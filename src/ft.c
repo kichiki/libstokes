@@ -1,13 +1,169 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ft.c,v 1.8 2001/02/04 07:50:07 ichiki Exp $
+ * $Id: ft.c,v 1.9 2001/02/12 08:40:49 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
 #include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+#include "f.h" // matrix_ij_A ()
 
 #include "ft.h"
+
+/* store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n6 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n6 * n6] :
+ */
+void
+matrix_ft_ij (int i, int j,
+	      double ex, double ey, double ez,
+	      double xa, double ya,
+	      double yb,
+	      double xc, double yc,
+	      int n6, double *mat)
+{
+  int i1, i4;
+  int j1, j4;
+
+  i1  = i * 6;
+  i4  = i1 + 3;
+
+  j1  = j * 6;
+  j4  = j1 + 3;
+
+  matrix_ij_A (n6, & mat [i1 * n6 + j1],
+	       ex, ey, ez,
+	       xa, ya);
+  matrix_ij_B (n6, & mat [i4 * n6 + j1],
+	       ex, ey, ez,
+	       yb);
+  matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
+		ex, ey, ez,
+		yb);
+  matrix_ij_C (n6, & mat [i4 * n6 + j4],
+	       ex, ey, ez,
+	       xc, yc);
+}
+
+/* store matrix in B part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yb : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_B (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double yb)
+{
+  double b1;
+  double b1x, b1y, b1z;
+
+  b1 = yb;
+
+  b1x = b1 * ex;
+  b1y = b1 * ey;
+  b1z = b1 * ez;
+
+  /* B part */
+  /* eps_ijk e_k */
+  mat [0 * n + 1] += + b1z ; /* x,y */
+  mat [0 * n + 2] += - b1y ; /* x,z */
+  mat [1 * n + 0] += - b1z ; /* y,x */
+  mat [1 * n + 2] += + b1x ; /* y,z */
+  mat [2 * n + 0] += + b1y ; /* z,x */
+  mat [2 * n + 1] += - b1x ; /* z,y */
+}
+
+/* store matrix in B-tilde part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yb : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_Bt (int n, double *mat,
+	      double ex, double ey, double ez,
+	      double yb)
+{
+  double b1;
+  double b1x, b1y, b1z;
+
+  b1 = yb;
+
+  b1x = b1 * ex;
+  b1y = b1 * ey;
+  b1z = b1 * ez;
+
+  /* BT part */
+  mat [1 * n + 0] -= + b1z ; /* y,x */
+  mat [2 * n + 0] -= - b1y ; /* z,x */
+  mat [0 * n + 1] -= - b1z ; /* x,y */
+  mat [2 * n + 1] -= + b1x ; /* z,y */
+  mat [0 * n + 2] -= + b1y ; /* x,z */
+  mat [1 * n + 2] -= - b1x ; /* y,z */
+}
+
+/* store matrix in C part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xc, yc : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_C (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xc, double yc)
+{
+  double c1, c2;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+
+  c1 = yc;
+  c2 = xc - yc;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+
+  /* C part */
+  mat [0 * n + 0] += c1 + c2 * exx;
+  mat [1 * n + 1] += c1 + c2 * eyy;
+  mat [2 * n + 2] += c1 + c2 * ezz;
+
+  mat [0 * n + 1] += c2 * exy;
+  mat [1 * n + 0] += c2 * exy;
+  mat [1 * n + 2] += c2 * eyz;
+  mat [2 * n + 1] += c2 * eyz;
+  mat [2 * n + 0] += c2 * exz;
+  mat [0 * n + 2] += c2 * exz;
+}
 
 /* ATIMES version (for O(N^2) scheme) of
  * store matrix in FT format with scalar functions
