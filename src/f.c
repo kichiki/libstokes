@@ -1,7 +1,12 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: f.c,v 1.1 2001/02/03 12:51:51 ichiki Exp $
+ * $Id: f.c,v 1.2 2001/02/03 13:34:25 ichiki Exp $
  */
+#include <stdio.h> // fprintf ()
+#include <stdlib.h> // malloc ()
+#include <math.h> // sqrt ()
+#include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+
 #include "f.h"
 
 /* ATIMES version (for O(N^2) scheme) of
@@ -76,12 +81,14 @@ set_F_by_f (int n,
     }
 }
 
-/*
+/* calc scalar functions of (M^inf)^-1 in FT
+ * INPUT
+ *   s : distance of particles
  * OUTPUT
  *  scalar_f [4] :
  */
 void
-scalar_minv_F (double s, double *scalar_f)
+scalar_minv_f (double s, double * scalar_f)
 {
   double xa11, xa12;
   double ya11, ya12;
@@ -117,4 +124,112 @@ scalar_minv_F (double s, double *scalar_f)
   scalar_f [1] = xa12;
   scalar_f [2] = ya11;
   scalar_f [3] = ya12;
+}
+
+/* calculate lubrication f by u for all particles
+ * INPUT
+ *   (global) pos [np * 3] : position of particles
+ *   np : # particles
+ *   u [np * 3] : velocity
+ * OUTPUT
+ *   f [np * 3] : force
+ */
+void
+calc_lub_3f (int np, double * u, double * f)
+{
+  extern double * pos;
+
+  int i, j;
+  int i3;
+  int j3;
+
+
+  /* clear f [np * 3] */
+  for (i = 0; i < np * 3; ++i)
+    f [i] = 0.0;
+
+  for (i = 0; i < np; ++i)
+    {
+      i3 = i * 3;
+      for (j = i + 1; j < np; ++j)
+	{
+	  j3 = j * 3;
+	  calc_lub_f_2b (u + i3, u + j3,
+			 pos + i3, pos + j3,
+			 f + i3, f + j3);
+	  
+	}
+    }
+}
+
+/* calculate f by u for pair of particles 1 and 2
+ * INPUT
+ *   (global) p : order of expansion
+ *   u1 [3] : velocity
+ *   u2 [3] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ * OUTPUT
+ *   f1 [3] : force
+ *   f2 [3] :
+ */
+void
+calc_lub_f_2b (double *u1, double *u2,
+	       double *x1, double *x2,
+	       double *f1, double *f2)
+{
+  double *res2b, *resinf;
+
+  double xx, yy, zz, rr;
+  double ex, ey, ez;
+
+  double xa11, ya11;
+  double xa12, ya12;
+
+
+  res2b = malloc (sizeof (double) * 44);
+  if (res2b == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      exit (1);
+    }
+  resinf = res2b + 22;
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr <= 2.0)
+    rr = 2.0 + 1.0e-12;
+
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalar_two_body_res (rr, res2b);
+  scalar_minv_f (rr, resinf);
+
+  xa11 = res2b [ 0] - resinf [ 0];
+  xa12 = res2b [ 1] - resinf [ 1];
+  ya11 = res2b [ 2] - resinf [ 2];
+  ya12 = res2b [ 3] - resinf [ 3];
+
+  matrix_f_atimes (u1, f1,
+		   ex, ey, ez,
+		   xa11, ya11);
+  matrix_f_atimes (u2, f1,
+		   ex, ey, ez,
+		   xa12, ya12);
+
+  matrix_f_atimes (u2, f2,
+		   - ex, - ey, - ez,
+		   xa11, ya11);
+  matrix_f_atimes (u1, f2,
+		   - ex, - ey, - ez,
+		   xa12, ya12);
+
+  free (res2b);
 }
