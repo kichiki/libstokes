@@ -1,33 +1,47 @@
-/*************************************************************************/
-/* Beenakker's Idea of Ewald summation technique for RP tensor           */
-/*  ３次元配列 ３次元周期境界版                                          */
-/*  無次元版 non-dimension formulation                                   */
-/*  from cal_f_p3.c on '93/ 9/18                                         */
-/*  Reviced on '93/ 9/20  Original (but all removed !!)                  */
-/*                  9/21  rebuild (almost same above !!)                 */
-/*                  9/22  ludcmp() で determinant を計算する             */
-/*                 10/08  calc_mob_ewald_3fのミスチェックのためシンプル化*/
-/*                 10/09  波数格子和のミスの修正                         */
-/*             '94/06/09  calc_steady_vel_3f_fix の追加                  */
-/*             '95/02/24  2D との比較、シンプル化                        */
-/*                 02/27  debug の結果シンプル化                         */
-/*                 03/02  calc_steady_vel() を削除( _fix に含まれる)     */
-/*             '96/04/23  無次元化                                       */
-/*                 05/08 式の演算順序を整える                            */
-/*                       グローバル変数を整理                            */
-/*************************************************************************/
+/* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
+ * Copyright (C) 1993-1996,1999 Kengo ICHIKI
+ *               <ichiki@phys.h.kyoto-u.ac.jp>
+ * $Id: ewald-3ft.c,v 1.2 1999/01/30 08:56:49 ichiki Exp $
+ *
+ * 3 dimensional hydrodynamics, 3D configuration
+ * periodic boundary condition in 3 direction,
+ * non-dimension formulation
+ *
+ * $Log: ewald-3ft.c,v $
+ * Revision 1.2  1999/01/30 08:56:49  ichiki
+ * revise comments (translate into English).
+ * cut set_Uniform().
+ *
+ * HISTORY
+ *  '96/05/08 correct order of evaluation of equations
+ *            summarize global variables
+ *  '96/04/23 non-dimensionalize
+ *  '95/03/02 cut routine calc_steady_vel_2f() (contained in _fix)
+ *      02/27 simplify program and debug
+ *  '95/02/24 compare 2D code
+ *            simplify code
+ *  '94/06/09 add calc_steady_vel_3f_fix()
+ *  '93/10/09 debug on summation in reciprocal space
+ *      10/08 simplify routine calc_mob_ewald_3f() in order to debug
+ *       9/22 calc determinant in ludcmp()
+ *       9/21 rebuild (almost same above !!)
+ *  '93/ 9/20 Original (but all removed !!)
+ *            based on  cal_f_p3.c on '93/ 9/18
+ */
 #define CALF3
 
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-#include "fun3.h" /* Wmat が定義されている */
+#include "fun3.h" /* Wmat is defined */
 #include "lub3.h" /* calc_lub_3f() */
 
-#include "calf3.h" /* 本ファイルのヘッダー */
+#include "calf3.h"
 
-void calc_mob_ewald_3f(int n,double x[],double mat[]){
-/* n は固定粒子も含んだ粒子数 */
+void
+calc_mob_ewald_3f (int n,double x[],double mat[])
+{
+  /* n is # of all (mobile and fixed) particles */
   /* Matrix work area */
   extern int 
     Indx[];
@@ -35,8 +49,8 @@ void calc_mob_ewald_3f(int n,double x[],double mat[]){
     Wmat1[];
 
   extern int 
-    pcellx,pcelly,pcellz,/* 周期セルの取る個数 */
-    kmaxx,kmaxy,kmaxz; /* 波数ベクトルの取る個数 */
+    pcellx,pcelly,pcellz,
+    kmaxx,kmaxy,kmaxz;
 
   extern double 
     zeta,zeta2,zaspi,za2,
@@ -70,16 +84,15 @@ void calc_mob_ewald_3f(int n,double x[],double mat[]){
     mob12,mob23,mob31;
 
   n3=n*3;
-/* 行列の消去 clear matrix */
+  /* clear matrix */
   for(i=0;i<n3*n3;i++){
     Wmat1[i]=0.0;
   }
-/* diagonal part ( self part ) 対角部分 */
+  /* diagonal part ( self part ) */
   for(i=0;i<n3;i++){
     Wmat1[i*n3+i] = 1.0 - zaspi*(6.0 - 40.0/3.0*za2);
   }
-
-/* ----- first Ewald part ( real space ) 実空間の格子和 -------*/
+  /* first Ewald part ( real space ) */
   for(i=0;i<n;i++){
     i1=i*3;
     i2=i*3+1;
@@ -133,8 +146,7 @@ void calc_mob_ewald_3f(int n,double x[],double mat[]){
       }
     }
   }
-
-/* Second Ewald part 逆空間での格子和 ( reciprocal space ) */
+  /* Second Ewald part ( reciprocal space ) */
   for(m1=-kmaxx;m1<=kmaxx;m1++){
     k1=pi2*(double)m1/lx;
     for(m2=-kmaxy;m2<=kmaxy;m2++){
@@ -192,48 +204,10 @@ void calc_mob_ewald_3f(int n,double x[],double mat[]){
   luinv(Wmat1,n3,Indx,mat);
 }
 
-void set_Uniform_3f(int n,double m[],double x[],double f[],
-int neighbor[27][N][NB]){
-  extern double 
-    Uniform,
-    Wmat1[],Wmat2[];
-  extern int 
-    Indx[];
-  double 
-    d,
-    v,vtmp;
-  int 
-    i,j,
-    n3;
-
-  n3 = n*3;
-
-  calc_lub_3f(n,n,x,Wmat2,neighbor);
-  for(i=0;i<n3*n3;i++){
-    Wmat2[i]+=m[i];
-  }
-
-  ludcmp(Wmat2,n3,Indx,&d);
-  if(d<0.0){
-    fprintf(stderr,"Negative Matrix in Calc. Uniform Flow Velocity!\n");
-    printf("Negative Matrix in Calc. Uniform Flow Velocity!\n");
-    /*exit(1);*/
-  }
-  luinv(Wmat2,n3,Indx,Wmat1);
-  
-  vtmp=0.0;
-  for(i=0;i<n;i++){
-    v=0.0;
-    for(j=0;j<n3;j++){
-      v+=Wmat1[(i*3+2)*n3+j]*f[j];
-    }
-    vtmp+=v;
-  }
-  Uniform=-vtmp/(double)n;
-}
-
-void calc_fluid_force_3f(int n,int nm,double mat[],
-double x[],double f[],double v[],int neighbor[27][N][NB]){
+void
+calc_fluid_force_3f (int n,int nm,double mat[],
+		     double x[],double f[],double v[],int neighbor[27][N][NB])
+{
   extern double 
     Uniform,
     Wmat1[];
@@ -260,8 +234,10 @@ double x[],double f[],double v[],int neighbor[27][N][NB]){
   }
 }
 
-void calc_steady_vel_3f_fix(int n,int nm,double m[],double x[],double f[],
-double v[],int neighbor[27][N][NB]){
+void
+calc_steady_vel_3f_fix (int n,int nm,double m[],double x[],double f[],
+			double v[],int neighbor[27][N][NB])
+{
   extern double 
     Uniform;
   extern int 
@@ -315,9 +291,11 @@ double v[],int neighbor[27][N][NB]){
 
 /*=============================================================================
  from Numerical Recipes
- =============================================================================*/
-void ludcmp(double a[],int n,int indx[],double *d){
-/* modefied on '93/09/22 -- return 'd' as determinant */
+=============================================================================*/
+void
+ludcmp (double a[],int n,int indx[],double *d)
+{
+  /* modefied on '93/09/22 -- return 'd' as determinant */
   double tiny=1.0e-20;
   double vv[3*N],
   aamax,sum,dum,tmp;
@@ -385,7 +363,9 @@ void ludcmp(double a[],int n,int indx[],double *d){
   }
 }
 
-void lubksb(double a[],int n,int indx[],double b[]){
+void
+lubksb (double a[],int n,int indx[],double b[])
+{
   int i,j,
   ii,ll;
   double sum;
@@ -415,8 +395,10 @@ void lubksb(double a[],int n,int indx[],double b[]){
   }
 }
 
-void luinv(double a[],int n,int indx[],double y[]){
-/* a[] must be decomposed by subroutine 'ludcmp' */
+void
+luinv (double a[],int n,int indx[],double y[])
+{
+  /* a[] must be decomposed by subroutine 'ludcmp' */
   int i,j;
   
   for(i=0;i<n;i++){
