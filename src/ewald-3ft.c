@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3ft.c,v 3.2 2001/02/03 08:57:59 ichiki Exp $
+ * $Id: ewald-3ft.c,v 3.3 2001/02/03 14:01:21 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -19,7 +19,6 @@
 #include <libiter.h> /* solve_iter_stab (), gpb () */
 
 #include "ft.h"
-#include "lub.h"
 #include "ewald-3ft.h"
 
 
@@ -680,10 +679,10 @@ calc_res_lub_ewald_3ft (int np,
  */
 void
 calc_mob_lub_fix_ewald_3ft (int np, int nm,
-			     double *f, double *t, double *e,
-			     double *uf, double *of, double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf)
+			     double *f, double *t,
+			     double *uf, double *of,
+			     double *u, double *o,
+			     double *ff, double *tf)
 {
   extern int NUMB_mobile_particles; /* this is dirty, though ... */
 
@@ -947,7 +946,7 @@ calc_lub_ewald_3ft (int np, double * uo, double * ft)
 	      tmp_pos [2] = pos [j3 + 2] + llz [k];
 	      if (cond_lub (pos + i3, tmp_pos) == 0)
 		{
-		  calc_lub_2b (uo + i6, uo + j6,
+		  calc_lub_ft_2b (uo + i6, uo + j6,
 			       pos + i3, tmp_pos,
 			       ft + i6, ft + j6);
 		}
