@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.5 2001/01/29 04:29:52 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.6 2001/01/29 05:39:14 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -37,7 +37,7 @@ atimes_mob_ewald_3fts (int n, double *x, double *y);
 
 /* utility routines for calc_mob_fix_ewald_3fts () */
 static void
-calc_b_mob_fix_ewald_3fts (int nm, int nf,
+calc_b_mob_fix_ewald_3fts (int np, int nm,
 			   double *f, double *t, double *e,
 			   double *uf, double *of, double *ef,
 			   double *b);
@@ -662,7 +662,8 @@ calc_mob_fix_ewald_3fts (int np, int nm,
 /* calc b-term (constant term) of (natural) mobility problem under Ewald sum
  * where b := -(0,0,e) + M.(f,t,0).
  * INPUT
- *  np : # particles (not # elements in b[]!)
+ *  np : # all particles (not # elements in b[]!)
+ *  nm : # mobile particles (not # elements in b[]!)
  *  f [nm * 3] :
  *  t [nm * 3] :
  *  e [nm * 5] :
@@ -673,7 +674,7 @@ calc_mob_fix_ewald_3fts (int np, int nm,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mob_fix_ewald_3fts (int nm, int nf,
+calc_b_mob_fix_ewald_3fts (int np, int nm,
 			   double *f, double *t, double *e,
 			   double *uf, double *of, double *ef,
 			   double *b)
@@ -681,7 +682,7 @@ calc_b_mob_fix_ewald_3fts (int nm, int nf,
   int i;
   int i3, i5, i11;
   int j;
-  int np;
+  int nf;
   int n3, n5, n11;
   int nm11;
 
@@ -689,7 +690,7 @@ calc_b_mob_fix_ewald_3fts (int nm, int nf,
   double *v5_0;
 
 
-  np = nm + nf;
+  nf = np - nm;
   n3 = np * 3;
   n5 = np * 5;
   n11 = np * 11;
@@ -714,11 +715,12 @@ calc_b_mob_fix_ewald_3fts (int nm, int nf,
   set_fts_by_FTS (nf, x + nm11, v5_0, v5_0, v5_0);
   atimes_ewald_3fts (n11, x, b);
 
+  /* set b := M.x - [(0,0,E)_m,(U,O,E)_f] */
   for (i = 0; i < nm; ++i)
     {
       i5 = i * 5;
       i11 = i * 11;
-      for (j = 0; j < 5; j ++)
+      for (j = 0; j < 5; ++j)
 	{
 	  b [i11 + 6 + j] -= e [i5 + j];
 	}
@@ -728,12 +730,12 @@ calc_b_mob_fix_ewald_3fts (int nm, int nf,
       i3 = i * 3;
       i5 = i * 5;
       i11 = (i + nm) * 11;
-      for (j = 0; j < 3; j ++)
+      for (j = 0; j < 3; ++j)
 	{
 	  b [i11 + j] -= uf [i3 + j];
 	  b [i11 + 3 + j] -= of [i3 + j];
 	}
-      for (j = 0; j < 5; j ++)
+      for (j = 0; j < 5; ++j)
 	{
 	  b [i11 + 6 + j] -= ef [i5 + j];
 	}
@@ -759,7 +761,7 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
 
   int i;
   int np;
-  int n3, n5;
+  int n5;
   int nm, nf;
   int nf3, nf5;
   int nm3, nm5, nm11;
@@ -777,7 +779,6 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
   np = n / 11;
   nm = NUMB_mobile_particles;
   nf = np - nm;
-  n3 = np * 3;
   n5 = np * 5;
   nf3 = nf * 3;
   nf5 = nf * 5;
@@ -811,19 +812,20 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
       v5_0 [i] = 0.0;
     }
 
-  /* set (U,O,S)_mobile,(F,T,S)_fixed */
+  /* set (U,O,S)_mobile,(F,T,S)_fixed by x[] */
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
-  /* set y := (0,0,S)_mobile,(F,T,S)_fixed */
+  /* set y := [(0,0,S)_mobile,(F,T,S)_fixed] */
   set_fts_by_FTS (nm, y, v5_0, v5_0, s);
   set_fts_by_FTS (nf, y + nm11, ff, tf, sf);
   atimes_ewald_3fts (n, y, z);
 
-  /* set y := (U,O,0)_mobile,(0,0,0)_fixed */
+  /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
   set_fts_by_FTS (nm, y, u, o, v5_0);
   set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
 
+  /* set y := [(U,O,0)_m,(0,0,0)_f] - M.[(0,0,S)_m,(F,T,S)_f] */
   for (i = 0; i < n; ++i)
     {
       y [i] -= z [i];
