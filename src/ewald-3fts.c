@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.9 2001/02/05 07:45:56 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.10 2001/02/09 05:23:54 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -969,7 +969,8 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
 
   NUMB_mobile_particles = nm;
   solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts,
-		   gpb/*sta*//*gpb_chk*/);
+		   //gpb);
+		   st2_chk);
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -1133,22 +1134,24 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y)
   /* set y := (I + M.L).[(U,O,0)_mobile,(0,0,0)_fixed] */
   set_fts_by_FTS (nm, y, u, o, v5_0);
   set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
+
   calc_lub_ewald_3fts (np, y, w);
-  atimes_ewald_3fts (n, w, z);
-  for (i = 0; i < n; ++i)
-    {
-      y [i] += z [i];
-    }
 
   /* set z := [(0,0,S)_mobile,(F,T,S)_fixed] */
-  set_fts_by_FTS (nm, w, v5_0, v5_0, s);
-  set_fts_by_FTS (nf, w + nm11, ff, tf, sf);
+  set_fts_by_FTS (nm, z, v5_0, v5_0, s);
+  set_fts_by_FTS (nf, z + nm11, ff, tf, sf);
+
+  for (i = 0; i < n; ++i)
+    {
+      w [i] -= z [i];
+    }
+
   atimes_ewald_3fts (n, w, z);
 
   /* set y := (I + M.L).[(U,O,0)_m,(0,0,0)_f] - M.[(0,0,S)_m,(F,T,S)_f] */
   for (i = 0; i < n; ++i)
     {
-      y [i] -= z [i];
+      y [i] += z [i];
     }
 
   free (w);
