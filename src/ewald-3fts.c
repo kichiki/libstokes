@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.6 2001/01/29 05:39:14 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.7 2001/01/29 09:34:20 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -409,7 +409,7 @@ calc_res_ewald_3fts (int np,
     x [i] = 0.0;
 
   solve_iter_stab (n11, b, x, atimes_ewald_3fts,
-		   gpb, 2000, -6);
+		   gpb);
 
   set_FTS_by_fts (np, f, t, s, x);
 
@@ -458,7 +458,7 @@ calc_mob_ewald_3fts (int np,
     x [i] = 0.0;
 
   solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts,
-		   gpb, 2000, -6);
+		   gpb);
 
   set_FTS_by_fts (np, u, o, s, x);
 
@@ -650,7 +650,7 @@ calc_mob_fix_ewald_3fts (int np, int nm,
 
   NUMB_mobile_particles = nm;
   solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts,
-		   gpb, 2000, -6);
+		   gpb);
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
