@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f.c,v 2.3 2001/01/22 03:32:14 ichiki Exp $
+ * $Id: ewald-3f.c,v 2.4 2001/01/22 04:11:17 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -298,14 +298,14 @@ atimes_ewald_3f (int n, double *x, double *y)
 
 
   np = n / 3;
-  /* clear result */
+  /* clear result
   for (i = 0; i < n; i++)
-    y [i] = 0.0;
+    y [i] = 0.0; */
 
   /* diagonal part ( self part ) */
   ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
   for (i = 0; i < n; i++)
-    y [i] = ya;
+    y [i] = x [i] * ya;
 
 #ifdef ZETA
   ctmp1 = clock ();
@@ -426,7 +426,7 @@ atimes_ewald_3f (int n, double *x, double *y)
 		      ix = i * 3;
 		      iy = ix + 1;
 		      iz = ix + 2;
-		      for (j = 0; j < n; j++)
+		      for (j = 0; j < np; j++)
 			{
 			  jx = j * 3;
 			  jy = jx + 1;
