@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
- * Copyright (C) 1993-1996,1999-2000 Kengo Ichiki
+ * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f.c,v 2.2 2000/12/11 06:28:03 ichiki Exp $
+ * $Id: ewald-3f.c,v 2.3 2001/01/22 03:32:14 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -239,5 +239,229 @@ calc_mob_ewald_3f (int n, double *x, double *mat)
   cpu3 = (double) (ctmp3 - ctmp2);
   /*#else
     cholesky (mat, n3);*/
+#endif /* ZETA */
+}
+
+/* ATIMES version (for O(N^2) scheme) of
+ * calc ewald-summed mobility for F version
+ * INPUT
+ *  (global) pos [np * 3] : position of particles
+ *  n := np * 3
+ *  x [n] : F
+ * OUTPUT
+ *  y [n] : U
+ */
+void
+atimes_ewald_3f (int n, double *x, double *y)
+{
+  extern int pcellx, pcelly, pcellz;
+  extern int kmaxx, kmaxy, kmaxz;
+
+  extern double zeta, zeta2, zaspi, za2;
+  extern double pi2;
+  extern double pivol;
+  extern double lx, ly, lz; /* cell size */
+
+  extern double *pos;
+
+#ifdef ZETA
+  extern double cpu1, cpu2, cpu3;
+  clock_t ctmp1, ctmp2, ctmp3;
+#endif /* ZETA */
+
+  double ya;
+
+  double ex, ey, ez;
+  double exx, eyy, ezz, exy, eyz, ezx;
+
+  double xx, yy, zz, rr;
+  double zr, zr2;
+  double s, s2;
+  double rlx, rly, rlz;
+
+  int np;
+  int i, j;
+  int ix, iy, iz;
+  int jx, jy, jz;
+  int m1, m2, m3;
+
+  double k1, k2, k3, kk, k4z;
+  double cf;
+  double kexp;
+
+  double mob11, mob22, mob33, mob12, mob23, mob31;
+
+  double erfczr;
+  double expzr2;
+
+  double a2;
+
+
+  np = n / 3;
+  /* clear result */
+  for (i = 0; i < n; i++)
+    y [i] = 0.0;
+
+  /* diagonal part ( self part ) */
+  ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
+  for (i = 0; i < n; i++)
+    y [i] = ya;
+
+#ifdef ZETA
+  ctmp1 = clock ();
+#endif /* ZETA */
+
+  /* first Ewald part ( real space ) */
+  for (i = 0; i < np; i++)
+    {
+      ix = i * 3;
+      iy = ix + 1;
+      iz = ix + 2;
+      for (j = 0; j < np; j++)
+	{
+	  jx = j * 3;
+	  jy = jx + 1;
+	  jz = jx + 2;
+
+	  for (m1 = - pcellx; m1 <= pcellx; m1++)
+	    {
+	      rlx = lx * (double) m1;
+	      for (m2 = - pcelly; m2 <= pcelly; m2++)
+		{
+		  rly = ly * (double) m2;
+		  for (m3 = - pcellz; m3 <= pcellz; m3++)
+		    {
+		      rlz = lz * (double) m3;
+  
+		      xx = pos [jx] - pos [ix] + rlx;
+		      yy = pos [jy] - pos [iy] + rly;
+		      zz = pos [jz] - pos [iz] + rlz;
+		      rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+		      if (rr > 0.0)
+			{
+			  zr = zeta * rr;
+			  zr2 = zr * zr;
+			  s  = rr;
+			  s2 = s * s;
+
+			  erfczr = erfc (zr);
+			  expzr2 = zaspi * exp (- zr2);
+
+			  ex = xx / rr;
+			  ey = yy / rr;
+			  ez = zz / rr;
+
+			  exx = ex * ex;
+			  eyy = ey * ey;
+			  ezz = ez * ez;
+			  exy = ex * ey;
+			  eyz = ey * ez;
+			  ezx = ez * ex;
+
+			  ya = (0.75 + 0.5 / s2) / s * erfczr
+			    + ((1.0 + zr2 *
+				(14.0 + 4.0 * zr2 *
+				 (- 5.0 + zr2))) / s2
+			       - 4.5 + 3.0 * zr2)
+			    * expzr2;
+			  a2 = (0.75 - 1.5 / s2) / s * erfczr
+			    + ((- 3.0 + zr2 *
+				(- 2.0 + 4.0 * zr2 *
+				 (4.0 - zr2))) / s2
+			       + 1.5 - 3.0 * zr2)
+			    * expzr2;
+			  /*xa = a2 + ya;*/
+
+			  y [ix] += x [jx] * (ya + a2 * exx);
+			  y [iy] += x [jy] * (ya + a2 * eyy);
+			  y [iz] += x [jz] * (ya + a2 * ezz);
+
+			  y [ix] += x [jy] * a2 * exy;
+			  y [iy] += x [jx] * a2 * exy;
+			  y [iy] += x [jz] * a2 * eyz;
+			  y [iz] += x [jy] * a2 * eyz;
+			  y [iz] += x [jx] * a2 * ezx;
+			  y [ix] += x [jz] * a2 * ezx;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+#ifdef ZETA
+  ctmp2 = clock ();
+#endif /* ZETA */
+
+  /* Second Ewald part ( reciprocal space ) */
+  for (m1 = - kmaxx; m1 <= kmaxx; m1++)
+    {
+      k1 = pi2 * (double) m1 / lx;
+      for (m2 = - kmaxy; m2 <= kmaxy; m2++)
+	{
+	  k2 = pi2 * (double) m2 / ly;
+	  for (m3 = - kmaxz; m3 <= kmaxz; m3++)
+	    {
+	      k3 = pi2 * (double) m3 / lz;
+	      if (m1 != 0 || m2 != 0 || m3 != 0)
+		{
+		  kk = k1 * k1 + k2 * k2 + k3 * k3;
+		  k4z = kk / 4.0 / zeta2;
+		  kexp = pivol
+		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
+		    / kk * exp (- k4z);
+
+		  ya = 6.0 * (1.0 - kk / 3.0) * kexp;
+
+		  mob11 = (1.0 - k1 * k1 / kk) * ya;
+		  mob22 = (1.0 - k2 * k2 / kk) * ya;
+		  mob33 = (1.0 - k3 * k3 / kk) * ya;
+		  mob12 = - k1 * k2 / kk * ya;
+		  mob23 = - k2 * k3 / kk * ya;
+		  mob31 = - k3 * k1 / kk * ya;
+
+		  for (i = 0; i < np; i++)
+		    {
+		      ix = i * 3;
+		      iy = ix + 1;
+		      iz = ix + 2;
+		      for (j = 0; j < n; j++)
+			{
+			  jx = j * 3;
+			  jy = jx + 1;
+			  jz = jx + 2;
+
+			  xx = pos [jx] - pos [ix];
+			  yy = pos [jy] - pos [iy];
+			  zz = pos [jz] - pos [iz];
+
+			  cf = cos (+ k1 * xx
+				    + k2 * yy
+				    + k3 * zz);
+
+			  y [ix] += x [jx] * cf * mob11;
+			  y [iy] += x [jy] * cf * mob22;
+			  y [iz] += x [jz] * cf * mob33;
+
+			  y [ix] += x [jy] * cf * mob12;
+			  y [iy] += x [jx] * cf * mob12;
+			  y [iy] += x [jz] * cf * mob23;
+			  y [iz] += x [jy] * cf * mob23;
+			  y [iz] += x [jx] * cf * mob31;
+			  y [ix] += x [jz] * cf * mob31;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+#ifdef ZETA
+  ctmp3 = clock ();
+
+  cpu1 = (double) (ctmp3 - ctmp1);
+  cpu2 = (double) (ctmp2 - ctmp1);
+  cpu3 = (double) (ctmp3 - ctmp2);
 #endif /* ZETA */
 }
