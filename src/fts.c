@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
- * Copyright (C) 2000 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.2 2001/01/19 07:45:51 ichiki Exp $
+ * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
+ * $Id: fts.c,v 1.3 2001/01/24 06:48:33 ichiki Exp $
  */
 #include "fts.h"
 
@@ -425,15 +425,14 @@ matrix_fts_ij (int i, int j,
 
 /* ATIMES version (for O(N^2) scheme) of
  * store matrix in FTS format with scalar functions
- * r := x [alpha(i)] - x [beta(j)]
+ * r := pos [alpha(i)] - pos [beta(j)]
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
- *   x [11] :
+ *   x [11] : related to 'i'
  *   ex, ey, ez := (x[i] - x[j]) / r, where 'i' is for y[] and 'j' is for x[].
  *   xa, ya, ... : scalar functions
- *   n11 : dimension of the matrix mat []
  * OUTPUT
- *   y [11] :
+ *   y [11] : related to 'j'
  */
 void
 matrix_fts_atimes (double *x, double *y,
@@ -815,3 +814,74 @@ matrix_fts_atimes (double *x, double *y,
   y [10] += x [10] * (2.0 * mm5); /* yy,yy */
 }
 
+/* convert fts[] to f[], t[], s[] (this is applicable for UOE)
+ * INPUT
+ *  n : # particles
+ *  fts [n * 11] :
+ * OUTPUT
+ *  f[n * 3] :
+ *  t[n * 3] :
+ *  s[n * 5] :
+ */
+void
+set_FTS_by_fts (int n,
+		double *f, double *t, double *s,
+		double *fts)
+{
+  int i;
+  int j;
+  int i3, i5, i11;
+
+
+  for (i = 0; i < n; i ++)
+    {
+      i3 = i * 3;
+      i5 = i * 5;
+      i11 = i * 11;
+      for (j = 0; j < 3; j ++)
+	{
+	  f [i3 + j] = fts [i11 + j];
+	  t [i3 + j] = fts [i11 + 3 + j];
+	}
+      for (j = 0; j < 5; j ++)
+	{
+	  s [i5 + j] = fts [i11 + 6 + j];
+	}
+    }
+}
+
+/* convert fts[] to f[], t[], s[] (this is applicable for UOE)
+ * INPUT
+ *  n : # particles
+ *  f[n * 3] :
+ *  t[n * 3] :
+ *  s[n * 5] :
+ * OUTPUT
+ *  fts [n * 11] :
+ */
+void
+set_fts_by_FTS (int n,
+		double *fts,
+		double *f, double *t, double *s)
+{
+  int i;
+  int j;
+  int i3, i5, i11;
+
+
+  for (i = 0; i < n; i ++)
+    {
+      i3 = i * 3;
+      i5 = i * 5;
+      i11 = i * 11;
+      for (j = 0; j < 3; j ++)
+	{
+	  fts [i11 + j] = f [i3 + j];
+	  fts [i11 + 3 + j] = t [i3 + j];
+	}
+      for (j = 0; j < 5; j ++)
+	{
+	  fts [i11 + 6 + j] = s [i5 + j];
+	}
+    }
+}
