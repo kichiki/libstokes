@@ -1,6 +1,6 @@
 /* utility routines for Ewald-summation code in 3D
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: stokes.c,v 1.2 2001/01/23 09:52:57 ichiki Exp $
+ * $Id: stokes.c,v 1.3 2001/01/25 08:46:40 ichiki Exp $
  */
 #include <math.h>
 
@@ -117,6 +117,100 @@ init_config_SC (double phi, int nx, int ny, int nz,
 	      pos [j * 3 + 0] = (double) ix * (*lx);
 	      pos [j * 3 + 1] = (double) iy * (*ly);
 	      pos [j * 3 + 2] = (double) iz * (*lz);
+	      j ++;
+	    }
+	}
+    }
+  (*lx) *= (double) nx;
+  (*ly) *= (double) ny;
+  (*lz) *= (double) nz;
+}
+
+/* initialize configuration and the primary cell of BCC
+ * INPUT
+ *  phi        : volume fraction of particles
+ *  nx, ny, nz : # single cell in each direction
+ *             : so that total # particles is 2*nx*ny*nz
+ * OUTPUT
+ *  pos [(nx * ny * nz) 2 * * 3] : positions of particles
+ *  lx, ly, lz : geometry of the primary cell
+ */
+void
+init_config_BCC (double phi, int nx, int ny, int nz,
+		 double *pos, double *lx, double *ly, double *lz)
+{
+  int j;
+  int ix, iy, iz;
+
+
+  (*lx) = (*ly) = (*lz) = pow (8.0 * M_PI / phi / 3.0, 1.0 / 3.0);
+
+  /* extend the primary cell with 1 particle to that with "n" particles*/
+  j = 0;
+  for (ix = 0; ix < nx; ix ++)
+    {
+      for (iy = 0; iy < ny; iy ++)
+	{
+	  for (iz = 0; iz < nz; iz ++)
+	    {
+	      pos [j * 3 + 0] = (double) ix * (*lx);
+	      pos [j * 3 + 1] = (double) iy * (*ly);
+	      pos [j * 3 + 2] = (double) iz * (*lz);
+	      j ++;
+	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
+	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
+	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
+	      j ++;
+	    }
+	}
+    }
+  (*lx) *= (double) nx;
+  (*ly) *= (double) ny;
+  (*lz) *= (double) nz;
+}
+
+/* initialize configuration and the primary cell of FCC
+ * INPUT
+ *  phi        : volume fraction of particles
+ *  nx, ny, nz : # single cell in each direction
+ *             : so that total # particles is 4*nx*ny*nz
+ * OUTPUT
+ *  pos [(nx * ny * nz) 4 * * 3] : positions of particles
+ *  lx, ly, lz : geometry of the primary cell
+ */
+void
+init_config_FCC (double phi, int nx, int ny, int nz,
+		 double *pos, double *lx, double *ly, double *lz)
+{
+  int j;
+  int ix, iy, iz;
+
+
+  (*lx) = (*ly) = (*lz) = pow (16.0 * M_PI / phi / 3.0, 1.0 / 3.0);
+
+  /* extend the primary cell with 1 particle to that with "n" particles*/
+  j = 0;
+  for (ix = 0; ix < nx; ix ++)
+    {
+      for (iy = 0; iy < ny; iy ++)
+	{
+	  for (iz = 0; iz < nz; iz ++)
+	    {
+	      pos [j * 3 + 0] = (double) ix * (*lx);
+	      pos [j * 3 + 1] = (double) iy * (*ly);
+	      pos [j * 3 + 2] = (double) iz * (*lz);
+	      j ++;
+	      pos [j * 3 + 0] = ((double) ix + 0.0) * (*lx);
+	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
+	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
+	      j ++;
+	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
+	      pos [j * 3 + 1] = ((double) iy + 0.0) * (*ly);
+	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
+	      j ++;
+	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
+	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
+	      pos [j * 3 + 2] = ((double) iz + 0.0) * (*lz);
 	      j ++;
 	    }
 	}
