@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.11 2001/02/12 08:40:09 ichiki Exp $
+ * $Id: fts.c,v 1.12 2001/02/13 09:53:54 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -1458,6 +1458,126 @@ calc_lub_fts_2b (double *uoe1, double *uoe2,
 		     xg12, yg12,
 		     yh12,
 		     xm12, ym12, zm12);
+
+  free (res2b);
+}
+
+/* calculate fts by uoe for pair of particles 1 and 2
+ * INPUT
+ *   (global) p : order of expansion
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat'
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_fts_2b (int i, int j,
+		   double *x1, double *x2,
+		   int n, double * mat)
+{
+  double *res2b, *resinf;
+
+  double xx, yy, zz, rr;
+  double ex, ey, ez;
+
+  double xa11, ya11;
+  double xa12, ya12;
+  double yb11, yb12;
+  double xc11, yc11;
+  double xc12, yc12;
+  double xg11, xg12, yg11, yg12;
+  double yh11, yh12;
+  double xm11, xm12, ym11, ym12, zm11, zm12;
+
+
+  res2b = malloc (sizeof (double) * 44);
+  if (res2b == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      exit (1);
+    }
+  resinf = res2b + 22;
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr <= 2.0)
+    rr = 2.0 + 1.0e-12;
+
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalar_two_body_res (rr, res2b);
+  scalar_minv_fts (rr, resinf);
+
+  xa11 = res2b [ 0] - resinf [ 0];
+  xa12 = res2b [ 1] - resinf [ 1];
+  ya11 = res2b [ 2] - resinf [ 2];
+  ya12 = res2b [ 3] - resinf [ 3];
+  yb11 = res2b [ 4] - resinf [ 4];
+  yb12 = res2b [ 5] - resinf [ 5];
+  xc11 = res2b [ 6] - resinf [ 6];
+  xc12 = res2b [ 7] - resinf [ 7];
+  yc11 = res2b [ 8] - resinf [ 8];
+  yc12 = res2b [ 9] - resinf [ 9];
+  xg11 = res2b [10] - resinf [10];
+  xg12 = res2b [11] - resinf [11];
+  yg11 = res2b [12] - resinf [12];
+  yg12 = res2b [13] - resinf [13];
+  yh11 = res2b [14] - resinf [14];
+  yh12 = res2b [15] - resinf [15];
+  xm11 = res2b [16] - resinf [16];
+  xm12 = res2b [17] - resinf [17];
+  ym11 = res2b [18] - resinf [18];
+  ym12 = res2b [19] - resinf [19];
+  zm11 = res2b [20] - resinf [20];
+  zm12 = res2b [21] - resinf [21];
+
+  matrix_fts_ij (i, i,
+		 ex, ey, ez,
+		 xa11, ya11,
+		 yb11,
+		 xc11, yc11,
+		 xg11, yg11,
+		 yh11,
+		 xm11, ym11, zm11,
+		 n, mat);
+  matrix_fts_ij (i, j,
+		 ex, ey, ez,
+		 xa12, ya12,
+		 yb12,
+		 xc12, yc12,
+		 xg12, yg12,
+		 yh12,
+		 xm12, ym12, zm12,
+		 n, mat);
+
+  matrix_fts_ij (j, j,
+		 - ex, - ey, - ez,
+		 xa11, ya11,
+		 yb11,
+		 xc11, yc11,
+		 xg11, yg11,
+		 yh11,
+		 xm11, ym11, zm11,
+		 n, mat);
+  matrix_fts_ij (j, i,
+		 - ex, - ey, - ez,
+		 xa12, ya12,
+		 yb12,
+		 xc12, yc12,
+		 xg12, yg12,
+		 yh12,
+		 xm12, ym12, zm12,
+		 n, mat);
 
   free (res2b);
 }
