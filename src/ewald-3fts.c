@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.1 2001/01/22 04:17:21 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.2 2001/01/24 08:14:23 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -16,8 +16,22 @@
 #include <time.h> /* clock() */
 #endif /* ZETA */
 
+#include <libiter.h> /* solve_iter_stab (), gpb () */
+
 #include "fts.h"
 #include "ewald-3fts.h"
+
+
+/** function prototypes for local routines **/
+/* utility routines for calc_mob_ewald_3fts () */
+static void
+calc_b_mob_ewald_3fts (int n,
+		       double *f, double *t, double *e,
+		       double *b);
+static void
+atimes_mob_ewald_3fts (int n, double *x, double *y);
+
+
 
 /* ATIMES version (for O(N^2) scheme) of
  * calc ewald-summed mobility for FTS version
@@ -338,4 +352,194 @@ atimes_ewald_3fts (int n, double *x, double *y)
   cpu2 = (double) (ctmp2 - ctmp1);
   cpu3 = (double) (ctmp3 - ctmp2);
 #endif /* ZETA */
+}
+
+
+/** natural mobility problem **/
+/* solve natural mobility problem under Ewald sum
+ * INPUT
+ *  np : # particles
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_mob_ewald_3fts (int np,
+		     double *f, double *t, double *e,
+		     double *u, double *o, double *s)
+{
+  int i;
+  int n11;
+
+  double *b;
+  double *x;
+
+
+  n11 = np * 11;
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  calc_b_mob_ewald_3fts (np, f, t, e, b);
+
+  /* first guess */
+  for (i = 0; i < n11; ++i)
+    x [i] = 0.0;
+
+  solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts,
+		   gpb, 2000, -6);
+
+  set_FTS_by_fts (np, u, o, s, x);
+
+  free (b);
+  free (x);
+}
+
+/* calc b-term (constant term) of (natural) mobility problem under Ewald sum
+ * where b := -(0,0,e) + M.(f,t,0).
+ * INPUT
+ *  np : # particles (not # elements in b[]!)
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] :
+ * OUTPUT
+ *  b [np * 11] : constant vector
+ */
+static void
+calc_b_mob_ewald_3fts (int np,
+		       double *f, double *t, double *e,
+		       double *b)
+{
+  int i;
+  int i5, i11;
+  int j;
+  int n3, n5, n11;
+
+  double *x;
+  double *v3_0;
+  double *v5_0;
+
+
+  n3 = np * 3;
+  n5 = np * 5;
+  n11 = np * 11;
+
+  x = malloc (sizeof (double) * n11);
+  v3_0 = malloc (sizeof (double) * n3);
+  v5_0 = malloc (sizeof (double) * n5);
+  if (x == NULL
+      || v3_0 == NULL
+      || v5_0 == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_b_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  for (i = 0; i < n3; ++i)
+    {
+      v3_0 [i] = 0.0;
+    }
+  for (i = 0; i < n5; ++i)
+    {
+      v5_0 [i] = 0.0;
+    }
+
+  set_fts_by_FTS (np, x, f, t, v5_0);
+  atimes_ewald_3fts (n11, x, b);
+
+  for (i = 0; i < np; ++i)
+    {
+      i5 = i * 5;
+      i11 = i * 11;
+      for (j = 0; j < 5; j ++)
+	{
+	  b [i11 + 6 + j] -= e [i5 + j];
+	}
+    }
+
+  free (x);
+  free (v3_0);
+  free (v5_0);
+}
+
+/* calc atimes of (natural) mobility problem under Ewald sum
+ * where A.x := (u,o,0) - M.(0,0,s).
+ * INPUT
+ *  n : # elements in x[] and b[] (not # particles!)
+ *  x [n] :
+ * OUTPUT
+ *  y [n] :
+ */
+static void
+atimes_mob_ewald_3fts (int n, double *x, double *y)
+{
+  int i;
+  int n3, n5, n11;
+
+  double *z;
+  double *v3_0;
+  double *v5_0;
+  double *u;
+  double *o;
+  double *s;
+
+
+  n3 = n * 3;
+  n5 = n * 5;
+  n11 = n * 11;
+
+  z = malloc (sizeof (double) * n11);
+  v3_0 = malloc (sizeof (double) * n3);
+  v5_0 = malloc (sizeof (double) * n5);
+  u = malloc (sizeof (double) * n3);
+  o = malloc (sizeof (double) * n3);
+  s = malloc (sizeof (double) * n5);
+  if (z == NULL
+      || v3_0 == NULL
+      || v5_0 == NULL
+      || u == NULL
+      || o == NULL
+      || s == NULL)
+    {
+      fprintf (stderr, "allocation error in atimes_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+
+  for (i = 0; i < n3; ++i)
+    {
+      v3_0 [i] = 0.0;
+    }
+  for (i = 0; i < n5; ++i)
+    {
+      v5_0 [i] = 0.0;
+    }
+
+  set_FTS_by_fts (n, u, o, s, x);
+
+  set_fts_by_FTS (n, y, v3_0, v3_0, s);
+  atimes_ewald_3fts (n11, y, z);
+
+  set_fts_by_FTS (n, y, u, 0, v5_0);
+
+  for (i = 0; i < n; ++i)
+    {
+      y [i] -= z [i];
+    }
+
+  free (z);
+  free (v3_0);
+  free (v5_0);
+  free (u);
+  free (o);
+  free (s);
 }
