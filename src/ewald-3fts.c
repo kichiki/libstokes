@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.8 2001/02/01 05:30:55 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.9 2001/02/05 07:45:56 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -13,13 +13,12 @@
 #include <stdlib.h> /* for exit() */
 
 #ifdef ZETA
-#include <time.h> /* clock() */
+#include "../bench.h" // ptime_ms_d()
 #endif /* ZETA */
 
 #include <libiter.h> /* solve_iter_stab (), gpb () */
 
 #include "fts.h"
-#include "lub.h"
 #include "ewald-3fts.h"
 
 
@@ -84,7 +83,6 @@ atimes_ewald_3fts (int n, double *x, double *y)
 
 #ifdef ZETA
   extern double cpu1, cpu2, cpu3;
-  clock_t ctmp1, ctmp2, ctmp3;
 #endif /* ZETA */
 
   double xa, ya; 
@@ -144,7 +142,7 @@ atimes_ewald_3fts (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp1 = clock ();
+  ptime_ms_d ();
 #endif /* ZETA */
 
   /* first Ewald part ( real space ) */
@@ -299,7 +297,7 @@ atimes_ewald_3fts (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp2 = clock ();
+  cpu2 = ptime_ms_d ();
 #endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
@@ -373,11 +371,8 @@ atimes_ewald_3fts (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp3 = clock ();
-
-  cpu1 = (double) (ctmp3 - ctmp1);
-  cpu2 = (double) (ctmp2 - ctmp1);
-  cpu3 = (double) (ctmp3 - ctmp2);
+  cpu3 = ptime_ms_d ();
+  cpu1 = cpu2 + cpu3;
 #endif /* ZETA */
 }
 
@@ -974,7 +969,7 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
 
   NUMB_mobile_particles = nm;
   solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts,
-		   gpb);
+		   gpb/*sta*//*gpb_chk*/);
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -1205,30 +1200,22 @@ calc_lub_ewald_3fts (int np, double * uoe, double * fts)
     {
       i3 = i * 3;
       i11 = i * 11;
-      /* primary cell */
-      for (j = i + 1; j < np; ++j)
+      for (j = i; j < np; ++j)
 	{
 	  j3 = j * 3;
 	  j11 = j * 11;
-	  calc_lub_2b (uoe + i11, uoe + j11,
-		       pos + i3, pos + j3,
-		       fts + i11, fts + j11);
-	  
-	}
-      /* image cells */
-      for (k = 1; k < 27; ++k)
-	{
-	  for (j = 0; j < np; ++j)
+	  /* all image cells */
+	  for (k = 0; k < 27; ++k)
 	    {
-	      j3 = j * 3;
-	      j11 = j * 11;
 	      tmp_pos [0] = pos [j3 + 0] + llx [k];
 	      tmp_pos [1] = pos [j3 + 1] + lly [k];
 	      tmp_pos [2] = pos [j3 + 2] + llz [k];
 	      if (cond_lub (pos + i3, tmp_pos) == 0)
-		calc_lub_2b (uoe + i11, uoe + j11,
-			     pos + i3, tmp_pos,
-			     fts + i11, fts + j11);
+		{
+		  calc_lub_fts_2b (uoe + i11, uoe + j11,
+				   pos + i3, tmp_pos,
+				   fts + i11, fts + j11);
+		}
 	    }
 	}
     }
@@ -1236,6 +1223,13 @@ calc_lub_ewald_3fts (int np, double * uoe, double * fts)
   free (tmp_pos);
 }
 
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
 static int
 cond_lub (double * x1, double * x2)
 {
@@ -1251,7 +1245,8 @@ cond_lub (double * x1, double * x2)
     + y * y
     + z * z;
 
-  if (r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
+  if (r2 != 0.0
+      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
     return 0;
   else
     return 1;
