@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.2 2001/01/24 08:14:23 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.3 2001/01/24 08:59:06 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -483,7 +483,8 @@ static void
 atimes_mob_ewald_3fts (int n, double *x, double *y)
 {
   int i;
-  int n3, n5, n11;
+  int np;
+  int n3, n5;
 
   double *z;
   double *v3_0;
@@ -493,11 +494,11 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
   double *s;
 
 
-  n3 = n * 3;
-  n5 = n * 5;
-  n11 = n * 11;
+  np = n / 11;
+  n3 = np * 3;
+  n5 = np * 5;
 
-  z = malloc (sizeof (double) * n11);
+  z = malloc (sizeof (double) * n);
   v3_0 = malloc (sizeof (double) * n3);
   v5_0 = malloc (sizeof (double) * n5);
   u = malloc (sizeof (double) * n3);
@@ -524,12 +525,12 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
       v5_0 [i] = 0.0;
     }
 
-  set_FTS_by_fts (n, u, o, s, x);
+  set_FTS_by_fts (np, u, o, s, x);
 
-  set_fts_by_FTS (n, y, v3_0, v3_0, s);
-  atimes_ewald_3fts (n11, y, z);
+  set_fts_by_FTS (np, y, v3_0, v3_0, s);
+  atimes_ewald_3fts (n, y, z);
 
-  set_fts_by_FTS (n, y, u, 0, v5_0);
+  set_fts_by_FTS (np, y, u, o, v5_0);
 
   for (i = 0; i < n; ++i)
     {
