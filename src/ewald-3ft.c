@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3ft.c,v 3.4 2001/02/05 07:39:12 ichiki Exp $
+ * $Id: ewald-3ft.c,v 3.5 2001/02/09 05:54:33 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -771,25 +771,29 @@ calc_b_mob_lub_fix_ewald_3ft (int np, int nm,
       v3_0 [i] = 0.0;
     }
 
-  /* set b :=  - (I + M.L).[(0,0)_m,(U,O)_f] */
+  /* set b := [(0,0)_m,(U,O)_f] */
   set_ft_by_FT (nm, b, v3_0, v3_0);
   set_ft_by_FT (nf, b + nm6, uf, of);
+
+  /* set y := L.[(0,0)_m,(U,O)_f] */
   calc_lub_ewald_3ft (np, b, y);
-  atimes_ewald_3ft (n6, y, x); // x[] is used temporaly
-  for (i = 0; i < n6; ++i)
-    {
-      b [i] = - (b [i] + x [i]);
-    }
 
   /* set x := [(F,T)_m,(0,0)_f] */
   set_ft_by_FT (nm, x, f, t);
   set_ft_by_FT (nf, x + nm6, v3_0, v3_0);
-  atimes_ewald_3ft (n6, x, y);
 
-  /* set b := - (I + M.L).[(0,0,E)_m,(U,O,E)_f] + [(F,T,0)_m,(0,0,0)_f] */
+  /* set x := x - y */
   for (i = 0; i < n6; ++i)
     {
-      b [i] += y [i];
+      x [i] -= y [i];
+    }
+
+  atimes_ewald_3ft (n6, x, y);
+
+  /* set b := - (I + M.L).[(0,0)_m,(U,O)_f] + M.[(F,T)_m,(0,0)_f] */
+  for (i = 0; i < n6; ++i)
+    {
+      b [i] = - b [i] + y [i];
     }
 
   free (x);
@@ -862,25 +866,28 @@ atimes_mob_lub_fix_ewald_3ft (int n, double *x, double *y)
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
 
-  /* set y := (I + M.L).[(U,O)_mobile,(0,0)_fixed] */
+  /* set y := [(U,O)_mobile,(0,0)_fixed] */
   set_ft_by_FT (nm, y, u, o);
   set_ft_by_FT (nf, y + nm6, v3_0, v3_0);
+
+  /* set w := L.[(U,O,0)_mobile,(0,0,0)_fixed] */
   calc_lub_ewald_3ft (np, y, w);
-  atimes_ewald_3ft (n, w, z);
-  for (i = 0; i < n; ++i)
-    {
-      y [i] += z [i];
-    }
 
   /* set z := [(0,0)_mobile,(F,T)_fixed] */
-  set_ft_by_FT (nm, w, v3_0, v3_0);
-  set_ft_by_FT (nf, w + nm6, ff, tf);
+  set_ft_by_FT (nm, z, v3_0, v3_0);
+  set_ft_by_FT (nf, z + nm6, ff, tf);
+
+  for (i = 0; i < n; ++i)
+    {
+      w [i] -= z [i];
+    }
+
   atimes_ewald_3ft (n, w, z);
 
   /* set y := (I + M.L).[(U,O)_m,(0,0)_f] - M.[(0,0)_m,(F,T)_f] */
   for (i = 0; i < n; ++i)
     {
-      y [i] -= z [i];
+      y [i] += z [i];
     }
 
   free (w);
