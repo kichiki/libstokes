@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.1 2000/12/09 08:37:33 ichiki Exp $
+ * $Id: fts.c,v 1.2 2001/01/19 07:45:51 ichiki Exp $
  */
 #include "fts.h"
 
@@ -422,3 +422,396 @@ matrix_fts_ij (int i, int j,
   mat [i10 * n11 + j10] += mm5;       /* yz,yz */
   mat [i11 * n11 + j11] += 2.0 * mm5; /* yy,yy */
 }
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FTS format with scalar functions
+ * r := x [alpha(i)] - x [beta(j)]
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   x [11] :
+ *   ex, ey, ez := (x[i] - x[j]) / r, where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ *   n11 : dimension of the matrix mat []
+ * OUTPUT
+ *   y [11] :
+ */
+void
+matrix_fts_atimes (double *x, double *y,
+		   double ex, double ey, double ez,
+		   double xa, double ya,
+		   double yb,
+		   double xc, double yc,
+		   double xg, double yg,
+		   double yh,
+		   double xm, double ym, double zm)
+{
+  double a1, a2;
+  double b1;
+  double c1, c2;
+  double g1, g2, g3;
+  double h1;
+  double mm1, mm2, mm3, mm4, mm5;
+
+  double b1x, b1y, b1z;
+  double g1x, g1y, g1z;
+  double g2x, g2y, g2z;
+  double g3xxx, g3xxy, g3xxz, g3xyy, g3xyz, g3yyy, g3yyz, g3yzz, g3xzz, g3zzz;
+  double h1xx, h1xy, h1xz, h1yy, h1yz, h1zz;
+  double m1xxxx, m1xxxy, m1xxxz, m1xxyy, m1xxyz, m1xxzz;
+  double m1xyyy, m1xyyz, m1xyzz, m1xzzz;
+  double m1yyyy, m1yyyz, m1yyzz, m1yzzz, m1zzzz;
+  double m2xx, m2xy, m2xz, m2yy, m2yz, m2zz;
+  double m4xx, m4xy, m4xz, m4yy, m4yz, m4zz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+  double exxx, exxy, exxz, exyy, exyz, exzz, eyyy, eyyz, eyzz, ezzz;
+  double exxxx, exxxy, exxxz, exxyy, exxyz, exxzz;
+  double exyyy, exyyz, exyzz, exzzz;
+  double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
+
+
+  /* I DON'T KNOW WHY I SHOULD DO THE FOLLOWING */
+  ex = - ex;
+  ey = - ey;
+  ez = - ez;
+
+
+  a1 = ya;
+  a2 = xa - ya;
+
+  b1 = yb;
+
+  c1 = yc;
+  c2 = xc - yc;
+
+  g1 = - 1.0 / 3.0 * xg;
+  g2 = yg;
+  g3 = xg - 2.0 * yg;
+
+  h1 = yh;
+
+  mm1 =   1.5     * xm - 2.0 * ym + 0.5 * zm;
+  mm2 = - 0.5     * xm            + 0.5 * zm;
+  mm3 = 1.0 / 6.0 * xm            - 0.5 * zm;
+  mm4 =                  0.5 * ym - 0.5 * zm;
+  mm5 =                             0.5 * zm;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+  exxx = exx * ex;
+  exxy = exx * ey;
+  exxz = exx * ez;
+  exyy = exy * ey;
+  exyz = exy * ez;
+  exzz = exz * ez;
+  eyyy = eyy * ey;
+  eyyz = eyy * ez;
+  eyzz = eyz * ez;
+  ezzz = ezz * ez;
+  exxxx = exx * exx;
+  exxxy = exx * exy;
+  exxxz = exx * exz;
+  exxyy = exx * eyy;
+  exxyz = exx * eyz;
+  exxzz = exx * ezz;
+  exyyy = exy * eyy;
+  exyyz = exy * eyz;
+  exyzz = exy * ezz;
+  exzzz = exz * ezz;
+  eyyyy = eyy * eyy;
+  eyyyz = eyy * eyz;
+  eyyzz = eyy * ezz;
+  eyzzz = eyz * ezz;
+  ezzzz = ezz * ezz;
+
+  b1x = b1 * ex;
+  b1y = b1 * ey;
+  b1z = b1 * ez;
+
+  g1x = g1 * ex;
+  g1y = g1 * ey;
+  g1z = g1 * ez;
+
+  g2x = g2 * ex;
+  g2y = g2 * ey;
+  g2z = g2 * ez;
+
+  g3xxx = g3 * exxx;
+  g3xxy = g3 * exxy;
+  g3xxz = g3 * exxz;
+  g3xyy = g3 * exyy;
+  g3xyz = g3 * exyz;
+  g3xzz = g3 * exzz;
+  g3yyy = g3 * eyyy;
+  g3yyz = g3 * eyyz;
+  g3yzz = g3 * eyzz;
+  g3zzz = g3 * ezzz;
+	      
+  h1xx = h1 * exx;
+  h1xy = h1 * exy;
+  h1xz = h1 * exz;
+  h1yy = h1 * eyy;
+  h1yz = h1 * eyz;
+  h1zz = h1 * ezz;
+	      
+  m1xxxx = mm1 * exxxx;
+  m1xxxy = mm1 * exxxy;
+  m1xxxz = mm1 * exxxz;
+  m1xxyy = mm1 * exxyy;
+  m1xxyz = mm1 * exxyz;
+  m1xxzz = mm1 * exxzz;
+  m1xyyy = mm1 * exyyy;
+  m1xyyz = mm1 * exyyz;
+  m1xyzz = mm1 * exyzz;
+  m1xzzz = mm1 * exzzz;
+  m1yyyy = mm1 * eyyyy;
+  m1yyyz = mm1 * eyyyz;
+  m1yyzz = mm1 * eyyzz;
+  m1yzzz = mm1 * eyzzz;
+  m1zzzz = mm1 * ezzzz;
+
+  m2xx = mm2 * exx;
+  m2xy = mm2 * exy;
+  m2xz = mm2 * exz;
+  m2yy = mm2 * eyy;
+  m2yz = mm2 * eyz;
+  m2zz = mm2 * ezz;
+
+  m4xx = mm4 * exx;
+  m4xy = mm4 * exy;
+  m4xz = mm4 * exz;
+  m4yy = mm4 * eyy;
+  m4yz = mm4 * eyz;
+  m4zz = mm4 * ezz;
+
+  /* A part */
+  y [ 0] += x [ 0] * (a1 + a2 * exx);
+  y [ 1] += x [ 1] * (a1 + a2 * eyy);
+  y [ 2] += x [ 2] * (a1 + a2 * ezz);
+  
+  y [ 0] += x [ 1] * (a2 * exy);
+  y [ 1] += x [ 0] * (a2 * exy);
+  y [ 1] += x [ 2] * (a2 * eyz);
+  y [ 2] += x [ 1] * (a2 * eyz);
+  y [ 2] += x [ 0] * (a2 * exz);
+  y [ 0] += x [ 2] * (a2 * exz);
+
+  /* B part */
+  /* eps_ijk e_k */
+  y [ 3] += x [ 1] * (+ b1z ); /* x,y */
+  y [ 3] += x [ 2] * (- b1y ); /* x,z */
+  y [ 4] += x [ 0] * (- b1z ); /* y,x */
+  y [ 4] += x [ 2] * (+ b1x ); /* y,z */
+  y [ 5] += x [ 0] * (+ b1y ); /* z,x */
+  y [ 5] += x [ 1] * (- b1x ); /* z,y */
+
+  /* BT part */
+  y [ 1] -= x [ 3] * (+ b1z ); /* y,x */
+  y [ 2] -= x [ 3] * (- b1y ); /* z,x */
+  y [ 0] -= x [ 4] * (- b1z ); /* x,y */
+  y [ 2] -= x [ 4] * (+ b1x ); /* z,y */
+  y [ 0] -= x [ 5] * (+ b1y ); /* x,z */
+  y [ 1] -= x [ 5] * (- b1x ); /* y,z */
+
+  /* C part */
+  y [ 3] += x [ 3] * (c1 + c2 * exx);
+  y [ 4] += x [ 4] * (c1 + c2 * eyy);
+  y [ 5] += x [ 5] * (c1 + c2 * ezz);
+
+  y [ 3] += x [ 4] * (c2 * exy);
+  y [ 4] += x [ 3] * (c2 * exy);
+  y [ 4] += x [ 5] * (c2 * eyz);
+  y [ 5] += x [ 4] * (c2 * eyz);
+  y [ 5] += x [ 3] * (c2 * exz);
+  y [ 3] += x [ 5] * (c2 * exz);
+  
+  /* G part */
+  /* g1: d_ij e_k part */
+  y [ 6] += x [ 0] * (g1x); /* xx,x */
+  y [ 6] += x [ 1] * (g1y); /* xx,y */
+  y [ 6] += x [ 2] * (g1z); /* xx,z */
+  y [10] += x [ 0] * (g1x); /* yy,x */
+  y [10] += x [ 1] * (g1y); /* yy,y */
+  y [10] += x [ 2] * (g1z); /* yy,z */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  y [ 6] += x [ 0] * (2.0 * g2x); /* xx,x */
+  y [ 7] += x [ 0] * (g2y);       /* xy,x */
+  y [ 7] += x [ 1] * (g2x);       /* xy,y */
+  y [ 8] += x [ 0] * (g2z);       /* xz,x */
+  y [ 8] += x [ 2] * (g2x);       /* xz,z */
+  y [ 9] += x [ 1] * (g2z);       /* yz,y */
+  y [ 9] += x [ 2] * (g2y);       /* yz,z */
+  y [10] += x [ 1] * (2.0 * g2y); /* yy,y */
+
+  /* g3: e_ijk part */
+  y [ 6] += x [ 0] * (g3xxx); /* xx,x */
+  y [ 6] += x [ 1] * (g3xxy); /* xx,y */
+  y [ 6] += x [ 2] * (g3xxz); /* xx,z */
+  y [ 7] += x [ 0] * (g3xxy); /* xy,x */
+  y [ 7] += x [ 1] * (g3xyy); /* xy,y */
+  y [ 7] += x [ 2] * (g3xyz); /* xy,z */
+  y [ 8] += x [ 0] * (g3xxz); /* xz,x */
+  y [ 8] += x [ 1] * (g3xyz); /* xz,y */
+  y [ 8] += x [ 2] * (g3xzz); /* xz,z */
+  y [ 9] += x [ 0] * (g3xyz); /* yz,x */
+  y [ 9] += x [ 1] * (g3yyz); /* yz,y */
+  y [ 9] += x [ 2] * (g3yzz); /* yz,z */
+  y [10] += x [ 0] * (g3xyy); /* yy,x */
+  y [10] += x [ 1] * (g3yyy); /* yy,y */
+  y [10] += x [ 2] * (g3yyz); /* yy,z */
+
+  /* G21  =  (GT12)t  =  (-GT21)t */
+  /* g1: d_ij e_k part */
+  y [ 0] -= x [ 6] * g1x; /* x,xx */
+  y [ 1] -= x [ 6] * g1y; /* y,xx */
+  y [ 2] -= x [ 6] * g1z; /* z,xx */
+  y [ 0] -= x [10] * g1x; /* x,yy */
+  y [ 1] -= x [10] * g1y; /* y,yy */
+  y [ 2] -= x [10] * g1z; /* z,yy */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  y [ 0] -= x [ 6] * (2.0 * g2x); /* x,xx */
+  y [ 0] -= x [ 7] * (g2y);       /* x,xy */
+  y [ 1] -= x [ 7] * (g2x);       /* y,xy */
+  y [ 0] -= x [ 8] * (g2z);       /* x,xz */
+  y [ 2] -= x [ 8] * (g2x);       /* z,xz */
+  y [ 1] -= x [ 9] * (g2z);       /* y,yz */
+  y [ 2] -= x [ 9] * (g2y);       /* z,yz */
+  y [ 1] -= x [10] * (2.0 * g2y); /* y,yy */
+
+  /* g3: e_ijk part */
+  y [ 0] -= x [ 6] * g3xxx; /* x,xx */
+  y [ 1] -= x [ 6] * g3xxy; /* y,xx */
+  y [ 2] -= x [ 6] * g3xxz; /* z,xx */
+  y [ 0] -= x [ 7] * g3xxy; /* x,xy */
+  y [ 1] -= x [ 7] * g3xyy; /* y,xy */
+  y [ 2] -= x [ 7] * g3xyz; /* z,xy */
+  y [ 0] -= x [ 8] * g3xxz; /* x,xz */
+  y [ 1] -= x [ 8] * g3xyz; /* y,xz */
+  y [ 2] -= x [ 8] * g3xzz; /* z,xz */
+  y [ 0] -= x [ 9] * g3xyz; /* x,yz */
+  y [ 1] -= x [ 9] * g3yyz; /* y,yz */
+  y [ 2] -= x [ 9] * g3yzz; /* z,yz */
+  y [ 0] -= x [10] * g3xyy; /* x,yy */
+  y [ 1] -= x [10] * g3yyy; /* y,yy */
+  y [ 2] -= x [10] * g3yyz; /* z,yy */
+
+  /* H part */
+  /* e_i eps_jkl e_l + e_j eps_ikl e_l */
+  y [ 6] += x [ 4] * (+ 2.0 * h1xz);  /* xx,y */
+  y [ 6] += x [ 5] * (- 2.0 * h1xy);  /* xx,z */
+  y [ 7] += x [ 3] * (- h1xz);        /* xy,x */
+  y [ 7] += x [ 4] * (+ h1yz);        /* xy,y */
+  y [ 7] += x [ 5] * (+ h1xx - h1yy); /* xy,z */
+  y [ 8] += x [ 3] * (+ h1xy);        /* xz,x */
+  y [ 8] += x [ 4] * (- h1xx + h1zz); /* xz,y */
+  y [ 8] += x [ 5] * (- h1yz);        /* xz,z */
+  y [ 9] += x [ 3] * (+ h1yy - h1zz); /* yz,x */
+  y [ 9] += x [ 4] * (- h1xy);        /* yz,y */
+  y [ 9] += x [ 5] * (+ h1xz);        /* yz,z */
+  y [10] += x [ 3] * (- 2.0 * h1yz);  /* yy,x */
+  y [10] += x [ 5] * (+ 2.0 * h1xy);  /* yy,z */
+  
+  /* HT part */
+  /* H12  =  (HT21)t  =  (HT12)t */
+  y [ 4] += x [ 6] * (+ 2.0 * h1xz);  /* y,xx */
+  y [ 5] += x [ 6] * (- 2.0 * h1xy);  /* z,xx */
+  y [ 3] += x [ 7] * (- h1xz);        /* x,xy */
+  y [ 4] += x [ 7] * (+ h1yz);        /* y,xy */
+  y [ 5] += x [ 7] * (+ h1xx - h1yy); /* z,xy */
+  y [ 3] += x [ 8] * (+ h1xy);        /* x,xz */
+  y [ 4] += x [ 8] * (- h1xx + h1zz); /* y,xz */
+  y [ 5] += x [ 8] * (- h1yz);        /* z,xz */
+  y [ 3] += x [ 9] * (+ h1yy - h1zz); /* x,yz */
+  y [ 4] += x [ 9] * (- h1xy);        /* y,yz */
+  y [ 5] += x [ 9] * (+ h1xz);        /* z,yz */
+  y [ 3] += x [10] * (- 2.0 * h1yz);  /* x,yy */
+  y [ 5] += x [10] * (+ 2.0 * h1xy);  /* z,yy */
+  
+  /* M part */
+  /* e_ijkl part */
+  y [ 6] += x [ 6] * (m1xxxx); /* xx,xx */
+  y [ 6] += x [ 7] * (m1xxxy); /* xx,xy */
+  y [ 6] += x [ 8] * (m1xxxz); /* xx,xz */
+  y [ 6] += x [ 9] * (m1xxyz); /* xx,yz */
+  y [ 6] += x [10] * (m1xxyy); /* xx,yy */
+  y [ 7] += x [ 6] * (m1xxxy); /* xy,xx */
+  y [ 7] += x [ 7] * (m1xxyy); /* xy,xy */
+  y [ 7] += x [ 8] * (m1xxyz); /* xy,xz */
+  y [ 7] += x [ 9] * (m1xyyz); /* xy,yz */
+  y [ 7] += x [10] * (m1xyyy); /* xy,yy */
+  y [ 8] += x [ 6] * (m1xxxz); /* xz,xx */
+  y [ 8] += x [ 7] * (m1xxyz); /* xz,xy */
+  y [ 8] += x [ 8] * (m1xxzz); /* xz,xz */
+  y [ 8] += x [ 9] * (m1xyzz); /* xz,yz */
+  y [ 8] += x [10] * (m1xyyz); /* xz,yy */
+  y [ 9] += x [ 6] * (m1xxyz); /* yz,xx */
+  y [ 9] += x [ 7] * (m1xyyz); /* yz,xy */
+  y [ 9] += x [ 8] * (m1xyzz); /* yz,xz */
+  y [ 9] += x [ 9] * (m1yyzz); /* yz,yz */
+  y [ 9] += x [10] * (m1yyyz); /* yz,yy */
+  y [10] += x [ 6] * (m1xxyy); /* yy,xx */
+  y [10] += x [ 7] * (m1xyyy); /* yy,xy */
+  y [10] += x [ 8] * (m1xyyz); /* yy,xz */
+  y [10] += x [ 9] * (m1yyyz); /* yy,yz */
+  y [10] += x [10] * (m1yyyy); /* yy,yy */
+
+  /* (d_ij e_kl + e_ij d_kl)part */
+  y [ 6] += x [ 6] * (2.0 * m2xx);  /* xx,xx */
+  y [ 6] += x [ 7] * (m2xy);        /* xx,xy */
+  y [ 6] += x [ 8] * (m2xz);        /* xx,xz */
+  y [ 6] += x [ 9] * (m2yz);        /* xx,yz */
+  y [ 6] += x [10] * (m2yy + m2xx); /* xx,yy */
+  y [ 7] += x [ 6] * (m2xy);        /* xy,xx */
+  y [ 7] += x [10] * (m2xy);        /* xy,yy */
+  y [ 8] += x [ 6] * (m2xz);        /* xz,xx */
+  y [ 8] += x [10] * (m2xz);        /* xz,yy */
+  y [ 9] += x [ 6] * (m2yz);        /* yz,xx */
+  y [ 9] += x [10] * (m2yz);        /* yz,yy */
+  y [10] += x [ 6] * (m2xx + m2yy); /* yy,xx */
+  y [10] += x [ 7] * (m2xy);        /* yy,xy */
+  y [10] += x [ 8] * (m2xz);        /* yy,xz */
+  y [10] += x [ 9] * (m2yz);        /* yy,yz */
+  y [10] += x [10] * (2.0 * m2yy);  /* yy,yy */
+
+  /* d_ij d_kl part */
+  y [ 6] += x [ 6] * (mm3); /* xx,xx */
+  y [ 6] += x [10] * (mm3); /* xx,yy */
+  y [10] += x [ 6] * (mm3); /* yy,xx */
+  y [10] += x [10] * (mm3); /* yy,yy */
+
+  /* e_i d_jk e_l + e_i d_jl e_k + */
+  /* e_j d_ik e_l + e_j d_il e_k part */
+  y [ 6] += x [ 6] * (4.0 * m4xx);  /* xx,xx */
+  y [ 6] += x [ 7] * (2.0 * m4xy);  /* xx,xy */
+  y [ 6] += x [ 8] * (2.0 * m4xz);  /* xx,xz */
+  y [ 7] += x [ 6] * (2.0 * m4xy);  /* xy,xx */
+  y [ 7] += x [ 7] * (m4xx + m4yy); /* xy,xy */
+  y [ 7] += x [ 8] * (m4yz);        /* xy,xz */
+  y [ 7] += x [ 9] * (m4xz);        /* xy,yz */
+  y [ 7] += x [10] * (2.0 * m4xy);  /* xy,yy */
+  y [ 8] += x [ 6] * (2.0 * m4xz);  /* xz,xx */
+  y [ 8] += x [ 7] * (m4yz);        /* xz,xy */
+  y [ 8] += x [ 8] * (m4xx + m4zz); /* xz,xz */
+  y [ 8] += x [ 9] * (m4xy);        /* xz,yz */
+  y [ 9] += x [ 7] * (m4xz);        /* yz,xy */
+  y [ 9] += x [ 8] * (m4xy);        /* yz,xz */
+  y [ 9] += x [ 9] * (m4yy + m4zz); /* yz,yz */
+  y [ 9] += x [10] * (2.0 * m4yz);  /* yz,yy */
+  y [10] += x [ 7] * (2.0 * m4xy);  /* yy,xy */
+  y [10] += x [ 9] * (2.0 * m4yz);  /* yy,yz */
+  y [10] += x [10] * (4.0 * m4yy);  /* yy,yy */
+
+  /* (d_ik d_jl + d_jk d_il) part */
+  y [ 6] += x [ 6] * (2.0 * mm5); /* xx,xx */
+  y [ 7] += x [ 7] * (mm5);       /* xy,xy */
+  y [ 8] += x [ 8] * (mm5);       /* xz,xz */
+  y [ 9] += x [ 9] * (mm5);       /* yz,yz */
+  y [10] += x [10] * (2.0 * mm5); /* yy,yy */
+}
+
