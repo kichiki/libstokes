@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f.c,v 3.2 2001/02/03 14:03:54 ichiki Exp $
+ * $Id: ewald-3f.c,v 3.3 2001/02/05 07:29:11 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -13,7 +13,7 @@
 #include <stdlib.h> /* for exit() */
 
 #ifdef ZETA
-#include <time.h> /* clock() */
+#include "../bench.h" // ptime_ms_d()
 #endif /* ZETA */
 
 #include <libiter.h> /* solve_iter_stab (), gpb () */
@@ -74,7 +74,6 @@ atimes_ewald_3f (int n, double *x, double *y)
 
 #ifdef ZETA
   extern double cpu1, cpu2, cpu3;
-  clock_t ctmp1, ctmp2, ctmp3;
 #endif /* ZETA */
 
   double xa, ya; 
@@ -117,12 +116,12 @@ atimes_ewald_3f (int n, double *x, double *y)
     {
       i3 = i * 3;
       matrix_f_atimes (x + i3, y + i3,
-			 0.0, 0.0, 0.0,
-			 xa, ya);
+		       0.0, 0.0, 0.0,
+		       xa, ya);
     }
 
 #ifdef ZETA
-  ctmp1 = clock ();
+  ptime_ms_d ();
 #endif /* ZETA */
 
   /* first Ewald part ( real space ) */
@@ -183,8 +182,8 @@ atimes_ewald_3f (int n, double *x, double *y)
 			  xa = a2 + ya;
 	      
 			  matrix_f_atimes (x + i3, y + j3,
-					     ex, ey, ez,
-					     xa, ya);
+					   ex, ey, ez,
+					   xa, ya);
 			}
 		    }
 		}
@@ -193,7 +192,7 @@ atimes_ewald_3f (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp2 = clock ();
+  cpu2 = ptime_ms_d ();
 #endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
@@ -247,8 +246,8 @@ atimes_ewald_3f (int n, double *x, double *y)
 				      + k3 * zz);
 
 			  matrix_f_atimes (x + i3, y + j3,
-					     ex, ey, ez,
-					     0.0, cf * ya);
+					   ex, ey, ez,
+					   0.0, cf * ya);
 			}
 		    }
 		}
@@ -257,11 +256,8 @@ atimes_ewald_3f (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp3 = clock ();
-
-  cpu1 = (double) (ctmp3 - ctmp1);
-  cpu2 = (double) (ctmp2 - ctmp1);
-  cpu3 = (double) (ctmp3 - ctmp2);
+  cpu3 = ptime_ms_d ();
+  cpu1 = cpu2 + cpu3;
 #endif /* ZETA */
 }
 
@@ -290,7 +286,7 @@ calc_res_ewald_3f (int np,
     f [i] = 0.0;
 
   solve_iter_stab (n3, u, f, atimes_ewald_3f,
-		   gpb);
+		   st2);
 }
 
 /** natural mobility problem **/
@@ -303,15 +299,10 @@ calc_res_ewald_3f (int np,
  */
 void
 calc_mob_ewald_3f (int np,
-		    double *f,
-		    double *u)
+		   double *f,
+		   double *u)
 {
-  int n3;
-
-
-  n3 = np * 3;
-
-  atimes_ewald_3f (n3, f, u);
+  atimes_ewald_3f (np * 3, f, u);
 }
 
 
@@ -345,6 +336,12 @@ calc_mob_fix_ewald_3f (int np, int nm,
   double *x;
 
 
+  if (np == nm)
+    {
+      atimes_ewald_3f (np * 3, f, u);
+      return;
+    }
+
   nf = np - nm;
   n3 = np * 3;
   nm3 = nm * 3;
@@ -365,8 +362,9 @@ calc_mob_fix_ewald_3f (int np, int nm,
     x [i] = 0.0;
 
   NUMB_mobile_particles = nm;
-  solve_iter_stab (n3, b, x, atimes_mob_fix_ewald_3f,
-		   gpb);
+  /*solve_iter_stab (n3, b, x, atimes_mob_fix_ewald_3f,
+    st2);*/
+  solve_iter_gmres (n3, b, x, atimes_mob_fix_ewald_3f);
 
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
@@ -493,16 +491,16 @@ atimes_mob_fix_ewald_3f (int n, double *x, double *y)
       v3_0 [i] = 0.0;
     }
 
-  /* set (U,O)_mobile,(F,T)_fixed by x[] */
+  /* set (U)_mobile,(F)_fixed by x[] */
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
 
-  /* set y := [(0,0)_mobile,(F,T)_fixed] */
+  /* set y := [(0)_mobile,(F)_fixed] */
   set_F_by_f (nm, y, v3_0);
   set_F_by_f (nf, y + nm3, ff);
   atimes_ewald_3f (n, y, z);
 
-  /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
+  /* set y := [(U)_mobile,(0)_fixed] */
   set_F_by_f (nm, y, u);
   set_F_by_f (nf, y + nm3, v3_0);
 
@@ -557,7 +555,7 @@ calc_res_lub_ewald_3f (int np,
     f [i] = 0.0;
 
   solve_iter_stab (n3, lub, f, atimes_ewald_3f,
-		   gpb);
+		   st2);
 
   free (lub);
 }
@@ -589,8 +587,8 @@ calc_mob_lub_fix_ewald_3f (int np, int nm,
   int nf;
   int nm3;
 
-  double *b;
-  double *x;
+  double * b;
+  double * x;
 
 
   nf = np - nm;
@@ -613,8 +611,9 @@ calc_mob_lub_fix_ewald_3f (int np, int nm,
     x [i] = 0.0;
 
   NUMB_mobile_particles = nm;
-  solve_iter_stab (n3, b, x, atimes_mob_lub_fix_ewald_3f,
-		   gpb/*sta*//*gpb_chk*/);
+  /*solve_iter_stab (n3, b, x, atimes_mob_lub_fix_ewald_3f,
+    st2);*/
+  solve_iter_gmres (n3, b, x, atimes_mob_lub_fix_ewald_3f);
 
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
