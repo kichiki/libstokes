@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ft.c,v 1.1 2000/12/11 06:08:02 ichiki Exp $
+ * $Id: ft.c,v 1.2 2000/12/11 06:37:37 ichiki Exp $
  */
 #include "ft.h"
 
@@ -75,43 +75,43 @@ matrix_ft_ij (int i, int j,
   b1z = b1 * ez;
 
   /* A part */
-  mat [i1 * n11 + j1] += a1 + a2 * exx;
-  mat [i2 * n11 + j2] += a1 + a2 * eyy;
-  mat [i3 * n11 + j3] += a1 + a2 * ezz;
+  mat [i1 * n6 + j1] += a1 + a2 * exx;
+  mat [i2 * n6 + j2] += a1 + a2 * eyy;
+  mat [i3 * n6 + j3] += a1 + a2 * ezz;
   
-  mat [i1 * n11 + j2] += a2 * exy;
-  mat [i2 * n11 + j1] += a2 * exy;
-  mat [i2 * n11 + j3] += a2 * eyz;
-  mat [i3 * n11 + j2] += a2 * eyz;
-  mat [i3 * n11 + j1] += a2 * exz;
-  mat [i1 * n11 + j3] += a2 * exz;
+  mat [i1 * n6 + j2] += a2 * exy;
+  mat [i2 * n6 + j1] += a2 * exy;
+  mat [i2 * n6 + j3] += a2 * eyz;
+  mat [i3 * n6 + j2] += a2 * eyz;
+  mat [i3 * n6 + j1] += a2 * exz;
+  mat [i1 * n6 + j3] += a2 * exz;
 
   /* B part */
   /* eps_ijk e_k */
-  mat [i4 * n11 + j2] += + b1z ; /* x,y */
-  mat [i4 * n11 + j3] += - b1y ; /* x,z */
-  mat [i5 * n11 + j1] += - b1z ; /* y,x */
-  mat [i5 * n11 + j3] += + b1x ; /* y,z */
-  mat [i6 * n11 + j1] += + b1y ; /* z,x */
-  mat [i6 * n11 + j2] += - b1x ; /* z,y */
+  mat [i4 * n6 + j2] += + b1z ; /* x,y */
+  mat [i4 * n6 + j3] += - b1y ; /* x,z */
+  mat [i5 * n6 + j1] += - b1z ; /* y,x */
+  mat [i5 * n6 + j3] += + b1x ; /* y,z */
+  mat [i6 * n6 + j1] += + b1y ; /* z,x */
+  mat [i6 * n6 + j2] += - b1x ; /* z,y */
 
   /* BT part */
-  mat [i2 * n11 + j4] -= + b1z ; /* y,x */
-  mat [i3 * n11 + j4] -= - b1y ; /* z,x */
-  mat [i1 * n11 + j5] -= - b1z ; /* x,y */
-  mat [i3 * n11 + j5] -= + b1x ; /* z,y */
-  mat [i1 * n11 + j6] -= + b1y ; /* x,z */
-  mat [i2 * n11 + j6] -= - b1x ; /* y,z */
+  mat [i2 * n6 + j4] -= + b1z ; /* y,x */
+  mat [i3 * n6 + j4] -= - b1y ; /* z,x */
+  mat [i1 * n6 + j5] -= - b1z ; /* x,y */
+  mat [i3 * n6 + j5] -= + b1x ; /* z,y */
+  mat [i1 * n6 + j6] -= + b1y ; /* x,z */
+  mat [i2 * n6 + j6] -= - b1x ; /* y,z */
 
   /* C part */
-  mat [i4 * n11 + j4] += c1 + c2 * exx;
-  mat [i5 * n11 + j5] += c1 + c2 * eyy;
-  mat [i6 * n11 + j6] += c1 + c2 * ezz;
+  mat [i4 * n6 + j4] += c1 + c2 * exx;
+  mat [i5 * n6 + j5] += c1 + c2 * eyy;
+  mat [i6 * n6 + j6] += c1 + c2 * ezz;
 
-  mat [i4 * n11 + j5] += c2 * exy;
-  mat [i5 * n11 + j4] += c2 * exy;
-  mat [i5 * n11 + j6] += c2 * eyz;
-  mat [i6 * n11 + j5] += c2 * eyz;
-  mat [i6 * n11 + j4] += c2 * exz;
-  mat [i4 * n11 + j6] += c2 * exz;
+  mat [i4 * n6 + j5] += c2 * exy;
+  mat [i5 * n6 + j4] += c2 * exy;
+  mat [i5 * n6 + j6] += c2 * eyz;
+  mat [i6 * n6 + j5] += c2 * eyz;
+  mat [i6 * n6 + j4] += c2 * exz;
+  mat [i4 * n6 + j6] += c2 * exz;
 }
