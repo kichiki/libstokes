@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: f.c,v 1.3 2001/02/04 07:53:12 ichiki Exp $
+ * $Id: f.c,v 1.4 2001/02/04 09:00:00 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -102,10 +102,7 @@ scalar_minv_f (double s, double * scalar_f)
   s6 = s3 * s3;
 
   dx = 4.0 * s6 - (3.0 * s2 - 2.0) * (3.0 * s2 - 2.0);
-  dy = 16.0 + s2 *
-    (- 9.0 + s2 *
-     (- 12.0 + s2 *
-      (- 4.0)));
+  dy = (((16.0 * s2 - 9.0) * s2 - 12.0 ) * s2 - 4.0);
 
   xa11 =
     4.0 * s6
@@ -221,7 +218,8 @@ calc_lub_f_2b (double * u1, double * u2,
   /* for check
   fprintf (stdout, "%e %e %e %e %e\n",
 	   rr,
-	   xa11, xa12, ya11, ya12);*/
+	   xa11, xa12, ya11, ya12); */
+
   matrix_f_atimes (u1, f1,
 		   ex, ey, ez,
 		   xa11, ya11);
