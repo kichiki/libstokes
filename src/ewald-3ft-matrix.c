@@ -1,7 +1,7 @@
 /* Ewald summation technique under FTS version -- MATRIX procedure
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *   <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3ft-matrix.c,v 1.1 2001/02/13 07:41:32 ichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 1.2 2001/02/13 09:52:44 ichiki Exp $
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
@@ -12,6 +12,7 @@
 #endif /* ZETA */
 
 #include "../cholesky.h" /* cholesky() */
+#include "../ludcmp.h" /* ludcmp() */
 
 #include "fts.h"
 #include "ewald-3fts-matrix.h"
@@ -43,6 +44,41 @@ merge_matrix_3fts (int np,
 		   double * mat_hl, double * mat_hh,
 		   double *mat);
 
+static void
+test_symmetric (int n, double * mat, double tiny);
+static void
+multiply_matrices (int n, double *a, double *b);
+
+
+/* ATIMES version (for O(N^2) scheme) of
+ * calc ewald-summed mobility for FTS version
+ * INPUT
+ *  (global) pos [] : position of particles
+ *  n := np * 11
+ *  x [n * 11] : FTS
+ * OUTPUT
+ *  y [n * 11] : UOE
+ */
+void
+atimes_ewald_3fts_matrix (int n, double *x, double *y)
+{
+  int np;
+  double * mat;
+
+
+  np = n / 11;
+  mat = malloc (sizeof (double) * n * n);
+  if (mat == NULL)
+    {
+      fprintf (stderr, "allocation error in atimes_ewald_3fts_matrix ().\n");
+      exit (1);
+    }
+
+  make_matrix_mob_ewald_3fts (np, mat);
+  multiply_extmat_with_extvec_3fts (np, mat, x, y);
+
+  free (mat);
+}
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
@@ -84,8 +120,12 @@ calc_res_ewald_3fts_matrix (int np,
   set_fts_by_FTS (np, b, u, o, e);
 
   make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
+  /* for test */
+  test_symmetric (n11, mat, 1.0e-12);
 
-  cholesky (mat, n11); // resistance matrix in INVERSED form
+  /* resistance matrix in INVERSED form */
+  /*cholesky (mat, n11);*/
+  lu_inv (mat, n11);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
   multiply_extmat_with_extvec_3fts (np, mat, b, x);
@@ -149,7 +189,9 @@ calc_res_lub_ewald_3fts_matrix (int np,
   for (i = 0; i < n11; ++i)
     b [i] += y [i];
 
-  cholesky (mat, n11); // resistance matrix in INVERSED form
+  /* resistance matrix in INVERSED form */
+  /*cholesky (mat, n11);*/
+  lu_inv (mat, n11);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
   /* x := (M^-1).(I + M.L).(UOE) */
@@ -222,7 +264,8 @@ calc_mob_ewald_3fts_matrix (int np,
   make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
   split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
 
-  cholesky (mat_hh, n5);
+  /*cholesky (mat_hh, n5);*/
+  lu_inv (mat_hh, n5);
 
   /* J := mob_hl = - (A^-1).B = - (M_hh^-1).(M_hl) */
   for (i = 0; i < n5; ++i)
@@ -278,6 +321,250 @@ calc_mob_ewald_3fts_matrix (int np,
   free (mat_hh);
   free (mob_lh);
   free (mob_hl);
+  free (b);
+  free (x);
+}
+
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  np : # particles
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_mob_lub_ewald_3fts_matrix (int np,
+				double *f, double *t, double *e,
+				double *u, double *o, double *s)
+{
+  int i, j, k;
+  int n11, n6, n5;
+
+  double * mat;
+  double * lub;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
+  double * b;
+  double * x;
+
+
+  n11 = np * 11;
+  n6 = np * 6;
+  n5 = np * 5;
+  mat = malloc (sizeof (double) * n11 * n11);
+  lub = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * n6 * n6);
+  mat_lh = malloc (sizeof (double) * n6 * n5);
+  mat_hl = malloc (sizeof (double) * n5 * n6);
+  mat_hh = malloc (sizeof (double) * n5 * n5);
+  mob_ll = malloc (sizeof (double) * n6 * n6);
+  mob_lh = malloc (sizeof (double) * n6 * n5);
+  mob_hl = malloc (sizeof (double) * n5 * n6);
+  mob_hh = malloc (sizeof (double) * n5 * n5);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* used at lub [] */
+  I_ll = lub;
+  I_lh = I_ll + n6 * n6;
+  I_hl = I_lh + n6 * n5;
+  I_hh = I_hl + n5 * n6;
+
+  /* b := (FTE) */
+  set_fts_by_FTS (np, b, f, t, e);
+
+  make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
+  split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  make_matrix_lub_ewald_3fts (np, lub); // lub matrix in EXTRACTED form
+  multiply_matrices (n11, mat, lub);
+  for (i = 0; i < n11; ++i)
+    mat [i * n11 + i] += 1.0;
+  /* note: at this point, lub[] is free to use. */
+  split_matrix_3fts (np, mat, I_ll, I_lh, I_hl, I_hh);
+
+
+  /* STEP 1 */
+  /* mat_hh := (A^-1) */
+  /*cholesky (mat_hh, n5);*/
+  lu_inv (mat_hh, n5);
+
+  /* STEP 2 */
+  /* calc mob_hl := (A^-1).F = mat_hh . I_hl */
+  for (i = 0; i < n5; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  mob_hl [i * n6 + j] = 0.0;
+	  for (k = 0; k < n5; ++k)
+	    {
+	      mob_hl [i * n6 + j] +=
+		mat_hh [i * n5 + k] * I_hl [k * n6 + j];
+	    }
+	}
+    }
+  /* note: at this point, I_hl[] is free to use. */
+  /* calc mob_hh := (A^-1).E = mat_hh . I_hh */
+  for (i = 0; i < n5; ++i)
+    {
+      for (j = 0; j < n5; ++j)
+	{
+	  mob_hh [i * n5 + j] = 0.0;
+	  for (k = 0; k < n5; ++k)
+	    {
+	      mob_hh [i * n5 + j] +=
+		mat_hh [i * n5 + k] * I_hh [k * n5 + j];
+	    }
+	}
+    }
+  /* calc I_hl := (A^-1).B = mat_hh . mat_hl */
+  for (i = 0; i < n5; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  I_hl [i * n6 + j] = 0.0;
+	  for (k = 0; k < n5; ++k)
+	    {
+	      I_hl [i * n6 + j] +=
+		mat_hh [i * n5 + k] * mat_hl [k * n6 + j];
+	    }
+	}
+    }
+
+  /* STEP 3 */
+  /* calc I_ll := C.(A^-1).F - H = mat_lh . mob_hl - I_ll */
+  for (i = 0; i < n6; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  I_ll [i * n6 + j] = - I_ll [i * 6 + j];
+	  for (k = 0; k < n5; ++k)
+	    {
+	      I_ll [i * n6 + j] +=
+		mat_lh [i * n5 + k] * mob_hl [k * n6 + j];
+	    }
+	}
+    }
+  /* note: at this point, mob_hl[] is free to use. */
+  /*cholesky (I_ll, n6);*/
+  lu_inv (I_ll, n6);
+  /* calc I_lh := G - C.(A^-1).E = I_lh - mat_lh . mob_hh */
+  for (i = 0; i < n6; ++i)
+    {
+      for (j = 0; j < n5; ++j)
+	{
+	  for (k = 0; k < n5; ++k)
+	    {
+	      I_lh [i * n5 + j] -=
+		mat_lh [i * n5 + k] * mob_hh [k * n5 + j];
+	    }
+	}
+    }
+  /* calc mat_ll := - D + C.(A^-1).B = - mat_ll + mat_lh . I_hl */
+  for (i = 0; i < n6; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  mat_ll [i * n6 + j] = - mat_ll [i * 6 + j];
+	  for (k = 0; k < n5; ++k)
+	    {
+	      mat_ll [i * n6 + j] +=
+		mat_lh [i * n5 + k] * I_hl [k * n6 + j];
+	    }
+	}
+    }
+  /* at this point, mat_lh[] is free to use. */
+
+  /* STEP 4 */
+  /* calc mat_lh = K = [(C.A^-1.F-H)^-1].(G-C.A^-1.E) = I_ll . I_lh */
+  for (i = 0; i < n6; ++i)
+    {
+      for (j = 0; j < n5; ++j)
+	{
+	  mat_lh [i * n5 + j] = 0.0;
+	  for (k = 0; k < n6; ++k)
+	    {
+	      mat_lh [i * n5 + j] +=
+		I_ll [i * n6 + k] * I_lh [k * n5 + j];
+	    }
+	}
+    }
+  /* calc mob_ll = L = [(C.A^-1.F-H)^-1].(-D-C.A^-1.B) = I_ll . mat_ll */
+  for (i = 0; i < n6; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  mob_ll [i * n6 + j] = 0.0;
+	  for (k = 0; k < n6; ++k)
+	    {
+	      mob_ll [i * n6 + j] +=
+		I_ll [i * n6 + k] * mat_ll [k * n6 + j];
+	    }
+	}
+    }
+
+  /* STEP 5 */
+  /* calc mat_hh = I = A^-1.E+A^-1.F.K = mat_hh + mob_hl . mat_lh */
+  for (i = 0; i < n5; ++i)
+    {
+      for (j = 0; j < n5; ++j)
+	{
+	  for (k = 0; k < n6; ++k)
+	    {
+	      mat_hh [i * n5 + j] +=
+		mob_hl [i * n6 + k] * mat_lh [k * n5 + j];
+	    }
+	}
+    }
+  /* calc I_hl = J = -A^-1.B+A^-1.F.L = - I_hl + mob_hl . mob_ll  */
+  for (i = 0; i < n5; ++i)
+    {
+      for (j = 0; j < n6; ++j)
+	{
+	  I_hl [i * n6 + j] = 0.0;
+	  for (k = 0; k < n6; ++k)
+	    {
+	      I_hl [i * n6 + j] +=
+		mob_hl [i * n6 + k] * mob_ll [k * n6 + j];
+	    }
+	}
+    }
+
+  /* STEP 6 */
+  merge_matrix_3fts (np, mob_ll, mat_lh, I_hl, mat_hh, mat);
+  trans_ext (np, mat); // resistance matrix in EXTRACTED form
+
+  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+
+  set_FTS_by_fts (np, u, o, s, x);
+
+  free (mat);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
   free (b);
   free (x);
 }
@@ -500,7 +787,7 @@ make_matrix_mob_ewald_3fts (int np, double * mat)
 					   (- 4.0))))) / s2)
 			    / s2 * expzr2;
 	      
-			  matrix_fts_ij (i, j,
+			  matrix_fts_ij (j, i,
 					 ex, ey, ez,
 					 xa, ya,
 					 yb,
@@ -573,7 +860,7 @@ make_matrix_mob_ewald_3fts (int np, double * mat)
 				      + k2 * yy
 				      + k3 * zz);
 
-			  matrix_fts_ij (i, j,
+			  matrix_fts_ij (j, i,
 					 ex, ey, ez,
 					 0.0, cf * ya,
 					 sf * yb,
@@ -941,4 +1228,61 @@ merge_matrix_3fts (int np,
 	    }
 	}
     }
+}
+
+/* this is just a test routine */
+static void
+test_symmetric (int n, double * mat, double tiny)
+{
+  int i, j;
+  double d;
+
+
+  for (i = 0; i < n; ++i)
+    {
+      for (j = i + 1; j < n; ++j)
+	{
+	  d = fabs (mat [i * n + j] - mat [j * n + i]);
+	  if (d > tiny)
+	    fprintf (stderr, "mat [%d, %d] != mat [%d, %d], "
+		     "|%f - %f| = %e\n",
+		     i, j, j, i,
+		     mat [i * n + j], mat [j * n + i],
+		     d);
+		     
+	}
+    }
+}
+
+/* return A_ij = A_ik . B_kj
+ * INPUT
+ *  a [n * n] :
+ *  b [n * n] :
+ * OUTPUT
+ *  a [n * n] :
+ */
+static void
+multiply_matrices (int n, double *a, double *b)
+{
+  int i, j, k;
+  double * tmp;
+
+  tmp = malloc (sizeof (double) * n * n);
+
+  for (i = 0; i < n; ++i)
+    {
+      for (j = 0; j < n; ++j)
+	{
+	  tmp [i * n + j] = 0.0;
+	  for (k = 0; k < n; ++k)
+	    {
+	      tmp [i * n + j] += a [i * n + k] * b [k * n + j];
+	    }
+	}
+    }
+
+  for (i = 0; i < n * n; ++i)
+    a [i] = tmp [i];
+
+  free (tmp);
 }
