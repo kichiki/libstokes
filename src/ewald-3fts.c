@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2000 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 2.6 2000/12/11 05:30:46 ichiki Exp $
+ * $Id: ewald-3fts.c,v 2.7 2000/12/11 05:59:42 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -36,8 +36,7 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 
   extern double zeta, zeta2, zaspi, za2;
   extern double pi2;
-  /*extern double pi6vol;*/
-  extern double pivol; /* new global, hopefully replacement of pi6vol */
+  extern double pivol;
   extern double lx, ly, lz; /* cell size */
 
 #ifdef ZETA
@@ -69,6 +68,9 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
   double k;
   double cf, sf;
   double kexp;
+
+  double erfczr;
+  double expzr2;
 
   double a2, c2;
 
@@ -134,51 +136,56 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 			  s  = rr;
 			  s2 = s * s;
 
+			  erfczr = erfc (zr);
+			  expzr2 = zaspi * exp (- zr2);
+
 			  ex = xx / rr;
 			  ey = yy / rr;
 			  ez = zz / rr;
 
-			  ya = (0.75 + 0.5 / s2) / s * erfc (zr)
+			  ya = (0.75 + 0.5 / s2) / s * erfczr
 			    + ((1.0 + zr2 *
 				(14.0 + 4.0 * zr2 *
 				 (- 5.0 + zr2))) / s2
-			       - 4.5 + 3.0 * zr2) * zaspi * exp (- zr2);
-			  a2 = (0.75 - 1.5 / s2) / s * erfc (zr)
+			       - 4.5 + 3.0 * zr2)
+			    * expzr2;
+			  a2 = (0.75 - 1.5 / s2) / s * erfczr
 			    + ((- 3.0 + zr2 *
 				(- 2.0 + 4.0 * zr2 *
 				 (4.0 - zr2))) / s2
-			       + 1.5 - 3.0 * zr2) * zaspi * exp (- zr2);
+			       + 1.5 - 3.0 * zr2)
+			    * expzr2;
 			  xa = a2 + ya;
 	      
-			  yb = - 0.75 / s2 * erfc (zr)
+			  yb = - 0.75 / s2 * erfczr
 			    - 1.5 * (+ 1.0 + zr2 *
 				     (- 6.0 + zr2 *
 				      (+ 2.0)))
-			    / s * zaspi * exp (- zr2);
+			    / s * expzr2;
 
-			  yc = - 3.0 / 8.0 / s2 / s * erfc (zr)
+			  yc = - 3.0 / 8.0 / s2 / s * erfczr
 			    - 0.75 * (+ 1.0 + zr2 *
 				      (+ 14.0 + zr2 *
 				       (-20.0 + zr2 *
 					( + 4.0))))
-			    / s2 * zaspi * exp (- zr2);
-			  c2 = 9.0 / 8.0 / s2 / s * erfc (zr)
+			    / s2 * expzr2;
+			  c2 = 9.0 / 8.0 / s2 / s * erfczr
 			    - 0.75 * (- 3.0 + zr2 *
 				      (- 2.0 + zr2 *
 				       (+ 16.0 + zr2 *
 					(- 4.0))))
-			    / s2 * zaspi * exp (- zr2);
+			    / s2 * expzr2;
 			  xc = c2 + yc;
 	      
-			  xg = (2.25 - 3.6 / s2) / s2 * erfc (zr)
+			  xg = (2.25 - 3.6 / s2) / s2 * erfczr
 			    + (- 1.5 * (- 3.0 + zr2 *
 					(+ 6.0))
 			       - 0.8 * (+ 9.0 + zr2 *
 					(+ 6.0 + zr2 *
 					 (- 48.0 + zr2 *
 					  (+ 12.0)))) / s2)
-			    / s * zaspi * exp (- zr2);
-			  yg = 1.2 / s2 / s2 * erfc (zr)
+			    / s * expzr2;
+			  yg = 1.2 / s2 / s2 * erfczr
 			    + (- 3.0 * ( zr2 *
 					 (2.0 + zr2 *
 					  (- 1.0)))
@@ -187,16 +194,16 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 					 (- 26.0 + zr2 *
 					  (+ 26.0 + zr2 *
 					   (- 4.0))))) / s2)
-			    / s * zaspi * exp (- zr2);
+			    / s * expzr2;
 
-			  yh = - 9.0 / 8.0 / s2 / s * erfc (zr)
+			  yh = - 9.0 / 8.0 / s2 / s * erfczr
 			    + 1.5 * (- 1.5 + zr2 *
 				     (- 1.0 + zr2 *
 				      (+ 8.0 + zr2 *
 				       (- 2.0))))
-			    / s2 * zaspi * exp (- zr2);
+			    / s2 * expzr2;
 
-			  xm = (- 4.5 + 10.8 / s2) / s / s2 * erfc (zr)
+			  xm = (- 4.5 + 10.8 / s2) / s / s2 * erfczr
 			    + (+ 1.5 * (- 6.0 +  zr2 *
 					(- 12.0 + zr2 *
 					 (+ 12.0)))
@@ -205,8 +212,8 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 					 (+ 30.0 + zr2 *
 					  (- 66.0 + zr2 *
 					   (+ 12.0))))) / s2)
-			    / s2 * zaspi * exp (- zr2);
-			  ym = (+ 2.25 - 7.2 / s2) / s / s2 * erfc (zr)
+			    / s2 * expzr2;
+			  ym = (+ 2.25 - 7.2 / s2) / s / s2 * erfczr
 			    + (- 1.5 * (- 3.0 +  zr2 *
 					(+ 6.0 + zr2 *
 					 (- 12.0 + zr2 *
@@ -217,8 +224,8 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 					  (+ 58.0 + zr2 *
 					   (- 34.0 + zr2 *
 					    (+ 4.0)))))) / s2)
-			    / s2 * zaspi * exp (- zr2);
-			  zm = + 1.8 / s2 / s / s2 * erfc (zr)
+			    / s2 * expzr2;
+			  zm = + 1.8 / s2 / s / s2 * erfczr
 			    + (- 1.5 * (+ 0.0 +  zr2 *
 					(+ 8.0 + zr2 *
 					 (- 4.0)))
@@ -227,7 +234,7 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 					 (- 26.0 + zr2 *
 					  (+ 26.0 + zr2 *
 					   (- 4.0))))) / s2)
-			    / s2 * zaspi * exp (- zr2);
+			    / s2 * expzr2;
 	      
 			  matrix_fts_ij (j, i,
 					 ex, ey, ez,
