@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: f.c,v 1.2 2001/02/03 13:34:25 ichiki Exp $
+ * $Id: f.c,v 1.3 2001/02/04 07:53:12 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -108,16 +108,16 @@ scalar_minv_f (double s, double * scalar_f)
       (- 4.0)));
 
   xa11 =
-    - 4.0 * s6
+    4.0 * s6
     / dx;
   xa12 =
-    + 2.0 * s3 * (3.0 * s2 - 2.0)
+    - 2.0 * s3 * (3.0 * s2 - 2.0)
     / dx;
   ya11 =
-    - 16.0 * s6
+    16.0 * s6
     / dy;
   ya12 =
-    + 4.0 * s3 * (3.0 * s2 + 2.0)
+    - 4.0 * s3 * (3.0 * s2 + 2.0)
     / dy;
 
   scalar_f [0] = xa11;
@@ -174,11 +174,11 @@ calc_lub_3f (int np, double * u, double * f)
  *   f2 [3] :
  */
 void
-calc_lub_f_2b (double *u1, double *u2,
-	       double *x1, double *x2,
-	       double *f1, double *f2)
+calc_lub_f_2b (double * u1, double * u2,
+	       double * x1, double * x2,
+	       double * f1, double * f2)
 {
-  double *res2b, *resinf;
+  double * res2b, * resinf;
 
   double xx, yy, zz, rr;
   double ex, ey, ez;
@@ -190,7 +190,7 @@ calc_lub_f_2b (double *u1, double *u2,
   res2b = malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
-      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      fprintf (stderr, "allocation error in calc_lub_f_2b ().\n");
       exit (1);
     }
   resinf = res2b + 22;
@@ -202,7 +202,8 @@ calc_lub_f_2b (double *u1, double *u2,
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
   if (rr <= 2.0)
-    rr = 2.0 + 1.0e-12;
+    //rr = 2.0 + 1.0e-12;
+    rr = 2.0 + 1.0e-6;
 
   ex = xx / rr;
   ey = yy / rr;
@@ -212,11 +213,15 @@ calc_lub_f_2b (double *u1, double *u2,
   scalar_two_body_res (rr, res2b);
   scalar_minv_f (rr, resinf);
 
-  xa11 = res2b [ 0] - resinf [ 0];
-  xa12 = res2b [ 1] - resinf [ 1];
-  ya11 = res2b [ 2] - resinf [ 2];
-  ya12 = res2b [ 3] - resinf [ 3];
+  xa11 = res2b [0] - resinf [0];
+  xa12 = res2b [1] - resinf [1];
+  ya11 = res2b [2] - resinf [2];
+  ya12 = res2b [3] - resinf [3];
 
+  /* for check
+  fprintf (stdout, "%e %e %e %e %e\n",
+	   rr,
+	   xa11, xa12, ya11, ya12);*/
   matrix_f_atimes (u1, f1,
 		   ex, ey, ez,
 		   xa11, ya11);
