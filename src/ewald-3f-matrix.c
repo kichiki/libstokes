@@ -1,7 +1,7 @@
 /* Ewald summation technique under FTS version -- MATRIX procedure
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *   <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f-matrix.c,v 1.4 2001/02/14 10:10:24 ichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 1.5 2001/02/15 04:57:13 ichiki Exp $
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
@@ -405,6 +405,243 @@ calc_mob_lub_ewald_3fts_matrix (int np,
 		   b, x);
 
   set_FTS_by_fts (np, u, o, s, x);
+
+  free (mat);
+  free (lub);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
+}
+
+/** natural mobility problem with fixed particles **/
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
+ * INPUT
+ *  np : # all particles
+ *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+calc_mob_fix_ewald_3fts_matrix (int np, int nm,
+				double *f, double *t, double *e,
+				double *uf, double *of, double *ef,
+				double *u, double *o, double *s,
+				double *ff, double *tf, double *sf)
+{
+  int n11;
+  int nf, nm11;
+  int nl, nh;
+
+  double * mat;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * b;
+  double * x;
+
+
+  n11 = np * 11;
+  nf = np - nm;
+  nm11 = nm * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+
+  mat = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * nl * nl);
+  mat_lh = malloc (sizeof (double) * nl * nh);
+  mat_hl = malloc (sizeof (double) * nh * nl);
+  mat_hh = malloc (sizeof (double) * nh * nh);
+  mob_ll = malloc (sizeof (double) * nl * nl);
+  mob_lh = malloc (sizeof (double) * nl * nh);
+  mob_hl = malloc (sizeof (double) * nh * nl);
+  mob_hh = malloc (sizeof (double) * nh * nh);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* b := (FTE) */
+  set_fts_by_FTS (nm, b, f, t, e);
+  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (np, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  solve_linear (nh, nl,
+		mat_hh, mat_hl, mat_lh, mat_ll,
+		mob_hh, mob_hl, mob_lh, mob_ll);
+
+  /* STEP 6 */
+  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (mat);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
+}
+
+/** natural mobility problem with lubrication with fixed particles **/
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
+ * INPUT
+ *  np : # all particles
+ *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+calc_mob_lub_fix_ewald_3fts_matrix (int np, int nm,
+				    double *f, double *t, double *e,
+				    double *uf, double *of, double *ef,
+				    double *u, double *o, double *s,
+				    double *ff, double *tf, double *sf)
+{
+  int i;
+  int n11;
+  int nf, nm11;
+  int nl, nh;
+
+  double * mat;
+  double * lub;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
+  double * b;
+  double * x;
+
+
+  n11 = np * 11;
+  nf = np - nm;
+  nm11 = nm * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+
+  mat = malloc (sizeof (double) * n11 * n11);
+  lub = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * nl * nl);
+  mat_lh = malloc (sizeof (double) * nl * nh);
+  mat_hl = malloc (sizeof (double) * nh * nl);
+  mat_hh = malloc (sizeof (double) * nh * nh);
+  mob_ll = malloc (sizeof (double) * nl * nl);
+  mob_lh = malloc (sizeof (double) * nl * nh);
+  mob_hl = malloc (sizeof (double) * nh * nl);
+  mob_hh = malloc (sizeof (double) * nh * nh);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || lub == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* used at lub [] */
+  I_ll = lub;
+  I_lh = I_ll + nl * nl;
+  I_hl = I_lh + nl * nh;
+  I_hh = I_hl + nh * nl;
+
+  /* b := (FTE) */
+  set_fts_by_FTS (nm, b, f, t, e);
+  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (np, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  /* lub matrix in EXTRACTED form */
+  make_matrix_lub_ewald_3fts (np, lub);
+  /* lub := L.T, where T.(UOE) = (UOE~) */
+  trans_mat_ext2ext (np, lub);
+  /* lub := (M.T).(L.T) */
+  multiply_matrices (n11, mat, lub);
+  /* lub := I + (M.T).(L.T) */
+  for (i = 0; i < n11; ++i)
+    mat [i * n11 + i] += 1.0;
+  /* note: at this point, lub[] is free to use. */
+  split_matrix_fix_3fts (np, nm, mat, I_ll, I_lh, I_hl, I_hh);
+
+  solve_gen_linear (nl, nh,
+		    I_ll, I_lh, I_hl, I_hh,
+		    mat_ll, mat_lh, mat_hl, mat_hh,
+		    mob_ll, mob_lh, mob_hl, mob_hh);
+
+  /* STEP 6 */
+  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
   free (mat);
   free (lub);
@@ -1243,7 +1480,7 @@ split_matrix_fix_3fts (int np, int nm,
 	      for (jj = 0; jj < 11; ++jj)
 		{
 		  mat_lh [(i6 + ii) * nh + nm5 + (j - nm) * 11 + jj]
-		    = mat [(i11 + ii) * n11 + j11 + 6 + jj];
+		    = mat [(i11 + ii) * n11 + j11 + jj];
 		}
 	    }
 	  for (ii = 0; ii < 5; ++ii)
@@ -1252,7 +1489,7 @@ split_matrix_fix_3fts (int np, int nm,
 	      for (jj = 0; jj < 11; ++jj)
 		{
 		  mat_hh [(i5 + ii) * nh + nm5 + (j - nm) * 11 + jj]
-		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		    = mat [(i11 + 6 + ii) * n11 + j11 + jj];
 		}
 	    }
 	}
@@ -1272,13 +1509,13 @@ split_matrix_fix_3fts (int np, int nm,
 	      for (jj = 0; jj < 6; ++jj)
 		{
 		  mat_hl [(nm5 + (i - nm) * 11 + ii) * nl + j6 + jj]
-		    = mat [(i11 + 6 + ii) * n11 + j11 + jj];
+		    = mat [(i11 + ii) * n11 + j11 + jj];
 		}
 	      /* hh */
 	      for (jj = 0; jj < 5; ++jj)
 		{
 		  mat_hh [(nm5 + (i - nm) * 11 + ii) * nh + j5 + jj]
-		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		    = mat [(i11 + ii) * n11 + j11 + 6 + jj];
 		}
 	    }
 	}
@@ -1297,7 +1534,7 @@ split_matrix_fix_3fts (int np, int nm,
 		{
 		  mat_hh [(nm5 + (i - nm) * 11 + ii) * nh
 			 + nm5 + (j - nm) * 11 + jj]
-		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		    = mat [(i11 + ii) * n11 + j11 + jj];
 		}
 	    }
 	}
@@ -1392,7 +1629,7 @@ merge_matrix_fix_3fts (int np, int nm,
 	      /* lh */
 	      for (jj = 0; jj < 11; ++jj)
 		{
-		  mat [(i11 + ii) * n11 + j11 + 6 + jj]
+		  mat [(i11 + ii) * n11 + j11 + jj]
 		    = mat_lh [(i6 + ii) * nh + nm5 + (j - nm) * 11 + jj];
 		}
 	    }
@@ -1401,7 +1638,7 @@ merge_matrix_fix_3fts (int np, int nm,
 	      /* hh */
 	      for (jj = 0; jj < 11; ++jj)
 		{
-		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		  mat [(i11 + 6 + ii) * n11 + j11 + jj]
 		    = mat_hh [(i5 + ii) * nh + nm5 + (j - nm) * 11 + jj];
 		}
 	    }
@@ -1421,13 +1658,13 @@ merge_matrix_fix_3fts (int np, int nm,
 	      /* hl */
 	      for (jj = 0; jj < 6; ++jj)
 		{
-		  mat [(i11 + 6 + ii) * n11 + j11 + jj]
+		  mat [(i11 + ii) * n11 + j11 + jj]
 		    = mat_hl [(nm5 + (i - nm) * 11 + ii) * nl + j6 + jj];
 		}
 	      /* hh */
 	      for (jj = 0; jj < 5; ++jj)
 		{
-		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		  mat [(i11 + ii) * n11 + j11 + 6 + jj]
 		    = mat_hh [(nm5 + (i - nm) * 11 + ii) * nh + j5 + jj];
 		}
 	    }
@@ -1445,7 +1682,7 @@ merge_matrix_fix_3fts (int np, int nm,
 	      /* hh */
 	      for (jj = 0; jj < 11; ++jj)
 		{
-		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		  mat [(i11 + ii) * n11 + j11 + jj]
 		    = mat_hh [(nm5 + (i - nm) * 11 + ii) * nh
 			     + nm5 + (j - nm) * 11 + jj];
 		}
