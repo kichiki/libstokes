@@ -1,6 +1,6 @@
 /* utility routines for Ewald-summation code in 3D
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: stokes.c,v 1.4 2001/01/29 09:41:31 ichiki Exp $
+ * $Id: stokes.c,v 1.5 2001/02/02 08:38:41 ichiki Exp $
  */
 #include <math.h>
 
@@ -50,33 +50,33 @@ init_ewald_3d (double lx, double ly, double lz,
 
   llx [ 0] = 0.0; lly [ 0] = 0.0; llz [ 0] = 0.0;
   llx [ 1] = -lx; lly [ 1] = 0.0; llz [ 1] = 0.0;
-  llx [ 2] = 0.0; lly [ 2] = 0.0; llz [ 2] = -lz;
+  llx [ 2] = 0.0; lly [ 2] = -ly; llz [ 2] = 0.0;
   llx [ 3] = +lx; lly [ 3] = 0.0; llz [ 3] = 0.0;
-  llx [ 4] = 0.0; lly [ 4] = 0.0; llz [ 4] = +lz;
-  llx [ 5] = -lx; lly [ 5] = 0.0; llz [ 5] = -lz;
-  llx [ 6] = -lx; lly [ 6] = 0.0; llz [ 6] = +lz;
-  llx [ 7] = +lx; lly [ 7] = 0.0; llz [ 7] = -lz;
-  llx [ 8] = +lx; lly [ 8] = 0.0; llz [ 8] = +lz;
+  llx [ 4] = 0.0; lly [ 4] = +ly; llz [ 4] = 0.0;
+  llx [ 5] = -lx; lly [ 5] = -ly; llz [ 5] = 0.0;
+  llx [ 6] = -lx; lly [ 6] = +ly; llz [ 6] = 0.0;
+  llx [ 7] = +lx; lly [ 7] = -ly; llz [ 7] = 0.0;
+  llx [ 8] = +lx; lly [ 8] = +ly; llz [ 8] = 0.0;
 
-  llx [ 9] = 0.0; lly [ 9] = - ly; llz [ 9] = 0.0;
-  llx [10] = -lx; lly [10] = - ly; llz [10] = 0.0;
-  llx [11] = 0.0; lly [11] = - ly; llz [11] = -lz;
-  llx [12] = +lx; lly [12] = - ly; llz [12] = 0.0;
-  llx [13] = 0.0; lly [13] = - ly; llz [13] = +lz;
-  llx [14] = -lx; lly [14] = - ly; llz [14] = -lz;
-  llx [15] = -lx; lly [15] = - ly; llz [15] = +lz;
-  llx [16] = +lx; lly [16] = - ly; llz [16] = -lz;
-  llx [17] = +lx; lly [17] = - ly; llz [17] = +lz;
+  llx [ 9] = 0.0; lly [ 9] = 0.0; llz [ 9] = - lz;
+  llx [10] = -lx; lly [10] = 0.0; llz [10] = - lz;
+  llx [11] = 0.0; lly [11] = -ly; llz [11] = - lz;
+  llx [12] = +lx; lly [12] = 0.0; llz [12] = - lz;
+  llx [13] = 0.0; lly [13] = +ly; llz [13] = - lz;
+  llx [14] = -lx; lly [14] = -ly; llz [14] = - lz;
+  llx [15] = -lx; lly [15] = +ly; llz [15] = - lz;
+  llx [16] = +lx; lly [16] = -ly; llz [16] = - lz;
+  llx [17] = +lx; lly [17] = +ly; llz [17] = - lz;
 
-  llx [18] = 0.0; lly [18] = + ly; llz [18] = 0.0;
-  llx [19] = -lx; lly [19] = + ly; llz [19] = 0.0;
-  llx [20] = 0.0; lly [20] = + ly; llz [20] = -lz;
-  llx [21] = +lx; lly [21] = + ly; llz [21] = 0.0;
-  llx [22] = 0.0; lly [22] = + ly; llz [22] = +lz;
-  llx [23] = -lx; lly [23] = + ly; llz [23] = -lz;
-  llx [24] = -lx; lly [24] = + ly; llz [24] = +lz;
-  llx [25] = +lx; lly [25] = + ly; llz [25] = -lz;
-  llx [26] = +lx; lly [26] = + ly; llz [26] = +lz;
+  llx [18] = 0.0; lly [18] = 0.0; llz [18] = + lz;
+  llx [19] = -lx; lly [19] = 0.0; llz [19] = + lz;
+  llx [20] = 0.0; lly [20] = -ly; llz [20] = + lz;
+  llx [21] = +lx; lly [21] = 0.0; llz [21] = + lz;
+  llx [22] = 0.0; lly [22] = +ly; llz [22] = + lz;
+  llx [23] = -lx; lly [23] = -ly; llz [23] = + lz;
+  llx [24] = -lx; lly [24] = +ly; llz [24] = + lz;
+  llx [25] = +lx; lly [25] = -ly; llz [25] = + lz;
+  llx [26] = +lx; lly [26] = +ly; llz [26] = + lz;
 
   /* define zeta */
   /*zeta = 0.01;*/
