@@ -1,9 +1,12 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.6 2001/01/31 09:32:15 ichiki Exp $
+ * $Id: fts.c,v 1.7 2001/02/03 13:09:03 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
+#include <math.h> // sqrt ()
+#include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+
 #include "fts.h"
 
 
@@ -486,4 +489,404 @@ set_fts_by_FTS (int n,
 	  fts [i11 + 6 + j] = s [i5 + j];
 	}
     }
+}
+
+/* calc scalar functions of (M^inf)^-1 in FTS
+ * INPUT
+ *   s : distance of particles
+ * OUTPUT
+ *   lub [22] : scalar functions
+ */
+void
+scalar_minv_FTS (double s,  double * scalar_fts)
+{
+  double xa11, xa12;
+  double ya11, ya12;
+  double yb11, yb12;
+  double xc11, xc12;
+  double yc11, yc12;
+  double xg11, xg12;
+  double yg11, yg12;
+  double yh11, yh12;
+  double xm11, xm12;
+  double ym11, ym12;
+  double zm11, zm12;
+
+  double s2;
+  double gx, gy;
+
+
+  s2 = s * s;
+  
+  gx = 
+    (2304.0 + s2 *
+     (-21120.0 + s2 *
+      (55600.0 + s2 *
+       (-90600.0 + s2 *
+	(45945.0 + s2 *
+	 (-800.0 + s2 *
+	  (-1800.0 + s2 *
+	   (-900.0 + s2 *
+	    (400.0)))))))));
+  gy = 
+    (-256.0 + s2 *
+     (-640.0 + s2 *
+      (2000.0 + s2 *
+       (29624.0 + s2 *
+	(-16505.0 + s2 *
+	 (14880.0 + s2 *
+	  (-112600.0 + s2 *
+	   (66360 + s2 *
+	    (-22800.0 + s2 *
+	     (-3600.0 + s2 *
+	      (-900.0 + s2 *
+	       (1600.0))))))))))));
+  xa11 = 
+    + 20.0 * s2 * s2 * s2 *
+    (-2880.0 + s2 *
+     (2208.0 + s2 *
+      (-260.0 + s2 *
+       (-75.0 + s2  * s2*
+	(20.0))))) / gx;
+  xa12 = 
+    + 20.0 * s2 * s *
+    (-576.0 + s2 *
+     (2880.0 + s2 *
+      (-2000.0 + s2 *
+       (375.0 + s2  * s2*
+	(20.0 + s2 *
+	 (-30.0)))))) / gx;
+  ya11 = 
+    + 80.0 * s2 * s2 * s2 *
+    (320.0 + s2 *
+     (-544.0 + s2 *
+      (140.0 + s2 *
+       (-1130.0 + s2 *
+	(736.0 + s2 *
+	 (-280.0 + s2 *
+	  (-15.0 + s2  * s2*
+	   (20.0)))))))) / gy;
+  ya12 = 
+    - 40.0 * s2 * s *
+    (64.0 + s2  * s2*
+     (-400.0 + s2 *
+      (119.0 + s2 *
+       (-1440.0 + s2 *
+	(1160.0 + s2 *
+	 (-405.0 + s2  * s2*
+	  (20.0 + s2 *
+	   (30.0)))))))) / gy;
+  yb11 = 
+    + 80.0 * s2 * s2 * s2 * s *
+    (384.0 + s2 *
+     (-248.0 + s2 *
+      (-190.0 + s2 *
+       (150.0 + s2 *
+	(-80.0 + s2 *
+	 (-20.0 + s2 *
+	  (-15.0))))))) / gy;
+  yb12 = 
+    + 20.0 * s2 * s2 *
+    (-128.0 + s2 *
+     (-80.0 + s2 *
+      (700.0 + s2 *
+       (-2935.0 + s2 *
+	(2464.0 + s2 *
+	 (-540.0 + s2 *
+	  (-30.0 + s2  * s2*
+	   (80.0)))))))) / gy;
+  xc11 = 
+    + 4.0 * s2 * s2 * s2
+    / 3.0 / (s2 * s2 * s2 - 1.0);
+  xc12 = 
+    - 4.0 * s2 * s
+    / 3.0 / (s2 * s2 * s2 - 1.0);
+  yc11 = 
+    + 16.0 * s2 * s2 * s2 *
+    (256.0 + s2 *
+     (7840.0 + s2 *
+      (1960.0 + s2 *
+       (-31525.0 + s2 *
+	(15690.0 + s2 *
+	 (-4100.0 + s2 *
+	  (-600.0 + s2 *
+	   (-225.0 + s2 *
+	    (400.0))))))))) / 3.0 / gy;
+  yc12 = 
+    + 4.0 * s2 * s *
+    (512.0 + s2 *
+     (3680.0 + s2 *
+      (200.0 + s2 *
+       (-66950.0 + s2 *
+	(80505.0 + s2 *
+	 (-10600.0 + s2  * s2*
+	  (450.0 + s2 *
+	   (800.0)))))))) / 3.0 / gy;
+  xg11 = 
+    + 100.0 * s2 * s2 * s2 * s *
+    (192.0 + s2 *
+     (-184.0 + s2 *
+      (16.0 + s2 *
+       (15.0)))) / gx;
+  
+  xg12 = 
+    + 10.0 * s2 * s2 *
+    (384.0 + s2 *
+     (-2000.0 + s2 *
+      (1700.0 + s2 *
+       (-375.0 + s2 *
+	(160.0 + s2 *
+	 (-100.0)))))) / gx;
+  yg11 = 
+    + 100.0 * s2 * s2 * s2 * s *
+    (-128.0 + s2 *
+     (320.0 + s2 *
+      (-48.0 + s2 *
+       (377.0 + s2 *
+	(-128.0 + s2 *
+	 (108.0)))))) / 3.0 / gy;
+  yg12 = 
+    + 10.0 * s2 * s2 *
+    (128.0 + s2 *
+     (-80.0 + s2 *
+      (-900.0 + s2 *
+       (613.0 + s2 *
+	(-5280.0 + s2 *
+	 (2580.0 + s2 *
+	  (-450.0 + s2 *
+	   (-640.0)))))))) / 3.0 / gy;
+  yh11 = 
+    + 20.0 * s2 * s2 * s2 * s2 *
+    (736.0 + s2 *
+     (-1240.0 + s2 *
+      (-1020.0 + s2 *
+       (3875.0 + s2 *
+	(-480.0)))))/3.0 / gy;
+  yh12 = 
+    + 10.0 * s2 * s2 * s *
+    (96.0 + s2 *
+     (-120.0 + s2 *
+      (-750.0 + s2 *
+       (6885.0 + s2 *
+	(-5160.0 + s2 *
+	 (-720.0 + s2 *
+	  (-450.0 + s2 *
+	   (800.0)))))))) / 3.0 / gy;
+  xm11 = 
+    + 200.0 * s2 * s2 * s2 * s2 *
+    (-192.0 + s2 *
+     (220.0 + s2 *
+      (-15.0 + s2 *
+       (-45.0 + s2 *
+	(20.0))))) / 9.0 / gx;
+  xm12 = 
+    +100.0 * s2 * s2 * s *
+    (96.0 + s2 *
+     (-584.0 + s2 *
+      (810.0 + s2 *
+       (-705.0 + s2 *
+	(200.0))))) / 9.0 / gx;
+  ym11 = 
+    + 200.0 * s2 * s2 * s2 * s2 *
+    (64.0 + s2 *
+     (-208.0 + s2 *
+      (75.0 + s2 *
+       (-76.0 + s2 *
+	(-340.0 + s2 *
+	 (-180.0 + s2 *
+	  (-45.0 + s2 *
+	   (80.0)))))))) / 9.0 / gy;
+  ym12 = 
+    + 50.0 * s2 * s2 * s *
+    (32.0 + s2 *
+     (-8.0 + s2 *
+      (-210.0 + s2 *
+       (-543.0 + s2 *
+	(-2072.0 + s2 *
+	 (360.0 + s2 *
+	  (3010.0 + s2 *
+	   (-800.0)))))))) / 9.0 / gy;
+  zm11 = 
+    + 10.0 * s2 * s2 * s2 * s2 * s2
+    / 9.0 / (s2 * s2 * s2 * s2 * s2 - 4.0);
+  zm12 = 
+    - 20.0 * s2 * s2 * s
+    / 9.0 / (s2 * s2 * s2 * s2 * s2 - 4.0);
+
+  scalar_fts [ 0] = xa11;
+  scalar_fts [ 1] = xa12;
+  scalar_fts [ 2] = ya11;
+  scalar_fts [ 3] = ya12;
+  scalar_fts [ 4] = yb11;
+  scalar_fts [ 5] = yb12;
+  scalar_fts [ 6] = xc11;
+  scalar_fts [ 7] = xc12;
+  scalar_fts [ 8] = yc11;
+  scalar_fts [ 9] = yc12;
+  scalar_fts [10] = xg11;
+  scalar_fts [11] = xg12;
+  scalar_fts [12] = yg11;
+  scalar_fts [13] = yg12;
+  scalar_fts [14] = yh11;
+  scalar_fts [15] = yh12;
+  scalar_fts [16] = xm11;
+  scalar_fts [17] = xm12;
+  scalar_fts [18] = ym11;
+  scalar_fts [19] = ym12;
+  scalar_fts [20] = zm11;
+  scalar_fts [21] = zm12;
+}
+
+/* calculate lubrication fts by uoe for all particles
+ * INPUT
+ *   (global) pos [np * 3] : position of particles
+ *   np : # particles
+ *   uoe [np * 11] : velocity, angular velocity, strain
+ * OUTPUT
+ *   fts [np * 11] : force, torque, stresslet
+ */
+void
+calc_lub_3fts (int np, double * uoe, double * fts)
+{
+  extern double * pos;
+
+  int i, j;
+  int i3, i11;
+  int j3, j11;
+
+
+  /* clear fts [np * 11] */
+  for (i = 0; i < np * 11; ++i)
+    fts [i] = 0.0;
+
+  for (i = 0; i < np; ++i)
+    {
+      i3 = i * 3;
+      i11 = i * 11;
+      for (j = i + 1; j < np; ++j)
+	{
+	  j3 = j * 3;
+	  j11 = j * 11;
+	  calc_lub_fts_2b (uoe + i11, uoe + j11,
+			   pos + i3, pos + j3,
+			   fts + i11, fts + j11);
+	  
+	}
+    }
+}
+
+/* calculate fts by uoe for pair of particles 1 and 2
+ * INPUT
+ *   (global) p : order of expansion
+ *   uoe1 [11] : velocity, angular velocity, strain
+ *   uoe2 [11] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ * OUTPUT
+ *   fts1 [11] : force, torque, stresslet
+ *   fts2 [11] :
+ */
+void
+calc_lub_fts_2b (double *uoe1, double *uoe2,
+		 double *x1, double *x2,
+		 double *fts1, double *fts2)
+{
+  double *res2b, *resinf;
+
+  double xx, yy, zz, rr;
+  double ex, ey, ez;
+
+  double xa11, ya11;
+  double xa12, ya12;
+  double yb11, yb12;
+  double xc11, yc11;
+  double xc12, yc12;
+  double xg11, xg12, yg11, yg12;
+  double yh11, yh12;
+  double xm11, xm12, ym11, ym12, zm11, zm12;
+
+
+  res2b = malloc (sizeof (double) * 44);
+  if (res2b == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      exit (1);
+    }
+  resinf = res2b + 22;
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr <= 2.0)
+    rr = 2.0 + 1.0e-12;
+
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalar_two_body_res (rr, res2b);
+  scalar_minv_FTS (rr, resinf);
+
+  xa11 = res2b [ 0] - resinf [ 0];
+  xa12 = res2b [ 1] - resinf [ 1];
+  ya11 = res2b [ 2] - resinf [ 2];
+  ya12 = res2b [ 3] - resinf [ 3];
+  yb11 = res2b [ 4] - resinf [ 4];
+  yb12 = res2b [ 5] - resinf [ 5];
+  xc11 = res2b [ 6] - resinf [ 6];
+  xc12 = res2b [ 7] - resinf [ 7];
+  yc11 = res2b [ 8] - resinf [ 8];
+  yc12 = res2b [ 9] - resinf [ 9];
+  xg11 = res2b [10] - resinf [10];
+  xg12 = res2b [11] - resinf [11];
+  yg11 = res2b [12] - resinf [12];
+  yg12 = res2b [13] - resinf [13];
+  yh11 = res2b [14] - resinf [14];
+  yh12 = res2b [15] - resinf [15];
+  xm11 = res2b [16] - resinf [16];
+  xm12 = res2b [17] - resinf [17];
+  ym11 = res2b [18] - resinf [18];
+  ym12 = res2b [19] - resinf [19];
+  zm11 = res2b [20] - resinf [20];
+  zm12 = res2b [21] - resinf [21];
+
+  matrix_fts_atimes (uoe1, fts1,
+		     ex, ey, ez,
+		     xa11, ya11,
+		     yb11,
+		     xc11, yc11,
+		     xg11, yg11,
+		     yh11,
+		     xm11, ym11, zm11);
+  matrix_fts_atimes (uoe2, fts1,
+		     ex, ey, ez,
+		     xa12, ya12,
+		     yb12,
+		     xc12, yc12,
+		     xg12, yg12,
+		     yh12,
+		     xm12, ym12, zm12);
+
+  matrix_fts_atimes (uoe2, fts2,
+		     - ex, - ey, - ez,
+		     xa11, ya11,
+		     yb11,
+		     xc11, yc11,
+		     xg11, yg11,
+		     yh11,
+		     xm11, ym11, zm11);
+  matrix_fts_atimes (uoe1, fts2,
+		     - ex, - ey, - ez,
+		     xa12, ya12,
+		     yb12,
+		     xc12, yc12,
+		     xg12, yg12,
+		     yh12,
+		     xm12, ym12, zm12);
+
+  free (res2b);
 }
