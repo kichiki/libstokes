@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2000 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 2.3 2000/12/08 09:01:35 ichiki Exp $
+ * $Id: ewald-3fts.c,v 2.4 2000/12/08 14:10:42 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -746,6 +746,9 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 		  exyy = exy * ey;
 		  exyz = exy * ez;
 		  exzz = exz * ez;
+		  eyyy = eyy * ey;
+		  eyyz = eyy * ez;
+		  eyzz = eyz * ez;
 		  ezzz = ezz * ez;
 		  exxxx = exx * exx;
 		  exxxy = exx * exy;
@@ -862,23 +865,33 @@ calc_mob_ewald_3fts (int n, double *x, double *mat)
 		      ix = i * 3;
 		      iy = ix + 1;
 		      iz = ix + 2;
-		      i1 = i * 6;
-		      i2 = i1 + 1;
-		      i3 = i1 + 2;
-		      i4 = i1 + 3;
-		      i5 = i1 + 4;
-		      i6 = i1 + 5;
+		      i1  = i * 11;
+		      i2  = i1 + 1;
+		      i3  = i1 + 2;
+		      i4  = i1 + 3;
+		      i5  = i1 + 4;
+		      i6  = i1 + 5;
+		      i7  = i1 + 6;
+		      i8  = i1 + 7;
+		      i9  = i1 + 8;
+		      i10 = i1 + 9;
+		      i11 = i1 + 10;
 		      for (j = 0; j < n; j++)
 			{
 			  jx = j * 3;
 			  jy = jx + 1;
 			  jz = jx + 2;
-			  j1 = j * 6;
-			  j2 = j1 + 1;
-			  j3 = j1 + 2;
-			  j4 = j1 + 3;
-			  j5 = j1 + 4;
-			  j6 = j1 + 5;
+			  j1  = j * 11;
+			  j2  = j1 + 1;
+			  j3  = j1 + 2;
+			  j4  = j1 + 3;
+			  j5  = j1 + 4;
+			  j6  = j1 + 5;
+			  j7  = j1 + 6;
+			  j8  = j1 + 7;
+			  j9  = j1 + 8;
+			  j10 = j1 + 9;
+			  j11 = j1 + 10;
 
 			  xx = x [jx] - x [ix];
 			  yy = x [jy] - x [iy];
