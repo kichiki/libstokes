@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.3 2001/01/24 08:59:06 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.4 2001/01/25 08:09:51 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -102,7 +102,7 @@ atimes_ewald_3fts (int n, double *x, double *y)
   xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
   xc = yc = 0.75 - zaspi * za2 * 10.0;
   xm = ym = zm = 0.9 - zaspi * za2 * (12.0 - 30.24 * za2);
-  /*xm = ym = zm = 0.9 - 3.0 * zaspi * za2 * (2.0 - 5.04 * za2);*/
+
   for (i = 0; i < np; i++)
     {
       i11 = i * 11;
@@ -355,13 +355,62 @@ atimes_ewald_3fts (int n, double *x, double *y)
 }
 
 
+/** natural resistance problem **/
+/* solve natural resistance problem in FTS version under Ewald sum
+ * INPUT
+ *  np : # particles
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_res_ewald_3fts (int np,
+		     double *u, double *o, double *e,
+		     double *f, double *t, double *s)
+{
+  int i;
+  int n11;
+
+  double *b;
+  double *x;
+
+
+  n11 = np * 11;
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  set_fts_by_FTS (np, b, u, o, e);
+
+  /* first guess */
+  for (i = 0; i < n11; ++i)
+    x [i] = 0.0;
+
+  solve_iter_stab (n11, b, x, atimes_ewald_3fts,
+		   gpb, 2000, -6);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (b);
+  free (x);
+}
+
 /** natural mobility problem **/
-/* solve natural mobility problem under Ewald sum
+/* solve natural mobility problem in FTS version under Ewald sum
  * INPUT
  *  np : # particles
  *   f [np * 3] :
  *   t [np * 3] :
- *   s [np * 5] :
+ *   e [np * 5] :
  * OUTPUT
  *   u [np * 3] :
  *   o [np * 3] :
