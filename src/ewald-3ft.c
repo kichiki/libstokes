@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3ft.c,v 3.3 2001/02/03 14:01:21 ichiki Exp $
+ * $Id: ewald-3ft.c,v 3.4 2001/02/05 07:39:12 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -13,7 +13,7 @@
 #include <stdlib.h> /* for exit() */
 
 #ifdef ZETA
-#include <time.h> /* clock() */
+#include "../bench.h" // ptime_ms_d()
 #endif /* ZETA */
 
 #include <libiter.h> /* solve_iter_stab (), gpb () */
@@ -74,7 +74,6 @@ atimes_ewald_3ft (int n, double *x, double *y)
 
 #ifdef ZETA
   extern double cpu1, cpu2, cpu3;
-  clock_t ctmp1, ctmp2, ctmp3;
 #endif /* ZETA */
 
   double xa, ya; 
@@ -127,7 +126,7 @@ atimes_ewald_3ft (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp1 = clock ();
+  ptime_ms_d ();
 #endif /* ZETA */
 
   /* first Ewald part ( real space ) */
@@ -220,7 +219,7 @@ atimes_ewald_3ft (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp2 = clock ();
+  cpu2 = ptime_ms_d ();
 #endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
@@ -288,11 +287,8 @@ atimes_ewald_3ft (int n, double *x, double *y)
     }
 
 #ifdef ZETA
-  ctmp3 = clock ();
-
-  cpu1 = (double) (ctmp3 - ctmp1);
-  cpu2 = (double) (ctmp2 - ctmp1);
-  cpu3 = (double) (ctmp3 - ctmp2);
+  cpu3 = ptime_ms_d ();
+  cpu1 = cpu2 + cpu3;
 #endif /* ZETA */
 }
 
