@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.4 2001/01/25 08:09:51 ichiki Exp $
+ * $Id: ewald-3fts.c,v 3.5 2001/01/29 04:29:52 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -22,6 +22,10 @@
 #include "ewald-3fts.h"
 
 
+/* (local) global variable */
+int NUMB_mobile_particles; /* this is dirty, though ... */
+
+
 /** function prototypes for local routines **/
 /* utility routines for calc_mob_ewald_3fts () */
 static void
@@ -30,6 +34,15 @@ calc_b_mob_ewald_3fts (int n,
 		       double *b);
 static void
 atimes_mob_ewald_3fts (int n, double *x, double *y);
+
+/* utility routines for calc_mob_fix_ewald_3fts () */
+static void
+calc_b_mob_fix_ewald_3fts (int nm, int nf,
+			   double *f, double *t, double *e,
+			   double *uf, double *of, double *ef,
+			   double *b);
+static void
+atimes_mob_fix_ewald_3fts (int n, double *x, double *y);
 
 
 
@@ -474,7 +487,6 @@ calc_b_mob_ewald_3fts (int np,
   int n3, n5, n11;
 
   double *x;
-  double *v3_0;
   double *v5_0;
 
 
@@ -483,20 +495,14 @@ calc_b_mob_ewald_3fts (int np,
   n11 = np * 11;
 
   x = malloc (sizeof (double) * n11);
-  v3_0 = malloc (sizeof (double) * n3);
   v5_0 = malloc (sizeof (double) * n5);
   if (x == NULL
-      || v3_0 == NULL
       || v5_0 == NULL)
     {
       fprintf (stderr, "allocation error in calc_b_mob_ewald_3fts ().\n");
       exit (1);
     }
 
-  for (i = 0; i < n3; ++i)
-    {
-      v3_0 [i] = 0.0;
-    }
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -516,7 +522,6 @@ calc_b_mob_ewald_3fts (int np,
     }
 
   free (x);
-  free (v3_0);
   free (v5_0);
 }
 
@@ -536,7 +541,6 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
   int n3, n5;
 
   double *z;
-  double *v3_0;
   double *v5_0;
   double *u;
   double *o;
@@ -548,13 +552,11 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
   n5 = np * 5;
 
   z = malloc (sizeof (double) * n);
-  v3_0 = malloc (sizeof (double) * n3);
   v5_0 = malloc (sizeof (double) * n5);
   u = malloc (sizeof (double) * n3);
   o = malloc (sizeof (double) * n3);
   s = malloc (sizeof (double) * n5);
   if (z == NULL
-      || v3_0 == NULL
       || v5_0 == NULL
       || u == NULL
       || o == NULL
@@ -565,10 +567,6 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
     }
 
 
-  for (i = 0; i < n3; ++i)
-    {
-      v3_0 [i] = 0.0;
-    }
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -576,7 +574,7 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
 
   set_FTS_by_fts (np, u, o, s, x);
 
-  set_fts_by_FTS (np, y, v3_0, v3_0, s);
+  set_fts_by_FTS (np, y, v5_0, v5_0, s);
   atimes_ewald_3fts (n, y, z);
 
   set_fts_by_FTS (np, y, u, o, v5_0);
@@ -587,9 +585,256 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
     }
 
   free (z);
-  free (v3_0);
   free (v5_0);
   free (u);
   free (o);
   free (s);
+}
+
+/** natural mobility problem with fixed particles **/
+/* solve natural mobility problem with fixed particles in FTS version
+ * under Ewald sum
+ * INPUT
+ *  np : # all particles
+ *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+calc_mob_fix_ewald_3fts (int np, int nm,
+			 double *f, double *t, double *e,
+			 double *uf, double *of, double *ef,
+			 double *u, double *o, double *s,
+			 double *ff, double *tf, double *sf)
+{
+  extern int NUMB_mobile_particles; /* this is dirty, though ... */
+
+  int i;
+  int n11;
+  int nf;
+  int nm11;
+
+  double *b;
+  double *x;
+
+
+  nf = np - nm;
+  n11 = np * 11;
+  nm11 = nm * 11;
+
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  calc_b_mob_fix_ewald_3fts (np, nm, f, t, e, uf, of, ef, b);
+
+  /* first guess */
+  for (i = 0; i < n11; ++i)
+    x [i] = 0.0;
+
+  NUMB_mobile_particles = nm;
+  solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts,
+		   gpb, 2000, -6);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (b);
+  free (x);
+}
+
+/* calc b-term (constant term) of (natural) mobility problem under Ewald sum
+ * where b := -(0,0,e) + M.(f,t,0).
+ * INPUT
+ *  np : # particles (not # elements in b[]!)
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [nm * 5] :
+ *  uf [nf * 3] :
+ *  of [nf * 3] :
+ *  ef [nf * 5] :
+ * OUTPUT
+ *  b [np * 11] : constant vector
+ */
+static void
+calc_b_mob_fix_ewald_3fts (int nm, int nf,
+			   double *f, double *t, double *e,
+			   double *uf, double *of, double *ef,
+			   double *b)
+{
+  int i;
+  int i3, i5, i11;
+  int j;
+  int np;
+  int n3, n5, n11;
+  int nm11;
+
+  double *x;
+  double *v5_0;
+
+
+  np = nm + nf;
+  n3 = np * 3;
+  n5 = np * 5;
+  n11 = np * 11;
+  nm11 = nm * 11;
+
+  x = malloc (sizeof (double) * n11);
+  v5_0 = malloc (sizeof (double) * n5);
+  if (x == NULL
+      || v5_0 == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_b_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  for (i = 0; i < n5; ++i)
+    {
+      v5_0 [i] = 0.0;
+    }
+
+  /* set x := [(F,T,0)_m,(0,0,0)_f] */
+  set_fts_by_FTS (nm, x, f, t, v5_0);
+  set_fts_by_FTS (nf, x + nm11, v5_0, v5_0, v5_0);
+  atimes_ewald_3fts (n11, x, b);
+
+  for (i = 0; i < nm; ++i)
+    {
+      i5 = i * 5;
+      i11 = i * 11;
+      for (j = 0; j < 5; j ++)
+	{
+	  b [i11 + 6 + j] -= e [i5 + j];
+	}
+    }
+  for (i = 0; i < nf; ++i)
+    {
+      i3 = i * 3;
+      i5 = i * 5;
+      i11 = (i + nm) * 11;
+      for (j = 0; j < 3; j ++)
+	{
+	  b [i11 + j] -= uf [i3 + j];
+	  b [i11 + 3 + j] -= of [i3 + j];
+	}
+      for (j = 0; j < 5; j ++)
+	{
+	  b [i11 + 6 + j] -= ef [i5 + j];
+	}
+    }
+
+  free (x);
+  free (v5_0);
+}
+
+/* calc atimes of (natural) mobility problem under Ewald sum
+ * where A.x := [(u,o,0)_m,(0,0,0)_f] - M.[(0,0,s)_m,(f,t,s)_f].
+ * INPUT
+ *  (global) : NUMB_mobile_particles -- this is dirty, though ...
+ *  n : # elements in x[] and b[] (not # particles!)
+ *  x [n] :
+ * OUTPUT
+ *  y [n] :
+ */
+static void
+atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
+{
+  extern int NUMB_mobile_particles; /* this is dirty, though ... */
+
+  int i;
+  int np;
+  int n3, n5;
+  int nm, nf;
+  int nf3, nf5;
+  int nm3, nm5, nm11;
+
+  double *z;
+  double *v5_0;
+  double *u;
+  double *o;
+  double *s;
+  double *ff;
+  double *tf;
+  double *sf;
+
+
+  np = n / 11;
+  nm = NUMB_mobile_particles;
+  nf = np - nm;
+  n3 = np * 3;
+  n5 = np * 5;
+  nf3 = nf * 3;
+  nf5 = nf * 5;
+  nm3 = nm * 3;
+  nm5 = nm * 5;
+  nm11 = nm * 11;
+
+  z = malloc (sizeof (double) * n);
+  v5_0 = malloc (sizeof (double) * n5);
+  u = malloc (sizeof (double) * nm3);
+  o = malloc (sizeof (double) * nm3);
+  s = malloc (sizeof (double) * nm5);
+  ff = malloc (sizeof (double) * nf3);
+  tf = malloc (sizeof (double) * nf3);
+  sf = malloc (sizeof (double) * nf5);
+  if (z == NULL
+      || v5_0 == NULL
+      || u == NULL
+      || o == NULL
+      || s == NULL
+      || ff == NULL
+      || tf == NULL
+      || sf == NULL)
+    {
+      fprintf (stderr, "allocation error in atimes_mob_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  for (i = 0; i < n5; ++i)
+    {
+      v5_0 [i] = 0.0;
+    }
+
+  /* set (U,O,S)_mobile,(F,T,S)_fixed */
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  /* set y := (0,0,S)_mobile,(F,T,S)_fixed */
+  set_fts_by_FTS (nm, y, v5_0, v5_0, s);
+  set_fts_by_FTS (nf, y + nm11, ff, tf, sf);
+  atimes_ewald_3fts (n, y, z);
+
+  /* set y := (U,O,0)_mobile,(0,0,0)_fixed */
+  set_fts_by_FTS (nm, y, u, o, v5_0);
+  set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
+
+  for (i = 0; i < n; ++i)
+    {
+      y [i] -= z [i];
+    }
+
+  free (z);
+  free (v5_0);
+  free (u);
+  free (o);
+  free (s);
+  free (ff);
+  free (tf);
+  free (sf);
 }
