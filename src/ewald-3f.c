@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f.c,v 3.3 2001/02/05 07:29:11 ichiki Exp $
+ * $Id: ewald-3f.c,v 3.4 2001/02/09 05:59:14 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -611,9 +611,9 @@ calc_mob_lub_fix_ewald_3f (int np, int nm,
     x [i] = 0.0;
 
   NUMB_mobile_particles = nm;
-  /*solve_iter_stab (n3, b, x, atimes_mob_lub_fix_ewald_3f,
-    st2);*/
-  solve_iter_gmres (n3, b, x, atimes_mob_lub_fix_ewald_3f);
+  solve_iter_stab (n3, b, x, atimes_mob_lub_fix_ewald_3f,
+		   gpb/*st2*/);
+  /*solve_iter_gmres (n3, b, x, atimes_mob_lub_fix_ewald_3f);*/
 
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
@@ -669,25 +669,29 @@ calc_b_mob_lub_fix_ewald_3f (int np, int nm,
       v3_0 [i] = 0.0;
     }
 
-  /* set b :=  - (I + M.L).[(0)_m,(U)_f] */
+  /* set b := [(0)_m,(U)_f] */
   set_F_by_f (nm, b, v3_0);
   set_F_by_f (nf, b + nm3, uf);
+
+  /* set y := L.[(0)_m,(U)_f] */
   calc_lub_ewald_3f (np, b, y);
-  atimes_ewald_3f (n3, y, x); // x[] is used temporaly
-  for (i = 0; i < n3; ++i)
-    {
-      b [i] = - (b [i] + x [i]);
-    }
 
   /* set x := [(F)_m,(0)_f] */
   set_F_by_f (nm, x, f);
   set_F_by_f (nf, x + nm3, v3_0);
-  atimes_ewald_3f (n3, x, y);
 
-  /* set b := - (I + M.L).[(0)_m,(U)_f] + [(F)_m,(0)_f] */
+  /* set x := x - y */
   for (i = 0; i < n3; ++i)
     {
-      b [i] += y [i];
+      x [i] -= y [i];
+    }
+
+  atimes_ewald_3f (n3, x, y);
+
+  /* set b := - (I + M.L).[(0)_m,(U)_f] + M.[(F)_m,(0)_f] */
+  for (i = 0; i < n3; ++i)
+    {
+      b [i] = - b [i] + y [i];
     }
 
   free (x);
@@ -753,25 +757,28 @@ atimes_mob_lub_fix_ewald_3f (int n, double *x, double *y)
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
 
-  /* set y := (I + M.L).[(U)_mobile,(0)_fixed] */
+  /* set y := [(U)_mobile,(0)_fixed] */
   set_F_by_f (nm, y, u);
   set_F_by_f (nf, y + nm3, v3_0);
+
+  /* set w := L.[(U,O,0)_mobile,(0,0,0)_fixed] */
   calc_lub_ewald_3f (np, y, w);
-  atimes_ewald_3f (n, w, z);
-  for (i = 0; i < n; ++i)
-    {
-      y [i] += z [i];
-    }
 
   /* set z := [(0)_mobile,(F)_fixed] */
-  set_F_by_f (nm, w, v3_0);
-  set_F_by_f (nf, w + nm3, ff);
+  set_F_by_f (nm, z, v3_0);
+  set_F_by_f (nf, z + nm3, ff);
+
+  for (i = 0; i < n; ++i)
+    {
+      w [i] -= z [i];
+    }
+
   atimes_ewald_3f (n, w, z);
 
   /* set y := (I + M.L).[(U)_m,(0)_f] - M.[(0)_m,(F)_f] */
   for (i = 0; i < n; ++i)
     {
-      y [i] -= z [i];
+      y [i] += z [i];
     }
 
   free (w);
