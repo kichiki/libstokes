@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: f.c,v 1.4 2001/02/04 09:00:00 ichiki Exp $
+ * $Id: f.c,v 1.5 2001/02/12 08:41:11 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -8,6 +8,79 @@
 #include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
 
 #include "f.h"
+
+/* store matrix in F format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n3 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n3 * n3] :
+ */
+void
+matrix_f_ij (int i, int j,
+	     double ex, double ey, double ez,
+	     double xa, double ya,
+	     int n3, double *mat)
+{
+  int i1;
+  int j1;
+
+  i1  = i * 3;
+
+  j1  = j * 3;
+
+  matrix_ij_A (n3, & mat [i1 * n3 + j1],
+	       ex, ey, ez,
+	       xa, ya);
+}
+
+/* store matrix in A part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_A (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xa, double ya)
+{
+  double a1, a2;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+
+  a1 = ya;
+  a2 = xa - ya;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+
+  /* A part */
+  mat [0 * n + 0] += a1 + a2 * exx;
+  mat [1 * n + 1] += a1 + a2 * eyy;
+  mat [2 * n + 2] += a1 + a2 * ezz;
+  
+  mat [0 * n + 1] += a2 * exy;
+  mat [1 * n + 0] += a2 * exy;
+  mat [1 * n + 2] += a2 * eyz;
+  mat [2 * n + 1] += a2 * eyz;
+  mat [2 * n + 0] += a2 * exz;
+  mat [0 * n + 2] += a2 * exz;
+}
 
 /* ATIMES version (for O(N^2) scheme) of
  * store matrix in F format with scalar functions
