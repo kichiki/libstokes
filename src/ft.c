@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
- * Copyright (C) 2000 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ft.c,v 1.3 2001/01/22 02:59:43 ichiki Exp $
+ * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
+ * $Id: ft.c,v 1.4 2001/02/03 08:52:37 ichiki Exp $
  */
 #include "ft.h"
 
@@ -208,4 +208,64 @@ matrix_ft_atimes (double *x, double *y,
   y [ 5] += x [ 4] * (c2 * eyz);
   y [ 5] += x [ 3] * (c2 * exz);
   y [ 3] += x [ 5] * (c2 * exz);
+}
+
+/* convert ft[] to f[], t[] (this is applicable for UO)
+ * INPUT
+ *  n : # particles
+ *  fts [n * 6] :
+ * OUTPUT
+ *  f[n * 3] :
+ *  t[n * 3] :
+ */
+void
+set_FT_by_ft (int n,
+	      double *f, double *t,
+	      double *ft)
+{
+  int i;
+  int j;
+  int i3, i6;
+
+
+  for (i = 0; i < n; i ++)
+    {
+      i3 = i * 3;
+      i6 = i * 6;
+      for (j = 0; j < 3; j ++)
+	{
+	  f [i3 + j] = ft [i6 + j];
+	  t [i3 + j] = ft [i6 + 3 + j];
+	}
+    }
+}
+
+/* convert ft[] to f[], t[] (this is applicable for UO)
+ * INPUT
+ *  n : # particles
+ *  f[n * 3] :
+ *  t[n * 3] :
+ * OUTPUT
+ *  ft [n * 6] :
+ */
+void
+set_ft_by_FT (int n,
+	      double *fts,
+	      double *f, double *t)
+{
+  int i;
+  int j;
+  int i3, i6;
+
+
+  for (i = 0; i < n; i ++)
+    {
+      i3 = i * 3;
+      i6 = i * 6;
+      for (j = 0; j < 3; j ++)
+	{
+	  ft [i6 + j] = f [i3 + j];
+	  ft [i6 + 3 + j] = t [i3 + j];
+	}
+    }
 }
