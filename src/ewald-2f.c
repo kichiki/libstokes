@@ -1,7 +1,7 @@
 /* Ewald summation technique under 2D
  * this is a wrapper package for ewald-3f.c
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-2f.c,v 1.2 2001/02/04 04:55:20 ichiki Exp $
+ * $Id: ewald-2f.c,v 1.3 2001/02/04 12:10:26 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 2D configuration
  * periodic boundary condition in 3 direction,
@@ -94,7 +94,7 @@ calc_mob_ewald_2f (int np,
       f3 [i3 + 1] = f [i2 + 1];
       f3 [i3 + 2] = 0.0;
     }
-  calc_mob_ewald_2f (np, f3,
+  calc_mob_ewald_3f (np, f3,
 		     u);
 
   free (f3);
