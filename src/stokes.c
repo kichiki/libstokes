@@ -1,0 +1,88 @@
+/* utility routines for Ewald-summation code in 3D
+ * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
+ * $Id: stokes.c,v 1.1 2001/01/23 05:56:40 ichiki Exp $
+ */
+#include <math.h>
+
+#include "ewald-3.h"
+
+/* initialize parameters used in Ewald-summation code in 3D
+ * INPUT
+ *  lx, ly, lz : geometry of the primary cell
+ *  tratio : a parameter by zeta-code to determine pcell? and kmax?
+ *  cutlim : cut-off limit to determine pcell? and kmax?
+ * OUTPUT
+ *  (global) pcellx, pcelly, pcellz;
+ *  (global) kmaxx, kmaxy, kmaxz;
+ *  (global) zeta, zeta2, zaspi, za2;
+ *  (global) pi2;
+ *  (global) pivol;
+ *  (global) lx, ly, lz;
+ */
+void
+init_ewald_3d (double lx, double ly, double lz,
+	       double tratio, double cutlim)
+{
+  extern int pcellx, pcelly, pcellz;
+  extern int kmaxx, kmaxy, kmaxz;
+
+  extern double zeta, zeta2, zaspi, za2;
+  extern double pi2;
+  extern double pivol;
+  extern double lx, ly, lz; /* cell size */
+  extern double llx [27], lly [27], llz [27];
+
+
+  /* initialization */
+  pi2 = M_PI * 2.0;
+  pivol = M_PI / lx / ly / lz;
+
+  llx [ 0] = 0.0; lly [ 0] = 0.0; llz [ 0] = 0.0;
+  llx [ 1] = -lx; lly [ 1] = 0.0; llz [ 1] = 0.0;
+  llx [ 2] = 0.0; lly [ 2] = 0.0; llz [ 2] = -lz;
+  llx [ 3] = +lx; lly [ 3] = 0.0; llz [ 3] = 0.0;
+  llx [ 4] = 0.0; lly [ 4] = 0.0; llz [ 4] = +lz;
+  llx [ 5] = -lx; lly [ 5] = 0.0; llz [ 5] = -lz;
+  llx [ 6] = -lx; lly [ 6] = 0.0; llz [ 6] = +lz;
+  llx [ 7] = +lx; lly [ 7] = 0.0; llz [ 7] = -lz;
+  llx [ 8] = +lx; lly [ 8] = 0.0; llz [ 8] = +lz;
+
+  llx [ 9] = 0.0; lly [ 9] = - ly; llz [ 9] = 0.0;
+  llx [10] = -lx; lly [10] = - ly; llz [10] = 0.0;
+  llx [11] = 0.0; lly [11] = - ly; llz [11] = -lz;
+  llx [12] = +lx; lly [12] = - ly; llz [12] = 0.0;
+  llx [13] = 0.0; lly [13] = - ly; llz [13] = +lz;
+  llx [14] = -lx; lly [14] = - ly; llz [14] = -lz;
+  llx [15] = -lx; lly [15] = - ly; llz [15] = +lz;
+  llx [16] = +lx; lly [16] = - ly; llz [16] = -lz;
+  llx [17] = +lx; lly [17] = - ly; llz [17] = +lz;
+
+  llx [18] = 0.0; lly [18] = + ly; llz [18] = 0.0;
+  llx [19] = -lx; lly [19] = + ly; llz [19] = 0.0;
+  llx [20] = 0.0; lly [20] = + ly; llz [20] = -lz;
+  llx [21] = +lx; lly [21] = + ly; llz [21] = 0.0;
+  llx [22] = 0.0; lly [22] = + ly; llz [22] = +lz;
+  llx [23] = -lx; lly [23] = + ly; llz [23] = -lz;
+  llx [24] = -lx; lly [24] = + ly; llz [24] = +lz;
+  llx [25] = +lx; lly [25] = + ly; llz [25] = -lz;
+  llx [26] = +lx; lly [26] = + ly; llz [26] = +lz;
+
+  /* define zeta */
+  /*zeta = 0.01;*/
+  zeta = pow (tratio, 1.0 / 6.0)
+    * sqrt (M_PI)
+    / pow (lx * ly * lz, 1.0 / 3.0);
+  zeta2 = zeta * zeta;
+  za2 = zeta2;
+  zaspi = zeta / sqrt (M_PI);
+
+  /* define # of cells  */
+  /* in real space */
+  pcellx = (int) (sqrt (- log (cutlim)) / zeta / lx) + 1;
+  pcelly = (int) (sqrt (- log (cutlim)) / zeta / ly) + 1;
+  pcellz = (int) (sqrt (- log (cutlim)) / zeta / lz) + 1;
+  /* in reciprocal space */
+  kmaxx = (int) (sqrt (- log (cutlim)) * zeta * lx / M_PI);
+  kmaxy = (int) (sqrt (- log (cutlim)) * zeta * ly / M_PI);
+  kmaxz = (int) (sqrt (- log (cutlim)) * zeta * lz / M_PI);
+}
