@@ -1,17 +1,18 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.4 2001/01/25 04:56:20 ichiki Exp $
+ * $Id: fts.c,v 1.5 2001/01/31 09:02:56 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include "fts.h"
 
 /* store matrix in FTS format with scalar functions
- * r := x [alpha(i)] - x [beta(j)]
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
  *   i, j : particle index
- *   ex, ey, ez := (x[i] - x[j]) / r
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
  *   xa, ya, ... : scalar functions
  *   n11 : dimension of the matrix mat []
  * OUTPUT
@@ -54,12 +55,6 @@ matrix_fts_ij (int i, int j,
   double exxxx, exxxy, exxxz, exxyy, exxyz, exxzz;
   double exyyy, exyyz, exyzz, exzzz;
   double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
-
-
-  /* I DON'T KNOW WHY I SHOULD DO THE FOLLOWING */
-  ex = - ex;
-  ey = - ey;
-  ez = - ez;
 
 
   a1 = ya;
@@ -427,14 +422,15 @@ matrix_fts_ij (int i, int j,
 
 /* ATIMES version (for O(N^2) scheme) of
  * store matrix in FTS format with scalar functions
- * r := pos [alpha(i)] - pos [beta(j)]
- * only m [alpha(i), beta(j)] is stored.
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- beta(j)' interaction is stored.
  * INPUT
- *   x [11] : related to 'i' (extracted form)
- *   ex, ey, ez := (x[i] - x[j]) / r, where 'i' is for y[] and 'j' is for x[].
+ *   x [11] : FTS of particle 'i' (extracted form)
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
  *   xa, ya, ... : scalar functions
  * OUTPUT
- *   y [11] : related to 'j' (extracted form)
+ *   y [11] : UOE of particle 'j' (extracted form)
  */
 void
 matrix_fts_atimes (double *x, double *y,
@@ -490,12 +486,6 @@ matrix_fts_atimes (double *x, double *y,
   z [8] = 2.0 * x [8];
   z [9] = 2.0 * x [9];
   z [10] = 2.0 * x [10] + x [6];
-
-
-  /* I DON'T KNOW WHY I SHOULD DO THE FOLLOWING */
-  ex = - ex;
-  ey = - ey;
-  ez = - ez;
 
 
   a1 = ya;
