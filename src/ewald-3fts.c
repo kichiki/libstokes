@@ -1,7 +1,7 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 3.11 2001/02/09 05:46:50 ichiki Exp $
+ * $Id: ewald-3fts.c,v 4.1 2002/06/02 19:09:49 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 3D configuration
  * periodic boundary condition in 3 direction,
@@ -33,7 +33,7 @@ calc_b_mob_ewald_3fts (int n,
 		       double *f, double *t, double *e,
 		       double *b);
 static void
-atimes_mob_ewald_3fts (int n, double *x, double *y);
+atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data);
 
 /* utility routines for calc_mob_fix_ewald_3fts () */
 static void
@@ -42,7 +42,7 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
 			   double *uf, double *of, double *ef,
 			   double *b);
 static void
-atimes_mob_fix_ewald_3fts (int n, double *x, double *y);
+atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data);
 
 
 /* utility routines for calc_mob_lub_fix_ewald_3fts () */
@@ -52,7 +52,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
 			       double *uf, double *of, double *ef,
 			       double *b);
 static void
-atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y);
+atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data);
 static void
 calc_lub_ewald_3fts (int np, double * uoe, double * fts);
 static int
@@ -69,7 +69,7 @@ cond_lub (double * x1, double * x2);
  *  y [n * 11] : UOE
  */
 void
-atimes_ewald_3fts (int n, double *x, double *y)
+atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
   extern int pcellx, pcelly, pcellz;
   extern int kmaxx, kmaxy, kmaxz;
@@ -417,8 +417,8 @@ calc_res_ewald_3fts (int np,
   for (i = 0; i < n11; ++i)
     x [i] = 0.0;
 
-  solve_iter_stab (n11, b, x, atimes_ewald_3fts,
-		   gpb);
+  solve_iter_stab (n11, b, x, atimes_ewald_3fts, NULL,
+		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (np, f, t, s, x);
 
@@ -466,8 +466,8 @@ calc_mob_ewald_3fts (int np,
   for (i = 0; i < n11; ++i)
     x [i] = 0.0;
 
-  solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts,
-		   gpb);
+  solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts, NULL,
+		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (np, u, o, s, x);
 
@@ -518,7 +518,7 @@ calc_b_mob_ewald_3fts (int np,
     }
 
   set_fts_by_FTS (np, x, f, t, v5_0);
-  atimes_ewald_3fts (n11, x, b);
+  atimes_ewald_3fts (n11, x, b, NULL);
 
   for (i = 0; i < np; ++i)
     {
@@ -543,7 +543,7 @@ calc_b_mob_ewald_3fts (int np,
  *  y [n] :
  */
 static void
-atimes_mob_ewald_3fts (int n, double *x, double *y)
+atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
   int i;
   int np;
@@ -584,7 +584,7 @@ atimes_mob_ewald_3fts (int n, double *x, double *y)
   set_FTS_by_fts (np, u, o, s, x);
 
   set_fts_by_FTS (np, y, v5_0, v5_0, s);
-  atimes_ewald_3fts (n, y, z);
+  atimes_ewald_3fts (n, y, z, NULL);
 
   set_fts_by_FTS (np, y, u, o, v5_0);
 
@@ -658,8 +658,8 @@ calc_mob_fix_ewald_3fts (int np, int nm,
     x [i] = 0.0;
 
   NUMB_mobile_particles = nm;
-  solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts,
-		   gpb);
+  solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts, NULL,
+		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -722,7 +722,7 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
   /* set x := [(F,T,0)_m,(0,0,0)_f] */
   set_fts_by_FTS (nm, x, f, t, v5_0);
   set_fts_by_FTS (nf, x + nm11, v5_0, v5_0, v5_0);
-  atimes_ewald_3fts (n11, x, b);
+  atimes_ewald_3fts (n11, x, b, NULL);
 
   /* set b := M.x - [(0,0,E)_m,(U,O,E)_f] */
   for (i = 0; i < nm; ++i)
@@ -764,7 +764,7 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
  *  y [n] :
  */
 static void
-atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
+atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
   extern int NUMB_mobile_particles; /* this is dirty, though ... */
 
@@ -828,7 +828,7 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y)
   /* set y := [(0,0,S)_mobile,(F,T,S)_fixed] */
   set_fts_by_FTS (nm, y, v5_0, v5_0, s);
   set_fts_by_FTS (nf, y + nm11, ff, tf, sf);
-  atimes_ewald_3fts (n, y, z);
+  atimes_ewald_3fts (n, y, z, NULL);
 
   /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
   set_fts_by_FTS (nm, y, u, o, v5_0);
@@ -891,7 +891,7 @@ calc_res_lub_ewald_3fts (int np,
 
   set_fts_by_FTS (np, b, u, o, e);
   calc_lub_ewald_3fts (np, b, lub);
-  atimes_ewald_3fts (n11, lub, x); // x[] is used temporaly
+  atimes_ewald_3fts (n11, lub, x, NULL); /* x[] is used temporaly */
   for (i = 0; i < n11; ++i)
     b [i] += x [i];
 
@@ -899,8 +899,8 @@ calc_res_lub_ewald_3fts (int np,
   for (i = 0; i < n11; ++i)
     x [i] = 0.0;
 
-  solve_iter_stab (n11, b, x, atimes_ewald_3fts,
-		   gpb);
+  solve_iter_stab (n11, b, x, atimes_ewald_3fts, NULL,
+		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (np, f, t, s, x);
 
@@ -968,9 +968,12 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
     x [i] = 0.0;
 
   NUMB_mobile_particles = nm;
-  solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts,
-		   //gpb);
-		   st2_chk);
+  solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts, NULL,
+		   /*gpb_chk*/
+		   /*st2_chk*/
+		   sta2, 2000, -12.0);
+  /*solve_iter_gmres (n11, b, x, atimes_mob_lub_fix_ewald_3fts);*/
+  /*solve_iter_otmk (n11, b, x, atimes_mob_lub_fix_ewald_3fts, otmk);*/
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -1032,7 +1035,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
       v5_0 [i] = 0.0;
     }
 
-  /* set b :=  - [(0,0,E)_m,(U,O,E)_f] */
+  /* set b := [(0,0,E)_m,(U,O,E)_f] */
   set_fts_by_FTS (nm, b, v5_0, v5_0, e);
   set_fts_by_FTS (nf, b + nm11, uf, of, ef);
 
@@ -1049,7 +1052,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
       x [i] -= y [i];
     }
 
-  atimes_ewald_3fts (n11, x, y);
+  atimes_ewald_3fts (n11, x, y, NULL);
 
   /* set b := - (I + M.L).[(0,0,E)_m,(U,O,E)_f] + M.[(F,T,0)_m,(0,0,0)_f] */
   for (i = 0; i < n11; ++i)
@@ -1072,7 +1075,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
  *  y [n] :
  */
 static void
-atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y)
+atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
   extern int NUMB_mobile_particles; /* this is dirty, though ... */
 
@@ -1135,10 +1138,11 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y)
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
-  /* set y := (I + M.L).[(U,O,0)_mobile,(0,0,0)_fixed] */
+  /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
   set_fts_by_FTS (nm, y, u, o, v5_0);
   set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
 
+  /* set w := L.[(U,O,0)_mobile,(0,0,0)_fixed] */
   calc_lub_ewald_3fts (np, y, w);
 
   /* set z := [(0,0,S)_mobile,(F,T,S)_fixed] */
@@ -1150,7 +1154,7 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y)
       w [i] -= z [i];
     }
 
-  atimes_ewald_3fts (n, w, z);
+  atimes_ewald_3fts (n, w, z, NULL);
 
   /* set y := (I + M.L).[(U,O,0)_m,(0,0,0)_f] - M.[(0,0,S)_m,(F,T,S)_f] */
   for (i = 0; i < n; ++i)
