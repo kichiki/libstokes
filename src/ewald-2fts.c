@@ -1,7 +1,7 @@
 /* Ewald summation technique under 2D
  * this is a wrapper package for ewald-3fts.c
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-2fts.c,v 1.1 2001/02/02 08:01:53 ichiki Exp $
+ * $Id: ewald-2fts.c,v 1.2 2001/02/02 08:40:10 ichiki Exp $
  *
  * 3 dimensional hydrodynamics, 2D configuration
  * periodic boundary condition in 3 direction,
@@ -401,14 +401,14 @@ calc_res_lub_ewald_3fts_2d (int np,
  * INPUT
  *  np : # all particles
  *  nm : # mobile particles, so that (np - nm) is # fixed particles
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [nm * 3] : OK, this is 3D form
+ *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   ef [nf * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
  * OUTPUT
- *   u [nm * 3] :
+ *   u [nm * 3] : results are given in 3D form
  *   o [nm * 3] :
  *   s [nm * 5] :
  *   ff [nf * 3] :
@@ -767,7 +767,7 @@ static void
 calc_lub_ewald_2fts (int np, double * uoe, double * fts)
 {
   extern double * pos;
-  extern double llx [27], llz [27];
+  extern double llx [27], lly [27];
 
   int i, j, k;
   int i3, i11;
@@ -799,7 +799,7 @@ calc_lub_ewald_2fts (int np, double * uoe, double * fts)
 	  for (k = 0; k < 9; ++k)
 	    {
 	      tmp_pos [0] = pos [j3 + 0] + llx [k];
-	      tmp_pos [1] = pos [j3 + 1] + llz [k];
+	      tmp_pos [1] = pos [j3 + 1] + lly [k];
 	      tmp_pos [2] = pos [j3 + 2];
 	      if (cond_lub_2d (pos + i3, tmp_pos) == 0)
 		{
