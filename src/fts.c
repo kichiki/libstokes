@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.7 2001/02/03 13:09:03 ichiki Exp $
+ * $Id: fts.c,v 1.8 2001/02/03 13:36:58 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -498,7 +498,7 @@ set_fts_by_FTS (int n,
  *   lub [22] : scalar functions
  */
 void
-scalar_minv_FTS (double s,  double * scalar_fts)
+scalar_minv_fts (double s,  double * scalar_fts)
 {
   double xa11, xa12;
   double ya11, ya12;
@@ -829,7 +829,7 @@ calc_lub_fts_2b (double *uoe1, double *uoe2,
 
   /* calc scalar functions of lubrication */
   scalar_two_body_res (rr, res2b);
-  scalar_minv_FTS (rr, resinf);
+  scalar_minv_fts (rr, resinf);
 
   xa11 = res2b [ 0] - resinf [ 0];
   xa12 = res2b [ 1] - resinf [ 1];
