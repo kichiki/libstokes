@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.9 2001/02/04 07:48:34 ichiki Exp $
+ * $Id: fts.c,v 1.10 2001/02/04 11:46:33 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -548,14 +548,14 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	     (3600.0 + s2 *
 	      (900.0 + s2 *
 	       (- 1600.0))))))))))));
-  xa11 = 
+  xa11 =
     20.0 * s6 *
     (- 2880.0 + s2 *
      (2208.0 + s2 *
       (- 260.0 + s2 *
        (- 75.0 + s2  * s2*
 	(20.0))))) / gx;
-  xa12 = 
+  xa12 =
     20.0 * s3 *
     (- 576.0 + s2 *
      (2880.0 + s2 *
@@ -563,7 +563,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
        (375.0 + s2  * s2*
 	(20.0 + s2 *
 	 (- 30.0)))))) / gx;
-  ya11 = 
+  ya11 =
     - 80.0 * s6 *
     (320.0 + s2 *
      (- 544.0 + s2 *
@@ -573,7 +573,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	 (- 280.0 + s2 *
 	  (- 15.0 + s2  * s2*
 	   (20.0)))))))) / gy;
-  ya12 = 
+  ya12 =
     40.0 * s3 *
     (64.0 + s2  * s2*
      (- 400.0 + s2 *
@@ -583,7 +583,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	 (- 405.0 + s2  * s2*
 	  (20.0 + s2 *
 	   (30.0)))))))) / gy;
-  yb11 = 
+  yb11 =
     - 80.0 * s7 *
     (384.0 + s2 *
      (- 248.0 + s2 *
@@ -592,7 +592,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	(- 80.0 + s2 *
 	 (- 20.0 + s2 *
 	  (- 15.0))))))) / gy;
-  yb12 = 
+  yb12 =
     - 20.0 * s4 *
     (- 128.0 + s2 *
      (- 80.0 + s2 *
@@ -602,13 +602,13 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	 (- 540.0 + s2 *
 	  (- 30.0 + s2  * s2*
 	   (80.0)))))))) / gy;
-  xc11 = 
+  xc11 =
     4.0 * s6
     / 3.0 / (s6 - 1.0);
-  xc12 = 
+  xc12 =
     - 4.0 * s3
     / 3.0 / (s6 - 1.0);
-  yc11 = 
+  yc11 =
     - 16.0 * s6 *
     (256.0 + s2 *
      (7840.0 + s2 *
@@ -620,7 +620,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	   (- 225.0 + s2 *
 	    (400.0)))))))))
     / 3.0 / gy;
-  yc12 = 
+  yc12 =
     - 4.0 * s3 *
     (512.0 + s2 *
      (3680.0 + s2 *
@@ -631,13 +631,13 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	  (450.0 + s2 *
 	   (800.0))))))))
     / 3.0 / gy;
-  xg11 = 
+  xg11 =
     100.0 * s7 *
     (192.0 + s2 *
      (- 184.0 + s2 *
       (16.0 + s2 *
        (15.0)))) / gx;
-  xg12 = 
+  xg12 =
     10.0 * s4 *
     (384.0 + s2 *
      (- 2000.0 + s2 *
@@ -645,7 +645,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
        (- 375.0 + s2 *
 	(160.0 + s2 *
 	 (- 100.0)))))) / gx;
-  yg11 = 
+  yg11 =
     - 100.0 * s7 *
     (128.0 + s2 *
      (320.0 + s2 *
@@ -654,7 +654,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	(- 128.0 + s2 *
 	 (108.0))))))
     / 3.0 / gy;
-  yg12 = 
+  yg12 =
     - 10.0 * s4 *
     (128.0 + s2 *
      (- 80.0 + s2 *
@@ -665,7 +665,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	  (- 450.0 + s2 *
 	   (- 640.0))))))))
     / 3.0 / gy;
-  yh11 = 
+  yh11 =
     - 20.0 * s8 *
     (736.0 + s2 *
      (- 1240.0 + s2 *
@@ -673,7 +673,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
        (3875.0 + s2 *
 	(- 480.0)))))
     / 3.0 / gy;
-  yh12 = 
+  yh12 =
     - 10.0 * s5 *
     (96.0 + s2 *
      (- 120.0 + s2 *
@@ -684,15 +684,15 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	  (- 450.0 + s2 *
 	   (800.0))))))))
     / 3.0 / gy;
-  xm11 = 
-    200.0 * s7 *
+  xm11 =
+    200.0 * s8 *
     (- 192.0 + s2 *
      (220.0 + s2 *
       (- 15.0 + s2 *
        (- 45.0 + s2 *
 	(20.0)))))
     / 9.0 / gx;
-  xm12 = 
+  xm12 =
     100.0 * s5 *
     (96.0 + s2 *
      (- 584.0 + s2 *
@@ -700,7 +700,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
        (- 705.0 + s2 *
 	(200.0)))))
     / 9.0 / gx;
-  ym11 = 
+  ym11 =
     - 200.0 * s8 *
     (64.0 + s2 *
      (- 208.0 + s2 *
@@ -711,7 +711,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	  (- 45.0 + s2 *
 	   (80.0))))))))
     / 9.0 / gy;
-  ym12 = 
+  ym12 =
     - 50.0 * s5 *
     (32.0 + s2 *
      (- 8.0 + s2 *
@@ -722,10 +722,10 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	  (3010.0 + s2 *
 	   (- 800.0))))))))
     / 9.0 / gy;
-  zm11 = 
+  zm11 =
     10.0 * s10
     / 9.0 / (s10 - 4.0);
-  zm12 = 
+  zm12 =
     - 20.0 * s5
     / 9.0 / (s10 - 4.0);
 
