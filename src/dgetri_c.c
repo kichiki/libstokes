@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
  * Copyright (C) 2005 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dgetri_c.c,v 1.1 2005/03/29 18:48:22 ichiki Exp $
+ * $Id: dgetri_c.c,v 1.2 2005/03/31 02:46:07 ichiki Exp $
  */
 #include <stdlib.h>
 
@@ -155,4 +155,7 @@ void lapack_inv (int n, const double *a,
     }
   dgetrf_ (&n, &n, ai, &n, ipvt, &info);
   dgetri_ (&n, ai, &n, ipvt, work, &n, &info);
+
+  free (ipvt);
+  free (work);
 }
