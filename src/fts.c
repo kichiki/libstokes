@@ -1,13 +1,568 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.10 2001/02/04 11:46:33 ichiki Exp $
+ * $Id: fts.c,v 1.11 2001/02/12 08:40:09 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
 #include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+#include "f.h" // matrix_ij_A ()
+#include "ft.h" // matrix_ij_B (), matrix_ij_Bt (), matrix_ij_C (), 
 
 #include "fts.h"
+
+
+/* store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n11 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n11 * n11] :
+ */
+void
+matrix_fts_ij (int i, int j,
+	       double ex, double ey, double ez,
+	       double xa, double ya,
+	       double yb,
+	       double xc, double yc,
+	       double xg, double yg,
+	       double yh,
+	       double xm, double ym, double zm,
+	       int n11, double *mat)
+{
+  int i1, i4, i7;
+  int j1, j4, j7;
+
+  i1  = i * 11;
+  i4  = i1 + 3;
+  i7  = i1 + 6;
+
+  j1  = j * 11;
+  j4  = j1 + 3;
+  j7  = j1 + 6;
+
+  matrix_ij_A (n11, & mat [i1 * n11 + j1],
+	       ex, ey, ez,
+	       xa, ya);
+  matrix_ij_B (n11, & mat [i4 * n11 + j1],
+	       ex, ey, ez,
+	       yb);
+  matrix_ij_Bt (n11, & mat [i1 * n11 + j4],
+		ex, ey, ez,
+		yb);
+  matrix_ij_C (n11, & mat [i4 * n11 + j4],
+	       ex, ey, ez,
+	       xc, yc);
+  matrix_ij_G (n11, & mat [i7 * n11 + j1],
+	       ex, ey, ez,
+	       xg, yg);
+  matrix_ij_Gt (n11, & mat [i1 * n11 + j7],
+		ex, ey, ez,
+		xg, yg);
+  matrix_ij_H (n11, & mat [i7 * n11 + j4],
+	       ex, ey, ez,
+	       yh);
+  matrix_ij_Ht (n11, & mat [i4 * n11 + j7],
+		ex, ey, ez,
+		yh);
+  matrix_ij_M (n11, & mat [i7 * n11 + j7],
+	       ex, ey, ez,
+	       xm, ym, zm);
+}
+
+/* store matrix in G part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xg, yg : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_G (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xg, double yg)
+{
+  double g1, g2, g3;
+  double g1x, g1y, g1z;
+  double g2x, g2y, g2z;
+  double g3xxx, g3xxy, g3xxz, g3xyy, g3xyz, g3yyy, g3yyz, g3yzz, g3xzz, g3zzz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+  double exxx, exxy, exxz, exyy, exyz, exzz, eyyy, eyyz, eyzz, ezzz;
+
+  g1 = - 1.0 / 3.0 * xg;
+  g2 = yg;
+  g3 = xg - 2.0 * yg;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+  exxx = exx * ex;
+  exxy = exx * ey;
+  exxz = exx * ez;
+  exyy = exy * ey;
+  exyz = exy * ez;
+  exzz = exz * ez;
+  eyyy = eyy * ey;
+  eyyz = eyy * ez;
+  eyzz = eyz * ez;
+  ezzz = ezz * ez;
+
+  g1x = g1 * ex;
+  g1y = g1 * ey;
+  g1z = g1 * ez;
+
+  g2x = g2 * ex;
+  g2y = g2 * ey;
+  g2z = g2 * ez;
+
+  g3xxx = g3 * exxx;
+  g3xxy = g3 * exxy;
+  g3xxz = g3 * exxz;
+  g3xyy = g3 * exyy;
+  g3xyz = g3 * exyz;
+  g3xzz = g3 * exzz;
+  g3yyy = g3 * eyyy;
+  g3yyz = g3 * eyyz;
+  g3yzz = g3 * eyzz;
+  g3zzz = g3 * ezzz;
+	      
+  /* G part */
+  /* g1: d_ij e_k part */
+  mat [0 * n + 0] += g1x; /* xx,x */
+  mat [0 * n + 1] += g1y; /* xx,y */
+  mat [0 * n + 2] += g1z; /* xx,z */
+  mat [4 * n + 0] += g1x; /* yy,x */
+  mat [4 * n + 1] += g1y; /* yy,y */
+  mat [4 * n + 2] += g1z; /* yy,z */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  mat [0 * n + 0] += 2.0 * g2x; /* xx,x */
+  mat [1 * n + 0] += g2y;       /* xy,x */
+  mat [1 * n + 1] += g2x;       /* xy,y */
+  mat [2 * n + 0] += g2z;       /* xz,x */
+  mat [2 * n + 2] += g2x;       /* xz,z */
+  mat [3 * n + 1] += g2z;       /* yz,y */
+  mat [3 * n + 2] += g2y;       /* yz,z */
+  mat [4 * n + 1] += 2.0 * g2y; /* yy,y */
+
+  /* g3: e_ijk part */
+  mat [0 * n + 0] += g3xxx; /* xx,x */
+  mat [0 * n + 1] += g3xxy; /* xx,y */
+  mat [0 * n + 2] += g3xxz; /* xx,z */
+  mat [1 * n + 0] += g3xxy; /* xy,x */
+  mat [1 * n + 1] += g3xyy; /* xy,y */
+  mat [1 * n + 2] += g3xyz; /* xy,z */
+  mat [2 * n + 0] += g3xxz; /* xz,x */
+  mat [2 * n + 1] += g3xyz; /* xz,y */
+  mat [2 * n + 2] += g3xzz; /* xz,z */
+  mat [3 * n + 0] += g3xyz; /* yz,x */
+  mat [3 * n + 1] += g3yyz; /* yz,y */
+  mat [3 * n + 2] += g3yzz; /* yz,z */
+  mat [4 * n + 0] += g3xyy; /* yy,x */
+  mat [4 * n + 1] += g3yyy; /* yy,y */
+  mat [4 * n + 2] += g3yyz; /* yy,z */
+}
+
+/* store matrix in G-tilde part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xg, yg : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_Gt (int n, double *mat,
+	      double ex, double ey, double ez,
+	      double xg, double yg)
+{
+  double g1, g2, g3;
+  double g1x, g1y, g1z;
+  double g2x, g2y, g2z;
+  double g3xxx, g3xxy, g3xxz, g3xyy, g3xyz, g3yyy, g3yyz, g3yzz, g3xzz, g3zzz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+  double exxx, exxy, exxz, exyy, exyz, exzz, eyyy, eyyz, eyzz, ezzz;
+
+  g1 = - 1.0 / 3.0 * xg;
+  g2 = yg;
+  g3 = xg - 2.0 * yg;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+  exxx = exx * ex;
+  exxy = exx * ey;
+  exxz = exx * ez;
+  exyy = exy * ey;
+  exyz = exy * ez;
+  exzz = exz * ez;
+  eyyy = eyy * ey;
+  eyyz = eyy * ez;
+  eyzz = eyz * ez;
+  ezzz = ezz * ez;
+
+  g1x = g1 * ex;
+  g1y = g1 * ey;
+  g1z = g1 * ez;
+
+  g2x = g2 * ex;
+  g2y = g2 * ey;
+  g2z = g2 * ez;
+
+  g3xxx = g3 * exxx;
+  g3xxy = g3 * exxy;
+  g3xxz = g3 * exxz;
+  g3xyy = g3 * exyy;
+  g3xyz = g3 * exyz;
+  g3xzz = g3 * exzz;
+  g3yyy = g3 * eyyy;
+  g3yyz = g3 * eyyz;
+  g3yzz = g3 * eyzz;
+  g3zzz = g3 * ezzz;
+	      
+  /* G21  =  (GT12)t  =  (-GT21)t */
+  /* g1: d_ij e_k part */
+  mat [0 * n + 0] -= g1x; /* x,xx */
+  mat [1 * n + 0] -= g1y; /* y,xx */
+  mat [2 * n + 0] -= g1z; /* z,xx */
+  mat [0 * n + 4] -= g1x; /* x,yy */
+  mat [1 * n + 4] -= g1y; /* y,yy */
+  mat [2 * n + 4] -= g1z; /* z,yy */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  mat [0 * n + 0] -= 2.0 * g2x; /* x,xx */
+  mat [0 * n + 1] -= g2y;       /* x,xy */
+  mat [1 * n + 1] -= g2x;       /* y,xy */
+  mat [0 * n + 2] -= g2z;       /* x,xz */
+  mat [2 * n + 2] -= g2x;       /* z,xz */
+  mat [1 * n + 3] -= g2z;       /* y,yz */
+  mat [2 * n + 3] -= g2y;       /* z,yz */
+  mat [1 * n + 4] -= 2.0 * g2y; /* y,yy */
+
+  /* g3: e_ijk part */
+  mat [0 * n + 0] -= g3xxx; /* x,xx */
+  mat [1 * n + 0] -= g3xxy; /* y,xx */
+  mat [2 * n + 0] -= g3xxz; /* z,xx */
+  mat [0 * n + 1] -= g3xxy; /* x,xy */
+  mat [1 * n + 1] -= g3xyy; /* y,xy */
+  mat [2 * n + 1] -= g3xyz; /* z,xy */
+  mat [0 * n + 2] -= g3xxz; /* x,xz */
+  mat [1 * n + 2] -= g3xyz; /* y,xz */
+  mat [2 * n + 2] -= g3xzz; /* z,xz */
+  mat [0 * n + 3] -= g3xyz; /* x,yz */
+  mat [1 * n + 3] -= g3yyz; /* y,yz */
+  mat [2 * n + 3] -= g3yzz; /* z,yz */
+  mat [0 * n + 4] -= g3xyy; /* x,yy */
+  mat [1 * n + 4] -= g3yyy; /* y,yy */
+  mat [2 * n + 4] -= g3yyz; /* z,yy */
+}
+
+/* store matrix in H part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yh : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_H (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double yh)
+{
+  double h1;
+  double h1xx, h1xy, h1xz, h1yy, h1yz, h1zz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+
+  h1 = yh;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+
+  h1xx = h1 * exx;
+  h1xy = h1 * exy;
+  h1xz = h1 * exz;
+  h1yy = h1 * eyy;
+  h1yz = h1 * eyz;
+  h1zz = h1 * ezz;
+	      
+  /* H part */
+  /* e_i eps_jkl e_l + e_j eps_ikl e_l */
+  mat [0 * n + 1] += + 2.0 * h1xz;  /* xx,y */
+  mat [0 * n + 2] += - 2.0 * h1xy;  /* xx,z */
+  mat [1 * n + 0] += - h1xz;        /* xy,x */
+  mat [1 * n + 1] += + h1yz;        /* xy,y */
+  mat [1 * n + 2] += + h1xx - h1yy; /* xy,z */
+  mat [2 * n + 0] += + h1xy;        /* xz,x */
+  mat [2 * n + 1] += - h1xx + h1zz; /* xz,y */
+  mat [2 * n + 2] += - h1yz;        /* xz,z */
+  mat [3 * n + 0] += + h1yy - h1zz; /* yz,x */
+  mat [3 * n + 1] += - h1xy;        /* yz,y */
+  mat [3 * n + 2] += + h1xz;        /* yz,z */
+  mat [4 * n + 0] += - 2.0 * h1yz;  /* yy,x */
+  mat [4 * n + 2] += + 2.0 * h1xy;  /* yy,z */
+}
+
+/* store matrix in H-tilde part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yh : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_Ht (int n, double *mat,
+	      double ex, double ey, double ez,
+	      double yh)
+{
+  double h1;
+  double h1xx, h1xy, h1xz, h1yy, h1yz, h1zz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+
+  h1 = yh;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+
+  h1xx = h1 * exx;
+  h1xy = h1 * exy;
+  h1xz = h1 * exz;
+  h1yy = h1 * eyy;
+  h1yz = h1 * eyz;
+  h1zz = h1 * ezz;
+	      
+  /* HT part */
+  /* H12  =  (HT21)t  =  (HT12)t */
+  mat [1 * n + 0] += + 2.0 * h1xz;  /* y,xx */
+  mat [2 * n + 0] += - 2.0 * h1xy;  /* z,xx */
+  mat [0 * n + 1] += - h1xz;        /* x,xy */
+  mat [1 * n + 1] += + h1yz;        /* y,xy */
+  mat [2 * n + 1] += + h1xx - h1yy; /* z,xy */
+  mat [0 * n + 2] += + h1xy;        /* x,xz */
+  mat [1 * n + 2] += - h1xx + h1zz; /* y,xz */
+  mat [2 * n + 2] += - h1yz;        /* z,xz */
+  mat [0 * n + 3] += + h1yy - h1zz; /* x,yz */
+  mat [1 * n + 3] += - h1xy;        /* y,yz */
+  mat [2 * n + 3] += + h1xz;        /* z,yz */
+  mat [0 * n + 4] += - 2.0 * h1yz;  /* x,yy */
+  mat [2 * n + 4] += + 2.0 * h1xy;  /* z,yy */
+}
+
+/* store matrix in M part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xm, ym, zm : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_M (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xm, double ym, double zm)
+{
+  double mm1, mm2, mm3, mm4, mm5;
+  double m1xxxx, m1xxxy, m1xxxz, m1xxyy, m1xxyz, m1xxzz;
+  double m1xyyy, m1xyyz, m1xyzz, m1xzzz;
+  double m1yyyy, m1yyyz, m1yyzz, m1yzzz, m1zzzz;
+  double m2xx, m2xy, m2xz, m2yy, m2yz, m2zz;
+  double m4xx, m4xy, m4xz, m4yy, m4yz, m4zz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+  double exxx, exxy, exxz, exyy, exyz, exzz, eyyy, eyyz, eyzz, ezzz;
+  double exxxx, exxxy, exxxz, exxyy, exxyz, exxzz;
+  double exyyy, exyyz, exyzz, exzzz;
+  double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
+
+  mm1 =   1.5     * xm - 2.0 * ym + 0.5 * zm;
+  mm2 = - 0.5     * xm            + 0.5 * zm;
+  mm3 = 1.0 / 6.0 * xm            - 0.5 * zm;
+  mm4 =                  0.5 * ym - 0.5 * zm;
+  mm5 =                             0.5 * zm;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+  exxx = exx * ex;
+  exxy = exx * ey;
+  exxz = exx * ez;
+  exyy = exy * ey;
+  exyz = exy * ez;
+  exzz = exz * ez;
+  eyyy = eyy * ey;
+  eyyz = eyy * ez;
+  eyzz = eyz * ez;
+  ezzz = ezz * ez;
+  exxxx = exx * exx;
+  exxxy = exx * exy;
+  exxxz = exx * exz;
+  exxyy = exx * eyy;
+  exxyz = exx * eyz;
+  exxzz = exx * ezz;
+  exyyy = exy * eyy;
+  exyyz = exy * eyz;
+  exyzz = exy * ezz;
+  exzzz = exz * ezz;
+  eyyyy = eyy * eyy;
+  eyyyz = eyy * eyz;
+  eyyzz = eyy * ezz;
+  eyzzz = eyz * ezz;
+  ezzzz = ezz * ezz;
+
+  m1xxxx = mm1 * exxxx;
+  m1xxxy = mm1 * exxxy;
+  m1xxxz = mm1 * exxxz;
+  m1xxyy = mm1 * exxyy;
+  m1xxyz = mm1 * exxyz;
+  m1xxzz = mm1 * exxzz;
+  m1xyyy = mm1 * exyyy;
+  m1xyyz = mm1 * exyyz;
+  m1xyzz = mm1 * exyzz;
+  m1xzzz = mm1 * exzzz;
+  m1yyyy = mm1 * eyyyy;
+  m1yyyz = mm1 * eyyyz;
+  m1yyzz = mm1 * eyyzz;
+  m1yzzz = mm1 * eyzzz;
+  m1zzzz = mm1 * ezzzz;
+
+  m2xx = mm2 * exx;
+  m2xy = mm2 * exy;
+  m2xz = mm2 * exz;
+  m2yy = mm2 * eyy;
+  m2yz = mm2 * eyz;
+  m2zz = mm2 * ezz;
+
+  m4xx = mm4 * exx;
+  m4xy = mm4 * exy;
+  m4xz = mm4 * exz;
+  m4yy = mm4 * eyy;
+  m4yz = mm4 * eyz;
+  m4zz = mm4 * ezz;
+
+  /* M part */
+  /* e_ijkl part */
+  mat [0 * n + 0] += m1xxxx; /* xx,xx */
+  mat [0 * n + 1] += m1xxxy; /* xx,xy */
+  mat [0 * n + 2] += m1xxxz; /* xx,xz */
+  mat [0 * n + 3] += m1xxyz; /* xx,yz */
+  mat [0 * n + 4] += m1xxyy; /* xx,yy */
+  mat [1 * n + 0] += m1xxxy; /* xy,xx */
+  mat [1 * n + 1] += m1xxyy; /* xy,xy */
+  mat [1 * n + 2] += m1xxyz; /* xy,xz */
+  mat [1 * n + 3] += m1xyyz; /* xy,yz */
+  mat [1 * n + 4] += m1xyyy; /* xy,yy */
+  mat [2 * n + 0] += m1xxxz; /* xz,xx */
+  mat [2 * n + 1] += m1xxyz; /* xz,xy */
+  mat [2 * n + 2] += m1xxzz; /* xz,xz */
+  mat [2 * n + 3] += m1xyzz; /* xz,yz */
+  mat [2 * n + 4] += m1xyyz; /* xz,yy */
+  mat [3 * n + 0] += m1xxyz; /* yz,xx */
+  mat [3 * n + 1] += m1xyyz; /* yz,xy */
+  mat [3 * n + 2] += m1xyzz; /* yz,xz */
+  mat [3 * n + 3] += m1yyzz; /* yz,yz */
+  mat [3 * n + 4] += m1yyyz; /* yz,yy */
+  mat [4 * n + 0] += m1xxyy; /* yy,xx */
+  mat [4 * n + 1] += m1xyyy; /* yy,xy */
+  mat [4 * n + 2] += m1xyyz; /* yy,xz */
+  mat [4 * n + 3] += m1yyyz; /* yy,yz */
+  mat [4 * n + 4] += m1yyyy; /* yy,yy */
+
+  /* (d_ij e_kl + e_ij d_kl)part */
+  mat [0 * n + 0] += 2.0 * m2xx;  /* xx,xx */
+  mat [0 * n + 1] += m2xy;        /* xx,xy */
+  mat [0 * n + 2] += m2xz;        /* xx,xz */
+  mat [0 * n + 3] += m2yz;        /* xx,yz */
+  mat [0 * n + 4] += m2yy + m2xx; /* xx,yy */
+  mat [1 * n + 0] += m2xy;        /* xy,xx */
+  mat [1 * n + 4] += m2xy;        /* xy,yy */
+  mat [2 * n + 0] += m2xz;        /* xz,xx */
+  mat [2 * n + 4] += m2xz;        /* xz,yy */
+  mat [3 * n + 0] += m2yz;        /* yz,xx */
+  mat [3 * n + 4] += m2yz;        /* yz,yy */
+  mat [4 * n + 0] += m2xx + m2yy; /* yy,xx */
+  mat [4 * n + 1] += m2xy;        /* yy,xy */
+  mat [4 * n + 2] += m2xz;        /* yy,xz */
+  mat [4 * n + 3] += m2yz;        /* yy,yz */
+  mat [4 * n + 4] += 2.0 * m2yy;  /* yy,yy */
+
+  /* d_ij d_kl part */
+  mat [0 * n + 0] += mm3; /* xx,xx */
+  mat [0 * n + 4] += mm3; /* xx,yy */
+  mat [4 * n + 0] += mm3; /* yy,xx */
+  mat [4 * n + 4] += mm3; /* yy,yy */
+
+  /* e_i d_jk e_l + e_i d_jl e_k + */
+  /* e_j d_ik e_l + e_j d_il e_k part */
+  mat [0 * n + 0] += 4.0 * m4xx;  /* xx,xx */
+  mat [0 * n + 1] += 2.0 * m4xy;  /* xx,xy */
+  mat [0 * n + 2] += 2.0 * m4xz;  /* xx,xz */
+  mat [1 * n + 0] += 2.0 * m4xy;  /* xy,xx */
+  mat [1 * n + 1] += m4xx + m4yy; /* xy,xy */
+  mat [1 * n + 2] += m4yz;        /* xy,xz */
+  mat [1 * n + 3] += m4xz;        /* xy,yz */
+  mat [1 * n + 4] += 2.0 * m4xy;  /* xy,yy */
+  mat [2 * n + 0] += 2.0 * m4xz;  /* xz,xx */
+  mat [2 * n + 1] += m4yz;        /* xz,xy */
+  mat [2 * n + 2] += m4xx + m4zz; /* xz,xz */
+  mat [2 * n + 3] += m4xy;        /* xz,yz */
+  mat [3 * n + 1] += m4xz;        /* yz,xy */
+  mat [3 * n + 2] += m4xy;        /* yz,xz */
+  mat [3 * n + 3] += m4yy + m4zz; /* yz,yz */
+  mat [3 * n + 4] += 2.0 * m4yz;  /* yz,yy */
+  mat [4 * n + 1] += 2.0 * m4xy;  /* yy,xy */
+  mat [4 * n + 3] += 2.0 * m4yz;  /* yy,yz */
+  mat [4 * n + 4] += 4.0 * m4yy;  /* yy,yy */
+
+  /* (d_ik d_jl + d_jk d_il) part */
+  mat [0 * n + 0] += 2.0 * mm5; /* xx,xx */
+  mat [1 * n + 1] += mm5;       /* xy,xy */
+  mat [2 * n + 2] += mm5;       /* xz,xz */
+  mat [3 * n + 3] += mm5;       /* yz,yz */
+  mat [4 * n + 4] += 2.0 * mm5; /* yy,yy */
+}
 
 
 /* ATIMES version (for O(N^2) scheme) of
