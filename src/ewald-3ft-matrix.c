@@ -1,7 +1,7 @@
 /* Ewald summation technique under FTS version -- MATRIX procedure
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *   <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3ft-matrix.c,v 1.2 2001/02/13 09:52:44 ichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 1.3 2001/02/14 09:07:12 ichiki Exp $
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
@@ -15,6 +15,7 @@
 #include "../ludcmp.h" /* ludcmp() */
 
 #include "fts.h"
+#include "matrix.h"
 #include "ewald-3fts-matrix.h"
 
 
@@ -31,6 +32,8 @@ static int
 cond_lub (double * x1, double * x2);
 static void
 trans_ext (int np, double *r);
+static void
+trans_mat_ext2ext (int np, double * mat);
 static void
 multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
 				  double * y);
@@ -222,12 +225,11 @@ calc_mob_ewald_3fts_matrix (int np,
 			    double *f, double *t, double *e,
 			    double *u, double *o, double *s)
 {
-  int i, j, k;
   int n11, n6, n5;
 
   double * mat;
   double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_lh, * mob_hl;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
   double * b;
   double * x;
 
@@ -240,8 +242,10 @@ calc_mob_ewald_3fts_matrix (int np,
   mat_lh = malloc (sizeof (double) * n6 * n5);
   mat_hl = malloc (sizeof (double) * n5 * n6);
   mat_hh = malloc (sizeof (double) * n5 * n5);
+  mob_ll = malloc (sizeof (double) * n6 * n6);
   mob_lh = malloc (sizeof (double) * n6 * n5);
   mob_hl = malloc (sizeof (double) * n5 * n6);
+  mob_hh = malloc (sizeof (double) * n5 * n5);
   b = malloc (sizeof (double) * n11);
   x = malloc (sizeof (double) * n11);
   if (mat == NULL
@@ -249,8 +253,10 @@ calc_mob_ewald_3fts_matrix (int np,
       || mat_lh == NULL
       || mat_hl == NULL
       || mat_hh == NULL
+      || mob_ll == NULL
       || mob_lh == NULL
       || mob_hl == NULL
+      || mob_hh == NULL
       || b == NULL
       || x == NULL)
     {
@@ -261,56 +267,20 @@ calc_mob_ewald_3fts_matrix (int np,
   /* b := (FTE) */
   set_fts_by_FTS (np, b, f, t, e);
 
-  make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (np, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
   split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
 
-  /*cholesky (mat_hh, n5);*/
-  lu_inv (mat_hh, n5);
+  solve_linear (n5, n6,
+		mat_hh, mat_hl, mat_lh, mat_ll,
+		mob_hh, mob_hl, mob_lh, mob_ll);
 
-  /* J := mob_hl = - (A^-1).B = - (M_hh^-1).(M_hl) */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  mob_hl [i * n6 + j] = 0.0;
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mob_hl [i * n6 + j] -=
-		mat_hh [i * n5 + k] * mat_hl [k * n6 + j];
-	    }
-	}
-    }
-
-  /* K := mob_lh = C.(A^-1) = (M_lh).(M_hh^-1) */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n5; ++j)
-	{
-	  mob_lh [i * n5 + j] = 0.0;
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mob_lh [i * n5 + j] +=
-		mat_lh [i * n5 + k] * mat_hh [k * n5 + j];
-	    }
-	}
-    }
-
-  /* L := mob_ll = (D - C.(A^-1).B) */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mat_ll [i * n6 + j] +=
-		mat_lh [i * n5 + k] * mob_hl [k * n6 + j];
-	    }
-	}
-    }
-  merge_matrix_3fts (np, mat_ll, mob_lh, mob_hl, mat_hh, mat);
-  trans_ext (np, mat); // resistance matrix in EXTRACTED form
-
-  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+  /* STEP 6 */
+  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
 
   set_FTS_by_fts (np, u, o, s, x);
 
@@ -319,8 +289,10 @@ calc_mob_ewald_3fts_matrix (int np,
   free (mat_lh);
   free (mat_hl);
   free (mat_hh);
+  free (mob_ll);
   free (mob_lh);
   free (mob_hl);
+  free (mob_hh);
   free (b);
   free (x);
 }
@@ -341,7 +313,7 @@ calc_mob_lub_ewald_3fts_matrix (int np,
 				double *f, double *t, double *e,
 				double *u, double *o, double *s)
 {
-  int i, j, k;
+  int i;
   int n11, n6, n5;
 
   double * mat;
@@ -369,12 +341,15 @@ calc_mob_lub_ewald_3fts_matrix (int np,
   b = malloc (sizeof (double) * n11);
   x = malloc (sizeof (double) * n11);
   if (mat == NULL
+      || lub == NULL
       || mat_ll == NULL
       || mat_lh == NULL
       || mat_hl == NULL
       || mat_hh == NULL
+      || mob_ll == NULL
       || mob_lh == NULL
       || mob_hl == NULL
+      || mob_hh == NULL
       || b == NULL
       || x == NULL)
     {
@@ -391,172 +366,38 @@ calc_mob_lub_ewald_3fts_matrix (int np,
   /* b := (FTE) */
   set_fts_by_FTS (np, b, f, t, e);
 
-  make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (np, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
   split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
 
-  make_matrix_lub_ewald_3fts (np, lub); // lub matrix in EXTRACTED form
+  /* lub matrix in EXTRACTED form */
+  make_matrix_lub_ewald_3fts (np, lub);
+  /* lub := L.T, where T.(UOE) = (UOE~) */
+  trans_mat_ext2ext (np, lub);
+  /* lub := (M.T).(L.T) */
   multiply_matrices (n11, mat, lub);
+  /* lub := I + (M.T).(L.T) */
   for (i = 0; i < n11; ++i)
     mat [i * n11 + i] += 1.0;
   /* note: at this point, lub[] is free to use. */
   split_matrix_3fts (np, mat, I_ll, I_lh, I_hl, I_hh);
 
-
-  /* STEP 1 */
-  /* mat_hh := (A^-1) */
-  /*cholesky (mat_hh, n5);*/
-  lu_inv (mat_hh, n5);
-
-  /* STEP 2 */
-  /* calc mob_hl := (A^-1).F = mat_hh . I_hl */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  mob_hl [i * n6 + j] = 0.0;
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mob_hl [i * n6 + j] +=
-		mat_hh [i * n5 + k] * I_hl [k * n6 + j];
-	    }
-	}
-    }
-  /* note: at this point, I_hl[] is free to use. */
-  /* calc mob_hh := (A^-1).E = mat_hh . I_hh */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n5; ++j)
-	{
-	  mob_hh [i * n5 + j] = 0.0;
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mob_hh [i * n5 + j] +=
-		mat_hh [i * n5 + k] * I_hh [k * n5 + j];
-	    }
-	}
-    }
-  /* calc I_hl := (A^-1).B = mat_hh . mat_hl */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  I_hl [i * n6 + j] = 0.0;
-	  for (k = 0; k < n5; ++k)
-	    {
-	      I_hl [i * n6 + j] +=
-		mat_hh [i * n5 + k] * mat_hl [k * n6 + j];
-	    }
-	}
-    }
-
-  /* STEP 3 */
-  /* calc I_ll := C.(A^-1).F - H = mat_lh . mob_hl - I_ll */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  I_ll [i * n6 + j] = - I_ll [i * 6 + j];
-	  for (k = 0; k < n5; ++k)
-	    {
-	      I_ll [i * n6 + j] +=
-		mat_lh [i * n5 + k] * mob_hl [k * n6 + j];
-	    }
-	}
-    }
-  /* note: at this point, mob_hl[] is free to use. */
-  /*cholesky (I_ll, n6);*/
-  lu_inv (I_ll, n6);
-  /* calc I_lh := G - C.(A^-1).E = I_lh - mat_lh . mob_hh */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n5; ++j)
-	{
-	  for (k = 0; k < n5; ++k)
-	    {
-	      I_lh [i * n5 + j] -=
-		mat_lh [i * n5 + k] * mob_hh [k * n5 + j];
-	    }
-	}
-    }
-  /* calc mat_ll := - D + C.(A^-1).B = - mat_ll + mat_lh . I_hl */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  mat_ll [i * n6 + j] = - mat_ll [i * 6 + j];
-	  for (k = 0; k < n5; ++k)
-	    {
-	      mat_ll [i * n6 + j] +=
-		mat_lh [i * n5 + k] * I_hl [k * n6 + j];
-	    }
-	}
-    }
-  /* at this point, mat_lh[] is free to use. */
-
-  /* STEP 4 */
-  /* calc mat_lh = K = [(C.A^-1.F-H)^-1].(G-C.A^-1.E) = I_ll . I_lh */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n5; ++j)
-	{
-	  mat_lh [i * n5 + j] = 0.0;
-	  for (k = 0; k < n6; ++k)
-	    {
-	      mat_lh [i * n5 + j] +=
-		I_ll [i * n6 + k] * I_lh [k * n5 + j];
-	    }
-	}
-    }
-  /* calc mob_ll = L = [(C.A^-1.F-H)^-1].(-D-C.A^-1.B) = I_ll . mat_ll */
-  for (i = 0; i < n6; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  mob_ll [i * n6 + j] = 0.0;
-	  for (k = 0; k < n6; ++k)
-	    {
-	      mob_ll [i * n6 + j] +=
-		I_ll [i * n6 + k] * mat_ll [k * n6 + j];
-	    }
-	}
-    }
-
-  /* STEP 5 */
-  /* calc mat_hh = I = A^-1.E+A^-1.F.K = mat_hh + mob_hl . mat_lh */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n5; ++j)
-	{
-	  for (k = 0; k < n6; ++k)
-	    {
-	      mat_hh [i * n5 + j] +=
-		mob_hl [i * n6 + k] * mat_lh [k * n5 + j];
-	    }
-	}
-    }
-  /* calc I_hl = J = -A^-1.B+A^-1.F.L = - I_hl + mob_hl . mob_ll  */
-  for (i = 0; i < n5; ++i)
-    {
-      for (j = 0; j < n6; ++j)
-	{
-	  I_hl [i * n6 + j] = 0.0;
-	  for (k = 0; k < n6; ++k)
-	    {
-	      I_hl [i * n6 + j] +=
-		mob_hl [i * n6 + k] * mob_ll [k * n6 + j];
-	    }
-	}
-    }
+  solve_gen_linear (n6, n5,
+		    I_ll, I_lh, I_hl, I_hh,
+		    mat_ll, mat_lh, mat_hl, mat_hh,
+		    mob_ll, mob_lh, mob_hl, mob_hh);
 
   /* STEP 6 */
-  merge_matrix_3fts (np, mob_ll, mat_lh, I_hl, mat_hh, mat);
-  trans_ext (np, mat); // resistance matrix in EXTRACTED form
-
-  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
 
   set_FTS_by_fts (np, u, o, s, x);
 
   free (mat);
+  free (lub);
   free (mat_ll);
   free (mat_lh);
   free (mat_hl);
@@ -1061,6 +902,79 @@ trans_ext (int np, double *r)
 		}
 	    }
 	}
+    }
+
+  free (tmp);
+}
+
+/* multiply transformation matrix from right-hand-side,
+ * so that this could be multiplied by extracted vector
+ * and return the extracted vector
+ * INPUT
+ *  mat [np * 11 * np * 11] :
+ * OUTPUT
+ *  mat [np * 11 * np * 11] := mat . t, where t.E = E~
+ */
+static void
+trans_mat_ext2ext (int np, double * mat)
+{
+  static double
+    t [121] = {
+      1.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 1.0, 0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 1.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 1.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 1.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 1.0,  0.0,  0.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  2.0,  0.0, 0.0, 0.0,  1.0, 
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,  2.0, 0.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 2.0, 0.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 2.0,  0.0,
+      0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  1.0,  0.0, 0.0, 0.0,  2.0};
+
+  int i, ii, i11, i0;
+  int j, jj, j11, j0;
+  int k;
+  int n;
+
+  double * tmp;
+
+  n = np * 11;
+
+  tmp = malloc (sizeof (double) * n * n);
+  if (tmp == NULL)
+    {
+      fprintf (stderr, "allocation error in trans_ext().\n");
+      exit (1);
+    }
+
+  for (i = 0; i < np; ++i)
+    {
+      i11 = i * 11;
+      for (j = 0; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (ii = 0; ii < 11; ++ii)
+	    {
+	      i0 = i11 + ii;
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  j0 = j11 + jj;
+		  tmp [i0 * n + j0] = 0.0;
+		  for (k=0; k<11; k++)
+		    {
+		      tmp [i0 * n + j0] +=
+			mat [i0 * n + j11 + k]
+			* t [k * 11 + jj];
+		    }
+		}
+	    }
+	}
+    }
+
+  for (i = 0; i < n * n; ++i)
+    {
+      mat [i] = tmp [i];
     }
 
   free (tmp);
