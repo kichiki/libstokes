@@ -1,10 +1,21 @@
 /* utility routines for Ewald-summation code in 3D
  * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: stokes.c,v 1.3 2001/01/25 08:46:40 ichiki Exp $
+ * $Id: stokes.c,v 1.4 2001/01/29 09:41:31 ichiki Exp $
  */
 #include <math.h>
 
 #include "ewald-3.h"
+
+/** global variables **/
+int pcellx, pcelly, pcellz; /* # of cell in real space */
+int kmaxx, kmaxy, kmaxz; /* # of cell in reciprocal space */
+double zeta, zeta2, zaspi, za2;
+double pi2;
+double pivol;
+double lx, ly, lz; /* cell size */
+double llx [27], lly [27], llz [27]; /* for regist and lub */
+
+
 
 /* initialize parameters used in Ewald-summation code in 3D
  * INPUT
@@ -29,7 +40,7 @@ init_ewald_3d (double lx, double ly, double lz,
   extern double zeta, zeta2, zaspi, za2;
   extern double pi2;
   extern double pivol;
-  extern double lx, ly, lz; /* cell size */
+  //extern double lx, ly, lz; /* cell size */
   extern double llx [27], lly [27], llz [27];
 
 
