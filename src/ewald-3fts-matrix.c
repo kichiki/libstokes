@@ -1,7 +1,7 @@
 /* Ewald summation technique under FTS version -- MATRIX procedure
  * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
  *   <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts-matrix.c,v 1.3 2001/02/14 09:07:12 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 1.4 2001/02/14 10:10:24 ichiki Exp $
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
@@ -46,6 +46,16 @@ merge_matrix_3fts (int np,
 		   double * mat_ll, double * mat_lh,
 		   double * mat_hl, double * mat_hh,
 		   double *mat);
+static void
+split_matrix_fix_3fts (int np, int nm,
+		       double * mat,
+		       double * mat_ll, double * mat_lh,
+		       double * mat_hl, double * mat_hh);
+static void
+merge_matrix_fix_3fts (int np, int nm,
+		       double * mat_ll, double * mat_lh,
+		       double * mat_hl, double * mat_hh,
+		       double * mat);
 
 static void
 test_symmetric (int n, double * mat, double tiny);
@@ -1138,6 +1148,306 @@ merge_matrix_3fts (int np,
 		{
 		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
 		    = mat_hh [(i5 + ii) * n5 + j5 + jj];
+		}
+	    }
+	}
+    }
+}
+
+/*
+ * INPUT
+ *  np : # ALL particles
+ *  nm : # MOBILE particles
+ *  mat [np * 11 * np * 11] : matrix to split
+ * OUTPUT
+ *  mat_ll [nm * 6 * nm * 6] :
+ *  mat_lh [nm * 6 * n'    ] :
+ *  mat_hl [n'     * nm * 6] :
+ *  mat_hh [n'     * n'    ] :
+ *  where n' = np * 11 - nm * 6
+ */
+static void
+split_matrix_fix_3fts (int np, int nm,
+		       double * mat,
+		       double * mat_ll, double * mat_lh,
+		       double * mat_hl, double * mat_hh)
+{
+  int i, j;
+  int ii, jj;
+  int i11, i6, i5;
+  int j11, j6, j5;
+  int n11;
+  int nl, nh;
+  int nm5;
+
+
+  n11 = np * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+  nm5 = nm * 5;
+
+  for (i = 0; i < nm; ++i)
+    {
+      i11 = i * 11;
+      i6 = i * 6;
+      i5 = i * 5;
+      for (j = 0; j < nm; ++j)
+	{
+	  j11 = j * 11;
+	  j6 = j * 6;
+	  j5 = j * 5;
+	  for (ii = 0; ii < 6; ++ii)
+	    {
+	      /* ll */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat_ll [(i6 + ii) * nl + j6 + jj]
+		    = mat [(i11 + ii) * n11 + j11 + jj];
+		}
+	      /* lh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat_lh [(i6 + ii) * nh + j5 + jj]
+		    = mat [(i11 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	  for (ii = 0; ii < 5; ++ii)
+	    {
+	      /* hl */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat_hl [(i5 + ii) * nl + j6 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + jj];
+		}
+	      /* hh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat_hh [(i5 + ii) * nh + j5 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = 0; i < nm; ++i)
+    {
+      i11 = i * 11;
+      i6 = i * 6;
+      i5 = i * 5;
+      for (j = nm; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (ii = 0; ii < 6; ++ii)
+	    {
+	      /* lh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat_lh [(i6 + ii) * nh + nm5 + (j - nm) * 11 + jj]
+		    = mat [(i11 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	  for (ii = 0; ii < 5; ++ii)
+	    {
+	      /* hh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat_hh [(i5 + ii) * nh + nm5 + (j - nm) * 11 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = nm; i < np; ++i)
+    {
+      i11 = i * 11;
+      for (j = 0; j < nm; ++j)
+	{
+	  j11 = j * 11;
+	  j6 = j * 6;
+	  j5 = j * 5;
+	  for (ii = 0; ii < 11; ++ii)
+	    {
+	      /* hl */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat_hl [(nm5 + (i - nm) * 11 + ii) * nl + j6 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + jj];
+		}
+	      /* hh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat_hh [(nm5 + (i - nm) * 11 + ii) * nh + j5 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = nm; i < np; ++i)
+    {
+      i11 = i * 11;
+      for (j = nm; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (ii = 0; ii < 11; ++ii)
+	    {
+	      /* hh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat_hh [(nm5 + (i - nm) * 11 + ii) * nh
+			 + nm5 + (j - nm) * 11 + jj]
+		    = mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj];
+		}
+	    }
+	}
+    }
+}
+
+/*
+ * INPUT
+ *  np : # ALL particles
+ *  nm : # MOBILE particles
+ *  mat [np * 11 * np * 11] : matrix to split
+ * OUTPUT
+ *  mat_ll [nm * 6 * nm * 6] :
+ *  mat_lh [nm * 6 * n'    ] :
+ *  mat_hl [n'     * nm * 6] :
+ *  mat_hh [n'     * n'    ] :
+ *  where n' = np * 11 - nm * 6
+ */
+static void
+merge_matrix_fix_3fts (int np, int nm,
+		       double * mat_ll, double * mat_lh,
+		       double * mat_hl, double * mat_hh,
+		       double * mat)
+{
+  int i, j;
+  int ii, jj;
+  int i11, i6, i5;
+  int j11, j6, j5;
+  int n11;
+  int nl, nh;
+  int nm5;
+
+
+  n11 = np * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+  nm5 = nm * 5;
+
+  for (i = 0; i < nm; ++i)
+    {
+      i11 = i * 11;
+      i6 = i * 6;
+      i5 = i * 5;
+      for (j = 0; j < nm; ++j)
+	{
+	  j11 = j * 11;
+	  j6 = j * 6;
+	  j5 = j * 5;
+	  for (ii = 0; ii < 6; ++ii)
+	    {
+	      /* ll */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat [(i11 + ii) * n11 + j11 + jj]
+		    = mat_ll [(i6 + ii) * nl + j6 + jj];
+		}
+	      /* lh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat [(i11 + ii) * n11 + j11 + 6 + jj]
+		    = mat_lh [(i6 + ii) * nh + j5 + jj];
+		}
+	    }
+	  for (ii = 0; ii < 5; ++ii)
+	    {
+	      /* hl */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + jj]
+		    = mat_hl [(i5 + ii) * nl + j6 + jj];
+		}
+	      /* hh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		    = mat_hh [(i5 + ii) * nh + j5 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = 0; i < nm; ++i)
+    {
+      i11 = i * 11;
+      i6 = i * 6;
+      i5 = i * 5;
+      for (j = nm; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (ii = 0; ii < 6; ++ii)
+	    {
+	      /* lh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat [(i11 + ii) * n11 + j11 + 6 + jj]
+		    = mat_lh [(i6 + ii) * nh + nm5 + (j - nm) * 11 + jj];
+		}
+	    }
+	  for (ii = 0; ii < 5; ++ii)
+	    {
+	      /* hh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		    = mat_hh [(i5 + ii) * nh + nm5 + (j - nm) * 11 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = nm; i < np; ++i)
+    {
+      i11 = i * 11;
+      for (j = 0; j < nm; ++j)
+	{
+	  j11 = j * 11;
+	  j6 = j * 6;
+	  j5 = j * 5;
+	  for (ii = 0; ii < 11; ++ii)
+	    {
+	      /* hl */
+	      for (jj = 0; jj < 6; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + jj]
+		    = mat_hl [(nm5 + (i - nm) * 11 + ii) * nl + j6 + jj];
+		}
+	      /* hh */
+	      for (jj = 0; jj < 5; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		    = mat_hh [(nm5 + (i - nm) * 11 + ii) * nh + j5 + jj];
+		}
+	    }
+	}
+    }
+
+  for (i = nm; i < np; ++i)
+    {
+      i11 = i * 11;
+      for (j = nm; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (ii = 0; ii < 11; ++ii)
+	    {
+	      /* hh */
+	      for (jj = 0; jj < 11; ++jj)
+		{
+		  mat [(i11 + 6 + ii) * n11 + j11 + 6 + jj]
+		    = mat_hh [(nm5 + (i - nm) * 11 + ii) * nh
+			     + nm5 + (j - nm) * 11 + jj];
 		}
 	    }
 	}
