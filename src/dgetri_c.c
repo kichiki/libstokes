@@ -1,7 +1,8 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
  * Copyright (C) 2005 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dgetri_c.c,v 1.2 2005/03/31 02:46:07 ichiki Exp $
+ * $Id: dgetri_c.c,v 1.3 2005/07/17 18:57:08 ichiki Exp $
  */
+#include <stdio.h>
 #include <stdlib.h>
 
 /*
@@ -154,7 +155,18 @@ void lapack_inv (int n, const double *a,
       ai[i] = a[i];
     }
   dgetrf_ (&n, &n, ai, &n, ipvt, &info);
+  if (info > 0)
+    {
+      fprintf (stderr, "singular matrix met at dgetrf (info = %d)\n", info);
+      exit (1);
+    }
+
   dgetri_ (&n, ai, &n, ipvt, work, &n, &info);
+  if (info > 0)
+    {
+      fprintf (stderr, "singular matrix met at dgetri (info = %d)\n", info);
+      exit (1);
+    }
 
   free (ipvt);
   free (work);
