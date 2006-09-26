@@ -1,11 +1,12 @@
 /* subroutine for the procedure of F version
- * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: f.c,v 1.5 2001/02/12 08:41:11 ichiki Exp $
+ * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: f.c,v 1.6 2006/09/26 01:09:20 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
-#include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+#include "two-body-res.h" /* scalar_two_body_res () */
+#include "stokes.h" /* struct stokeks */
 
 #include "f.h"
 
@@ -198,25 +199,29 @@ scalar_minv_f (double s, double * scalar_f)
 
 /* calculate lubrication f by u for all particles
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
+ *  sys : system parameters
  *   u [np * 3] : velocity
  * OUTPUT
  *   f [np * 3] : force
  */
 void
-calc_lub_3f (int np, double * u, double * f)
+calc_lub_3f (struct stokes * sys,
+	     double * u, double * f)
 {
-  extern double * pos;
+  int np; 
 
   int i, j;
   int i3;
   int j3;
 
 
+  np = sys->np;
+
   /* clear f [np * 3] */
   for (i = 0; i < np * 3; ++i)
-    f [i] = 0.0;
+    {
+      f [i] = 0.0;
+    }
 
   for (i = 0; i < np; ++i)
     {
@@ -225,7 +230,7 @@ calc_lub_3f (int np, double * u, double * f)
 	{
 	  j3 = j * 3;
 	  calc_lub_f_2b (u + i3, u + j3,
-			 pos + i3, pos + j3,
+			 sys->pos + i3, sys->pos + j3,
 			 f + i3, f + j3);
 	  
 	}

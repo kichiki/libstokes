@@ -1,10 +1,10 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
- * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
- *               <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3fts.c,v 4.1 2002/06/02 19:09:49 ichiki Exp $
+ * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3fts.c,v 5.1 2006/09/26 01:06:12 ichiki Exp $
  *
- * 3 dimensional hydrodynamics, 3D configuration
- * periodic boundary condition in 3 direction,
+ * 3 dimensional hydrodynamics
+ * 3D configuration
+ * periodic boundary condition in 3 direction
  * FTS version
  * non-dimension formulation
  */
@@ -18,72 +18,32 @@
 
 #include <libiter.h> /* solve_iter_stab (), gpb () */
 
+#include "stokes.h" /* struct stokeks */
 #include "fts.h"
 #include "ewald-3fts.h"
-
-
-/* (local) global variable */
-int NUMB_mobile_particles; /* this is dirty, though ... */
-
-
-/** function prototypes for local routines **/
-/* utility routines for calc_mob_ewald_3fts () */
-static void
-calc_b_mob_ewald_3fts (int n,
-		       double *f, double *t, double *e,
-		       double *b);
-static void
-atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data);
-
-/* utility routines for calc_mob_fix_ewald_3fts () */
-static void
-calc_b_mob_fix_ewald_3fts (int np, int nm,
-			   double *f, double *t, double *e,
-			   double *uf, double *of, double *ef,
-			   double *b);
-static void
-atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data);
-
-
-/* utility routines for calc_mob_lub_fix_ewald_3fts () */
-static void
-calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
-			       double *f, double *t, double *e,
-			       double *uf, double *of, double *ef,
-			       double *b);
-static void
-atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data);
-static void
-calc_lub_ewald_3fts (int np, double * uoe, double * fts);
-static int
-cond_lub (double * x1, double * x2);
 
 
 /* ATIMES version (for O(N^2) scheme) of
  * calc ewald-summed mobility for FTS version
  * INPUT
- *  (global) pos [] : position of particles
  *  n := np * 11
  *  x [n * 11] : FTS
+ *  user_data = (struct stokes *) sys : system parameters
  * OUTPUT
  *  y [n * 11] : UOE
  */
 void
 atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
-  extern int pcellx, pcelly, pcellz;
-  extern int kmaxx, kmaxy, kmaxz;
-
-  extern double zeta, zeta2, zaspi, za2;
-  extern double pi2;
-  extern double pivol;
-  extern double lx, ly, lz; /* cell size */
-
-  extern double *pos;
-
-#ifdef ZETA
-  extern double cpu1, cpu2, cpu3;
-#endif /* ZETA */
+  struct stokes * sys;
+  int pcellx, pcelly, pcellz;
+  int kmaxx, kmaxy, kmaxz;
+  double zeta, zeta2, zaspi, za2;
+  double pi2;
+  double pivol;
+  double lx, ly, lz;
+  double *pos;
+  int np_sys; /* for check */
 
   double xa, ya; 
   double yb;
@@ -117,11 +77,37 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
   double a2, c2;
 
 
+  sys = (struct stokes *) user_data;
+  pcellx = sys->pcellx;
+  pcelly = sys->pcelly;
+  pcellz = sys->pcellz;
+  kmaxx  = sys->kmaxx;
+  kmaxy  = sys->kmaxy;
+  kmaxz  = sys->kmaxz;
+  zeta   = sys->zeta;
+  zeta2  = sys->zeta2;
+  zaspi  = sys->zaspi;
+  za2    = sys->za2;
+  pi2    = sys->pi2;
+  pivol  = sys->pivol;
+  lx     = sys->lx;
+  ly     = sys->ly;
+  lz     = sys->lz;
+  pos    = sys->pos;
+  np_sys = sys->np;
+
   np = n / 11;
+  if (np_sys != np)
+    {
+      fprintf (stderr, "wrong n %d <-> np %d\n", n, np_sys);
+      exit (1);
+    }
 
   /* clear result */
   for (i = 0; i < n; i ++)
-    y [i] = 0.0;
+    {
+      y [i] = 0.0;
+    }
 
   /* diagonal part ( self part ) */
   xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
@@ -297,7 +283,7 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
     }
 
 #ifdef ZETA
-  cpu2 = ptime_ms_d ();
+  sys->cpu2 = ptime_ms_d ();
 #endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
@@ -371,8 +357,8 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
     }
 
 #ifdef ZETA
-  cpu3 = ptime_ms_d ();
-  cpu1 = cpu2 + cpu3;
+  sys->cpu3 = ptime_ms_d ();
+  sys->cpu1 = sys->cpu2 + sys->cpu3;
 #endif /* ZETA */
 }
 
@@ -380,7 +366,7 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
- *  np : # particles
+ *  sys : system parameters
  *   u [np * 3] :
  *   o [np * 3] :
  *   e [np * 5] :
@@ -390,16 +376,19 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data)
  *   s [np * 5] :
  */
 void
-calc_res_ewald_3fts (int np,
+calc_res_ewald_3fts (struct stokes * sys,
 		     double *u, double *o, double *e,
 		     double *f, double *t, double *s)
 {
+  int np;
   int i;
   int n11;
 
   double *b;
   double *x;
 
+
+  np = sys->np;
 
   n11 = np * 11;
   b = malloc (sizeof (double) * n11);
@@ -415,9 +404,11 @@ calc_res_ewald_3fts (int np,
 
   /* first guess */
   for (i = 0; i < n11; ++i)
-    x [i] = 0.0;
+    {
+      x [i] = 0.0;
+    }
 
-  solve_iter_stab (n11, b, x, atimes_ewald_3fts, NULL,
+  solve_iter_stab (n11, b, x, atimes_ewald_3fts, (void *) sys,
 		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (np, f, t, s, x);
@@ -427,58 +418,10 @@ calc_res_ewald_3fts (int np,
 }
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  np : # particles
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_ewald_3fts (int np,
-		     double *f, double *t, double *e,
-		     double *u, double *o, double *s)
-{
-  int i;
-  int n11;
-
-  double *b;
-  double *x;
-
-
-  n11 = np * 11;
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_mob_ewald_3fts ().\n");
-      exit (1);
-    }
-
-  calc_b_mob_ewald_3fts (np, f, t, e, b);
-
-  /* first guess */
-  for (i = 0; i < n11; ++i)
-    x [i] = 0.0;
-
-  solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts, NULL,
-		   gpb, 2000, -12.0);
-
-  set_FTS_by_fts (np, u, o, s, x);
-
-  free (b);
-  free (x);
-}
-
 /* calc b-term (constant term) of (natural) mobility problem under Ewald sum
  * where b := -(0,0,e) + M.(f,t,0).
  * INPUT
- *  np : # particles (not # elements in b[]!)
+ *  sys : system parameters
  *  f [np * 3] :
  *  t [np * 3] :
  *  e [np * 5] :
@@ -486,10 +429,11 @@ calc_mob_ewald_3fts (int np,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mob_ewald_3fts (int np,
+calc_b_mob_ewald_3fts (struct stokes * sys,
 		       double *f, double *t, double *e,
 		       double *b)
 {
+  int np;
   int i;
   int i5, i11;
   int j;
@@ -498,6 +442,8 @@ calc_b_mob_ewald_3fts (int np,
   double *x;
   double *v5_0;
 
+
+  np = sys->np;
 
   n3 = np * 3;
   n5 = np * 5;
@@ -518,7 +464,7 @@ calc_b_mob_ewald_3fts (int np,
     }
 
   set_fts_by_FTS (np, x, f, t, v5_0);
-  atimes_ewald_3fts (n11, x, b, NULL);
+  atimes_ewald_3fts (n11, x, b, (void *) sys);
 
   for (i = 0; i < np; ++i)
     {
@@ -533,18 +479,20 @@ calc_b_mob_ewald_3fts (int np,
   free (x);
   free (v5_0);
 }
-
 /* calc atimes of (natural) mobility problem under Ewald sum
  * where A.x := (u,o,0) - M.(0,0,s).
  * INPUT
  *  n : # elements in x[] and b[] (not # particles!)
  *  x [n] :
+ *  user_data = (struct stokes *) sys : system parameters
  * OUTPUT
  *  y [n] :
  */
 static void
 atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
+  struct stokes * sys;
+
   int i;
   int np;
   int n3, n5;
@@ -556,7 +504,9 @@ atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data)
   double *s;
 
 
-  np = n / 11;
+  sys = (struct stokes *) user_data;
+  np = sys->np;
+
   n3 = np * 3;
   n5 = np * 5;
 
@@ -584,7 +534,7 @@ atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data)
   set_FTS_by_fts (np, u, o, s, x);
 
   set_fts_by_FTS (np, y, v5_0, v5_0, s);
-  atimes_ewald_3fts (n, y, z, NULL);
+  atimes_ewald_3fts (n, y, z, (void *) sys);
 
   set_fts_by_FTS (np, y, u, o, v5_0);
 
@@ -599,49 +549,32 @@ atimes_mob_ewald_3fts (int n, double *x, double *y, void * user_data)
   free (o);
   free (s);
 }
-
-/** natural mobility problem with fixed particles **/
-/* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
+/* solve natural mobility problem in FTS version under Ewald sum
  * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
  */
 void
-calc_mob_fix_ewald_3fts (int np, int nm,
-			 double *f, double *t, double *e,
-			 double *uf, double *of, double *ef,
-			 double *u, double *o, double *s,
-			 double *ff, double *tf, double *sf)
+calc_mob_ewald_3fts (struct stokes * sys,
+		     double *f, double *t, double *e,
+		     double *u, double *o, double *s)
 {
-  extern int NUMB_mobile_particles; /* this is dirty, though ... */
-
+  int np;
   int i;
   int n11;
-  int nf;
-  int nm11;
 
   double *b;
   double *x;
 
 
-  nf = np - nm;
+  np = sys->np;
   n11 = np * 11;
-  nm11 = nm * 11;
-
   b = malloc (sizeof (double) * n11);
   x = malloc (sizeof (double) * n11);
   if (b == NULL
@@ -651,28 +584,28 @@ calc_mob_fix_ewald_3fts (int np, int nm,
       exit (1);
     }
 
-  calc_b_mob_fix_ewald_3fts (np, nm, f, t, e, uf, of, ef, b);
+  calc_b_mob_ewald_3fts (sys, f, t, e, b);
 
   /* first guess */
   for (i = 0; i < n11; ++i)
-    x [i] = 0.0;
+    {
+      x [i] = 0.0;
+    }
 
-  NUMB_mobile_particles = nm;
-  solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts, NULL,
+  solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts, (void *) sys,
 		   gpb, 2000, -12.0);
 
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+  set_FTS_by_fts (np, u, o, s, x);
 
   free (b);
   free (x);
 }
 
+/** natural mobility problem with fixed particles **/
 /* calc b-term (constant term) of (natural) mobility problem under Ewald sum
  * where b := -(0,0,e) + M.(f,t,0).
  * INPUT
- *  np : # all particles (not # elements in b[]!)
- *  nm : # mobile particles (not # elements in b[]!)
+ *  sys : system parameters
  *  f [nm * 3] :
  *  t [nm * 3] :
  *  e [nm * 5] :
@@ -683,11 +616,12 @@ calc_mob_fix_ewald_3fts (int np, int nm,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mob_fix_ewald_3fts (int np, int nm,
+calc_b_mob_fix_ewald_3fts (struct stokes * sys,
 			   double *f, double *t, double *e,
 			   double *uf, double *of, double *ef,
 			   double *b)
 {
+  int np, nm;
   int i;
   int i3, i5, i11;
   int j;
@@ -698,6 +632,9 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
   double *x;
   double *v5_0;
 
+
+  np = sys->np;
+  nm = sys->nm;
 
   nf = np - nm;
   n3 = np * 3;
@@ -722,7 +659,7 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
   /* set x := [(F,T,0)_m,(0,0,0)_f] */
   set_fts_by_FTS (nm, x, f, t, v5_0);
   set_fts_by_FTS (nf, x + nm11, v5_0, v5_0, v5_0);
-  atimes_ewald_3fts (n11, x, b, NULL);
+  atimes_ewald_3fts (n11, x, b, (void *) sys);
 
   /* set b := M.x - [(0,0,E)_m,(U,O,E)_f] */
   for (i = 0; i < nm; ++i)
@@ -753,20 +690,19 @@ calc_b_mob_fix_ewald_3fts (int np, int nm,
   free (x);
   free (v5_0);
 }
-
 /* calc atimes of (natural) mobility problem under Ewald sum
  * where A.x := [(u,o,0)_m,(0,0,0)_f] - M.[(0,0,s)_m,(f,t,s)_f].
  * INPUT
- *  (global) : NUMB_mobile_particles -- this is dirty, though ...
  *  n : # elements in x[] and b[] (not # particles!)
  *  x [n] :
+ *  user_data = (struct stokes *) sys : system parameters
  * OUTPUT
  *  y [n] :
  */
 static void
 atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
-  extern int NUMB_mobile_particles; /* this is dirty, though ... */
+  struct stokes * sys;
 
   int i;
   int np;
@@ -785,8 +721,10 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   double *sf;
 
 
-  np = n / 11;
-  nm = NUMB_mobile_particles;
+  sys = (struct stokes *) user_data;
+  np = sys->np;
+  nm = sys->nm;
+
   nf = np - nm;
   n5 = np * 5;
   nf3 = nf * 3;
@@ -828,7 +766,7 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   /* set y := [(0,0,S)_mobile,(F,T,S)_fixed] */
   set_fts_by_FTS (nm, y, v5_0, v5_0, s);
   set_fts_by_FTS (nf, y + nm11, ff, tf, sf);
-  atimes_ewald_3fts (n, y, z, NULL);
+  atimes_ewald_3fts (n, y, z, (void *) sys);
 
   /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
   set_fts_by_FTS (nm, y, u, o, v5_0);
@@ -849,73 +787,10 @@ atimes_mob_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   free (tf);
   free (sf);
 }
-
-
-/** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication
- * in FTS version under Ewald sum
+/* solve natural mobility problem with fixed particles in FTS version
+ * under Ewald sum
  * INPUT
- *  np : # particles
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_res_lub_ewald_3fts (int np,
-			 double *u, double *o, double *e,
-			 double *f, double *t, double *s)
-{
-  int i;
-  int n11;
-
-  double *b;
-  double *x;
-  double *lub;
-
-
-  n11 = np * 11;
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  lub = malloc (sizeof (double) * n11);
-  if (b == NULL
-      || x == NULL
-      || lub == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_lub_ewald_3fts ().\n");
-      exit (1);
-    }
-
-  set_fts_by_FTS (np, b, u, o, e);
-  calc_lub_ewald_3fts (np, b, lub);
-  atimes_ewald_3fts (n11, lub, x, NULL); /* x[] is used temporaly */
-  for (i = 0; i < n11; ++i)
-    b [i] += x [i];
-
-  /* first guess */
-  for (i = 0; i < n11; ++i)
-    x [i] = 0.0;
-
-  solve_iter_stab (n11, b, x, atimes_ewald_3fts, NULL,
-		   gpb, 2000, -12.0);
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (b);
-  free (x);
-  free (lub);
-}
-
-
-/** natural mobility problem with lubrication with fixed particles **/
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
- * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *  sys : system parameters
  *   f [nm * 3] :
  *   t [nm * 3] :
  *   e [nm * 5] :
@@ -931,14 +806,13 @@ calc_res_lub_ewald_3fts (int np,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_3fts (int np, int nm,
-			     double *f, double *t, double *e,
-			     double *uf, double *of, double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf)
+calc_mob_fix_ewald_3fts (struct stokes * sys,
+			 double *f, double *t, double *e,
+			 double *uf, double *of, double *ef,
+			 double *u, double *o, double *s,
+			 double *ff, double *tf, double *sf)
 {
-  extern int NUMB_mobile_particles; /* this is dirty, though ... */
-
+  int np, nm;
   int i;
   int n11;
   int nf;
@@ -947,6 +821,9 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
   double *b;
   double *x;
 
+
+  np = sys->np;
+  nm = sys->nm;
 
   nf = np - nm;
   n11 = np * 11;
@@ -961,19 +838,16 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
       exit (1);
     }
 
-  calc_b_mob_lub_fix_ewald_3fts (np, nm, f, t, e, uf, of, ef, b);
+  calc_b_mob_fix_ewald_3fts (sys, f, t, e, uf, of, ef, b);
 
   /* first guess */
   for (i = 0; i < n11; ++i)
-    x [i] = 0.0;
+    {
+      x [i] = 0.0;
+    }
 
-  NUMB_mobile_particles = nm;
-  solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts, NULL,
-		   /*gpb_chk*/
-		   /*st2_chk*/
-		   sta2, 2000, -12.0);
-  /*solve_iter_gmres (n11, b, x, atimes_mob_lub_fix_ewald_3fts);*/
-  /*solve_iter_otmk (n11, b, x, atimes_mob_lub_fix_ewald_3fts, otmk);*/
+  solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts, (void *) sys,
+		   gpb, 2000, -12.0);
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -982,12 +856,171 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
   free (x);
 }
 
+/** natural resistance problem with lubrication **/
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+static int
+cond_lub (double * x1, double * x2)
+{
+  double x, y, z;
+  double r2;
+
+
+  x = x1 [0] - x2 [0];
+  y = x1 [1] - x2 [1];
+  z = x1 [2] - x2 [2];
+
+  r2 = x * x
+    + y * y
+    + z * z;
+
+  if (r2 != 0.0
+      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
+    {
+      return 0;
+    }
+  else
+    {
+      return 1;
+    }
+}
+/* calculate lubrication fts by uoe for all particles
+ * under the periodic boundary condition
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ *   uoe [np * 11] : velocity, angular velocity, strain
+ * OUTPUT
+ *   fts [np * 11] : force, torque, stresslet
+ */
+static void
+calc_lub_ewald_3fts (struct stokes * sys,
+		     double * uoe, double * fts)
+{
+  int np;
+  int i, j, k;
+  int i3, i11;
+  int j3, j11;
+
+  double * tmp_pos;
+
+
+  np = sys->np;
+
+  tmp_pos = malloc (sizeof (double) * 3);
+  if (tmp_pos == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      exit (1);
+    }
+
+  /* clear fts [np * 11] */
+  for (i = 0; i < np * 11; ++i)
+    {
+      fts [i] = 0.0;
+    }
+
+  for (i = 0; i < np; ++i)
+    {
+      i3 = i * 3;
+      i11 = i * 11;
+      for (j = i; j < np; ++j)
+	{
+	  j3 = j * 3;
+	  j11 = j * 11;
+	  /* all image cells */
+	  for (k = 0; k < 27; ++k)
+	    {
+	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		{
+		  calc_lub_fts_2b (uoe + i11, uoe + j11,
+				   sys->pos + i3, tmp_pos,
+				   fts + i11, fts + j11);
+		}
+	    }
+	}
+    }
+
+  free (tmp_pos);
+}
+/* solve natural resistance problem with lubrication
+ * in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_res_lub_ewald_3fts (struct stokes * sys,
+			 double *u, double *o, double *e,
+			 double *f, double *t, double *s)
+{
+  int np;
+  int i;
+  int n11;
+
+  double *b;
+  double *x;
+  double *lub;
+
+
+  np = sys->np;
+  n11 = np * 11;
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  lub = malloc (sizeof (double) * n11);
+  if (b == NULL
+      || x == NULL
+      || lub == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_lub_ewald_3fts ().\n");
+      exit (1);
+    }
+
+  set_fts_by_FTS (np, b, u, o, e);
+  calc_lub_ewald_3fts (sys, b, lub);
+  atimes_ewald_3fts (n11, lub, x, (void *) sys); /* x[] is used temporaly */
+  for (i = 0; i < n11; ++i)
+    {
+      b [i] += x [i];
+    }
+
+  /* first guess */
+  for (i = 0; i < n11; ++i)
+    {
+      x [i] = 0.0;
+    }
+
+  solve_iter_stab (n11, b, x, atimes_ewald_3fts, (void *) sys,
+		   gpb, 2000, -12.0);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (b);
+  free (x);
+  free (lub);
+}
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* calc b-term (constant term) of (natural) mobility problem
  * with lubrication under Ewald sum
  * where b := -(0,0,e) + M.(f,t,0).
  * INPUT
- *  np : # all particles (not # elements in b[]!)
- *  nm : # mobile particles (not # elements in b[]!)
+ *  sys : system parameters
  *  f [nm * 3] :
  *  t [nm * 3] :
  *  e [nm * 5] :
@@ -998,11 +1031,12 @@ calc_mob_lub_fix_ewald_3fts (int np, int nm,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
+calc_b_mob_lub_fix_ewald_3fts (struct stokes * sys,
 			       double *f, double *t, double *e,
 			       double *uf, double *of, double *ef,
 			       double *b)
 {
+  int np, nm;
   int i;
   int nf;
   int n3, n5, n11;
@@ -1012,6 +1046,9 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
   double *y;
   double *v5_0;
 
+
+  np = sys->np;
+  nm = sys->nm;
 
   nf = np - nm;
   n3 = np * 3;
@@ -1040,7 +1077,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
   set_fts_by_FTS (nf, b + nm11, uf, of, ef);
 
   /* set y := L.[(0,0,E)_m,(U,O,E)_f] */
-  calc_lub_ewald_3fts (np, b, y);
+  calc_lub_ewald_3fts (sys, b, y);
 
   /* set x := [(F,T,0)_m,(0,0,0)_f] */
   set_fts_by_FTS (nm, x, f, t, v5_0);
@@ -1052,7 +1089,7 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
       x [i] -= y [i];
     }
 
-  atimes_ewald_3fts (n11, x, y, NULL);
+  atimes_ewald_3fts (n11, x, y, (void *) sys);
 
   /* set b := - (I + M.L).[(0,0,E)_m,(U,O,E)_f] + M.[(F,T,0)_m,(0,0,0)_f] */
   for (i = 0; i < n11; ++i)
@@ -1064,20 +1101,19 @@ calc_b_mob_lub_fix_ewald_3fts (int np, int nm,
   free (y);
   free (v5_0);
 }
-
 /* calc atimes of (natural) mobility problem under Ewald sum
  * where A.x := [(u,o,0)_m,(0,0,0)_f] - M.[(0,0,s)_m,(f,t,s)_f].
  * INPUT
- *  (global) : NUMB_mobile_particles -- this is dirty, though ...
  *  n : # elements in x[] and b[] (not # particles!)
  *  x [n] :
+ *  user_data = (struct stokes *) sys : system parameters
  * OUTPUT
  *  y [n] :
  */
 static void
 atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
 {
-  extern int NUMB_mobile_particles; /* this is dirty, though ... */
+  struct stokes * sys;
 
   int i;
   int np;
@@ -1097,8 +1133,10 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   double *sf;
 
 
-  np = n / 11;
-  nm = NUMB_mobile_particles;
+  sys = (struct stokes *) user_data;
+  np = sys->np;
+  nm = sys->nm;
+
   nf = np - nm;
   n5 = np * 5;
   nf3 = nf * 3;
@@ -1143,7 +1181,7 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
 
   /* set w := L.[(U,O,0)_mobile,(0,0,0)_fixed] */
-  calc_lub_ewald_3fts (np, y, w);
+  calc_lub_ewald_3fts (sys, y, w);
 
   /* set z := [(0,0,S)_mobile,(F,T,S)_fixed] */
   set_fts_by_FTS (nm, z, v5_0, v5_0, s);
@@ -1154,7 +1192,7 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
       w [i] -= z [i];
     }
 
-  atimes_ewald_3fts (n, w, z, NULL);
+  atimes_ewald_3fts (n, w, z, (void *) sys);
 
   /* set y := (I + M.L).[(U,O,0)_m,(0,0,0)_f] - M.[(0,0,S)_m,(F,T,S)_f] */
   for (i = 0; i < n; ++i)
@@ -1172,93 +1210,76 @@ atimes_mob_lub_fix_ewald_3fts (int n, double *x, double *y, void * user_data)
   free (tf);
   free (sf);
 }
-
-
-/* calculate lubrication fts by uoe for all particles
- * under the periodic boundary condition
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
- *   uoe [np * 11] : velocity, angular velocity, strain
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
  * OUTPUT
- *   fts [np * 11] : force, torque, stresslet
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
  */
-static void
-calc_lub_ewald_3fts (int np, double * uoe, double * fts)
+void
+calc_mob_lub_fix_ewald_3fts (struct stokes * sys,
+			     double *f, double *t, double *e,
+			     double *uf, double *of, double *ef,
+			     double *u, double *o, double *s,
+			     double *ff, double *tf, double *sf)
 {
-  extern double * pos;
-  extern double llx [27], lly [27], llz [27];
+  int np, nm;
 
-  int i, j, k;
-  int i3, i11;
-  int j3, j11;
+  int i;
+  int n11;
+  int nf;
+  int nm11;
 
-  double * tmp_pos;
+  double *b;
+  double *x;
 
 
-  tmp_pos = malloc (sizeof (double) * 3);
-  if (tmp_pos == NULL)
+  np = sys->np;
+  nm = sys->nm;
+
+  nf = np - nm;
+  n11 = np * 11;
+  nm11 = nm * 11;
+
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (b == NULL
+      || x == NULL)
     {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      fprintf (stderr, "allocation error in calc_mob_ewald_3fts ().\n");
       exit (1);
     }
 
-  /* clear fts [np * 11] */
-  for (i = 0; i < np * 11; ++i)
-    fts [i] = 0.0;
+  calc_b_mob_lub_fix_ewald_3fts (sys, f, t, e, uf, of, ef, b);
 
-  for (i = 0; i < np; ++i)
+  /* first guess */
+  for (i = 0; i < n11; ++i)
     {
-      i3 = i * 3;
-      i11 = i * 11;
-      for (j = i; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  j11 = j * 11;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
-	    {
-	      tmp_pos [0] = pos [j3 + 0] + llx [k];
-	      tmp_pos [1] = pos [j3 + 1] + lly [k];
-	      tmp_pos [2] = pos [j3 + 2] + llz [k];
-	      if (cond_lub (pos + i3, tmp_pos) == 0)
-		{
-		  calc_lub_fts_2b (uoe + i11, uoe + j11,
-				   pos + i3, tmp_pos,
-				   fts + i11, fts + j11);
-		}
-	    }
-	}
+      x [i] = 0.0;
     }
 
-  free (tmp_pos);
-}
+  solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts, (void *) sys,
+		   /*gpb_chk*/
+		   /*st2_chk*/
+		   sta2, 2000, -12.0);
+  /*solve_iter_gmres (n11, b, x, atimes_mob_lub_fix_ewald_3fts);*/
+  /*solve_iter_otmk (n11, b, x, atimes_mob_lub_fix_ewald_3fts, otmk);*/
 
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (double * x1, double * x2)
-{
-  double x, y, z;
-  double r2;
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
-
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
-
-  r2 = x * x
-    + y * y
-    + z * z;
-
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
-    return 0;
-  else
-    return 1;
+  free (b);
+  free (x);
 }

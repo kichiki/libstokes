@@ -1,7 +1,6 @@
-/* Ewald summation technique under FTS version -- MATRIX procedure
- * Copyright (C) 1993-1996,1999-2001 Kengo Ichiki
- *   <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-3f-matrix.c,v 1.5 2001/02/15 04:57:13 ichiki Exp $
+/* Ewald summation technique with FTS version -- MATRIX procedure
+ * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3f-matrix.c,v 2.1 2006/09/26 01:07:29 ichiki Exp $
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
@@ -11,676 +10,32 @@
 #include "../bench.h" // ptime_ms_d()
 #endif /* ZETA */
 
-#include "../cholesky.h" /* cholesky() */
-#include "../ludcmp.h" /* ludcmp() */
+//#include "../../misc/cholesky.h" /* cholesky() */
+#include "../../misc/ludcmp.h" /* ludcmp() */
 
+#include "stokes.h" /* struct stokeks */
 #include "fts.h"
 #include "matrix.h"
 #include "ewald-3fts-matrix.h"
 
 
-/* (local) global variable */
-/*int NUMB_mobile_particles;*/ /* this is dirty, though ... */
-
-
-/** function prototypes for local routines **/
-static void
-make_matrix_mob_ewald_3fts (int np, double * mat);
-static void
-make_matrix_lub_ewald_3fts (int np, double * mat);
-static int
-cond_lub (double * x1, double * x2);
-static void
-trans_ext (int np, double *r);
-static void
-trans_mat_ext2ext (int np, double * mat);
-static void
-multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
-				  double * y);
-static void
-split_matrix_3fts (int np, double *mat,
-		   double * mat_ll, double * mat_lh,
-		   double * mat_hl, double * mat_hh);
-static void
-merge_matrix_3fts (int np,
-		   double * mat_ll, double * mat_lh,
-		   double * mat_hl, double * mat_hh,
-		   double *mat);
-static void
-split_matrix_fix_3fts (int np, int nm,
-		       double * mat,
-		       double * mat_ll, double * mat_lh,
-		       double * mat_hl, double * mat_hh);
-static void
-merge_matrix_fix_3fts (int np, int nm,
-		       double * mat_ll, double * mat_lh,
-		       double * mat_hl, double * mat_hh,
-		       double * mat);
-
-static void
-test_symmetric (int n, double * mat, double tiny);
-static void
-multiply_matrices (int n, double *a, double *b);
-
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FTS version
- * INPUT
- *  (global) pos [] : position of particles
- *  n := np * 11
- *  x [n * 11] : FTS
- * OUTPUT
- *  y [n * 11] : UOE
- */
-void
-atimes_ewald_3fts_matrix (int n, double *x, double *y)
-{
-  int np;
-  double * mat;
-
-
-  np = n / 11;
-  mat = malloc (sizeof (double) * n * n);
-  if (mat == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_ewald_3fts_matrix ().\n");
-      exit (1);
-    }
-
-  make_matrix_mob_ewald_3fts (np, mat);
-  multiply_extmat_with_extvec_3fts (np, mat, x, y);
-
-  free (mat);
-}
-
-/** natural resistance problem **/
-/* solve natural resistance problem in FTS version under Ewald sum
- * INPUT
- *  np : # particles
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_res_ewald_3fts_matrix (int np,
-			    double *u, double *o, double *e,
-			    double *f, double *t, double *s)
-{
-  int n11;
-
-  double * mat;
-  double * b;
-  double * x;
-
-
-  n11 = np * 11;
-  mat = malloc (sizeof (double) * n11 * n11);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* b := (UOE) */
-  set_fts_by_FTS (np, b, u, o, e);
-
-  make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
-  /* for test */
-  test_symmetric (n11, mat, 1.0e-12);
-
-  /* resistance matrix in INVERSED form */
-  /*cholesky (mat, n11);*/
-  lu_inv (mat, n11);
-  trans_ext (np, mat); // resistance matrix in EXTRACTED form
-
-  multiply_extmat_with_extvec_3fts (np, mat, b, x);
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (mat);
-  free (b);
-  free (x);
-}
-
-/* solve natural resistance problem in FTS version under Ewald sum
- * INPUT
- *  np : # particles
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_res_lub_ewald_3fts_matrix (int np,
-				double *u, double *o, double *e,
-				double *f, double *t, double *s)
-{
-  int i;
-  int n11;
-
-  double * mat;
-  double * b;
-  double * x;
-  double * y;
-
-
-  n11 = np * 11;
-  mat = malloc (sizeof (double) * n11 * n11);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  y = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || b == NULL
-      || x == NULL
-      || y == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* b := (UOE) */
-  set_fts_by_FTS (np, b, u, o, e);
-
-  make_matrix_lub_ewald_3fts (np, mat); // lub matrix in EXTRACTED form
-  multiply_extmat_with_extvec_3fts (np, mat, b, x); // x := L.(UOE)
-
-  make_matrix_mob_ewald_3fts (np, mat); // mobility matrix in EXTRACTED form
-  multiply_extmat_with_extvec_3fts (np, mat, x, y); // y := M.L.(UOE)
-
-  /* y := (I + M.L).(UOE) */
-  for (i = 0; i < n11; ++i)
-    b [i] += y [i];
-
-  /* resistance matrix in INVERSED form */
-  /*cholesky (mat, n11);*/
-  lu_inv (mat, n11);
-  trans_ext (np, mat); // resistance matrix in EXTRACTED form
-
-  /* x := (M^-1).(I + M.L).(UOE) */
-  multiply_extmat_with_extvec_3fts (np, mat, b, x);
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (mat);
-  free (b);
-  free (x);
-  free (y);
-}
-
-/** natural mobility problem **/
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  np : # particles
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_ewald_3fts_matrix (int np,
-			    double *f, double *t, double *e,
-			    double *u, double *o, double *s)
-{
-  int n11, n6, n5;
-
-  double * mat;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * b;
-  double * x;
-
-
-  n11 = np * 11;
-  n6 = np * 6;
-  n5 = np * 5;
-  mat = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * n6 * n6);
-  mat_lh = malloc (sizeof (double) * n6 * n5);
-  mat_hl = malloc (sizeof (double) * n5 * n6);
-  mat_hh = malloc (sizeof (double) * n5 * n5);
-  mob_ll = malloc (sizeof (double) * n6 * n6);
-  mob_lh = malloc (sizeof (double) * n6 * n5);
-  mob_hl = malloc (sizeof (double) * n5 * n6);
-  mob_hh = malloc (sizeof (double) * n5 * n5);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* b := (FTE) */
-  set_fts_by_FTS (np, b, f, t, e);
-
-  /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (np, mat);
-  /* mat := M.T, where T.(FTS) = (FTS~) */
-  trans_mat_ext2ext (np, mat);
-  split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
-
-  solve_linear (n5, n6,
-		mat_hh, mat_hl, mat_lh, mat_ll,
-		mob_hh, mob_hl, mob_lh, mob_ll);
-
-  /* STEP 6 */
-  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
-  dot_prod_matrix (mat, n11, n11,
-		   b, x);
-
-  set_FTS_by_fts (np, u, o, s, x);
-
-  free (mat);
-  free (mat_ll);
-  free (mat_lh);
-  free (mat_hl);
-  free (mat_hh);
-  free (mob_ll);
-  free (mob_lh);
-  free (mob_hl);
-  free (mob_hh);
-  free (b);
-  free (x);
-}
-
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  np : # particles
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_lub_ewald_3fts_matrix (int np,
-				double *f, double *t, double *e,
-				double *u, double *o, double *s)
-{
-  int i;
-  int n11, n6, n5;
-
-  double * mat;
-  double * lub;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
-  double * b;
-  double * x;
-
-
-  n11 = np * 11;
-  n6 = np * 6;
-  n5 = np * 5;
-  mat = malloc (sizeof (double) * n11 * n11);
-  lub = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * n6 * n6);
-  mat_lh = malloc (sizeof (double) * n6 * n5);
-  mat_hl = malloc (sizeof (double) * n5 * n6);
-  mat_hh = malloc (sizeof (double) * n5 * n5);
-  mob_ll = malloc (sizeof (double) * n6 * n6);
-  mob_lh = malloc (sizeof (double) * n6 * n5);
-  mob_hl = malloc (sizeof (double) * n5 * n6);
-  mob_hh = malloc (sizeof (double) * n5 * n5);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || lub == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* used at lub [] */
-  I_ll = lub;
-  I_lh = I_ll + n6 * n6;
-  I_hl = I_lh + n6 * n5;
-  I_hh = I_hl + n5 * n6;
-
-  /* b := (FTE) */
-  set_fts_by_FTS (np, b, f, t, e);
-
-  /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (np, mat);
-  /* mat := M.T, where T.(FTS) = (FTS~) */
-  trans_mat_ext2ext (np, mat);
-  split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
-
-  /* lub matrix in EXTRACTED form */
-  make_matrix_lub_ewald_3fts (np, lub);
-  /* lub := L.T, where T.(UOE) = (UOE~) */
-  trans_mat_ext2ext (np, lub);
-  /* lub := (M.T).(L.T) */
-  multiply_matrices (n11, mat, lub);
-  /* lub := I + (M.T).(L.T) */
-  for (i = 0; i < n11; ++i)
-    mat [i * n11 + i] += 1.0;
-  /* note: at this point, lub[] is free to use. */
-  split_matrix_3fts (np, mat, I_ll, I_lh, I_hl, I_hh);
-
-  solve_gen_linear (n6, n5,
-		    I_ll, I_lh, I_hl, I_hh,
-		    mat_ll, mat_lh, mat_hl, mat_hh,
-		    mob_ll, mob_lh, mob_hl, mob_hh);
-
-  /* STEP 6 */
-  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
-  dot_prod_matrix (mat, n11, n11,
-		   b, x);
-
-  set_FTS_by_fts (np, u, o, s, x);
-
-  free (mat);
-  free (lub);
-  free (mat_ll);
-  free (mat_lh);
-  free (mat_hl);
-  free (mat_hh);
-  free (mob_ll);
-  free (mob_lh);
-  free (mob_hl);
-  free (mob_hh);
-  free (b);
-  free (x);
-}
-
-/** natural mobility problem with fixed particles **/
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
- * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_fix_ewald_3fts_matrix (int np, int nm,
-				double *f, double *t, double *e,
-				double *uf, double *of, double *ef,
-				double *u, double *o, double *s,
-				double *ff, double *tf, double *sf)
-{
-  int n11;
-  int nf, nm11;
-  int nl, nh;
-
-  double * mat;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * b;
-  double * x;
-
-
-  n11 = np * 11;
-  nf = np - nm;
-  nm11 = nm * 11;
-  nl = nm * 6;
-  nh = n11 - nl;
-
-  mat = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * nl * nl);
-  mat_lh = malloc (sizeof (double) * nl * nh);
-  mat_hl = malloc (sizeof (double) * nh * nl);
-  mat_hh = malloc (sizeof (double) * nh * nh);
-  mob_ll = malloc (sizeof (double) * nl * nl);
-  mob_lh = malloc (sizeof (double) * nl * nh);
-  mob_hl = malloc (sizeof (double) * nh * nl);
-  mob_hh = malloc (sizeof (double) * nh * nh);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* b := (FTE) */
-  set_fts_by_FTS (nm, b, f, t, e);
-  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
-
-  /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (np, mat);
-  /* mat := M.T, where T.(FTS) = (FTS~) */
-  trans_mat_ext2ext (np, mat);
-  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
-
-  solve_linear (nh, nl,
-		mat_hh, mat_hl, mat_lh, mat_ll,
-		mob_hh, mob_hl, mob_lh, mob_ll);
-
-  /* STEP 6 */
-  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
-  dot_prod_matrix (mat, n11, n11,
-		   b, x);
-
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
-
-  free (mat);
-  free (mat_ll);
-  free (mat_lh);
-  free (mat_hl);
-  free (mat_hh);
-  free (mob_ll);
-  free (mob_lh);
-  free (mob_hl);
-  free (mob_hh);
-  free (b);
-  free (x);
-}
-
-/** natural mobility problem with lubrication with fixed particles **/
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
- * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_lub_fix_ewald_3fts_matrix (int np, int nm,
-				    double *f, double *t, double *e,
-				    double *uf, double *of, double *ef,
-				    double *u, double *o, double *s,
-				    double *ff, double *tf, double *sf)
-{
-  int i;
-  int n11;
-  int nf, nm11;
-  int nl, nh;
-
-  double * mat;
-  double * lub;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
-  double * b;
-  double * x;
-
-
-  n11 = np * 11;
-  nf = np - nm;
-  nm11 = nm * 11;
-  nl = nm * 6;
-  nh = n11 - nl;
-
-  mat = malloc (sizeof (double) * n11 * n11);
-  lub = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * nl * nl);
-  mat_lh = malloc (sizeof (double) * nl * nh);
-  mat_hl = malloc (sizeof (double) * nh * nl);
-  mat_hh = malloc (sizeof (double) * nh * nh);
-  mob_ll = malloc (sizeof (double) * nl * nl);
-  mob_lh = malloc (sizeof (double) * nl * nh);
-  mob_hl = malloc (sizeof (double) * nh * nl);
-  mob_hh = malloc (sizeof (double) * nh * nh);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || lub == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
-
-  /* used at lub [] */
-  I_ll = lub;
-  I_lh = I_ll + nl * nl;
-  I_hl = I_lh + nl * nh;
-  I_hh = I_hl + nh * nl;
-
-  /* b := (FTE) */
-  set_fts_by_FTS (nm, b, f, t, e);
-  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
-
-  /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (np, mat);
-  /* mat := M.T, where T.(FTS) = (FTS~) */
-  trans_mat_ext2ext (np, mat);
-  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
-
-  /* lub matrix in EXTRACTED form */
-  make_matrix_lub_ewald_3fts (np, lub);
-  /* lub := L.T, where T.(UOE) = (UOE~) */
-  trans_mat_ext2ext (np, lub);
-  /* lub := (M.T).(L.T) */
-  multiply_matrices (n11, mat, lub);
-  /* lub := I + (M.T).(L.T) */
-  for (i = 0; i < n11; ++i)
-    mat [i * n11 + i] += 1.0;
-  /* note: at this point, lub[] is free to use. */
-  split_matrix_fix_3fts (np, nm, mat, I_ll, I_lh, I_hl, I_hh);
-
-  solve_gen_linear (nl, nh,
-		    I_ll, I_lh, I_hl, I_hh,
-		    mat_ll, mat_lh, mat_hl, mat_hh,
-		    mob_ll, mob_lh, mob_hl, mob_hh);
-
-  /* STEP 6 */
-  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
-  dot_prod_matrix (mat, n11, n11,
-		   b, x);
-
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
-
-  free (mat);
-  free (lub);
-  free (mat_ll);
-  free (mat_lh);
-  free (mat_hl);
-  free (mat_hh);
-  free (mob_ll);
-  free (mob_lh);
-  free (mob_hl);
-  free (mob_hh);
-  free (b);
-  free (x);
-}
-
-
 /* make ewald-summed mobility matrix for FTS version
  * INPUT
- *  (global) pos [] : position of particles
- *  np : # particles
+ * sys : system parameters
  * OUTPUT
  *  mat [np * 11 * np * 11] :
  */
 static void
-make_matrix_mob_ewald_3fts (int np, double * mat)
+make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 {
-  extern int pcellx, pcelly, pcellz;
-  extern int kmaxx, kmaxy, kmaxz;
-
-  extern double zeta, zeta2, zaspi, za2;
-  extern double pi2;
-  extern double pivol;
-  extern double lx, ly, lz; /* cell size */
-
-  extern double *pos;
-
-#ifdef ZETA
-  extern double cpu1, cpu2, cpu3;
-#endif /* ZETA */
+  int pcellx, pcelly, pcellz;
+  int kmaxx, kmaxy, kmaxz;
+  double zeta, zeta2, zaspi, za2;
+  double pi2;
+  double pivol;
+  double lx, ly, lz;
+  double *pos;
+  int np;
 
   double xa, ya; 
   double yb;
@@ -713,11 +68,31 @@ make_matrix_mob_ewald_3fts (int np, double * mat)
   double a2, c2;
 
 
+  pcellx = sys->pcellx;
+  pcelly = sys->pcelly;
+  pcellz = sys->pcellz;
+  kmaxx  = sys->kmaxx;
+  kmaxy  = sys->kmaxy;
+  kmaxz  = sys->kmaxz;
+  zeta   = sys->zeta;
+  zeta2  = sys->zeta2;
+  zaspi  = sys->zaspi;
+  za2    = sys->za2;
+  pi2    = sys->pi2;
+  pivol  = sys->pivol;
+  lx     = sys->lx;
+  ly     = sys->ly;
+  lz     = sys->lz;
+  pos    = sys->pos;
+  np     = sys->np;
+
   n = np * 11;
 
   /* clear result */
   for (i = 0; i < n * n; ++i)
-    mat [i] = 0.0;
+    {
+      mat [i] = 0.0;
+    }
 
   /* diagonal part ( self part ) */
   xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
@@ -892,7 +267,7 @@ make_matrix_mob_ewald_3fts (int np, double * mat)
     }
 
 #ifdef ZETA
-  cpu2 = ptime_ms_d ();
+  sys->cpu2 = ptime_ms_d ();
 #endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
@@ -965,104 +340,109 @@ make_matrix_mob_ewald_3fts (int np, double * mat)
     }
 
 #ifdef ZETA
-  cpu3 = ptime_ms_d ();
-  cpu1 = cpu2 + cpu3;
+  sys->cpu3 = ptime_ms_d ();
+  sys->cpu1 = sys->cpu2 + sys->cpu3;
 #endif /* ZETA */
 }
 
-
-/* make lubrication matrix for FTS version for all particles
- * under the periodic boundary condition
+/** copy from test-fts-atimes.c Rev 1.5 **/
+/* utility routine for matrix in the extracted form
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
- * OUTPUT
- *  mat [np * 11 * np * 11] :
+ *  np : # particles (not # elements!)
+ *  m [np *11 * np *11] : matrix in the extracted form
+ *  x [np *11] : vector in the extracted form
+ * INPUT
+ *  y [np *11] : output vector in the extracted form (:= m.x)
  */
 static void
-make_matrix_lub_ewald_3fts (int np, double * mat)
+multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
+				  double * y)
 {
-  extern double * pos;
-  extern double llx [27], lly [27], llz [27];
-
-  int i, j, k;
-  int i3, i11;
-  int j3, j11;
-  int n;
-
-  double * tmp_pos;
+  int n11;
+  int i;
+  int j;
+  int j11;
+  int jj;
 
 
-  tmp_pos = malloc (sizeof (double) * 3);
-  if (tmp_pos == NULL)
+  n11 = np * 11;
+
+  for (i = 0; i < n11; ++i)
     {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      y [i] = 0.0;
+      for (j = 0; j < np; ++j)
+	{
+	  j11 = j * 11;
+	  for (jj = 0; jj < 6; ++jj)
+	    {
+	      y [i] += m [i * n11 + j11 + jj] * x [j11 + jj];
+	    }
+	  y [i] += m [i * n11 + j11 + 6]
+	    * (2.0 * x [j11 + 6] + x [j11 + 10]);
+	  y [i] += m [i * n11 + j11 + 7] * 2.0 * x [j11 + 7];
+	  y [i] += m [i * n11 + j11 + 8] * 2.0 * x [j11 + 8];
+	  y [i] += m [i * n11 + j11 + 9] * 2.0 * x [j11 + 9];
+	  y [i] += m [i * n11 + j11 + 10]
+	    * (2.0 * x [j11 + 10] + x [j11 + 6]);
+	}
+    }
+}
+/* ATIMES version (for O(N^2) scheme) of
+ * calc ewald-summed mobility for FTS version
+ * INPUT
+ *  n := np * 11
+ *  x [n * 11] : FTS
+ *  user_data = (struct stokes *) sys : system parameters
+ * OUTPUT
+ *  y [n * 11] : UOE
+ */
+void
+atimes_ewald_3fts_matrix (int n, double *x, double *y, void * user_data)
+{
+  struct stokes * sys;
+  int np;
+  double * mat;
+
+
+  sys = (struct stokes *) user_data;
+  np = sys->np;
+  mat = malloc (sizeof (double) * n * n);
+  if (mat == NULL)
+    {
+      fprintf (stderr, "allocation error in atimes_ewald_3fts_matrix ().\n");
       exit (1);
     }
 
-  n = np * 11;
+  make_matrix_mob_ewald_3fts (sys, mat);
+  multiply_extmat_with_extvec_3fts (np, mat, x, y);
 
-  /* clear result */
-  for (i = 0; i < n * n; ++i)
-    mat [i] = 0.0;
+  free (mat);
+}
 
-  for (i = 0; i < np; ++i)
+/** natural resistance problem **/
+/* this is just a test routine */
+static void
+test_symmetric (int n, double * mat, double tiny)
+{
+  int i, j;
+  double d;
+
+
+  for (i = 0; i < n; ++i)
     {
-      i3 = i * 3;
-      i11 = i * 11;
-      for (j = i; j < np; ++j)
+      for (j = i + 1; j < n; ++j)
 	{
-	  j3 = j * 3;
-	  j11 = j * 11;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
-	    {
-	      tmp_pos [0] = pos [j3 + 0] + llx [k];
-	      tmp_pos [1] = pos [j3 + 1] + lly [k];
-	      tmp_pos [2] = pos [j3 + 2] + llz [k];
-	      if (cond_lub (pos + i3, tmp_pos) == 0)
-		{
-		  matrix_lub_fts_2b (i, j,
-				     pos + i3, tmp_pos,
-				     n, mat);
-		}
-	    }
+	  d = fabs (mat [i * n + j] - mat [j * n + i]);
+	  if (d > tiny)
+	    fprintf (stderr, "mat [%d, %d] != mat [%d, %d], "
+		     "|%f - %f| = %e\n",
+		     i, j, j, i,
+		     mat [i * n + j], mat [j * n + i],
+		     d);
+		     
 	}
     }
-
-  free (tmp_pos);
 }
-
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (double * x1, double * x2)
-{
-  double x, y, z;
-  double r2;
-
-
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
-
-  r2 = x * x
-    + y * y
-    + z * z;
-
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
-    return 0;
-  else
-    return 1;
-}
-
-
 /** copy from NR/src/FINITE/stokes-fts.c Rev 1.4 **/
 /*
  * INPUT
@@ -1153,7 +533,236 @@ trans_ext (int np, double *r)
 
   free (tmp);
 }
+/* solve natural resistance problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_res_ewald_3fts_matrix (struct stokes * sys,
+			    double *u, double *o, double *e,
+			    double *f, double *t, double *s)
+{
+  int np;
+  int n11;
 
+  double * mat;
+  double * b;
+  double * x;
+
+
+  np = sys->np;
+
+  n11 = np * 11;
+  mat = malloc (sizeof (double) * n11 * n11);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* b := (UOE) */
+  set_fts_by_FTS (np, b, u, o, e);
+
+  make_matrix_mob_ewald_3fts (sys, mat); // mobility matrix in EXTRACTED form
+  /* for test */
+  test_symmetric (n11, mat, 1.0e-12);
+
+  /* resistance matrix in INVERSED form */
+  /*cholesky (mat, n11);*/
+  lu_inv (mat, n11);
+  trans_ext (np, mat); // resistance matrix in EXTRACTED form
+
+  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (mat);
+  free (b);
+  free (x);
+}
+
+
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+static int
+cond_lub (double * x1, double * x2)
+{
+  double x, y, z;
+  double r2;
+
+
+  x = x1 [0] - x2 [0];
+  y = x1 [1] - x2 [1];
+  z = x1 [2] - x2 [2];
+
+  r2 = x * x
+    + y * y
+    + z * z;
+
+  if (r2 != 0.0
+      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
+    {
+      return 0;
+    }
+  else
+    {
+      return 1;
+    }
+}
+/* make lubrication matrix for FTS version for all particles
+ * under the periodic boundary condition
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ * OUTPUT
+ *  mat [np * 11 * np * 11] :
+ */
+static void
+make_matrix_lub_ewald_3fts (struct stokes * sys,
+			    double * mat)
+{
+  int np;
+  int i, j, k;
+  int i3, i11;
+  int j3, j11;
+  int n;
+
+  double * tmp_pos;
+
+
+  np = sys->np;
+
+  tmp_pos = malloc (sizeof (double) * 3);
+  if (tmp_pos == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      exit (1);
+    }
+
+  n = np * 11;
+
+  /* clear result */
+  for (i = 0; i < n * n; ++i)
+    {
+      mat [i] = 0.0;
+    }
+
+  for (i = 0; i < np; ++i)
+    {
+      i3 = i * 3;
+      i11 = i * 11;
+      for (j = i; j < np; ++j)
+	{
+	  j3 = j * 3;
+	  j11 = j * 11;
+	  /* all image cells */
+	  for (k = 0; k < 27; ++k)
+	    {
+	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		{
+		  matrix_lub_fts_2b (i, j,
+				     sys->pos + i3, tmp_pos,
+				     n, mat);
+		}
+	    }
+	}
+    }
+
+  free (tmp_pos);
+}
+/* solve natural resistance problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
+				double *u, double *o, double *e,
+				double *f, double *t, double *s)
+{
+  int np;
+  int i;
+  int n11;
+
+  double * mat;
+  double * b;
+  double * x;
+  double * y;
+
+
+  np = sys->np;
+  n11 = np * 11;
+  mat = malloc (sizeof (double) * n11 * n11);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  y = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || b == NULL
+      || x == NULL
+      || y == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* b := (UOE) */
+  set_fts_by_FTS (np, b, u, o, e);
+
+  make_matrix_lub_ewald_3fts (sys, mat); // lub matrix in EXTRACTED form
+  multiply_extmat_with_extvec_3fts (np, mat, b, x); // x := L.(UOE)
+
+  make_matrix_mob_ewald_3fts (sys, mat); // mobility matrix in EXTRACTED form
+  multiply_extmat_with_extvec_3fts (np, mat, x, y); // y := M.L.(UOE)
+
+  /* y := (I + M.L).(UOE) */
+  for (i = 0; i < n11; ++i)
+    {
+      b [i] += y [i];
+    }
+
+  /* resistance matrix in INVERSED form */
+  /*cholesky (mat, n11);*/
+  lu_inv (mat, n11);
+  trans_ext (np, mat); // resistance matrix in EXTRACTED form
+
+  /* x := (M^-1).(I + M.L).(UOE) */
+  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (mat);
+  free (b);
+  free (x);
+  free (y);
+}
+
+/** natural mobility problem **/
 /* multiply transformation matrix from right-hand-side,
  * so that this could be multiplied by extracted vector
  * and return the extracted vector
@@ -1226,50 +835,6 @@ trans_mat_ext2ext (int np, double * mat)
 
   free (tmp);
 }
-
-/** copy from test-fts-atimes.c Rev 1.5 **/
-/* utility routine for matrix in the extracted form
- * INPUT
- *  np : # particles (not # elements!)
- *  m [np *11 * np *11] : matrix in the extracted form
- *  x [np *11] : vector in the extracted form
- * INPUT
- *  y [np *11] : output vector in the extracted form (:= m.x)
- */
-static void
-multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
-				  double * y)
-{
-  int n11;
-  int i;
-  int j;
-  int j11;
-  int jj;
-
-
-  n11 = np * 11;
-
-  for (i = 0; i < n11; ++i)
-    {
-      y [i] = 0.0;
-      for (j = 0; j < np; ++j)
-	{
-	  j11 = j * 11;
-	  for (jj = 0; jj < 6; ++jj)
-	    {
-	      y [i] += m [i * n11 + j11 + jj] * x [j11 + jj];
-	    }
-	  y [i] += m [i * n11 + j11 + 6]
-	    * (2.0 * x [j11 + 6] + x [j11 + 10]);
-	  y [i] += m [i * n11 + j11 + 7] * 2.0 * x [j11 + 7];
-	  y [i] += m [i * n11 + j11 + 8] * 2.0 * x [j11 + 8];
-	  y [i] += m [i * n11 + j11 + 9] * 2.0 * x [j11 + 9];
-	  y [i] += m [i * n11 + j11 + 10]
-	    * (2.0 * x [j11 + 10] + x [j11 + 6]);
-	}
-    }
-}
-
 static void
 split_matrix_3fts (int np, double *mat,
 		   double * mat_ll, double * mat_lh,
@@ -1329,7 +894,6 @@ split_matrix_3fts (int np, double *mat,
 	}
     }
 }
-
 static void
 merge_matrix_3fts (int np,
 		   double * mat_ll, double * mat_lh,
@@ -1390,7 +954,247 @@ merge_matrix_3fts (int np,
 	}
     }
 }
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_mob_ewald_3fts_matrix (struct stokes * sys,
+			    double *f, double *t, double *e,
+			    double *u, double *o, double *s)
+{
+  int np;
+  int n11, n6, n5;
 
+  double * mat;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * b;
+  double * x;
+
+
+  np = sys->np;
+  n11 = np * 11;
+  n6 = np * 6;
+  n5 = np * 5;
+  mat = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * n6 * n6);
+  mat_lh = malloc (sizeof (double) * n6 * n5);
+  mat_hl = malloc (sizeof (double) * n5 * n6);
+  mat_hh = malloc (sizeof (double) * n5 * n5);
+  mob_ll = malloc (sizeof (double) * n6 * n6);
+  mob_lh = malloc (sizeof (double) * n6 * n5);
+  mob_hl = malloc (sizeof (double) * n5 * n6);
+  mob_hh = malloc (sizeof (double) * n5 * n5);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* b := (FTE) */
+  set_fts_by_FTS (np, b, f, t, e);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (sys, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  solve_linear (n5, n6,
+		mat_hh, mat_hl, mat_lh, mat_ll,
+		mob_hh, mob_hl, mob_lh, mob_ll);
+
+  /* STEP 6 */
+  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (np, u, o, s, x);
+
+  free (mat);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
+}
+
+/* return A_ij = A_ik . B_kj
+ * INPUT
+ *  a [n * n] :
+ *  b [n * n] :
+ * OUTPUT
+ *  a [n * n] :
+ */
+static void
+multiply_matrices (int n, double *a, double *b)
+{
+  int i, j, k;
+  double * tmp;
+
+  tmp = malloc (sizeof (double) * n * n);
+
+  for (i = 0; i < n; ++i)
+    {
+      for (j = 0; j < n; ++j)
+	{
+	  tmp [i * n + j] = 0.0;
+	  for (k = 0; k < n; ++k)
+	    {
+	      tmp [i * n + j] += a [i * n + k] * b [k * n + j];
+	    }
+	}
+    }
+
+  for (i = 0; i < n * n; ++i)
+    a [i] = tmp [i];
+
+  free (tmp);
+}
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
+				double *f, double *t, double *e,
+				double *u, double *o, double *s)
+{
+  int np;
+  int i;
+  int n11, n6, n5;
+
+  double * mat;
+  double * lub;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
+  double * b;
+  double * x;
+
+
+  np = sys->np;
+
+  n11 = np * 11;
+  n6 = np * 6;
+  n5 = np * 5;
+  mat = malloc (sizeof (double) * n11 * n11);
+  lub = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * n6 * n6);
+  mat_lh = malloc (sizeof (double) * n6 * n5);
+  mat_hl = malloc (sizeof (double) * n5 * n6);
+  mat_hh = malloc (sizeof (double) * n5 * n5);
+  mob_ll = malloc (sizeof (double) * n6 * n6);
+  mob_lh = malloc (sizeof (double) * n6 * n5);
+  mob_hl = malloc (sizeof (double) * n5 * n6);
+  mob_hh = malloc (sizeof (double) * n5 * n5);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || lub == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
+    }
+
+  /* used at lub [] */
+  I_ll = lub;
+  I_lh = I_ll + n6 * n6;
+  I_hl = I_lh + n6 * n5;
+  I_hh = I_hl + n5 * n6;
+
+  /* b := (FTE) */
+  set_fts_by_FTS (np, b, f, t, e);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (sys, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  /* lub matrix in EXTRACTED form */
+  make_matrix_lub_ewald_3fts (sys, lub);
+  /* lub := L.T, where T.(UOE) = (UOE~) */
+  trans_mat_ext2ext (np, lub);
+  /* lub := (M.T).(L.T) */
+  multiply_matrices (n11, mat, lub);
+  /* lub := I + (M.T).(L.T) */
+  for (i = 0; i < n11; ++i)
+    {
+      mat [i * n11 + i] += 1.0;
+    }
+  /* note: at this point, lub[] is free to use. */
+  split_matrix_3fts (np, mat, I_ll, I_lh, I_hl, I_hh);
+
+  solve_gen_linear (n6, n5,
+		    I_ll, I_lh, I_hl, I_hh,
+		    mat_ll, mat_lh, mat_hl, mat_hh,
+		    mob_ll, mob_lh, mob_hl, mob_hh);
+
+  /* STEP 6 */
+  merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (np, u, o, s, x);
+
+  free (mat);
+  free (lub);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
+}
+
+/** natural mobility problem with fixed particles **/
 /*
  * INPUT
  *  np : # ALL particles
@@ -1540,7 +1344,6 @@ split_matrix_fix_3fts (int np, int nm,
 	}
     }
 }
-
 /*
  * INPUT
  *  np : # ALL particles
@@ -1690,60 +1493,247 @@ merge_matrix_fix_3fts (int np, int nm,
 	}
     }
 }
-
-/* this is just a test routine */
-static void
-test_symmetric (int n, double * mat, double tiny)
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
+				double *f, double *t, double *e,
+				double *uf, double *of, double *ef,
+				double *u, double *o, double *s,
+				double *ff, double *tf, double *sf)
 {
-  int i, j;
-  double d;
+  int np, nm;
+  int n11;
+  int nf, nm11;
+  int nl, nh;
+
+  double * mat;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * b;
+  double * x;
 
 
-  for (i = 0; i < n; ++i)
+  np = sys->np;
+  nm = sys->nm;
+
+  n11 = np * 11;
+  nf = np - nm;
+  nm11 = nm * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+
+  mat = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * nl * nl);
+  mat_lh = malloc (sizeof (double) * nl * nh);
+  mat_hl = malloc (sizeof (double) * nh * nl);
+  mat_hh = malloc (sizeof (double) * nh * nh);
+  mob_ll = malloc (sizeof (double) * nl * nl);
+  mob_lh = malloc (sizeof (double) * nl * nh);
+  mob_hl = malloc (sizeof (double) * nh * nl);
+  mob_hh = malloc (sizeof (double) * nh * nh);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
     {
-      for (j = i + 1; j < n; ++j)
-	{
-	  d = fabs (mat [i * n + j] - mat [j * n + i]);
-	  if (d > tiny)
-	    fprintf (stderr, "mat [%d, %d] != mat [%d, %d], "
-		     "|%f - %f| = %e\n",
-		     i, j, j, i,
-		     mat [i * n + j], mat [j * n + i],
-		     d);
-		     
-	}
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
     }
+
+  /* b := (FTE) */
+  set_fts_by_FTS (nm, b, f, t, e);
+  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (sys, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  solve_linear (nh, nl,
+		mat_hh, mat_hl, mat_lh, mat_ll,
+		mob_hh, mob_hl, mob_lh, mob_ll);
+
+  /* STEP 6 */
+  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (mat);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
 }
 
-/* return A_ij = A_ik . B_kj
+/** natural mobility problem with lubrication with fixed particles **/
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
  * INPUT
- *  a [n * n] :
- *  b [n * n] :
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
  * OUTPUT
- *  a [n * n] :
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
  */
-static void
-multiply_matrices (int n, double *a, double *b)
+void
+calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
+				    double *f, double *t, double *e,
+				    double *uf, double *of, double *ef,
+				    double *u, double *o, double *s,
+				    double *ff, double *tf, double *sf)
 {
-  int i, j, k;
-  double * tmp;
+  int np, nm;
 
-  tmp = malloc (sizeof (double) * n * n);
+  int i;
+  int n11;
+  int nf, nm11;
+  int nl, nh;
 
-  for (i = 0; i < n; ++i)
+  double * mat;
+  double * lub;
+  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
+  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
+  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
+  double * b;
+  double * x;
+
+
+  np = sys->np;
+  nm = sys->nm;
+
+  n11 = np * 11;
+  nf = np - nm;
+  nm11 = nm * 11;
+  nl = nm * 6;
+  nh = n11 - nl;
+
+  mat = malloc (sizeof (double) * n11 * n11);
+  lub = malloc (sizeof (double) * n11 * n11);
+  mat_ll = malloc (sizeof (double) * nl * nl);
+  mat_lh = malloc (sizeof (double) * nl * nh);
+  mat_hl = malloc (sizeof (double) * nh * nl);
+  mat_hh = malloc (sizeof (double) * nh * nh);
+  mob_ll = malloc (sizeof (double) * nl * nl);
+  mob_lh = malloc (sizeof (double) * nl * nh);
+  mob_hl = malloc (sizeof (double) * nh * nl);
+  mob_hh = malloc (sizeof (double) * nh * nh);
+  b = malloc (sizeof (double) * n11);
+  x = malloc (sizeof (double) * n11);
+  if (mat == NULL
+      || lub == NULL
+      || mat_ll == NULL
+      || mat_lh == NULL
+      || mat_hl == NULL
+      || mat_hh == NULL
+      || mob_ll == NULL
+      || mob_lh == NULL
+      || mob_hl == NULL
+      || mob_hh == NULL
+      || b == NULL
+      || x == NULL)
     {
-      for (j = 0; j < n; ++j)
-	{
-	  tmp [i * n + j] = 0.0;
-	  for (k = 0; k < n; ++k)
-	    {
-	      tmp [i * n + j] += a [i * n + k] * b [k * n + j];
-	    }
-	}
+      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      exit (1);
     }
 
-  for (i = 0; i < n * n; ++i)
-    a [i] = tmp [i];
+  /* used at lub [] */
+  I_ll = lub;
+  I_lh = I_ll + nl * nl;
+  I_hl = I_lh + nl * nh;
+  I_hh = I_hl + nh * nl;
 
-  free (tmp);
+  /* b := (FTE) */
+  set_fts_by_FTS (nm, b, f, t, e);
+  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+
+  /* mobility matrix in EXTRACTED form */
+  make_matrix_mob_ewald_3fts (sys, mat);
+  /* mat := M.T, where T.(FTS) = (FTS~) */
+  trans_mat_ext2ext (np, mat);
+  split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
+
+  /* lub matrix in EXTRACTED form */
+  make_matrix_lub_ewald_3fts (sys, lub);
+  /* lub := L.T, where T.(UOE) = (UOE~) */
+  trans_mat_ext2ext (np, lub);
+  /* lub := (M.T).(L.T) */
+  multiply_matrices (n11, mat, lub);
+  /* lub := I + (M.T).(L.T) */
+  for (i = 0; i < n11; ++i)
+    {
+      mat [i * n11 + i] += 1.0;
+    }
+  /* note: at this point, lub[] is free to use. */
+  split_matrix_fix_3fts (np, nm, mat, I_ll, I_lh, I_hl, I_hh);
+
+  solve_gen_linear (nl, nh,
+		    I_ll, I_lh, I_hl, I_hh,
+		    mat_ll, mat_lh, mat_hl, mat_hh,
+		    mob_ll, mob_lh, mob_hl, mob_hh);
+
+  /* STEP 6 */
+  merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
+  dot_prod_matrix (mat, n11, n11,
+		   b, x);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (mat);
+  free (lub);
+  free (mat_ll);
+  free (mat_lh);
+  free (mat_hl);
+  free (mat_hh);
+  free (mob_ll);
+  free (mob_lh);
+  free (mob_hl);
+  free (mob_hh);
+  free (b);
+  free (x);
 }

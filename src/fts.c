@@ -1,11 +1,12 @@
 /* subroutine for the procedure of FTS version
- * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: fts.c,v 1.12 2001/02/13 09:53:54 ichiki Exp $
+ * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: fts.c,v 1.13 2006/09/26 01:11:45 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
-#include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+#include "two-body-res.h" /* scalar_two_body_res () */
+#include "stokes.h" /* struct stokeks */
 #include "f.h" // matrix_ij_A ()
 #include "ft.h" // matrix_ij_B (), matrix_ij_Bt (), matrix_ij_C (), 
 
@@ -1317,18 +1318,23 @@ scalar_minv_fts (double s,  double * scalar_fts)
  *   fts [np * 11] : force, torque, stresslet
  */
 void
-calc_lub_3fts (int np, double * uoe, double * fts)
+calc_lub_3fts (struct stokes * sys,
+	       double * uoe, double * fts)
 {
-  extern double * pos;
+  int np; 
 
   int i, j;
   int i3, i11;
   int j3, j11;
 
 
+  np = sys->np;
+
   /* clear fts [np * 11] */
   for (i = 0; i < np * 11; ++i)
-    fts [i] = 0.0;
+    {
+      fts [i] = 0.0;
+    }
 
   for (i = 0; i < np; ++i)
     {
@@ -1339,7 +1345,7 @@ calc_lub_3fts (int np, double * uoe, double * fts)
 	  j3 = j * 3;
 	  j11 = j * 11;
 	  calc_lub_fts_2b (uoe + i11, uoe + j11,
-			   pos + i3, pos + j3,
+			   sys->pos + i3, sys->pos + j3,
 			   fts + i11, fts + j11);
 	  
 	}

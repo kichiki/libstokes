@@ -1,11 +1,12 @@
 /* subroutine for the procedure of FT version
- * Copyright (C) 2000-2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ft.c,v 1.9 2001/02/12 08:40:49 ichiki Exp $
+ * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ft.c,v 2.1 2006/09/26 01:10:38 ichiki Exp $
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
-#include "../FINITE/two-body-res.h" /* scalar_two_body_res () */
+#include "two-body-res.h" /* scalar_two_body_res () */
+#include "stokes.h" /* struct stokeks */
 #include "f.h" // matrix_ij_A ()
 
 #include "ft.h"
@@ -390,25 +391,29 @@ scalar_minv_ft (double s, double * scalar_ft)
 
 /* calculate lubrication ft by uoe for all particles
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
+ *  sys : system parameters
  *   uo [np * 6] : velocity, angular velocity
  * OUTPUT
  *   ft [np * 6] : force, torque
  */
 void
-calc_lub_3ft (int np, double * uo, double * ft)
+calc_lub_3ft (struct stokes * sys,
+	      double * uo, double * ft)
 {
-  extern double * pos;
+  int np; 
 
   int i, j;
   int i3, i6;
   int j3, j6;
 
 
+  np = sys->np;
+
   /* clear ft [np * 6] */
   for (i = 0; i < np * 6; ++i)
-    ft [i] = 0.0;
+    {
+      ft [i] = 0.0;
+    }
 
   for (i = 0; i < np; ++i)
     {
@@ -419,7 +424,7 @@ calc_lub_3ft (int np, double * uo, double * ft)
 	  j3 = j * 3;
 	  j6 = j * 6;
 	  calc_lub_ft_2b (uo + i6, uo + j6,
-			  pos + i3, pos + j3,
+			  sys->pos + i3, sys->pos + j3,
 			  ft + i6, ft + j6);
 	  
 	}
