@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.1 2006/09/26 21:40:40 ichiki Exp $
+ * $Id: libstokes.h,v 1.2 2006/09/26 23:52:15 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,55 @@
  */
 #ifndef	_LIBSTOKES_H_
 #define	_LIBSTOKES_H_
+
+
+/***********************************
+ ** system parameters             **
+ ***********************************/
+struct stokes {
+  int np; /* number of all particles */
+  int nm; /* number of mobile particles */
+  double * pos; /* position of particles */
+
+  /* for ewald codes */
+  int pcellx, pcelly, pcellz; /* # of cell in real space */
+  int kmaxx, kmaxy, kmaxz; /* # of cell in reciprocal space */
+
+  double zeta,zeta2,zaspi,za2;
+  double pi2,pivol;
+
+  double lx, ly, lz;
+  double llx[27], lly[27], llz[27]; /* for regist and lub */
+
+  /* for zeta program */
+  double cpu1, cpu2, cpu3;
+};
+
+
+/* all elements are zero-cleared
+ */
+struct stokes *
+stokes_init (void);
+
+void
+stokes_free (struct stokes * sys);
+
+void
+stokes_set_np (struct stokes * sys,
+	       int np, int nm);
+
+void
+stokes_set_ll (struct stokes * sys,
+	       double lx, double ly, double lz);
+
+void
+stokes_set_zeta (struct stokes * sys,
+		 double zeta, double cutlim);
+
+double
+zeta_by_tratio (struct stokes * sys,
+		double tratio);
+
 
 
 /***********************************
