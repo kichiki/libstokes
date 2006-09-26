@@ -1,25 +1,36 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.1 2006/09/26 01:04:44 ichiki Exp $
+ * $Id: ewald-3ft.c,v 4.2 2006/09/26 23:57:50 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
  * periodic boundary condition in 3 direction
  * FT version
  * non-dimension formulation
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-
-#ifdef ZETA
-#include "../bench.h" // ptime_ms_d()
-#endif /* ZETA */
-
 #include <libiter.h> /* solve_iter_stab (), gpb () */
 
+#include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
 #include "ft.h"
+
 #include "ewald-3ft.h"
 
 
@@ -33,7 +44,7 @@
  *  y [n * 6] : UO
  */
 void
-atimes_ewald_3ft (int n, double *x, double *y, void * user_data)
+atimes_ewald_3ft (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
   int pcellx, pcelly, pcellz;
@@ -120,9 +131,8 @@ atimes_ewald_3ft (int n, double *x, double *y, void * user_data)
 			xc, yc);
     }
 
-#ifdef ZETA
+  /* for zeta code to measure CPU times */
   ptime_ms_d ();
-#endif /* ZETA */
 
   /* first Ewald part ( real space ) */
   for (i = 0; i < np; i++)
@@ -213,9 +223,8 @@ atimes_ewald_3ft (int n, double *x, double *y, void * user_data)
 	}
     }
 
-#ifdef ZETA
+  /* for zeta code to measure CPU times */
   sys->cpu2 = ptime_ms_d ();
-#endif /* ZETA */
 
   /* Second Ewald part ( reciprocal space ) */
   for (m1 = - kmaxx; m1 <= kmaxx; m1++)
@@ -281,10 +290,9 @@ atimes_ewald_3ft (int n, double *x, double *y, void * user_data)
 	}
     }
 
-#ifdef ZETA
+  /* for zeta code to measure CPU times */
   sys->cpu3 = ptime_ms_d ();
   sys->cpu1 = sys->cpu2 + sys->cpu3;
-#endif /* ZETA */
 }
 
 
@@ -300,7 +308,7 @@ atimes_ewald_3ft (int n, double *x, double *y, void * user_data)
  */
 void
 calc_res_ewald_3ft (struct stokes * sys,
-		    double *u, double *o,
+		    const double *u, const double *o,
 		    double *f, double *t)
 {
   int np;
@@ -352,7 +360,7 @@ calc_res_ewald_3ft (struct stokes * sys,
  */
 void
 calc_mob_ewald_3ft (struct stokes * sys,
-		    double *f, double *t,
+		    const double *f, const double *t,
 		    double *u, double *o)
 {
   int np;
@@ -373,9 +381,9 @@ calc_mob_ewald_3ft (struct stokes * sys,
       exit (1);
     }
 
-  set_FT_by_ft (np, f, t, x);
+  set_ft_by_FT (np, x, f, t);
   atimes_ewald_3ft (n6, x, b, (void *) sys);
-  set_ft_by_FT (np, b, u, o);
+  set_FT_by_ft (np, u, o, b);
 
   free (b);
   free (x);
@@ -396,8 +404,8 @@ calc_mob_ewald_3ft (struct stokes * sys,
  */
 static void
 calc_b_mob_fix_ewald_3ft (struct stokes * sys,
-			  double *f, double *t,
-			  double *uf, double *of,
+			  const double *f, const double *t,
+			  const double *uf, const double *of,
 			  double *b)
 {
   int np, nm;
@@ -464,7 +472,7 @@ calc_b_mob_fix_ewald_3ft (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_fix_ewald_3ft (int n, double *x, double *y, void * user_data)
+atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -557,8 +565,8 @@ atimes_mob_fix_ewald_3ft (int n, double *x, double *y, void * user_data)
  */
 void
 calc_mob_fix_ewald_3ft (struct stokes * sys,
-			double *f, double *t,
-			double *uf, double *of,
+			const double *f, const double *t,
+			const double *uf, const double *of,
 			double *u, double *o,
 			double *ff, double *tf)
 {
@@ -615,7 +623,7 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
  *  1 : otherwise
  */
 static int
-cond_lub (double * x1, double * x2)
+cond_lub (const double * x1, const double * x2)
 {
   double x, y, z;
   double r2;
@@ -651,7 +659,7 @@ cond_lub (double * x1, double * x2)
  */
 static void
 calc_lub_ewald_3ft (struct stokes * sys,
-		    double * uo, double * ft)
+		    const double * uo, double * ft)
 {
   int np;
   int i, j, k;
@@ -714,7 +722,7 @@ calc_lub_ewald_3ft (struct stokes * sys,
  */
 void
 calc_res_lub_ewald_3ft (struct stokes * sys,
-			double *u, double *o,
+			const double *u, const double *o,
 			double *f, double *t)
 {
   int np;
@@ -779,8 +787,8 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
  */
 static void
 calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
-			      double *f, double *t,
-			      double *uf, double *of,
+			      const double *f, const double *t,
+			      const double *uf, const double *of,
 			      double *b)
 {
   int np, nm;
@@ -857,7 +865,8 @@ calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_lub_fix_ewald_3ft (int n, double *x, double *y, void * user_data)
+atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
+			      double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -962,8 +971,8 @@ atimes_mob_lub_fix_ewald_3ft (int n, double *x, double *y, void * user_data)
  */
 void
 calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
-			    double *f, double *t,
-			    double *uf, double *of,
+			    const double *f, const double *t,
+			    const double *uf, const double *of,
 			    double *u, double *o,
 			    double *ff, double *tf)
 {
