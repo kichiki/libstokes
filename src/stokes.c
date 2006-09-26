@@ -1,341 +1,161 @@
-/* utility routines for Ewald-summation code in 3D
- * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: stokes.c,v 1.6 2001/02/06 03:47:16 ichiki Exp $
+/* structure for system parameters of stokes library.
+ * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.c,v 2.1 2006/09/26 01:00:12 ichiki Exp $
  */
-#include <math.h>
-#include <stdlib.h> // srand48(), drand48()
+#include <stdlib.h>
+#include <math.h> /* log() */
 
-#include "ewald-3.h"
+#include "stokes.h"
 
-/** global variables **/
-int pcellx, pcelly, pcellz; /* # of cell in real space */
-int kmaxx, kmaxy, kmaxz; /* # of cell in reciprocal space */
-double zeta, zeta2, zaspi, za2;
-double pi2;
-double pivol;
-double lx, ly, lz; /* cell size */
-double llx [27], lly [27], llz [27]; /* for regist and lub */
-
-
-static int
-check_overlap (int np, double lx, double ly, double lz, double * pos);
-
-
-/* initialize parameters used in Ewald-summation code in 3D
- * INPUT
- *  lx, ly, lz : geometry of the primary cell
- *  tratio : a parameter by zeta-code to determine pcell? and kmax?
- *  cutlim : cut-off limit to determine pcell? and kmax?
- * OUTPUT
- *  (global) pcellx, pcelly, pcellz;
- *  (global) kmaxx, kmaxy, kmaxz;
- *  (global) zeta, zeta2, zaspi, za2;
- *  (global) pi2;
- *  (global) pivol;
- *  (global) lx, ly, lz;
+/* all elements are zero-cleared
  */
-void
-init_ewald_3d (double lx, double ly, double lz,
-	       double tratio, double cutlim)
+struct stokes *
+stokes_init (void)
 {
-  extern int pcellx, pcelly, pcellz;
-  extern int kmaxx, kmaxy, kmaxz;
+  struct stokes * sys = NULL;
 
-  extern double zeta, zeta2, zaspi, za2;
-  extern double pi2;
-  extern double pivol;
-  //extern double lx, ly, lz; /* cell size */
-  extern double llx [27], lly [27], llz [27];
+  sys = (struct stokes *) malloc (sizeof (struct stokes));
+
+  sys->np = 0;
+  sys->nm = 0;
+  sys->pos = NULL;
+
+  /* # of cell in real space */
+  sys->pcellx = 0;
+  sys->pcelly = 0;
+  sys->pcellz = 0;
+
+  /* # of cell in reciprocal space */
+  sys->kmaxx = 0;
+  sys->kmaxy = 0;
+  sys->kmaxz = 0;
+
+  sys->zeta = 0.0;
+  sys->zeta2 = 0.0;
+  sys->zaspi = 0.0;
+  sys->za2 = 0.0;
+
+  sys->pi2 = 0.0;
+  sys->pivol = 0.0;
+
+  sys->lx = 0.0;
+  sys->ly = 0.0;
+  sys->lz = 0.0;
+
+  int i;
+  for (i = 0; i < 27; i ++)
+    {
+      sys->llx [i] = 0.0;
+      sys->lly [i] = 0.0;
+      sys->llz [i] = 0.0;
+    }
+
+  /* for zeta program */
+  sys->cpu1 = 0.0;
+  sys->cpu2 = 0.0;
+  sys->cpu3 = 0.0;
+
+  return (sys);
+}
+
+void
+stokes_free (struct stokes * sys)
+{
+  if (sys != NULL)
+    {
+      if (sys->pos != NULL) free (sys->pos);
+      free (sys);
+    }
+}
 
 
-  /* initialization */
-  pi2 = M_PI * 2.0;
-  pivol = M_PI / lx / ly / lz;
+void
+stokes_set_np (struct stokes * sys,
+	       int np, int nm)
+{
+  sys->np = np;
+  sys->nm = nm;
 
-  llx [ 0] = 0.0; lly [ 0] = 0.0; llz [ 0] = 0.0;
-  llx [ 1] = -lx; lly [ 1] = 0.0; llz [ 1] = 0.0;
-  llx [ 2] = 0.0; lly [ 2] = -ly; llz [ 2] = 0.0;
-  llx [ 3] = +lx; lly [ 3] = 0.0; llz [ 3] = 0.0;
-  llx [ 4] = 0.0; lly [ 4] = +ly; llz [ 4] = 0.0;
-  llx [ 5] = -lx; lly [ 5] = -ly; llz [ 5] = 0.0;
-  llx [ 6] = -lx; lly [ 6] = +ly; llz [ 6] = 0.0;
-  llx [ 7] = +lx; lly [ 7] = -ly; llz [ 7] = 0.0;
-  llx [ 8] = +lx; lly [ 8] = +ly; llz [ 8] = 0.0;
+  if (sys->pos != NULL) free (sys->pos);
+  sys->pos = (double *) malloc (sizeof (double) * np * 3);
+}
 
-  llx [ 9] = 0.0; lly [ 9] = 0.0; llz [ 9] = - lz;
-  llx [10] = -lx; lly [10] = 0.0; llz [10] = - lz;
-  llx [11] = 0.0; lly [11] = -ly; llz [11] = - lz;
-  llx [12] = +lx; lly [12] = 0.0; llz [12] = - lz;
-  llx [13] = 0.0; lly [13] = +ly; llz [13] = - lz;
-  llx [14] = -lx; lly [14] = -ly; llz [14] = - lz;
-  llx [15] = -lx; lly [15] = +ly; llz [15] = - lz;
-  llx [16] = +lx; lly [16] = -ly; llz [16] = - lz;
-  llx [17] = +lx; lly [17] = +ly; llz [17] = - lz;
 
-  llx [18] = 0.0; lly [18] = 0.0; llz [18] = + lz;
-  llx [19] = -lx; lly [19] = 0.0; llz [19] = + lz;
-  llx [20] = 0.0; lly [20] = -ly; llz [20] = + lz;
-  llx [21] = +lx; lly [21] = 0.0; llz [21] = + lz;
-  llx [22] = 0.0; lly [22] = +ly; llz [22] = + lz;
-  llx [23] = -lx; lly [23] = -ly; llz [23] = + lz;
-  llx [24] = -lx; lly [24] = +ly; llz [24] = + lz;
-  llx [25] = +lx; lly [25] = -ly; llz [25] = + lz;
-  llx [26] = +lx; lly [26] = +ly; llz [26] = + lz;
+void
+stokes_set_ll (struct stokes * sys,
+	       double lx, double ly, double lz)
+{
+  sys->pi2 = M_PI * 2.0;
+  sys->pivol = M_PI / lx / ly / lz;
 
-  /* define zeta */
-  /*zeta = 0.01;*/
-  zeta = pow (tratio, 1.0 / 6.0)
-    * sqrt (M_PI)
-    / pow (lx * ly * lz, 1.0 / 3.0);
-  zeta2 = zeta * zeta;
-  za2 = zeta2;
-  zaspi = zeta / sqrt (M_PI);
+  sys->lx = lx;
+  sys->ly = ly;
+  sys->lz = lz;
+
+  /* 0 is always the primary cell */
+  sys->llx [ 0] = 0.0; sys->lly [ 0] = 0.0; sys->llz [ 0] = 0.0;
+  sys->llx [ 1] = -lx; sys->lly [ 1] = 0.0; sys->llz [ 1] = 0.0;
+  sys->llx [ 2] = 0.0; sys->lly [ 2] = -ly; sys->llz [ 2] = 0.0;
+  sys->llx [ 3] = +lx; sys->lly [ 3] = 0.0; sys->llz [ 3] = 0.0;
+  sys->llx [ 4] = 0.0; sys->lly [ 4] = +ly; sys->llz [ 4] = 0.0;
+  sys->llx [ 5] = -lx; sys->lly [ 5] = -ly; sys->llz [ 5] = 0.0;
+  sys->llx [ 6] = -lx; sys->lly [ 6] = +ly; sys->llz [ 6] = 0.0;
+  sys->llx [ 7] = +lx; sys->lly [ 7] = -ly; sys->llz [ 7] = 0.0;
+  sys->llx [ 8] = +lx; sys->lly [ 8] = +ly; sys->llz [ 8] = 0.0;
+  /* up to 8, the monolayer (xy plain)
+   * note: y is the vertical direction for 2D monolayer case! */
+
+  sys->llx [ 9] = 0.0; sys->lly [ 9] = 0.0; sys->llz [ 9] = - lz;
+  sys->llx [10] = -lx; sys->lly [10] = 0.0; sys->llz [10] = - lz;
+  sys->llx [11] = 0.0; sys->lly [11] = -ly; sys->llz [11] = - lz;
+  sys->llx [12] = +lx; sys->lly [12] = 0.0; sys->llz [12] = - lz;
+  sys->llx [13] = 0.0; sys->lly [13] = +ly; sys->llz [13] = - lz;
+  sys->llx [14] = -lx; sys->lly [14] = -ly; sys->llz [14] = - lz;
+  sys->llx [15] = -lx; sys->lly [15] = +ly; sys->llz [15] = - lz;
+  sys->llx [16] = +lx; sys->lly [16] = -ly; sys->llz [16] = - lz;
+  sys->llx [17] = +lx; sys->lly [17] = +ly; sys->llz [17] = - lz;
+
+  sys->llx [18] = 0.0; sys->lly [18] = 0.0; sys->llz [18] = + lz;
+  sys->llx [19] = -lx; sys->lly [19] = 0.0; sys->llz [19] = + lz;
+  sys->llx [20] = 0.0; sys->lly [20] = -ly; sys->llz [20] = + lz;
+  sys->llx [21] = +lx; sys->lly [21] = 0.0; sys->llz [21] = + lz;
+  sys->llx [22] = 0.0; sys->lly [22] = +ly; sys->llz [22] = + lz;
+  sys->llx [23] = -lx; sys->lly [23] = -ly; sys->llz [23] = + lz;
+  sys->llx [24] = -lx; sys->lly [24] = +ly; sys->llz [24] = + lz;
+  sys->llx [25] = +lx; sys->lly [25] = -ly; sys->llz [25] = + lz;
+  sys->llx [26] = +lx; sys->lly [26] = +ly; sys->llz [26] = + lz;
+}
+
+void
+stokes_set_zeta (struct stokes * sys,
+		 double zeta, double cutlim)
+{
+  sys->zeta  = zeta;
+  sys->zeta2 = zeta * zeta;
+  sys->za2   = sys->zeta2;
+  sys->zaspi = zeta / sqrt (M_PI);
 
   /* define # of cells  */
   /* in real space */
-  pcellx = (int) (sqrt (- log (cutlim)) / zeta / lx) + 1;
-  pcelly = (int) (sqrt (- log (cutlim)) / zeta / ly) + 1;
-  pcellz = (int) (sqrt (- log (cutlim)) / zeta / lz) + 1;
+  sys->pcellx = (int)(sqrt (-log(cutlim)) / zeta / sys->lx) + 1;
+  sys->pcelly = (int)(sqrt (-log(cutlim)) / zeta / sys->ly) + 1;
+  sys->pcellz = (int)(sqrt (-log(cutlim)) / zeta / sys->lz) + 1;
   /* in reciprocal space */
-  kmaxx = (int) (sqrt (- log (cutlim)) * zeta * lx / M_PI);
-  kmaxy = (int) (sqrt (- log (cutlim)) * zeta * ly / M_PI);
-  kmaxz = (int) (sqrt (- log (cutlim)) * zeta * lz / M_PI);
+  sys->kmaxx = (int)(sqrt (-log(cutlim)) * zeta * sys->lx / M_PI);
+  sys->kmaxy = (int)(sqrt (-log(cutlim)) * zeta * sys->ly / M_PI);
+  sys->kmaxz = (int)(sqrt (-log(cutlim)) * zeta * sys->lz / M_PI);
 }
 
 
-/* initialize configuration and the primary cell of simple cubic lattic
- * INPUT
- *  phi        : volume fraction of particles
- *  nx, ny, nz : # particles in each direction
- * OUTPUT
- *  pos [(nx * ny * nz) * 3] : positions of particles
- *  lx, ly, lz : geometry of the primary cell
- */
-void
-init_config_SC (double phi, int nx, int ny, int nz,
-		double *pos, double *lx, double *ly, double *lz)
+double
+zeta_by_tratio (struct stokes * sys,
+		double tratio)
 {
-  int j;
-  int ix, iy, iz;
+  double zeta;
 
+  zeta = pow (tratio, 1.0 / 6.0)
+    * sqrt (M_PI)
+    / pow (sys->lx * sys->ly * sys->lz, 1.0 / 3.0);
 
-  (*lx) = (*ly) = (*lz) = pow (4.0 * M_PI / phi / 3.0, 1.0 / 3.0);
-
-  /* extend the primary cell with 1 particle to that with "n" particles*/
-  j = 0;
-  for (ix = 0; ix < nx; ix ++)
-    {
-      for (iy = 0; iy < ny; iy ++)
-	{
-	  for (iz = 0; iz < nz; iz ++)
-	    {
-	      pos [j * 3 + 0] = (double) ix * (*lx);
-	      pos [j * 3 + 1] = (double) iy * (*ly);
-	      pos [j * 3 + 2] = (double) iz * (*lz);
-	      j ++;
-	    }
-	}
-    }
-  (*lx) *= (double) nx;
-  (*ly) *= (double) ny;
-  (*lz) *= (double) nz;
-}
-
-/* initialize configuration and the primary cell of BCC
- * INPUT
- *  phi        : volume fraction of particles
- *  nx, ny, nz : # single cell in each direction
- *             : so that total # particles is 2*nx*ny*nz
- * OUTPUT
- *  pos [(nx * ny * nz) 2 * * 3] : positions of particles
- *  lx, ly, lz : geometry of the primary cell
- */
-void
-init_config_BCC (double phi, int nx, int ny, int nz,
-		 double *pos, double *lx, double *ly, double *lz)
-{
-  int j;
-  int ix, iy, iz;
-
-
-  (*lx) = (*ly) = (*lz) = pow (8.0 * M_PI / phi / 3.0, 1.0 / 3.0);
-
-  /* extend the primary cell with 1 particle to that with "n" particles*/
-  j = 0;
-  for (ix = 0; ix < nx; ix ++)
-    {
-      for (iy = 0; iy < ny; iy ++)
-	{
-	  for (iz = 0; iz < nz; iz ++)
-	    {
-	      pos [j * 3 + 0] = (double) ix * (*lx);
-	      pos [j * 3 + 1] = (double) iy * (*ly);
-	      pos [j * 3 + 2] = (double) iz * (*lz);
-	      j ++;
-	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
-	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
-	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
-	      j ++;
-	    }
-	}
-    }
-  (*lx) *= (double) nx;
-  (*ly) *= (double) ny;
-  (*lz) *= (double) nz;
-}
-
-/* initialize configuration and the primary cell of FCC
- * INPUT
- *  phi        : volume fraction of particles
- *  nx, ny, nz : # single cell in each direction
- *             : so that total # particles is 4*nx*ny*nz
- * OUTPUT
- *  pos [(nx * ny * nz) 4 * * 3] : positions of particles
- *  lx, ly, lz : geometry of the primary cell
- */
-void
-init_config_FCC (double phi, int nx, int ny, int nz,
-		 double *pos, double *lx, double *ly, double *lz)
-{
-  int j;
-  int ix, iy, iz;
-
-
-  (*lx) = (*ly) = (*lz) = pow (16.0 * M_PI / phi / 3.0, 1.0 / 3.0);
-
-  /* extend the primary cell with 1 particle to that with "n" particles*/
-  j = 0;
-  for (ix = 0; ix < nx; ix ++)
-    {
-      for (iy = 0; iy < ny; iy ++)
-	{
-	  for (iz = 0; iz < nz; iz ++)
-	    {
-	      pos [j * 3 + 0] = (double) ix * (*lx);
-	      pos [j * 3 + 1] = (double) iy * (*ly);
-	      pos [j * 3 + 2] = (double) iz * (*lz);
-	      j ++;
-	      pos [j * 3 + 0] = ((double) ix + 0.0) * (*lx);
-	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
-	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
-	      j ++;
-	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
-	      pos [j * 3 + 1] = ((double) iy + 0.0) * (*ly);
-	      pos [j * 3 + 2] = ((double) iz + 0.5) * (*lz);
-	      j ++;
-	      pos [j * 3 + 0] = ((double) ix + 0.5) * (*lx);
-	      pos [j * 3 + 1] = ((double) iy + 0.5) * (*ly);
-	      pos [j * 3 + 2] = ((double) iz + 0.0) * (*lz);
-	      j ++;
-	    }
-	}
-    }
-  (*lx) *= (double) nx;
-  (*ly) *= (double) ny;
-  (*lz) *= (double) nz;
-}
-
-/* initialize random configuration and the primary cell
- * INPUT
- *  seed : seed for random
- *  phi : volume fraction of particles
- *  np  : # particles
- * OUTPUT
- *  pos [np * 3] : positions of particles
- *  lx, ly, lz   : geometry of the primary cell, where lz = 2.0 is fixed.
- */
-void
-init_config_random (long seed,
-		    double phi, int np,
-		    double *pos, double *lx, double *ly, double *lz)
-{
-  int i;
-  int ix, iy, iz;
-  int i_tor = 1000;
-  int j;
-
-
-  srand48 (seed);
-
-  (*lx) = (*ly) = (*lz)
-    = pow (4.0 * M_PI * (double) np / phi / 3.0,
-	   1.0 / 3.0);
-
-  j = 0;
-  for (i = 0; i < np; i ++)
-    {
-    retry_init_config_random:
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
-
-      pos [ix] = (*lx) * drand48 ();
-      pos [iy] = (*ly) * drand48 ();
-      pos [iz] = (*lz) * drand48 ();
-
-      if (check_overlap (i + 1, (*lx), (*ly), (*lz), pos) != 0)
-	{
-	  ++j;
-	  if (j > i_tor)
-	    {
-	      j = 0;
-	      if (i > 0)
-		--i;
-	    }
-	  goto retry_init_config_random;
-	}
-    }
-}
-
-/* check overlap
- * INPUT
- * OUTPUT (return value)
- *  0 : no-overlap
- *  1 : overlap
- */
-static int
-check_overlap (int np, double lx, double ly, double lz, double * pos)
-{
-  int i;
-  int ix, iy, iz;
-  int j;
-  int jx, jy, jz;
-  int kx, ky, kz;
-
-  double rr;
-  double x, y, z;
-
-
-  for (i = 0; i < np; ++i)
-    {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
-      for (j = i + 1; j < np; ++j)
-	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
-	  for (kx = -1; kx <= 1; ++kx)
-	    {
-	      for (ky = -1; ky <= 1; ++ky)
-		{
-		  for (kz = -1; kz <= 1; ++kz)
-		    {
-		      x = pos [ix] - pos [jx] + (double) kx * lx;
-		      y = pos [iy] - pos [jy] + (double) ky * ly;
-		      z = pos [iz] - pos [jz] + (double) kz * lz;
-		      rr = x * x
-			+ y * y
-			+ z * z;
-		      if (rr <= 4.0)
-			{
-			  return 1;
-			}
-		    }
-		}
-	    }
-	}
-    }
-  return 0;
+  return (zeta);
 }
