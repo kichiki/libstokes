@@ -1,12 +1,27 @@
 /* header file for 'ewald-3fts.c' --
- * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
- * Copyright (C) 1993-1996,1999-2002 Kengo Ichiki <ichiki@pegasus.me.jhu.edu>
- * $Id: ewald-3fts.h,v 5.1 2006/09/26 01:06:44 ichiki Exp $
+/* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
+ * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3fts.h,v 5.2 2006/09/26 23:58:56 ichiki Exp $
  *
- * 3 dimensional hydrodynamics, 3D configuration
- * periodic boundary condition in 3 direction,
+ * 3 dimensional hydrodynamics
+ * 3D configuration
+ * periodic boundary condition in 3 direction
  * FTS version
  * non-dimension formulation
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #ifndef	_EWALD_3FTS_H_
 #define	_EWALD_3FTS_H_
@@ -22,7 +37,7 @@
  *  y [n * 11] : UOE
  */
 void
-atimes_ewald_3fts (int n, double *x, double *y, void * user_data);
+atimes_ewald_3fts (int n, const double *x, double *y, void * user_data);
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
@@ -38,7 +53,7 @@ atimes_ewald_3fts (int n, double *x, double *y, void * user_data);
  */
 void
 calc_res_ewald_3fts (struct stokes * sys,
-		     double *u, double *o, double *e,
+		     const double *u, const double *o, const double *e,
 		     double *f, double *t, double *s);
 
 /** natural mobility problem **/
@@ -55,7 +70,7 @@ calc_res_ewald_3fts (struct stokes * sys,
  */
 void
 calc_mob_ewald_3fts (struct stokes * sys,
-		     double *f, double *t, double *e,
+		     const double *f, const double *t, const double *e,
 		     double *u, double *o, double *s);
 
 /** natural mobility problem with fixed particles **/
@@ -79,8 +94,8 @@ calc_mob_ewald_3fts (struct stokes * sys,
  */
 void
 calc_mob_fix_ewald_3fts (struct stokes * sys,
-			 double *f, double *t, double *e,
-			 double *uf, double *of, double *ef,
+			 const double *f, const double *t, const double *e,
+			 const double *uf, const double *of, const double *ef,
 			 double *u, double *o, double *s,
 			 double *ff, double *tf, double *sf);
 
@@ -99,7 +114,7 @@ calc_mob_fix_ewald_3fts (struct stokes * sys,
  */
 void
 calc_res_lub_ewald_3fts (struct stokes * sys,
-			 double *u, double *o, double *e,
+			 const double *u, const double *o, const double *e,
 			 double *f, double *t, double *s);
 
 /** natural mobility problem with lubrication with fixed particles **/
@@ -123,8 +138,9 @@ calc_res_lub_ewald_3fts (struct stokes * sys,
  */
 void
 calc_mob_lub_fix_ewald_3fts (struct stokes * sys,
-			     double *f, double *t, double *e,
-			     double *uf, double *of, double *ef,
+			     const double *f, const double *t, const double *e,
+			     const double *uf, const double *of,
+			     const double *ef,
 			     double *u, double *o, double *s,
 			     double *ff, double *tf, double *sf);
 
