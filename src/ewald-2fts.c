@@ -1,16 +1,18 @@
 /* Ewald summation technique under 2D
  * this is a wrapper package for ewald-3fts.c
- * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: ewald-2fts.c,v 1.3 2001/02/04 12:26:43 ichiki Exp $
+ * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-2fts.c,v 1.4 2006/09/26 05:41:11 ichiki Exp $
  *
- * 3 dimensional hydrodynamics, 2D configuration
- * periodic boundary condition in 3 direction,
+ * 3 dimensional hydrodynamics
+ * 2D configuration
+ * periodic boundary condition in 3 direction
  * FTS version
  * non-dimension formulation
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
+#include "stokes.h" /* struct stokeks */
 #include "ewald-3fts.h"
 
 #include "ewald-2fts.h"
@@ -19,7 +21,7 @@
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
- *  np : # particles
+ *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
  *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
  *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
@@ -29,10 +31,11 @@
  *   s [np * 5] :
  */
 void
-calc_res_ewald_2fts (int np,
-		     double *u, double *o, double *e,
+calc_res_ewald_2fts (struct stokes * sys,
+		     const double *u, const double *o, const double *e,
 		     double *f, double *t, double *s)
 {
+  int np;
   int i;
   int np3, np5;
   int i2, i3, i5;
@@ -40,11 +43,12 @@ calc_res_ewald_2fts (int np,
   double * u3, * o3, * e3;
 
 
+  np = sys->np;
   np3 = np * 3;
   np5 = np * 5;
-  u3 = malloc (sizeof (double) * np3);
-  o3 = malloc (sizeof (double) * np3);
-  e3 = malloc (sizeof (double) * np5);
+  u3 = (double *) malloc (sizeof (double) * np3);
+  o3 = (double *) malloc (sizeof (double) * np3);
+  e3 = (double *) malloc (sizeof (double) * np5);
   if (u3 == NULL
       || o3 == NULL
       || e3 == NULL)
@@ -73,7 +77,7 @@ calc_res_ewald_2fts (int np,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_res_ewald_3fts (np, u3, o3, e3,
+  calc_res_ewald_3fts (sys, u3, o3, e3,
 		       f, t, s);
 
   free (u3);
@@ -83,6 +87,7 @@ calc_res_ewald_2fts (int np,
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FTS version under Ewald sum
+ *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [np * 3] : OK, this is 3D form
  *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
@@ -92,10 +97,11 @@ calc_res_ewald_2fts (int np,
  *   s [np * 5] :
  */
 void
-calc_mob_ewald_2fts (int np,
-		     double *f, double *t3, double *e,
+calc_mob_ewald_2fts (struct stokes * sys,
+		     const double *f, const double *t3, const double *e,
 		     double *u, double *o, double *s)
 {
+  int np;
   int i;
   int np3, np5;
   int i2, i3, i5;
@@ -103,10 +109,11 @@ calc_mob_ewald_2fts (int np,
   double * f3, * e3;
 
 
+  np = sys->np;
   np3 = np * 3;
   np5 = np * 5;
-  f3 = malloc (sizeof (double) * np3);
-  e3 = malloc (sizeof (double) * np5);
+  f3 = (double *) malloc (sizeof (double) * np3);
+  e3 = (double *) malloc (sizeof (double) * np5);
   if (f3 == NULL
       || e3 == NULL)
     {
@@ -130,7 +137,7 @@ calc_mob_ewald_2fts (int np,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_mob_ewald_3fts (np, f3, t3, e3,
+  calc_mob_ewald_3fts (sys, f3, t3, e3,
 		       u, o, s);
 
   free (f3);
@@ -141,8 +148,7 @@ calc_mob_ewald_2fts (int np,
 /* solve natural mobility problem with fixed particles in FTS version
  * under Ewald sum
  * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [nm * 3] : OK, this is 3D form
  *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
@@ -158,12 +164,13 @@ calc_mob_ewald_2fts (int np,
  *   sf [nf * 5] :
  */
 void
-calc_mob_fix_ewald_2fts (int np, int nm,
-			 double *f, double *t3, double *e,
-			 double *uf, double *of, double *ef,
+calc_mob_fix_ewald_2fts (struct stokes * sys,
+			 const double *f, const double *t3, const double *e,
+			 const double *uf, const double *of, const double *ef,
 			 double *u, double *o, double *s,
 			 double *ff, double *tf, double *sf)
 {
+  int np, nm;
   int i;
   int nm3, nm5;
   int nf, nf3, nf5;
@@ -173,17 +180,20 @@ calc_mob_fix_ewald_2fts (int np, int nm,
   double * uf3, * of3, * ef3;
 
 
+  np = sys->np;
+  nm = sys->nm;
+
   nm3 = nm * 3;
   nm5 = nm * 5;
-  f3 = malloc (sizeof (double) * nm3);
-  e3 = malloc (sizeof (double) * nm5);
+  f3 = (double *) malloc (sizeof (double) * nm3);
+  e3 = (double *) malloc (sizeof (double) * nm5);
 
   nf = np - nm;
   nf3 = nf * 3;
   nf5 = nf * 5;
-  uf3 = malloc (sizeof (double) * nf3);
-  of3 = malloc (sizeof (double) * nf3);
-  ef3 = malloc (sizeof (double) * nf5);
+  uf3 = (double *) malloc (sizeof (double) * nf3);
+  of3 = (double *) malloc (sizeof (double) * nf3);
+  ef3 = (double *) malloc (sizeof (double) * nf5);
 
   if (f3 == NULL
       || e3 == NULL
@@ -233,7 +243,7 @@ calc_mob_fix_ewald_2fts (int np, int nm,
       ef3 [i5 + 4] = - ef [i2 + 0]; /* yy */
     }
 
-  calc_mob_fix_ewald_3fts (np, nm,
+  calc_mob_fix_ewald_3fts (sys,
 			   f3, t3, e3, uf3, of3, ef3,
 			   u, o, s, ff, tf, sf);
 
@@ -248,7 +258,7 @@ calc_mob_fix_ewald_2fts (int np, int nm,
 /* solve natural resistance problem with lubrication
  * in FTS version under Ewald sum
  * INPUT
- *  np : # particles
+ *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
  *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
  *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
@@ -258,10 +268,11 @@ calc_mob_fix_ewald_2fts (int np, int nm,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_2fts (int np,
-			 double *u, double *o, double *e,
+calc_res_lub_ewald_2fts (struct stokes * sys,
+			 const double *u, const double *o, const double *e,
 			 double *f, double *t, double *s)
 {
+  int np;
   int i;
   int np3, np5;
   int i2, i3, i5;
@@ -269,11 +280,12 @@ calc_res_lub_ewald_2fts (int np,
   double * u3, * o3, * e3;
 
 
+  np = sys->np;
   np3 = np * 3;
   np5 = np * 5;
-  u3 = malloc (sizeof (double) * np3);
-  o3 = malloc (sizeof (double) * np3);
-  e3 = malloc (sizeof (double) * np5);
+  u3 = (double *) malloc (sizeof (double) * np3);
+  o3 = (double *) malloc (sizeof (double) * np3);
+  e3 = (double *) malloc (sizeof (double) * np5);
   if (u3 == NULL
       || o3 == NULL
       || e3 == NULL)
@@ -302,7 +314,7 @@ calc_res_lub_ewald_2fts (int np,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_res_lub_ewald_3fts (np, u3, o3, e3,
+  calc_res_lub_ewald_3fts (sys, u3, o3, e3,
 			   f, t, s);
 
   free (u3);
@@ -314,8 +326,7 @@ calc_res_lub_ewald_2fts (int np,
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version under Ewald sum
  * INPUT
- *  np : # all particles
- *  nm : # mobile particles, so that (np - nm) is # fixed particles
+ *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [nm * 3] : OK, this is 3D form
  *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
@@ -331,12 +342,15 @@ calc_res_lub_ewald_2fts (int np,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_2fts (int np, int nm,
-			     double *f, double *t3, double *e,
-			     double *uf, double *of, double *ef,
+calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
+			     const double *f, const double *t3,
+			     const double *e,
+			     const double *uf, const double *of,
+			     const double *ef,
 			     double *u, double *o, double *s,
 			     double *ff, double *tf, double *sf)
 {
+  int np, nm;
   int i;
   int nm3, nm5;
   int nf, nf3, nf5;
@@ -346,17 +360,20 @@ calc_mob_lub_fix_ewald_2fts (int np, int nm,
   double * uf3, * of3, * ef3;
 
 
+  np = sys->np;
+  nm = sys->nm;
+
   nm3 = nm * 3;
   nm5 = nm * 5;
-  f3 = malloc (sizeof (double) * nm3);
-  e3 = malloc (sizeof (double) * nm5);
+  f3 = (double *) malloc (sizeof (double) * nm3);
+  e3 = (double *) malloc (sizeof (double) * nm5);
 
   nf = np - nm;
   nf3 = nf * 3;
   nf5 = nf * 5;
-  uf3 = malloc (sizeof (double) * nf3);
-  of3 = malloc (sizeof (double) * nf3);
-  ef3 = malloc (sizeof (double) * nf5);
+  uf3 = (double *) malloc (sizeof (double) * nf3);
+  of3 = (double *) malloc (sizeof (double) * nf3);
+  ef3 = (double *) malloc (sizeof (double) * nf5);
 
   if (f3 == NULL
       || e3 == NULL
@@ -406,7 +423,7 @@ calc_mob_lub_fix_ewald_2fts (int np, int nm,
       ef3 [i5 + 4] = - ef [i2 + 0]; /* yy */
     }
 
-  calc_mob_lub_fix_ewald_3fts (np, nm,
+  calc_mob_lub_fix_ewald_3fts (sys,
 			       f3, t3, e3, uf3, of3, ef3,
 			       u, o, s, ff, tf, sf);
 
