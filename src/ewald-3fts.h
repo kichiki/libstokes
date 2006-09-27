@@ -1,7 +1,7 @@
 /* header file for 'ewald-3fts.c' --
-/* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
+ * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.h,v 5.2 2006/09/26 23:58:56 ichiki Exp $
+ * $Id: ewald-3fts.h,v 5.3 2006/09/27 00:47:54 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
