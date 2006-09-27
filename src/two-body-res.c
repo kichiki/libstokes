@@ -1,6 +1,20 @@
 /* subroutines of exact 2-body resistance scalar functions
- * Copyright (C) 1999 Kengo ICHIKI <kengo@caltech.edu>
- * $Id: two-body-res.c,v 1.1 1999/08/25 01:11:56 ichiki Exp $
+ * Copyright (C) 1999-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: two-body-res.c,v 1.2 2006/09/27 00:14:02 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <math.h> /* log() */
 
