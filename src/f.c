@@ -1,6 +1,20 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 1.6 2006/09/26 01:09:20 ichiki Exp $
+ * $Id: f.c,v 2.1 2006/09/27 00:08:44 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
@@ -96,7 +110,8 @@ matrix_ij_A (int n, double *mat,
  *   y [3] : U of particle 'j'
  */
 void
-matrix_f_atimes (double *x, double *y,
+matrix_f_atimes (const double *x,
+		 double *y,
 		 double ex, double ey, double ez,
 		 double xa, double ya)
 {
@@ -138,7 +153,7 @@ matrix_f_atimes (double *x, double *y,
 void
 set_F_by_f (int n,
 	    double *f1,
-	    double *f2)
+	    const double *f2)
 {
   int i;
   int j;
@@ -206,7 +221,8 @@ scalar_minv_f (double s, double * scalar_f)
  */
 void
 calc_lub_3f (struct stokes * sys,
-	     double * u, double * f)
+	     const double * u,
+	     double * f)
 {
   int np; 
 
@@ -249,8 +265,8 @@ calc_lub_3f (struct stokes * sys,
  *   f2 [3] :
  */
 void
-calc_lub_f_2b (double * u1, double * u2,
-	       double * x1, double * x2,
+calc_lub_f_2b (const double * u1, const double * u2,
+	       const double * x1, const double * x2,
 	       double * f1, double * f2)
 {
   double * res2b, * resinf;

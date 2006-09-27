@@ -1,7 +1,21 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.1 2006/09/26 01:11:05 ichiki Exp $
+ * $Id: ft.h,v 2.2 2006/09/27 00:10:29 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #ifndef	_FT_H_
 #define	_FT_H_
@@ -87,7 +101,8 @@ matrix_ij_C (int n, double *mat,
  *   y [6] : UOE of particle 'j'
  */
 void
-matrix_ft_atimes (double *x, double *y,
+matrix_ft_atimes (const double *x,
+		  double *y,
 		  double ex, double ey, double ez,
 		  double xa, double ya,
 		  double yb,
@@ -96,7 +111,7 @@ matrix_ft_atimes (double *x, double *y,
 /* convert ft[] to f[], t[] (this is applicable for UO)
  * INPUT
  *  n : # particles
- *  fts [n * 6] :
+ *  ft [n * 6] :
  * OUTPUT
  *  f[n * 3] :
  *  t[n * 3] :
@@ -104,7 +119,7 @@ matrix_ft_atimes (double *x, double *y,
 void
 set_FT_by_ft (int n,
 	      double *f, double *t,
-	      double *ft);
+	      const double *ft);
 
 /* convert ft[] to f[], t[] (this is applicable for UO)
  * INPUT
@@ -117,7 +132,7 @@ set_FT_by_ft (int n,
 void
 set_ft_by_FT (int n,
 	      double *ft,
-	      double *f, double *t);
+	      const double *f, const double *t);
 
 /* calc scalar functions of (M^inf)^-1 in FT
  * INPUT
@@ -137,7 +152,8 @@ scalar_minv_ft (double s, double * scalar_ft);
  */
 void
 calc_lub_3ft (struct stokes * sys,
-	      double * uo, double * ft);
+	      const double * uo,
+	      double * ft);
 
 /* calculate ft by uoe for pair of particles 1 and 2
  * INPUT
@@ -151,8 +167,8 @@ calc_lub_3ft (struct stokes * sys,
  *   ft2 [6] :
  */
 void
-calc_lub_ft_2b (double *uo1, double *uo2,
-		double *x1, double *x2,
+calc_lub_ft_2b (const double *uo1, const double *uo2,
+		const double *x1, const double *x2,
 		double *ft1, double *ft2);
 
 #endif /* !_FT_H_ */

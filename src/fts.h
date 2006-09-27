@@ -1,7 +1,21 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 1.1 2006/09/26 01:12:11 ichiki Exp $
+ * $Id: fts.h,v 2.1 2006/09/27 00:11:52 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #ifndef	_FTS_H_
 #define	_FTS_H_
@@ -124,7 +138,8 @@ matrix_ij_M (int n, double *mat,
  *   y [11] : UOE of particle 'j' (extracted form)
  */
 void
-matrix_fts_atimes (double *x, double *y,
+matrix_fts_atimes (const double *x,
+		   double *y,
 		   double ex, double ey, double ez,
 		   double xa, double ya,
 		   double yb,
@@ -145,7 +160,7 @@ matrix_fts_atimes (double *x, double *y,
 void
 set_FTS_by_fts (int n,
 		double *f, double *t, double *s,
-		double *fts);
+		const double *fts);
 
 /* convert fts[] to f[], t[], s[] (this is applicable for UOE)
  * INPUT
@@ -159,7 +174,7 @@ set_FTS_by_fts (int n,
 void
 set_fts_by_FTS (int n,
 		double *fts,
-		double *f, double *t, double *s);
+		const double *f, const double *t, const double *s);
 
 /* calc scalar functions of (M^inf)^-1 in FTS
  * INPUT
@@ -180,7 +195,8 @@ scalar_minv_fts (double s,  double * scalar_fts);
  */
 void
 calc_lub_3fts (struct stokes * sys,
-	       double * uoe, double * fts);
+	       const double * uoe,
+	       double * fts);
 
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
@@ -194,8 +210,8 @@ calc_lub_3fts (struct stokes * sys,
  *   fts2 [11] :
  */
 void
-calc_lub_fts_2b (double *uoe1, double *uoe2,
-		 double *x1, double *x2,
+calc_lub_fts_2b (const double *uoe1, const double *uoe2,
+		 const double *x1, const double *x2,
 		 double *fts1, double *fts2);
 
 /* calculate fts by uoe for pair of particles 1 and 2
@@ -211,7 +227,7 @@ calc_lub_fts_2b (double *uoe1, double *uoe2,
  */
 void
 matrix_lub_fts_2b (int i, int j,
-		   double *x1, double *x2,
+		   const double *x1, const double *x2,
 		   int n, double * mat);
 
 #endif /* !_FTS_H_ */
