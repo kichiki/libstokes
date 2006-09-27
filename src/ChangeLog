@@ -1,0 +1,563 @@
+2006-09-26  Kengo Ichiki  <ichiki@tpr60>
+
+	* bench.h: 1.2 2006/09/27 00:19:49 ichiki Exp
+
+	* bench.c: 1.3 2006/09/27 00:19:17 ichiki Exp
+	add GPL notice.
+
+	* configure.in: 1.1 2006/09/27 00:16:50 ichiki Exp
+	initial revision.
+
+	* Makefile.am: 1.1 2006/09/27 00:16:12 ichiki Exp
+	initial revision.
+
+	* two-body-res.h: 1.2 2006/09/27 00:15:46 ichiki Exp
+
+	* two-body-res.c: 1.2 2006/09/27 00:14:02 ichiki Exp
+	add GPL notice.
+
+	* fts.h: 2.1 2006/09/27 00:11:52 ichiki Exp
+
+	* fts.c: 2.1 2006/09/27 00:11:14 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* ft.h: 2.2 2006/09/27 00:10:29 ichiki Exp
+
+	* ft.c: 2.2 2006/09/27 00:09:58 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* f.h: 2.1 2006/09/27 00:09:16 ichiki Exp
+
+	* f.c: 2.1 2006/09/27 00:08:44 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* ewald-2f.h: 1.2 2006/09/27 00:07:09 ichiki Exp
+
+	* ewald-2f.c: 1.5 2006/09/27 00:06:28 ichiki Exp
+	add GPL notice.
+
+	* ewald-2ft.h: 1.2 2006/09/27 00:05:47 ichiki Exp
+
+	* ewald-2ft.c: 1.4 2006/09/27 00:05:04 ichiki Exp
+	add GPL notice.
+
+	* ewald-2fts.h: 1.2 2006/09/27 00:04:23 ichiki Exp
+
+	* ewald-2fts.c: 1.5 2006/09/27 00:03:29 ichiki Exp
+	add GPL notice.
+
+	* stokes.h: 1.2 2006/09/27 00:02:31 ichiki Exp
+
+	* stokes.c: 2.2 2006/09/27 00:02:03 ichiki Exp
+	add GPL notice.
+
+	* ewald-3f.h: 4.2 2006/09/27 00:01:11 ichiki Exp
+
+	* ewald-3f.c: 4.2 2006/09/27 00:00:26 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+
+	* ewald-3ft.h: 4.2 2006/09/26 23:59:45 ichiki Exp
+
+	* ewald-3ft.c: 4.2 2006/09/26 23:57:50 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+	(calc_mob_ewald_3ft): bug fixed.
+
+	* ewald-3fts.c: 5.2 2006/09/26 23:58:56 ichiki Exp
+
+	* ewald-3fts.c: 5.2 2006/09/26 23:54:52 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+
+	* libstokes.h: 1.2 2006/09/26 23:52:15 ichiki Exp
+	add entries in 'stokes.h'.
+
+	* libstokes.h: 1.1 2006/09/26 21:40:40 ichiki Exp
+	initial revision.
+
+	* ewald-2fts-matrix.c, ewald-2fts-matrix.h, ewald-3fts-matrix.c, ewald-3fts-matrix.h, matrix.c, matrix.h:
+	move to libstokes-matrix.
+
+	* bench.h: 1.1 2006/09/26 18:21:31 ichiki Exp
+
+	* bench.c: 1.2 2006/09/26 18:21:16 ichiki Exp
+	move from 'misc' to here.
+
+	* ewald-2fts.h: 1.1 2006/09/26 05:41:25 ichiki Exp
+
+	* ewald-2fts.c: 1.4 2006/09/26 05:41:11 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+	* ewald-2ft.h: 1.1 2006/09/26 05:40:01 ichiki Exp
+
+	* ewald-2ft.c: 1.3 2006/09/26 05:39:46 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+	* ewald-2f.h: 1.1 2006/09/26 05:39:11 ichiki Exp
+
+	* ewald-2f.c: 1.4 2006/09/26 05:38:58 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+2006-09-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.h: 1.1 2006/09/26 01:12:11 ichiki Exp
+
+	* fts.c: 1.13 2006/09/26 01:11:45 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ft.h: 2.1 2006/09/26 01:11:05 ichiki Exp
+
+	* ft.c: 2.1 2006/09/26 01:10:38 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* f.h: 1.1 2006/09/26 01:09:51 ichiki Exp
+
+	* f.c: 1.6 2006/09/26 01:09:20 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3fts.h: 5.1 2006/09/26 01:06:44 ichiki Exp
+
+	* ewald-3fts.c: 5.1 2006/09/26 01:06:12 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3ft.h: 4.1 2006/09/26 01:05:28 ichiki Exp
+
+	* ewald-3ft.c: 4.1 2006/09/26 01:04:44 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3f.h: 4.1 2006/09/26 01:03:47 ichiki Exp
+
+	* ewald-3f.c: 4.1 2006/09/26 01:02:52 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* stokes.h: 1.1 2006/09/26 01:00:32 ichiki Exp
+
+	* stokes.c: 2.1 2006/09/26 01:00:12 ichiki Exp
+	based on ewald-3.c, introduce system structure 'stokes'.
+
+	* two-body-res.h: move from LIBEXP to RYUON/libstokes.
+
+	* two-body-res.c: move from LIBEXP to RYUON/libstokes.
+
+2003-04-25  kengo ichiki  <ichiki@tp>
+
+	* two-body-res.h: move from FINITE to LIBEXP.
+
+	* two-body-res.c: move from FINITE to LIBEXP.
+
+	* two-body-res.h: 1.1 2003/04/26 01:31:33 ichiki Exp
+	initial revision.
+
+2002-06-02  Kengo Ichiki  <ichiki@haru-me.me.jhu.edu>
+
+	* ewald-3fts.h: 4.1 2002/06/02 19:11:17 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 4.1 2002/06/02 19:09:49 ichiki Exp
+	update API's --
+	(atimes_ewald_3fts): add user_data pointer in the argument.
+	(atimes_mob_ewald_3fts): same above.
+	(atimes_mob_fix_ewald_3fts): same above.
+	(atimes_mob_lub_fix_ewald_3fts): same above.
+	(calc_res_ewald_3fts): revise the API of solve_iter_stab() routine.
+	(calc_mob_ewald_3fts): same above.
+	(calc_mob_fix_ewald_3fts): same above.
+	(calc_res_lub_ewald_3fts): same above.
+	(calc_mob_lub_fix_ewald_3fts): same above.
+	(calc_b_mob_ewald_3fts): revise the API of atimes... routine.
+	(calc_b_mob_fix_ewald_3fts): same above.
+	(atimes_mob_fix_ewald_3fts): same above.
+	(calc_res_lub_ewald_3fts): same above.
+	(calc_b_mob_lub_fix_ewald_3fts): same above.
+	(atimes_mob_lub_fix_ewald_3fts): same above.
+
+2001-02-13  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* fts.c: 1.12 2001/02/13 09:53:54 ichiki Exp
+	(matrix_lub_fts_2b): added for matrix version.
+
+2001-02-12  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* f.c: 1.5 2001/02/12 08:41:11 ichiki Exp
+	(matrix_f_ij): recovred, based on FTS version fts.c Rev 1.11.
+	(matrix_ij_A): added.
+
+	* ft.c: 1.9 2001/02/12 08:40:49 ichiki Exp
+	(matrix_ft_ij): recovred, based on FTS version fts.c Rev 1.11.
+	(matrix_ij_B): added.
+	(matrix_ij_Bt): added.
+	(matrix_ij_C): added.
+
+	* fts.c: 1.11 2001/02/12 08:40:09 ichiki Exp
+	(matrix_fts_ij): recovred from Rev 1.5, and split into small-matrices.
+	(matrix_fts_ij_G): added.
+	(matrix_fts_ij_Gt): added.
+	(matrix_fts_ij_H): added.
+	(matrix_fts_ij_Ht): added.
+	(matrix_fts_ij_M): added.
+
+2001-02-09  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3f.c: 3.4 2001/02/09 05:59:14 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3f): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+	(calc_b_mob_lub_fix_ewald_3f): same revision above,
+	but this routine is called once	for a problem.
+
+	* ewald-3ft.c: 3.5 2001/02/09 05:54:33 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3ft): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+	(calc_b_mob_lub_fix_ewald_3ft): same revision above,
+	but this routine is called once	for a problem.
+
+	* ewald-3fts.c: 3.11 2001/02/09 05:46:50 ichiki Exp
+	(calc_b_mob_lub_fix_ewald_3fts): same revision for
+	atimes_mob_lub_fix_ewald_3fts(), but this routine is called once
+	for a problem.
+
+	* ewald-3fts.c: 3.10 2001/02/09 05:23:54 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3fts): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+
+2001-02-06  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3.c: 1.6 2001/02/06 03:47:16 ichiki Exp
+	(init_config_random): added, based on init_config_random_2d() in
+	ewald-2.c.
+	(check_overlap): copied from ewald-2.c.
+
+2001-02-05  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-2.c: 1.1 2001/02/05 09:38:47 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 3.9 2001/02/05 07:45:56 ichiki Exp
+	(atimes_ewald_3fts): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+	* ewald-3ft.c: 3.4 2001/02/05 07:39:12 ichiki Exp
+	(atimes_ewald_3ft): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+	* ewald-3f.c: 3.3 2001/02/05 07:29:11 ichiki Exp
+	(calc_mob_fix_ewald_3f): add fail-sale for 'np==nm' case.
+	(atimes_ewald_3f): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+2001-02-04  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-2fts.c: 1.3 2001/02/04 12:26:43 ichiki Exp
+	(calc_mob_ewald_2fts): correct call to 'calc_mob_ewald_3fts()'.
+	(calc_res_lub_ewald_3fts_2d): removed.
+	(calc_mob_lub_fix_ewald_3fts_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2fts): removed.
+	(atimes_mob_lub_fix_ewald_2fts): removed.
+	(calc_lub_ewald_2fts): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2ft.c: 1.2 2001/02/04 12:19:15 ichiki Exp
+	(calc_mob_ewald_2ft): correct call function to 'calc_mob_ewald_3ft()'.
+	(calc_res_lub_ewald_3ft_2d): removed.
+	(calc_mob_lub_fix_ewald_3ft_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2ft): removed.
+	(atimes_mob_lub_fix_ewald_2ft): removed.
+	(calc_lub_ewald_2ft): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2f.c: 1.3 2001/02/04 12:10:26 ichiki Exp
+	(calc_mob_ewald_2f): correct call function to 'calc_mob_ewald_3f()'.
+
+	* fts.c: 1.10 2001/02/04 11:46:33 ichiki Exp
+	(scalar_minv_fts): debug on xm11; the order is not 7 but 8.
+
+	* f.c: 1.4 2001/02/04 09:00:00 ichiki Exp
+	(scalar_minv_f): correct the denominator 'dy'.
+
+	* fts.c: 1.9 2001/02/04 07:48:34 ichiki Exp
+	(scalar_minv_fts): revised.
+
+	* ft.c: 1.8 2001/02/04 07:50:07 ichiki Exp
+	(scalar_minv_ft): correct the sign.
+
+	* f.c: 1.3 2001/02/04 07:53:12 ichiki Exp
+	(scalar_minv_f): correct the sign.
+
+	* ewald-2f.c: 1.2 2001/02/04 04:55:20 ichiki Exp
+	(calc_res_lub_ewald_3f_2d): removed.
+	(calc_mob_lub_fix_ewald_3f_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2f): removed.
+	(atimes_mob_lub_fix_ewald_2f): removed.
+	(calc_lub_ewald_2f): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2f.c: 1.1 2001/02/03 15:05:28 ichiki Exp
+	initial revision.
+
+2001-02-03  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-2ft.c: 1.1 2001/02/03 14:48:36 ichiki Exp
+	initial revision.
+
+	* ewald-3f.c: 3.2 2001/02/03 14:03:54 ichiki Exp
+	completely rewritten from ewald-3fts.c Rev 3.8.
+
+	* ewald-3ft.c: 3.3 2001/02/03 14:01:21 ichiki Exp
+	cut inclusion of 'lub.h'.
+	(calc_mob_lub_fix_ewald_3ft): correct the arguments.
+	(calc_lub_ewald_3ft): correct the name of routine from
+	calc_lub_2b() to calc_lub_ft_2b().
+
+	* fts.c: 1.8 2001/02/03 13:36:58 ichiki Exp
+	(scalar_minv_fts): change name of this function from 'scalar_minv_FTS.'
+
+	* f.c: 1.2 2001/02/03 13:34:25 ichiki Exp
+	(calc_lub_3f): added.
+	(calc_lub_f_2b): added.
+
+	* ft.c: 1.7 2001/02/03 13:29:43 ichiki Exp
+	(calc_lub_3ft): added.
+	(calc_lub_ft_2b): added.
+
+	* fts.c: 1.7 2001/02/03 13:09:03 ichiki Exp
+	merge with lub.c Rev 1.2.
+	(scalar_minv_FTS): moved from FINITE/stokes-fts.c Rev 1.5.
+	(calc_lub_3fts): moved from PBC/lub.c Rev 1.2.
+	(calc_lub_fts_2b): moved from PBC/lub.c Rev 1.2.
+
+	* f.c: 1.1 2001/02/03 12:51:51 ichiki Exp
+	initial revision.
+
+	* ft.c: 1.6 2001/02/03 12:50:34 ichiki Exp
+	(scalar_minv_FT): added.
+
+	* ft.c: 1.5 2001/02/03 09:33:17 ichiki Exp
+	(matrix_ft_ij): remove because this is obsolete.
+	(matrix_ft_atimes): revise based on fts.c Rev 1.6.
+
+	* ewald-3ft.c: 3.2 2001/02/03 08:57:59 ichiki Exp
+	completely rewritten from ewald-3fts.c Rev 3.8.
+
+	* ft.c: 1.4 2001/02/03 08:52:37 ichiki Exp
+	(set_FT_by_ft): added.
+	(set_ft_by_FT): added.
+
+2001-02-02  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-2fts.c: 1.2 2001/02/02 08:40:10 ichiki Exp
+	(calc_lub_ewald_2fts): change according to ewald-3.c Rev 1.5.
+	z-direction is the neglecting one under 2D codes.
+
+	* ewald-3.c: 1.5 2001/02/02 08:38:41 ichiki Exp
+	(init_ewald_3d): change order of llx[], lly[], and llz[].
+	z-direction is the neglecting one under 2D codes.
+
+	* ewald-2fts.c: 1.1 2001/02/02 08:01:53 ichiki Exp
+	initial revision.
+
+2001-02-01  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.8 2001/02/01 05:30:55 ichiki Exp
+	lubrication codes are introduced.
+	(calc_res_lub_ewald_3fts): added.
+	(calc_mob_lub_fix_ewald_3fts): added.
+	(calc_b_mob_lub_fix_ewald_3fts): added.
+	(atimes_mob_lub_fix_ewald_3fts): added.
+	(calc_lub_ewald_3fts): added.
+	(cond_lub): added.
+
+	* lub.c: 1.2 2001/02/01 05:32:02 ichiki Exp
+	(calc_lub_3fts): added. this routine is, though, for free boundary
+	condition.
+
+2001-01-31  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* lub.c: 1.1 2001/01/31 10:10:22 ichiki Exp
+	initial revision.
+
+	* fts.c: 1.6 2001/01/31 09:32:15 ichiki Exp
+	(matrix_fts_ij): remove because this is obsolete.
+
+	* fts.c: 1.5 2001/01/31 09:02:56 ichiki Exp
+	finish checking by test-fts-exp.c.
+
+2001-01-29  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3.c: 1.4 2001/01/29 09:41:31 ichiki Exp
+	move global variables here from main ().
+
+	* ewald-3fts.c: 3.7 2001/01/29 09:34:20 ichiki Exp
+	(calc_res_ewald_3fts): revise according to bi-cgstab.c Rev 1.5.
+	(calc_mob_ewald_3fts): same above.
+	(calc_mob_fix_ewald_3fts): same above.
+
+	* ewald-3fts.c: 3.6 2001/01/29 05:39:14 ichiki Exp
+	(calc_b_mob_fix_ewald_3fts): modify the argument (for convenience).
+
+	* ewald-3fts.c: 3.5 2001/01/29 04:29:52 ichiki Exp
+	(calc_b_mob_ewald_3fts): v3_0 is removed (because of no-use).
+	(atimes_mob_ewald_3fts): same above (v5_0 is used for v3_0).
+	(calc_mob_fix_ewald_3fts): mobility problem with FIXED particles
+	is started.
+	add LOCAL global variable 'NUMB_mobile_particles' for
+	atimes_mob_fix_ewald_3fts ().
+	(calc_b_mob_fix_ewald_3fts): added.
+	(atimes_mob_fix_ewald_3fts): added.
+
+2001-01-25  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3.c: 1.3 2001/01/25 08:46:40 ichiki Exp
+	(init_config_BCC): added.
+	(init_config_FCC): added.
+
+	* ewald-3fts.c: 3.4 2001/01/25 08:09:51 ichiki Exp
+	(calc_res_ewald_3fts): added.
+
+	* fts.c: 1.4 2001/01/25 04:56:20 ichiki Exp ichiki
+	(matrix_fts_atimes): correct to manipulate stresslet in extracted form.
+
+2001-01-24  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.3 2001/01/24 08:59:06 ichiki Exp
+	(atimes_mob_ewald_3fts): debugs; 1) n should be np, and 2) argument
+	of set_fts_by_FTS () must be 'o', not '0'.
+
+	* ewald-3fts.c: 3.2 2001/01/24 08:14:23 ichiki Exp
+	(calc_mob_ewald_3fts): added.
+	(calc_b_mob_ewald_3fts): added.
+	(atimes_mob_ewald_3fts): added.
+
+	* fts.c: 1.3 2001/01/24 06:48:33 ichiki Exp
+	(set_FTS_by_fts): added.
+	(set_fts_by_FTS): added.
+
+2001-01-23  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3.c: 1.2 2001/01/23 09:52:57 ichiki Exp
+	(init_config_SC): added.
+
+	* ewald-3.c: 1.1 2001/01/23 05:56:40 ichiki Exp
+	initial revision.
+
+2001-01-22  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.1 2001/01/22 04:17:21 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3fts () -- this is obsolete.
+
+	* ewald-3ft.c: 3.1 2001/01/22 04:16:11 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3ft () -- this is obsolete.
+
+	* ewald-3f.c: 3.1 2001/01/22 04:14:22 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3f () -- this is obsolete.
+
+	* ewald-3f.c: 2.4 2001/01/22 04:11:17 ichiki Exp
+	(calc_mob_ewald_3f): debug on loop j for k-space summation.
+
+	* ewald-3f.c: 2.3 2001/01/22 03:32:14 ichiki Exp
+	(atimes_ewald_3f): added for atimes-type routine (O(N^2) scheme).
+
+	* ewald-3ft.c: 2.4 2001/01/22 03:04:59 ichiki Exp
+	(atimes_ewald_3ft): added for atimes-type routine (O(N^2) scheme).
+
+	* ft.c: 1.3 2001/01/22 02:59:43 ichiki Exp
+	(matrix_ft_atimes): added for atimes-type routine (O(N^2) scheme).
+
+2001-01-19  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 2.8 2001/01/19 07:56:54 ichiki Exp
+	(atimes_ewald_3fts): added for atimes-type routine (O(N^2) scheme).
+
+	* fts.c: 1.2 2001/01/19 07:45:51 ichiki Exp
+	(matrix_fts_atimes): added for atimes-type routine (O(N^2) scheme).
+
+2000-12-11  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ft.c: 1.2 2000/12/11 06:37:37 ichiki Exp
+	(matrix_ft_ij): debug ... n11 is replaced by n6.
+
+	* ewald-3f.c: 2.2 2000/12/11 06:28:03 ichiki Exp
+	(calc_mob_ewald_3f): style change; due to ewald-3fts.c Rev 2.7.
+
+	* ewald-3ft.c: 2.3 2000/12/11 06:11:27 ichiki Exp
+	(calc_mob_ewald_3ft): style change; due to ewald-3fts.c Rev 2.7.
+
+	* ft.c: 1.1 2000/12/11 06:08:02 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 2.7 2000/12/11 05:59:42 ichiki Exp
+	(calc_mob_ewald_3fts): introduce variables 'erfczr' and 'expzr2'.
+	remove 'pi6vol' completely (replacing 'pivol').
+
+	* ewald-3fts.c: 2.6 2000/12/11 05:30:46 ichiki Exp
+	(calc_mob_ewald_3fts): do not use pi6vol but pivol.
+	use matrix_fts_ij() for self part, also.
+	change name of variable 'mob' to 'kexp'.
+	BUGS FIX on definition of xm, ym, zm in real space; this makes
+	goot -- no zeta-dependence observed! (finally).
+
+2000-12-09  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-3fts.c: 2.5 2000/12/09 10:11:17 ichiki Exp
+	(calc_mob_ewald_3fts): make use of matrix_fts_ij() in fts.c.
+	correct k-space part, introducing sin-factor 'sf'.
+
+	* fts.c: 1.1 2000/12/09 08:37:33 ichiki Exp
+	initial revisin.
+
+2000-12-08  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-3fts.c: 2.4 2000/12/08 14:10:42 ichiki Exp
+	(calc_mob_ewald_3fts): debug.
+
+2000-12-08  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 2.3 2000/12/08 09:01:35 ichiki Exp
+	started, based on
+	ewald-3ft.c: 2.2 2000/12/08 06:13:40 ichiki Exp
+
+	* ewald-3ft.c: 2.2 2000/12/08 06:13:40 ichiki Exp
+	started, based on
+	ewald-3f.c: 2.1 2000/12/08 05:04:14 ichiki Exp
+
+	* ewald-3f.c: 2.1 2000/12/08 05:04:14 ichiki Exp
+	change (update) style.
+	-- from log of ewald-3f.c, for the record --
+	Revision 1.3  1999/01/31 00:30:18  ichiki
+	use cholesky() rather than ludcmp() & luinv().
+	extract calc_mob_ewald_2f() from calf2-non.c for convenience.
+	introduce ZETA in order to share this with zeta2.c directly.
+	Revision 1.2  1999/01/30 08:56:49  ichiki
+	revise comments (translate into English).
+	cut set_Uniform().
+	HISTORY
+	'96/05/08 correct order of evaluation of equations
+	summarize global variables
+	'96/04/23 non-dimensionalize
+	'95/03/02 cut routine calc_steady_vel_2f() (contained in _fix)
+	'95/02/27 simplify program and debug
+	'95/02/24 compare 2D code
+	simplify code
+	'94/06/09 add calc_steady_vel_3f_fix()
+	'93/10/09 debug on summation in reciprocal space
+	'93/10/08 simplify routine calc_mob_ewald_3f() in order to debug
+	'93/ 9/22 calc determinant in ludcmp()
+	'93/ 9/21 rebuild (almost same above !!)
+	'93/ 9/20 Original (but all removed !!)
+	based on  cal_f_p3.c on '93/ 9/18
+
+
+Tue Aug 24 18:03:56 1999  ICHIKI Kengo  <ichiki@konakia.che.caltech.edu>
+
+	* two-body-res.c: 1.1 1999/08/25 01:11:56 ichiki Exp
+	initial revision.
+	numerical coeficients are estimated by two-body-JO-coef.c.
+
