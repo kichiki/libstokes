@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.2 2006/09/27 00:10:29 ichiki Exp $
+ * $Id: ft.h,v 2.3 2006/09/28 04:42:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -145,7 +145,8 @@ scalar_minv_ft (double s, double * scalar_ft);
 
 /* calculate lubrication ft by uoe for all particles
  * INPUT
- *  sys : system parameters
+ *   sys : sys->pos [np * 3] : position of particles
+ *         sys->np           : # particles
  *   uo [np * 6] : velocity, angular velocity
  * OUTPUT
  *   ft [np * 6] : force, torque
@@ -157,7 +158,8 @@ calc_lub_3ft (struct stokes * sys,
 
 /* calculate ft by uoe for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   uo1 [6] : velocity, angular velocity, strain
  *   uo2 [6] :
  *   x1 [3] : position of particle 1
@@ -167,8 +169,27 @@ calc_lub_3ft (struct stokes * sys,
  *   ft2 [6] :
  */
 void
-calc_lub_ft_2b (const double *uo1, const double *uo2,
+calc_lub_ft_2b (struct stokes * sys,
+		const double *uo1, const double *uo2,
 		const double *x1, const double *x2,
 		double *ft1, double *ft2);
+
+/* calculate lub-matrix in FT version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubcut is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*6)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_ft_2b (struct stokes * sys,
+		  int i, int j,
+		  const double *x1, const double *x2,
+		  int n, double * mat);
 
 #endif /* !_FT_H_ */

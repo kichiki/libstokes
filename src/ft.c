@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.2 2006/09/27 00:09:58 ichiki Exp $
+ * $Id: ft.c,v 2.3 2006/09/28 04:42:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -406,7 +406,8 @@ scalar_minv_ft (double s, double * scalar_ft)
 
 /* calculate lubrication ft by uoe for all particles
  * INPUT
- *  sys : system parameters
+ *   sys : sys->pos [np * 3] : position of particles
+ *         sys->np           : # particles
  *   uo [np * 6] : velocity, angular velocity
  * OUTPUT
  *   ft [np * 6] : force, torque
@@ -439,7 +440,8 @@ calc_lub_3ft (struct stokes * sys,
 	{
 	  j3 = j * 3;
 	  j6 = j * 6;
-	  calc_lub_ft_2b (uo + i6, uo + j6,
+	  calc_lub_ft_2b (sys,
+			  uo + i6, uo + j6,
 			  sys->pos + i3, sys->pos + j3,
 			  ft + i6, ft + j6);
 	  
@@ -449,7 +451,8 @@ calc_lub_3ft (struct stokes * sys,
 
 /* calculate ft by uoe for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   uo1 [6] : velocity, angular velocity, strain
  *   uo2 [6] :
  *   x1 [3] : position of particle 1
@@ -459,7 +462,8 @@ calc_lub_3ft (struct stokes * sys,
  *   ft2 [6] :
  */
 void
-calc_lub_ft_2b (const double *uo1, const double *uo2,
+calc_lub_ft_2b (struct stokes * sys,
+		const double *uo1, const double *uo2,
 		const double *x1, const double *x2,
 		double *ft1, double *ft2)
 {
@@ -489,8 +493,10 @@ calc_lub_ft_2b (const double *uo1, const double *uo2,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= 2.0)
-    rr = 2.0 + 1.0e-12;
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
 
   ex = xx / rr;
   ey = yy / rr;
@@ -532,6 +538,103 @@ calc_lub_ft_2b (const double *uo1, const double *uo2,
 		    xa12, ya12,
 		    yb12,
 		    xc12, yc12);
+
+  free (res2b);
+}
+
+/* calculate lub-matrix in FT version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubcut is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*6)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_ft_2b (struct stokes * sys,
+		  int i, int j,
+		  const double *x1, const double *x2,
+		  int n, double * mat)
+{
+  double *res2b, *resinf;
+
+  double xx, yy, zz, rr;
+  double ex, ey, ez;
+
+  double xa11, ya11;
+  double xa12, ya12;
+  double yb11, yb12;
+  double xc11, yc11;
+  double xc12, yc12;
+
+
+  res2b = (double *) malloc (sizeof (double) * 44);
+  if (res2b == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      exit (1);
+    }
+  resinf = res2b + 22;
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalar_two_body_res (rr, res2b);
+  scalar_minv_ft (rr, resinf);
+
+  xa11 = res2b [ 0] - resinf [ 0];
+  xa12 = res2b [ 1] - resinf [ 1];
+  ya11 = res2b [ 2] - resinf [ 2];
+  ya12 = res2b [ 3] - resinf [ 3];
+  yb11 = res2b [ 4] - resinf [ 4];
+  yb12 = res2b [ 5] - resinf [ 5];
+  xc11 = res2b [ 6] - resinf [ 6];
+  xc12 = res2b [ 7] - resinf [ 7];
+  yc11 = res2b [ 8] - resinf [ 8];
+  yc12 = res2b [ 9] - resinf [ 9];
+
+  matrix_ft_ij (i, i,
+		ex, ey, ez,
+		xa11, ya11,
+		yb11,
+		xc11, yc11,
+		n, mat);
+  matrix_ft_ij (i, j,
+		ex, ey, ez,
+		xa12, ya12,
+		yb12,
+		xc12, yc12,
+		n, mat);
+
+  matrix_ft_ij (j, j,
+		- ex, - ey, - ez,
+		xa11, ya11,
+		yb11,
+		xc11, yc11,
+		n, mat);
+  matrix_ft_ij (j, i,
+		- ex, - ey, - ez,
+		xa12, ya12,
+		yb12,
+		xc12, yc12,
+		n, mat);
 
   free (res2b);
 }
