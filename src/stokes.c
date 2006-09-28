@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.2 2006/09/27 00:02:03 ichiki Exp $
+ * $Id: stokes.c,v 2.3 2006/09/28 04:37:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  */
 #include <stdlib.h>
 #include <math.h> /* log() */
+#include <libiter.h>
 
 #include "stokes.h"
 
@@ -64,10 +65,16 @@ stokes_init (void)
       sys->llz [i] = 0.0;
     }
 
+  /* for lubrication */
+  sys->lubcut = 0.0;
+
   /* for zeta program */
   sys->cpu1 = 0.0;
   sys->cpu2 = 0.0;
   sys->cpu3 = 0.0;
+
+  /* for iterative solvers */
+  sys->it = NULL;
 
   return (sys);
 }
@@ -78,6 +85,7 @@ stokes_free (struct stokes * sys)
   if (sys != NULL)
     {
       if (sys->pos != NULL) free (sys->pos);
+      if (sys->it != NULL) iter_free (sys->it);
       free (sys);
     }
 }
