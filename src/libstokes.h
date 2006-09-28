@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.2 2006/09/26 23:52:15 ichiki Exp $
+ * $Id: libstokes.h,v 1.3 2006/09/28 04:39:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,8 +38,14 @@ struct stokes {
   double lx, ly, lz;
   double llx[27], lly[27], llz[27]; /* for regist and lub */
 
+  /* for lubrication */
+  double lubcut;
+
   /* for zeta program */
   double cpu1, cpu2, cpu3;
+
+  /* for iterative solvers */
+  struct iter * it;
 };
 
 
@@ -66,7 +72,6 @@ stokes_set_zeta (struct stokes * sys,
 double
 zeta_by_tratio (struct stokes * sys,
 		double tratio);
-
 
 
 /***********************************
