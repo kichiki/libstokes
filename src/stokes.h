@@ -1,7 +1,7 @@
-/* header file for fbsys.c --
+/* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.2 2006/09/27 00:02:31 ichiki Exp $
+ * $Id: stokes.h,v 1.3 2006/09/28 04:38:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,8 +35,14 @@ struct stokes {
   double lx, ly, lz;
   double llx[27], lly[27], llz[27]; /* for regist and lub */
 
+  /* for lubrication */
+  double lubcut;
+
   /* for zeta program */
   double cpu1, cpu2, cpu3;
+
+  /* for iterative solvers */
+  struct iter * it;
 };
 
 
