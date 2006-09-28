@@ -1,6 +1,6 @@
 /* routines to evaluate CPU time
  * Copyright (C) 1999-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench.c,v 1.3 2006/09/27 00:19:17 ichiki Exp $
+ * $Id: bench.c,v 1.4 2006/09/28 04:34:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,48 +24,45 @@
 
 #include "bench.h"
 
-/* return process time difference since the last call in mili-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 long
 ptime_ms (void)
 {
-  static long t0 = 0;
-
+  long t;
   struct rusage info;
-  long tmp = t0;
 
   if (getrusage (RUSAGE_SELF, & info)) exit (1);
-  t0 = (info.ru_utime.tv_sec  + info.ru_stime.tv_sec)  * 1000
+  t = (info.ru_utime.tv_sec  + info.ru_stime.tv_sec)  * 1000
     + (info.ru_utime.tv_usec + info.ru_stime.tv_usec) / 1000;
-  return (t0 - tmp);
+  return (t);
 }
 
-/* return process time difference since the last call in mili-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 double
 ptime_ms_d (void)
 {
-  static double t0 = 0;
-
+  double t;
   struct rusage info;
-  double tmp = t0;
 
   if (getrusage (RUSAGE_SELF, & info)) exit (1);
-  t0 = ((double) info.ru_utime.tv_sec
-	+ (double) info.ru_stime.tv_sec) * 1000.0
+  t = ((double) info.ru_utime.tv_sec
+       + (double) info.ru_stime.tv_sec) * 1000.0
     + ((double) info.ru_utime.tv_usec
        + (double)info.ru_stime.tv_usec) / 1000.0;
-  return (t0 - tmp);
+  return (t);
 }
 
-/* return process time difference since the last call in micro-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 long
 ptime_micros (void)
 {
-  static long t0 = 0;
-
+  long t;
   struct rusage info;
-  long tmp = t0;
 
   if (getrusage (RUSAGE_SELF, & info)) exit (1);
-  t0 = (info.ru_utime.tv_usec + info.ru_stime.tv_usec);
-  return (t0 - tmp);
+  t = (info.ru_utime.tv_usec + info.ru_stime.tv_usec);
+  return (t);
 }

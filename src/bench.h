@@ -1,7 +1,7 @@
 /* header file for bench.c --
  * routines to evaluate CPU time
  * Copyright (C) 1999-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bench.h,v 1.2 2006/09/27 00:19:49 ichiki Exp $
+ * $Id: bench.h,v 1.3 2006/09/28 04:35:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,15 +21,18 @@
 #define	_BENCH_H_
 
 
-/* return process time difference since the last call in mili-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 long
 ptime_ms (void);
 
-/* return process time difference since the last call in mili-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 double
 ptime_ms_d (void);
 
-/* return process time difference since the last call in micro-seconds */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
 long
 ptime_micros (void);
 
