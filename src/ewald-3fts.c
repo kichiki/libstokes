@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.2 2006/09/26 23:54:52 ichiki Exp $
+ * $Id: ewald-3fts.c,v 5.3 2006/09/28 04:49:16 kichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -25,7 +25,7 @@
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-#include <libiter.h> /* solve_iter_stab (), gpb () */
+#include <libiter.h> /* solve_iter() */
 
 #include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
@@ -55,6 +55,8 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
   double lx, ly, lz;
   double *pos;
   int np_sys; /* for check */
+
+  double cpu0, cpu; /* for ptime_ms_d() */
 
   double xa, ya; 
   double yb;
@@ -139,7 +141,7 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
     }
 
   /* for zeta code to measure CPU times */
-  ptime_ms_d ();
+  cpu0 = ptime_ms_d ();
 
   /* first Ewald part ( real space ) */
   for (i = 0; i < np; i++)
@@ -293,7 +295,9 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
     }
 
   /* for zeta code to measure CPU times */
-  sys->cpu2 = ptime_ms_d ();
+  cpu = ptime_ms_d ();
+  sys->cpu2 = cpu - cpu0;
+  cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
   for (m1 = - kmaxx; m1 <= kmaxx; m1++)
@@ -366,7 +370,8 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
     }
 
   /* for zeta code to measure CPU times */
-  sys->cpu3 = ptime_ms_d ();
+  cpu = ptime_ms_d ();
+  sys->cpu3 = cpu - cpu0;
   sys->cpu1 = sys->cpu2 + sys->cpu3;
 }
 
@@ -416,8 +421,15 @@ calc_res_ewald_3fts (struct stokes * sys,
       x [i] = 0.0;
     }
 
+  solve_iter (n11, b, x,
+	      atimes_ewald_3fts, (void *) sys,
+	      sys->it);
+  /*
   solve_iter_stab (n11, b, x, atimes_ewald_3fts, (void *) sys,
-		   gpb, 2000, -12.0);
+		   gpb,
+		   sys->iter_max,
+		   sys->iter_log10_eps);
+  */
 
   set_FTS_by_fts (np, f, t, s, x);
 
@@ -600,8 +612,15 @@ calc_mob_ewald_3fts (struct stokes * sys,
       x [i] = 0.0;
     }
 
+  solve_iter (n11, b, x,
+	      atimes_mob_ewald_3fts, (void *) sys,
+	      sys->it);
+  /*
   solve_iter_stab (n11, b, x, atimes_mob_ewald_3fts, (void *) sys,
-		   gpb, 2000, -12.0);
+		   gpb,
+		   sys->iter_max,
+		   sys->iter_log10_eps);
+  */
 
   set_FTS_by_fts (np, u, o, s, x);
 
@@ -855,8 +874,15 @@ calc_mob_fix_ewald_3fts (struct stokes * sys,
       x [i] = 0.0;
     }
 
+  solve_iter (n11, b, x,
+	      atimes_mob_fix_ewald_3fts, (void *) sys,
+	      sys->it);
+  /*
   solve_iter_stab (n11, b, x, atimes_mob_fix_ewald_3fts, (void *) sys,
-		   gpb, 2000, -12.0);
+		   gpb,
+		   sys->iter_max,
+		   sys->iter_log10_eps);
+  */
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
@@ -951,7 +977,8 @@ calc_lub_ewald_3fts (struct stokes * sys,
 	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
 	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
 		{
-		  calc_lub_fts_2b (uoe + i11, uoe + j11,
+		  calc_lub_fts_2b (sys,
+				   uoe + i11, uoe + j11,
 				   sys->pos + i3, tmp_pos,
 				   fts + i11, fts + j11);
 		}
@@ -1014,8 +1041,15 @@ calc_res_lub_ewald_3fts (struct stokes * sys,
       x [i] = 0.0;
     }
 
+  solve_iter (n11, b, x,
+	      atimes_ewald_3fts, (void *) sys,
+	      sys->it);
+  /*
   solve_iter_stab (n11, b, x, atimes_ewald_3fts, (void *) sys,
-		   gpb, 2000, -12.0);
+		   gpb,
+		   sys->iter_max,
+		   sys->iter_log10_eps);
+  */
 
   set_FTS_by_fts (np, f, t, s, x);
 
@@ -1283,12 +1317,26 @@ calc_mob_lub_fix_ewald_3fts (struct stokes * sys,
       x [i] = 0.0;
     }
 
+  solve_iter (n11, b, x,
+	      atimes_mob_lub_fix_ewald_3fts, (void *) sys,
+	      sys->it);
+  /*
   solve_iter_stab (n11, b, x, atimes_mob_lub_fix_ewald_3fts, (void *) sys,
-		   /*gpb_chk*/
-		   /*st2_chk*/
-		   sta2, 2000, -12.0);
-  /*solve_iter_gmres (n11, b, x, atimes_mob_lub_fix_ewald_3fts);*/
-  /*solve_iter_otmk (n11, b, x, atimes_mob_lub_fix_ewald_3fts, otmk);*/
+		   //gpb_chk,
+		   //st2_chk,
+		   sta2,
+		   sys->iter_max,
+		   sys->iter_log10_eps);
+  solve_iter_gmres (n11, b, x, atimes_mob_lub_fix_ewald_3fts, (void *) sys,
+		    sys->iter_max,
+		    20,
+		    sys->iter_eps);
+  solve_iter_otmk (n11, b, x, atimes_mob_lub_fix_ewald_3fts, (void *) sys,
+		   otmk,
+		   sys->iter_max,
+		   sys->iter_log10_eps,
+		   10);
+  */
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
