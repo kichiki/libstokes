@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.1 2006/09/27 00:11:14 ichiki Exp $
+ * $Id: fts.c,v 2.2 2006/09/28 04:44:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1326,8 +1326,8 @@ scalar_minv_fts (double s,  double * scalar_fts)
 
 /* calculate lubrication fts by uoe for all particles
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
+ *   sys : sys->pos [np * 3] : position of particles
+ *         sys->np           : # particles
  *   uoe [np * 11] : velocity, angular velocity, strain
  * OUTPUT
  *   fts [np * 11] : force, torque, stresslet
@@ -1360,7 +1360,8 @@ calc_lub_3fts (struct stokes * sys,
 	{
 	  j3 = j * 3;
 	  j11 = j * 11;
-	  calc_lub_fts_2b (uoe + i11, uoe + j11,
+	  calc_lub_fts_2b (sys,
+			   uoe + i11, uoe + j11,
 			   sys->pos + i3, sys->pos + j3,
 			   fts + i11, fts + j11);
 	  
@@ -1370,7 +1371,8 @@ calc_lub_3fts (struct stokes * sys,
 
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   uoe1 [11] : velocity, angular velocity, strain
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
@@ -1380,7 +1382,8 @@ calc_lub_3fts (struct stokes * sys,
  *   fts2 [11] :
  */
 void
-calc_lub_fts_2b (const double *uoe1, const double *uoe2,
+calc_lub_fts_2b (struct stokes * sys,
+		 const double *uoe1, const double *uoe2,
 		 const double *x1, const double *x2,
 		 double *fts1, double *fts2)
 {
@@ -1413,8 +1416,10 @@ calc_lub_fts_2b (const double *uoe1, const double *uoe2,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= 2.0)
-    rr = 2.0 + 1.0e-12;
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
 
   ex = xx / rr;
   ey = yy / rr;
@@ -1484,19 +1489,21 @@ calc_lub_fts_2b (const double *uoe1, const double *uoe2,
   free (res2b);
 }
 
-/* calculate fts by uoe for pair of particles 1 and 2
+/* calculate lub-matrix in FTS version for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   i : particle index for '1'
  *   j : particle index for '2'
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   n : dimension of matrix 'mat'
+ *   n : dimension of matrix 'mat' (must be np*11)
  * OUTPUT
  *   mat [n * n] : add for (i,j)-pair
  */
 void
-matrix_lub_fts_2b (int i, int j,
+matrix_lub_fts_2b (struct stokes * sys,
+		   int i, int j,
 		   const double *x1, const double *x2,
 		   int n, double * mat)
 {
@@ -1529,8 +1536,10 @@ matrix_lub_fts_2b (int i, int j,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= 2.0)
-    rr = 2.0 + 1.0e-12;
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
 
   ex = xx / rr;
   ey = yy / rr;

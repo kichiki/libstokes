@@ -1,7 +1,7 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 2.1 2006/09/27 00:11:52 ichiki Exp $
+ * $Id: fts.h,v 2.2 2006/09/28 04:45:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -124,7 +124,6 @@ matrix_ij_M (int n, double *mat,
 	     double ex, double ey, double ez,
 	     double xm, double ym, double zm);
 
-
 /* ATIMES version (for O(N^2) scheme) of
  * store matrix in FTS format with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
@@ -187,8 +186,8 @@ scalar_minv_fts (double s,  double * scalar_fts);
 
 /* calculate lubrication fts by uoe for all particles
  * INPUT
- *   (global) pos [np * 3] : position of particles
- *   np : # particles
+ *   sys : sys->pos [np * 3] : position of particles
+ *         sys->np           : # particles
  *   uoe [np * 11] : velocity, angular velocity, strain
  * OUTPUT
  *   fts [np * 11] : force, torque, stresslet
@@ -200,7 +199,8 @@ calc_lub_3fts (struct stokes * sys,
 
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   uoe1 [11] : velocity, angular velocity, strain
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
@@ -210,23 +210,26 @@ calc_lub_3fts (struct stokes * sys,
  *   fts2 [11] :
  */
 void
-calc_lub_fts_2b (const double *uoe1, const double *uoe2,
+calc_lub_fts_2b (struct stokes * sys,
+		 const double *uoe1, const double *uoe2,
 		 const double *x1, const double *x2,
 		 double *fts1, double *fts2);
 
-/* calculate fts by uoe for pair of particles 1 and 2
+/* calculate lub-matrix in FTS version for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   i : particle index for '1'
  *   j : particle index for '2'
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   n : dimension of matrix 'mat'
+ *   n : dimension of matrix 'mat' (must be np*11)
  * OUTPUT
  *   mat [n * n] : add for (i,j)-pair
  */
 void
-matrix_lub_fts_2b (int i, int j,
+matrix_lub_fts_2b (struct stokes * sys,
+		   int i, int j,
 		   const double *x1, const double *x2,
 		   int n, double * mat);
 
