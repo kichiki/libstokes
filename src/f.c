@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.1 2006/09/27 00:08:44 ichiki Exp $
+ * $Id: f.c,v 2.2 2006/09/28 04:40:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -245,7 +245,8 @@ calc_lub_3f (struct stokes * sys,
       for (j = i + 1; j < np; ++j)
 	{
 	  j3 = j * 3;
-	  calc_lub_f_2b (u + i3, u + j3,
+	  calc_lub_f_2b (sys,
+			 u + i3, u + j3,
 			 sys->pos + i3, sys->pos + j3,
 			 f + i3, f + j3);
 	  
@@ -255,7 +256,8 @@ calc_lub_3f (struct stokes * sys,
 
 /* calculate f by u for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   u1 [3] : velocity
  *   u2 [3] :
  *   x1 [3] : position of particle 1
@@ -265,7 +267,8 @@ calc_lub_3f (struct stokes * sys,
  *   f2 [3] :
  */
 void
-calc_lub_f_2b (const double * u1, const double * u2,
+calc_lub_f_2b (struct stokes * sys,
+	       const double * u1, const double * u2,
 	       const double * x1, const double * x2,
 	       double * f1, double * f2)
 {
@@ -292,9 +295,10 @@ calc_lub_f_2b (const double * u1, const double * u2,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= 2.0)
-    //rr = 2.0 + 1.0e-12;
-    rr = 2.0 + 1.0e-6;
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
 
   ex = xx / rr;
   ey = yy / rr;
@@ -309,11 +313,6 @@ calc_lub_f_2b (const double * u1, const double * u2,
   ya11 = res2b [2] - resinf [2];
   ya12 = res2b [3] - resinf [3];
 
-  /* for check
-  fprintf (stdout, "%e %e %e %e %e\n",
-	   rr,
-	   xa11, xa12, ya11, ya12); */
-
   matrix_f_atimes (u1, f1,
 		   ex, ey, ez,
 		   xa11, ya11);
@@ -327,6 +326,86 @@ calc_lub_f_2b (const double * u1, const double * u2,
   matrix_f_atimes (u1, f2,
 		   - ex, - ey, - ez,
 		   xa12, ya12);
+
+  free (res2b);
+}
+
+/* calculate lub-matrix in F version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubcut is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*3)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_f_2b (struct stokes * sys,
+		 int i, int j,
+		 const double *x1, const double *x2,
+		 int n, double * mat)
+{
+  double *res2b, *resinf;
+
+  double xx, yy, zz, rr;
+  double ex, ey, ez;
+
+  double xa11, ya11;
+  double xa12, ya12;
+
+
+  res2b = malloc (sizeof (double) * 44);
+  if (res2b == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
+      exit (1);
+    }
+  resinf = res2b + 22;
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr <= sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalar_two_body_res (rr, res2b);
+  scalar_minv_f (rr, resinf);
+
+  xa11 = res2b [ 0] - resinf [ 0];
+  xa12 = res2b [ 1] - resinf [ 1];
+  ya11 = res2b [ 2] - resinf [ 2];
+  ya12 = res2b [ 3] - resinf [ 3];
+
+  matrix_f_ij (i, i,
+	       ex, ey, ez,
+	       xa11, ya11,
+	       n, mat);
+  matrix_f_ij (i, j,
+	       ex, ey, ez,
+	       xa12, ya12,
+	       n, mat);
+
+  matrix_f_ij (j, j,
+	       - ex, - ey, - ez,
+	       xa11, ya11,
+	       n, mat);
+  matrix_f_ij (j, i,
+	       - ex, - ey, - ez,
+	       xa12, ya12,
+	       n, mat);
 
   free (res2b);
 }

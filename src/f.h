@@ -1,7 +1,7 @@
 /* header file for f.c --
  * subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.h,v 2.1 2006/09/27 00:09:16 ichiki Exp $
+ * $Id: f.h,v 2.2 2006/09/28 04:41:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -108,7 +108,8 @@ calc_lub_3f (struct stokes * sys,
 
 /* calculate f by u for pair of particles 1 and 2
  * INPUT
- *   (global) p : order of expansion
+ *   sys : system parameters
+ *         sys->lubcut is used.
  *   u1 [3] : velocity
  *   u2 [3] :
  *   x1 [3] : position of particle 1
@@ -118,8 +119,27 @@ calc_lub_3f (struct stokes * sys,
  *   f2 [3] :
  */
 void
-calc_lub_f_2b (const double * u1, const double * u2,
+calc_lub_f_2b (struct stokes * sys,
+	       const double * u1, const double * u2,
 	       const double * x1, const double * x2,
 	       double * f1, double * f2);
+
+/* calculate lub-matrix in F version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubcut is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*3)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_f_2b (struct stokes * sys,
+		 int i, int j,
+		 const double *x1, const double *x2,
+		 int n, double * mat);
 
 #endif /* !_F_H_ */
