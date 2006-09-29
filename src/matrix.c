@@ -1,10 +1,25 @@
 /* matrix-manipulating routines
- * Copyright (C) 2001 Kengo Ichiki <ichiki@kona.jinkan.kyoto-u.ac.jp>
- * $Id: matrix.c,v 1.1 2001/02/14 08:40:35 ichiki Exp $
+ * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: matrix.c,v 1.2 2006/09/29 03:38:48 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-#include "../ludcmp.h" /* lu_inv() */
+//#include "../../misc/ludcmp.h" /* lu_inv() */
+#include "dgetri_c.h" /* lapack_inv_() */
 
 #include "matrix.h"
 
@@ -45,7 +60,8 @@ solve_gen_linear (int n1, int n2,
   /* type 2 */
 
   /* H := H^-1 */
-  lu_inv (H, n2);
+  //lu_inv (H, n2);
+  lapack_inv_ (n2, H);
 
   /* C := (H^-1) . C */
   mul_left_sq (C, n2, n1, H, n2);
@@ -62,7 +78,8 @@ solve_gen_linear (int n1, int n2,
   add_and_mul (B, n1, n2, F, n1, n2, D, n2, n2, -1.0, 1.0, B);
 
   /* A := (A-F.(H^-1).C)^-1 */
-  lu_inv (A, n1);
+  //lu_inv (A, n1);
+  lapack_inv_ (n1, A);
 
   /* I := A.E */
   mul_matrices (A, n1, n1, E, n1, n1, I);
@@ -104,7 +121,8 @@ solve_linear (int n1, int n2,
   /* type 1 */
 
   /* A := A^-1 */
-  lu_inv (A, n1);
+  //lu_inv (A, n1);
+  lapack_inv_ (n1, A);
 
   /* B := (A^-1).B */
   mul_left_sq (B, n1, n2, A, n1);
@@ -128,11 +146,10 @@ solve_linear (int n1, int n2,
  *  where (na2 == nb1)
  * OUTPUT
  *  C [na1, nb2] = A [na1, na2] . B [nb1, nb2]
- *  where C must be deferent from A and B!
  */
 void
-mul_matrices (double * A, int na1, int na2,
-	      double * B, int nb1, int nb2,
+mul_matrices (const double * A, int na1, int na2,
+	      const double * B, int nb1, int nb2,
 	      double * C)
 {
   int i, j, k;
@@ -168,7 +185,7 @@ mul_matrices (double * A, int na1, int na2,
  */
 void
 mul_left_sq (double * A, int na1, int na2,
-	     double * B, int nb)
+	     const double * B, int nb)
 {
   int i, j, k;
   double * tmp;
@@ -180,7 +197,7 @@ mul_left_sq (double * A, int na1, int na2,
       exit (1);
     }
 
-  tmp = malloc (sizeof (double) * na1 * na2);
+  tmp = (double *) malloc (sizeof (double) * na1 * na2);
   if (tmp == NULL)
     {
       fprintf (stderr, "allocation error in mul_left_sq().\n");
@@ -220,9 +237,9 @@ mul_left_sq (double * A, int na1, int na2,
  *  D could be same to A itself!
  */
 void
-add_and_mul (double * A, int na1, int na2,
-	     double * B, int nb1, int nb2,
-	     double * C, int nc1, int nc2,
+add_and_mul (const double * A, int na1, int na2,
+	     const double * B, int nb1, int nb2,
+	     const double * C, int nc1, int nc2,
 	     double a, double b,
 	     double * D)
 {
@@ -259,8 +276,8 @@ add_and_mul (double * A, int na1, int na2,
  *  y [n1] = mat [n1, n2] . x [n2]
  */
 void
-dot_prod_matrix (double * mat, int n1, int n2,
-		 double * x,
+dot_prod_matrix (const double * mat, int n1, int n2,
+		 const double * x,
 		 double * y)
 {
   int i, j;
