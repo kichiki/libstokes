@@ -1,20 +1,33 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.1 2006/09/26 01:07:29 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.2 2006/09/29 03:28:16 ichiki Exp $
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 
-#ifdef ZETA
-#include "../bench.h" // ptime_ms_d()
-#endif /* ZETA */
-
 //#include "../../misc/cholesky.h" /* cholesky() */
-#include "../../misc/ludcmp.h" /* ludcmp() */
+//#include "../../misc/ludcmp.h" /* ludcmp() */
+#include "dgetri_c.h" /* lapack_inv_() */
 
-#include "stokes.h" /* struct stokeks */
-#include "fts.h"
+#include <libstokes.h> /* struct stokeks */
+#include "/home/ichiki/WORK/SF/ryuon/libstokes/bench.h"
+#include "/home/ichiki/WORK/SF/ryuon/libstokes/fts.h"
+
 #include "matrix.h"
 #include "ewald-3fts-matrix.h"
 
@@ -25,17 +38,12 @@
  * OUTPUT
  *  mat [np * 11 * np * 11] :
  */
-static void
+void
 make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 {
-  int pcellx, pcelly, pcellz;
-  int kmaxx, kmaxy, kmaxz;
-  double zeta, zeta2, zaspi, za2;
-  double pi2;
-  double pivol;
-  double lx, ly, lz;
-  double *pos;
   int np;
+
+  double cpu0, cpu; /* for ptime_ms_d() */
 
   double xa, ya; 
   double yb;
@@ -68,24 +76,7 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
   double a2, c2;
 
 
-  pcellx = sys->pcellx;
-  pcelly = sys->pcelly;
-  pcellz = sys->pcellz;
-  kmaxx  = sys->kmaxx;
-  kmaxy  = sys->kmaxy;
-  kmaxz  = sys->kmaxz;
-  zeta   = sys->zeta;
-  zeta2  = sys->zeta2;
-  zaspi  = sys->zaspi;
-  za2    = sys->za2;
-  pi2    = sys->pi2;
-  pivol  = sys->pivol;
-  lx     = sys->lx;
-  ly     = sys->ly;
-  lz     = sys->lz;
-  pos    = sys->pos;
-  np     = sys->np;
-
+  np = sys->np;
   n = np * 11;
 
   /* clear result */
@@ -95,9 +86,9 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
     }
 
   /* diagonal part ( self part ) */
-  xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
-  xc = yc = 0.75 - zaspi * za2 * 10.0;
-  xm = ym = zm = 0.9 - zaspi * za2 * (12.0 - 30.24 * za2);
+  xa = ya = 1.0 - sys->zaspi * (6.0 - 40.0 / 3.0 * sys->za2);
+  xc = yc = 0.75 - sys->zaspi * sys->za2 * 10.0;
+  xm = ym = zm = 0.9 - sys->zaspi * sys->za2 * (12.0 - 30.24 * sys->za2);
 
   for (i = 0; i < np; i++)
     {
@@ -112,9 +103,8 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 		     n, mat);
     }
 
-#ifdef ZETA
-  ptime_ms_d ();
-#endif /* ZETA */
+  /* for zeta code to measure CPU times */
+  cpu0 = ptime_ms_d ();
 
   /* first Ewald part ( real space ) */
   for (i = 0; i < np; i++)
@@ -128,30 +118,30 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 	  jy = jx + 1;
 	  jz = jx + 2;
 
-	  for (m1 = - pcellx; m1 <= pcellx; m1++)
+	  for (m1 = - sys->pcellx; m1 <= sys->pcellx; m1++)
 	    {
-	      rlx = lx * (double) m1;
-	      for (m2 = - pcelly; m2 <= pcelly; m2++)
+	      rlx = sys->lx * (double) m1;
+	      for (m2 = - sys->pcelly; m2 <= sys->pcelly; m2++)
 		{
-		  rly = ly * (double) m2;
-		  for (m3 = - pcellz; m3 <= pcellz; m3++)
+		  rly = sys->ly * (double) m2;
+		  for (m3 = - sys->pcellz; m3 <= sys->pcellz; m3++)
 		    {
-		      rlz = lz * (double) m3;
+		      rlz = sys->lz * (double) m3;
   
-		      xx = pos [jx] - pos [ix] + rlx;
-		      yy = pos [jy] - pos [iy] + rly;
-		      zz = pos [jz] - pos [iz] + rlz;
+		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
+		      yy = sys->pos [jy] - sys->pos [iy] + rly;
+		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
 		      rr = sqrt (xx * xx + yy * yy + zz * zz);
 
 		      if (rr > 0.0)
 			{
-			  zr = zeta * rr;
+			  zr = sys->zeta * rr;
 			  zr2 = zr * zr;
 			  s  = rr;
 			  s2 = s * s;
 
 			  erfczr = erfc (zr);
-			  expzr2 = zaspi * exp (- zr2);
+			  expzr2 = sys->zaspi * exp (- zr2);
 
 			  ex = xx / rr;
 			  ey = yy / rr;
@@ -266,26 +256,27 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 	}
     }
 
-#ifdef ZETA
-  sys->cpu2 = ptime_ms_d ();
-#endif /* ZETA */
+  /* for zeta code to measure CPU times */
+  cpu = ptime_ms_d ();
+  sys->cpu2 = cpu - cpu0;
+  cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
-  for (m1 = - kmaxx; m1 <= kmaxx; m1++)
+  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      k1 = pi2 * (double) m1 / lx;
-      for (m2 = - kmaxy; m2 <= kmaxy; m2++)
+      k1 = sys->pi2 * (double) m1 / sys->lx;
+      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  k2 = pi2 * (double) m2 / ly;
-	  for (m3 = - kmaxz; m3 <= kmaxz; m3++)
+	  k2 = sys->pi2 * (double) m2 / sys->ly;
+	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      k3 = pi2 * (double) m3 / lz;
+	      k3 = sys->pi2 * (double) m3 / sys->lz;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
 		  kk = k1 * k1 + k2 * k2 + k3 * k3;
 		  k = sqrt (kk);
-		  k4z = kk / 4.0 / zeta2;
-		  kexp = pivol
+		  k4z = kk / 4.0 / sys->zeta2;
+		  kexp = sys->pivol
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
@@ -311,9 +302,9 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 			  jy = jx + 1;
 			  jz = jx + 2;
 
-			  xx = pos [jx] - pos [ix];
-			  yy = pos [jy] - pos [iy];
-			  zz = pos [jz] - pos [iz];
+			  xx = sys->pos [jx] - sys->pos [ix];
+			  yy = sys->pos [jy] - sys->pos [iy];
+			  zz = sys->pos [jz] - sys->pos [iz];
 
 			  cf = cos (+ k1 * xx
 				    + k2 * yy
@@ -339,10 +330,106 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
 	}
     }
 
-#ifdef ZETA
-  sys->cpu3 = ptime_ms_d ();
+  /* for zeta code to measure CPU times */
+  cpu = ptime_ms_d ();
+  sys->cpu3 = cpu - cpu0;
   sys->cpu1 = sys->cpu2 + sys->cpu3;
-#endif /* ZETA */
+}
+
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+static int
+cond_lub (const double * x1, const double * x2)
+{
+  double x, y, z;
+  double r2;
+
+
+  x = x1 [0] - x2 [0];
+  y = x1 [1] - x2 [1];
+  z = x1 [2] - x2 [2];
+
+  r2 = x * x
+    + y * y
+    + z * z;
+
+  if (r2 != 0.0
+      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
+    {
+      return 0;
+    }
+  else
+    {
+      return 1;
+    }
+}
+/* make lubrication matrix for FTS version for all particles
+ * under the periodic boundary condition
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ * OUTPUT
+ *  mat [np * 11 * np * 11] :
+ */
+void
+make_matrix_lub_ewald_3fts (struct stokes * sys,
+			    double * mat)
+{
+  int np;
+  int i, j, k;
+  int i3, j3;
+  int n;
+
+  double * tmp_pos;
+
+
+  np = sys->np;
+
+  tmp_pos = malloc (sizeof (double) * 3);
+  if (tmp_pos == NULL)
+    {
+      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      exit (1);
+    }
+
+  n = np * 11;
+
+  /* clear result */
+  for (i = 0; i < n * n; ++i)
+    {
+      mat [i] = 0.0;
+    }
+
+  for (i = 0; i < np; ++i)
+    {
+      i3 = i * 3;
+      for (j = i; j < np; ++j)
+	{
+	  j3 = j * 3;
+	  /* all image cells */
+	  for (k = 0; k < 27; ++k)
+	    {
+	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		{
+		  matrix_lub_fts_2b (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     n, mat);
+		}
+	    }
+	}
+    }
+
+  free (tmp_pos);
 }
 
 /** copy from test-fts-atimes.c Rev 1.5 **/
@@ -355,7 +442,7 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
  *  y [np *11] : output vector in the extracted form (:= m.x)
  */
 static void
-multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
+multiply_extmat_with_extvec_3fts (int np, const double * m, const double * x,
 				  double * y)
 {
   int n11;
@@ -397,7 +484,7 @@ multiply_extmat_with_extvec_3fts (int np, double * m, double * x,
  *  y [n * 11] : UOE
  */
 void
-atimes_ewald_3fts_matrix (int n, double *x, double *y, void * user_data)
+atimes_ewald_3fts_matrix (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
   int np;
@@ -422,7 +509,7 @@ atimes_ewald_3fts_matrix (int n, double *x, double *y, void * user_data)
 /** natural resistance problem **/
 /* this is just a test routine */
 static void
-test_symmetric (int n, double * mat, double tiny)
+test_symmetric (int n, const double * mat, double tiny)
 {
   int i, j;
   double d;
@@ -546,7 +633,7 @@ trans_ext (int np, double *r)
  */
 void
 calc_res_ewald_3fts_matrix (struct stokes * sys,
-			    double *u, double *o, double *e,
+			    const double *u, const double *o, const double *e,
 			    double *f, double *t, double *s)
 {
   int np;
@@ -580,7 +667,8 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
 
   /* resistance matrix in INVERSED form */
   /*cholesky (mat, n11);*/
-  lu_inv (mat, n11);
+  //lu_inv (mat, n11);
+  lapack_inv_ (n11, mat);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
   multiply_extmat_with_extvec_3fts (np, mat, b, x);
@@ -593,103 +681,6 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
 }
 
 
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (double * x1, double * x2)
-{
-  double x, y, z;
-  double r2;
-
-
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
-
-  r2 = x * x
-    + y * y
-    + z * z;
-
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
-    {
-      return 0;
-    }
-  else
-    {
-      return 1;
-    }
-}
-/* make lubrication matrix for FTS version for all particles
- * under the periodic boundary condition
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 11 * np * 11] :
- */
-static void
-make_matrix_lub_ewald_3fts (struct stokes * sys,
-			    double * mat)
-{
-  int np;
-  int i, j, k;
-  int i3, i11;
-  int j3, j11;
-  int n;
-
-  double * tmp_pos;
-
-
-  np = sys->np;
-
-  tmp_pos = malloc (sizeof (double) * 3);
-  if (tmp_pos == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
-      exit (1);
-    }
-
-  n = np * 11;
-
-  /* clear result */
-  for (i = 0; i < n * n; ++i)
-    {
-      mat [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      i11 = i * 11;
-      for (j = i; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  j11 = j * 11;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
-	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
-		{
-		  matrix_lub_fts_2b (i, j,
-				     sys->pos + i3, tmp_pos,
-				     n, mat);
-		}
-	    }
-	}
-    }
-
-  free (tmp_pos);
-}
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
  *  sys : system parameters
@@ -703,7 +694,8 @@ make_matrix_lub_ewald_3fts (struct stokes * sys,
  */
 void
 calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
-				double *u, double *o, double *e,
+				const double *u, const double *o,
+				const double *e,
 				double *f, double *t, double *s)
 {
   int np;
@@ -748,7 +740,8 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
 
   /* resistance matrix in INVERSED form */
   /*cholesky (mat, n11);*/
-  lu_inv (mat, n11);
+  //lu_inv (mat, n11);
+  lapack_inv_ (n11, mat);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
   /* x := (M^-1).(I + M.L).(UOE) */
@@ -836,7 +829,7 @@ trans_mat_ext2ext (int np, double * mat)
   free (tmp);
 }
 static void
-split_matrix_3fts (int np, double *mat,
+split_matrix_3fts (int np, const double *mat,
 		   double * mat_ll, double * mat_lh,
 		   double * mat_hl, double * mat_hh)
 {
@@ -896,8 +889,8 @@ split_matrix_3fts (int np, double *mat,
 }
 static void
 merge_matrix_3fts (int np,
-		   double * mat_ll, double * mat_lh,
-		   double * mat_hl, double * mat_hh,
+		   const double * mat_ll, const double * mat_lh,
+		   const double * mat_hl, const double * mat_hh,
 		   double *mat)
 {
   int i, j;
@@ -967,7 +960,7 @@ merge_matrix_3fts (int np,
  */
 void
 calc_mob_ewald_3fts_matrix (struct stokes * sys,
-			    double *f, double *t, double *e,
+			    const double *f, const double *t, const double *e,
 			    double *u, double *o, double *s)
 {
   int np;
@@ -1052,7 +1045,7 @@ calc_mob_ewald_3fts_matrix (struct stokes * sys,
  *  a [n * n] :
  */
 static void
-multiply_matrices (int n, double *a, double *b)
+multiply_matrices (int n, double *a, const double *b)
 {
   int i, j, k;
   double * tmp;
@@ -1089,7 +1082,8 @@ multiply_matrices (int n, double *a, double *b)
  */
 void
 calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
-				double *f, double *t, double *e,
+				const double *f, const double *t,
+				const double *e,
 				double *u, double *o, double *s)
 {
   int np;
@@ -1209,7 +1203,7 @@ calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
  */
 static void
 split_matrix_fix_3fts (int np, int nm,
-		       double * mat,
+		       const double * mat,
 		       double * mat_ll, double * mat_lh,
 		       double * mat_hl, double * mat_hh)
 {
@@ -1348,18 +1342,18 @@ split_matrix_fix_3fts (int np, int nm,
  * INPUT
  *  np : # ALL particles
  *  nm : # MOBILE particles
- *  mat [np * 11 * np * 11] : matrix to split
- * OUTPUT
  *  mat_ll [nm * 6 * nm * 6] :
  *  mat_lh [nm * 6 * n'    ] :
  *  mat_hl [n'     * nm * 6] :
  *  mat_hh [n'     * n'    ] :
  *  where n' = np * 11 - nm * 6
+ * OUTPUT
+ *  mat [np * 11 * np * 11] : matrix to split
  */
 static void
 merge_matrix_fix_3fts (int np, int nm,
-		       double * mat_ll, double * mat_lh,
-		       double * mat_hl, double * mat_hh,
+		       const double * mat_ll, const double * mat_lh,
+		       const double * mat_hl, const double * mat_hh,
 		       double * mat)
 {
   int i, j;
@@ -1513,8 +1507,10 @@ merge_matrix_fix_3fts (int np, int nm,
  */
 void
 calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
-				double *f, double *t, double *e,
-				double *uf, double *of, double *ef,
+				const double *f, const double *t,
+				const double *e,
+				const double *uf, const double *of,
+				const double *ef,
 				double *u, double *o, double *s,
 				double *ff, double *tf, double *sf)
 {
@@ -1622,8 +1618,10 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
  */
 void
 calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
-				    double *f, double *t, double *e,
-				    double *uf, double *of, double *ef,
+				    const double *f, const double *t,
+				    const double *e,
+				    const double *uf, const double *of,
+				    const double *ef,
 				    double *u, double *o, double *s,
 				    double *ff, double *tf, double *sf)
 {
