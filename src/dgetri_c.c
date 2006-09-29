@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
  * Copyright (C) 2005-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dgetri_c.c,v 1.4 2006/09/29 03:32:31 ichiki Exp $
+ * $Id: dgetri_c.c,v 1.5 2006/09/29 04:16:22 ichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,7 +147,7 @@ void lapack_inv (int n, const double *a,
   int info;
   double * work = NULL;
 
-  ipvt = (double *) malloc (sizeof (int) * n);
+  ipvt = (int *) malloc (sizeof (int) * n);
   work = (double *) malloc (sizeof (double) * n);
 
   for (i = 0; i < n*n; i ++)
@@ -176,12 +176,11 @@ void lapack_inv (int n, const double *a,
  */
 void lapack_inv_ (int n, double *a)
 {
-  int i;
   int * ipvt = NULL;
   int info;
   double * work = NULL;
 
-  ipvt = (double *) malloc (sizeof (int) * n);
+  ipvt = (int *) malloc (sizeof (int) * n);
   work = (double *) malloc (sizeof (double) * n);
 
   dgetrf_ (&n, &n, a, &n, ipvt, &info);
