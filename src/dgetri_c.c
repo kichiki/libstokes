@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
- * Copyright (C) 2005 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dgetri_c.c,v 1.3 2005/07/17 18:57:08 ichiki Exp $
+ * Copyright (C) 2005-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: dgetri_c.c,v 1.4 2006/09/29 03:32:31 ichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,8 +147,8 @@ void lapack_inv (int n, const double *a,
   int info;
   double * work = NULL;
 
-  ipvt = malloc (sizeof (int) * n);
-  work = malloc (sizeof (double) * n);
+  ipvt = (double *) malloc (sizeof (int) * n);
+  work = (double *) malloc (sizeof (double) * n);
 
   for (i = 0; i < n*n; i ++)
     {
@@ -162,6 +162,36 @@ void lapack_inv (int n, const double *a,
     }
 
   dgetri_ (&n, ai, &n, ipvt, work, &n, &info);
+  if (info > 0)
+    {
+      fprintf (stderr, "singular matrix met at dgetri (info = %d)\n", info);
+      exit (1);
+    }
+
+  free (ipvt);
+  free (work);
+}
+
+/* the version that a[n*n] is input AND output
+ */
+void lapack_inv_ (int n, double *a)
+{
+  int i;
+  int * ipvt = NULL;
+  int info;
+  double * work = NULL;
+
+  ipvt = (double *) malloc (sizeof (int) * n);
+  work = (double *) malloc (sizeof (double) * n);
+
+  dgetrf_ (&n, &n, a, &n, ipvt, &info);
+  if (info > 0)
+    {
+      fprintf (stderr, "singular matrix met at dgetrf (info = %d)\n", info);
+      exit (1);
+    }
+
+  dgetri_ (&n, a, &n, ipvt, work, &n, &info);
   if (info > 0)
     {
       fprintf (stderr, "singular matrix met at dgetri (info = %d)\n", info);
