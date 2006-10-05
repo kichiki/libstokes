@@ -1,7 +1,7 @@
 /* header file for ewald-3f-matrix.c --
  * Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.h,v 2.2 2006/09/29 03:31:48 ichiki Exp $
+ * $Id: ewald-3f-matrix.h,v 2.3 2006/10/05 04:29:12 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,15 +21,6 @@
 #define	_EWALD_3F_MATRIX_H_
 
 
-/* make ewald-summed mobility matrix for F version
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3 * np * 3] :
- */
-void
-make_matrix_mob_ewald_3f (struct stokes * sys, double * mat);
-
 /* make lubrication matrix for F version for all particles
  * under the periodic boundary condition
  * INPUT
@@ -43,18 +34,6 @@ void
 make_matrix_lub_ewald_3f (struct stokes * sys,
 			  double * mat);
 
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for F version
- * INPUT
- *  n := np * 3
- *  x [n * 3] : F
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 6] : U
- */
-void
-atimes_ewald_3f_matrix (int n, const double *x, double *y, void * user_data);
-
 /** natural resistance problem **/
 /* solve natural resistance problem in F version under Ewald sum
  * INPUT
@@ -67,7 +46,6 @@ void
 calc_res_ewald_3f_matrix (struct stokes * sys,
 			  const double *u,
 			  double *f);
-
 
 /* solve natural resistance problem in F version under Ewald sum
  * INPUT
