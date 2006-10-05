@@ -1,20 +1,11 @@
 /* header file for ewald-3fts-matrix.h --
  * Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.h,v 2.2 2006/09/29 03:28:43 ichiki Exp $
+ * $Id: ewald-3fts-matrix.h,v 2.3 2006/10/05 04:02:56 ichiki Exp $
  */
 #ifndef	_EWALD_3FTS_MATRIX_H_
 #define	_EWALD_3FTS_MATRIX_H_
 
-
-/* make ewald-summed mobility matrix for FTS version
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 11 * np * 11] :
- */
-void
-make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat);
 
 /* make lubrication matrix for FTS version for all particles
  * under the periodic boundary condition
@@ -28,20 +19,6 @@ make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat);
 void
 make_matrix_lub_ewald_3fts (struct stokes * sys,
 			    double * mat);
-
-
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FTS version
- * INPUT
- *  n := np * 11
- *  x [n * 11] : FTS
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 11] : UOE
- */
-void
-atimes_ewald_3fts_matrix (int n, const double *x, double *y, void * user_data);
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
@@ -59,6 +36,7 @@ void
 calc_res_ewald_3fts_matrix (struct stokes * sys,
 			    const double *u, const double *o, const double *e,
 			    double *f, double *t, double *s);
+
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
  *  sys : system parameters
@@ -92,6 +70,7 @@ void
 calc_mob_ewald_3fts_matrix (struct stokes * sys,
 			    const double *f, const double *t, const double *e,
 			    double *u, double *o, double *s);
+
 /* solve natural mobility problem in FTS version under Ewald sum
  * INPUT
  *  sys : system parameters

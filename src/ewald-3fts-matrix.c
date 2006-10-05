@@ -1,6 +1,6 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.2 2006/09/29 03:28:16 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.3 2006/10/05 04:02:32 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,321 +20,16 @@
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 
-//#include "../../misc/cholesky.h" /* cholesky() */
-//#include "../../misc/ludcmp.h" /* ludcmp() */
 #include "dgetri_c.h" /* lapack_inv_() */
 
 #include <libstokes.h> /* struct stokeks */
 #include "/home/ichiki/WORK/SF/ryuon/libstokes/bench.h"
 #include "/home/ichiki/WORK/SF/ryuon/libstokes/fts.h"
 
+#include "ewald.h" // make_matrix_mob_ewald_3all ()
 #include "matrix.h"
 #include "ewald-3fts-matrix.h"
 
-
-/* make ewald-summed mobility matrix for FTS version
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 11 * np * 11] :
- */
-void
-make_matrix_mob_ewald_3fts (struct stokes * sys, double * mat)
-{
-  int np;
-
-  double cpu0, cpu; /* for ptime_ms_d() */
-
-  double xa, ya; 
-  double yb;
-  double xc, yc;
-  double xg, yg;
-  double yh;
-  double xm, ym, zm;
-
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double zr, zr2;
-  double s, s2;
-  double rlx, rly, rlz;
-
-  int n;
-  int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m1, m2, m3;
-
-  double k1, k2, k3, kk, k4z;
-  double k;
-  double cf, sf;
-  double kexp;
-
-  double erfczr;
-  double expzr2;
-
-  double a2, c2;
-
-
-  np = sys->np;
-  n = np * 11;
-
-  /* clear result */
-  for (i = 0; i < n * n; ++i)
-    {
-      mat [i] = 0.0;
-    }
-
-  /* diagonal part ( self part ) */
-  xa = ya = 1.0 - sys->zaspi * (6.0 - 40.0 / 3.0 * sys->za2);
-  xc = yc = 0.75 - sys->zaspi * sys->za2 * 10.0;
-  xm = ym = zm = 0.9 - sys->zaspi * sys->za2 * (12.0 - 30.24 * sys->za2);
-
-  for (i = 0; i < np; i++)
-    {
-      matrix_fts_ij (i, i,
-		     0.0, 0.0, 0.0,
-		     xa, ya,
-		     0.0,
-		     xc, yc,
-		     0.0, 0.0,
-		     0.0,
-		     xm, ym, zm,
-		     n, mat);
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu0 = ptime_ms_d ();
-
-  /* first Ewald part ( real space ) */
-  for (i = 0; i < np; i++)
-    {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
-      for (j = 0; j < np; j++)
-	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
-
-	  for (m1 = - sys->pcellx; m1 <= sys->pcellx; m1++)
-	    {
-	      rlx = sys->lx * (double) m1;
-	      for (m2 = - sys->pcelly; m2 <= sys->pcelly; m2++)
-		{
-		  rly = sys->ly * (double) m2;
-		  for (m3 = - sys->pcellz; m3 <= sys->pcellz; m3++)
-		    {
-		      rlz = sys->lz * (double) m3;
-  
-		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
-		      yy = sys->pos [jy] - sys->pos [iy] + rly;
-		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
-		      rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-		      if (rr > 0.0)
-			{
-			  zr = sys->zeta * rr;
-			  zr2 = zr * zr;
-			  s  = rr;
-			  s2 = s * s;
-
-			  erfczr = erfc (zr);
-			  expzr2 = sys->zaspi * exp (- zr2);
-
-			  ex = xx / rr;
-			  ey = yy / rr;
-			  ez = zz / rr;
-
-			  ya = (0.75 + 0.5 / s2) / s * erfczr
-			    + ((1.0 + zr2 *
-				(14.0 + 4.0 * zr2 *
-				 (- 5.0 + zr2))) / s2
-			       - 4.5 + 3.0 * zr2)
-			    * expzr2;
-			  a2 = (0.75 - 1.5 / s2) / s * erfczr
-			    + ((- 3.0 + zr2 *
-				(- 2.0 + 4.0 * zr2 *
-				 (4.0 - zr2))) / s2
-			       + 1.5 - 3.0 * zr2)
-			    * expzr2;
-			  xa = a2 + ya;
-	      
-			  yb = - 0.75 / s2 * erfczr
-			    - 1.5 * (+ 1.0 + zr2 *
-				     (- 6.0 + zr2 *
-				      (+ 2.0)))
-			    / s * expzr2;
-
-			  yc = - 3.0 / 8.0 / s2 / s * erfczr
-			    - 0.75 * (+ 1.0 + zr2 *
-				      (+ 14.0 + zr2 *
-				       (-20.0 + zr2 *
-					( + 4.0))))
-			    / s2 * expzr2;
-			  c2 = 9.0 / 8.0 / s2 / s * erfczr
-			    - 0.75 * (- 3.0 + zr2 *
-				      (- 2.0 + zr2 *
-				       (+ 16.0 + zr2 *
-					(- 4.0))))
-			    / s2 * expzr2;
-			  xc = c2 + yc;
-	      
-			  xg = (2.25 - 3.6 / s2) / s2 * erfczr
-			    + (- 1.5 * (- 3.0 + zr2 *
-					(+ 6.0))
-			       - 0.8 * (+ 9.0 + zr2 *
-					(+ 6.0 + zr2 *
-					 (- 48.0 + zr2 *
-					  (+ 12.0)))) / s2)
-			    / s * expzr2;
-			  yg = 1.2 / s2 / s2 * erfczr
-			    + (- 3.0 * ( zr2 *
-					 (2.0 + zr2 *
-					  (- 1.0)))
-			       - 0.8 * (- 3.0 + zr2 *
-					(- 2.0 + zr2 *
-					 (- 26.0 + zr2 *
-					  (+ 26.0 + zr2 *
-					   (- 4.0))))) / s2)
-			    / s * expzr2;
-
-			  yh = - 9.0 / 8.0 / s2 / s * erfczr
-			    + 1.5 * (- 1.5 + zr2 *
-				     (- 1.0 + zr2 *
-				      (+ 8.0 + zr2 *
-				       (- 2.0))))
-			    / s2 * expzr2;
-
-			  xm = (- 4.5 + 10.8 / s2) / s / s2 * erfczr
-			    + (+ 1.5 * (- 6.0 +  zr2 *
-					(- 12.0 + zr2 *
-					 (+ 12.0)))
-			       + 1.2 * (+ 18.0 + zr2 *
-					(+ 12.0 + zr2 *
-					 (+ 30.0 + zr2 *
-					  (- 66.0 + zr2 *
-					   (+ 12.0))))) / s2)
-			    / s2 * expzr2;
-			  ym = (+ 2.25 - 7.2 / s2) / s / s2 * erfczr
-			    + (- 1.5 * (- 3.0 +  zr2 *
-					(+ 6.0 + zr2 *
-					 (- 12.0 + zr2 *
-					  (+ 4.0))))
-			       - 1.2 * (+ 12.0 + zr2 *
-					(+ 8.0 + zr2 *
-					 (- 22.0 + zr2 *
-					  (+ 58.0 + zr2 *
-					   (- 34.0 + zr2 *
-					    (+ 4.0)))))) / s2)
-			    / s2 * expzr2;
-			  zm = + 1.8 / s2 / s / s2 * erfczr
-			    + (- 1.5 * (+ 0.0 +  zr2 *
-					(+ 8.0 + zr2 *
-					 (- 4.0)))
-			       - 1.2 * (- 3.0 + zr2 *
-					(- 2.0 + zr2 *
-					 (- 26.0 + zr2 *
-					  (+ 26.0 + zr2 *
-					   (- 4.0))))) / s2)
-			    / s2 * expzr2;
-	      
-			  matrix_fts_ij (j, i,
-					 ex, ey, ez,
-					 xa, ya,
-					 yb,
-					 xc, yc,
-					 xg, yg,
-					 yh,
-					 xm, ym, zm,
-					 n, mat);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu = ptime_ms_d ();
-  sys->cpu2 = cpu - cpu0;
-  cpu0 = cpu;
-
-  /* Second Ewald part ( reciprocal space ) */
-  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
-    {
-      k1 = sys->pi2 * (double) m1 / sys->lx;
-      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
-	{
-	  k2 = sys->pi2 * (double) m2 / sys->ly;
-	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
-	    {
-	      k3 = sys->pi2 * (double) m3 / sys->lz;
-	      if (m1 != 0 || m2 != 0 || m3 != 0)
-		{
-		  kk = k1 * k1 + k2 * k2 + k3 * k3;
-		  k = sqrt (kk);
-		  k4z = kk / 4.0 / sys->zeta2;
-		  kexp = sys->pivol
-		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
-		    / kk * exp (- k4z);
-
-		  ex = k1 / k;
-		  ey = k2 / k;
-		  ez = k3 / k;
-
-		  ya = 6.0 * (1.0 - kk / 3.0) * kexp;
-		  yb = 3.0 * k * kexp;
-		  yc = 3.0 / 2.0 * kk * kexp;
-		  yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
-		  yh = 3.0 / 2.0 * kk * kexp;
-		  ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
-      
-		  for (i = 0; i < np; i++)
-		    {
-		      ix = i * 3;
-		      iy = ix + 1;
-		      iz = ix + 2;
-		      for (j = 0; j < np; j++)
-			{
-			  jx = j * 3;
-			  jy = jx + 1;
-			  jz = jx + 2;
-
-			  xx = sys->pos [jx] - sys->pos [ix];
-			  yy = sys->pos [jy] - sys->pos [iy];
-			  zz = sys->pos [jz] - sys->pos [iz];
-
-			  cf = cos (+ k1 * xx
-				    + k2 * yy
-				    + k3 * zz);
-
-			  sf = - sin (+ k1 * xx
-				      + k2 * yy
-				      + k3 * zz);
-
-			  matrix_fts_ij (j, i,
-					 ex, ey, ez,
-					 0.0, cf * ya,
-					 sf * yb,
-					 0.0, cf * yc,
-					 0.0, sf * yg,
-					 cf * yh,
-					 0.0, cf * ym, 0.0,
-					 n, mat);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu = ptime_ms_d ();
-  sys->cpu3 = cpu - cpu0;
-  sys->cpu1 = sys->cpu2 + sys->cpu3;
-}
 
 /* condition for lubrication
  * INPUT
@@ -473,37 +168,6 @@ multiply_extmat_with_extvec_3fts (int np, const double * m, const double * x,
 	    * (2.0 * x [j11 + 10] + x [j11 + 6]);
 	}
     }
-}
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FTS version
- * INPUT
- *  n := np * 11
- *  x [n * 11] : FTS
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 11] : UOE
- */
-void
-atimes_ewald_3fts_matrix (int n, const double *x, double *y, void * user_data)
-{
-  struct stokes * sys;
-  int np;
-  double * mat;
-
-
-  sys = (struct stokes *) user_data;
-  np = sys->np;
-  mat = malloc (sizeof (double) * n * n);
-  if (mat == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_ewald_3fts_matrix ().\n");
-      exit (1);
-    }
-
-  make_matrix_mob_ewald_3fts (sys, mat);
-  multiply_extmat_with_extvec_3fts (np, mat, x, y);
-
-  free (mat);
 }
 
 /** natural resistance problem **/
@@ -644,30 +308,24 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
   double * x;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
 
   n11 = np * 11;
-  mat = malloc (sizeof (double) * n11 * n11);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
+  mat = (double *) malloc (sizeof (double) * n11 * n11);
+  b = (double *) malloc (sizeof (double) * n11);
+  x = (double *) malloc (sizeof (double) * n11);
 
   /* b := (UOE) */
   set_fts_by_FTS (np, b, u, o, e);
 
-  make_matrix_mob_ewald_3fts (sys, mat); // mobility matrix in EXTRACTED form
-  /* for test */
+  // mobility matrix in EXTRACTED form
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
+  /* for test
   test_symmetric (n11, mat, 1.0e-12);
+  */
 
   /* resistance matrix in INVERSED form */
-  /*cholesky (mat, n11);*/
-  //lu_inv (mat, n11);
   lapack_inv_ (n11, mat);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
@@ -708,6 +366,7 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
   double * y;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
   n11 = np * 11;
   mat = malloc (sizeof (double) * n11 * n11);
@@ -729,7 +388,8 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
   make_matrix_lub_ewald_3fts (sys, mat); // lub matrix in EXTRACTED form
   multiply_extmat_with_extvec_3fts (np, mat, b, x); // x := L.(UOE)
 
-  make_matrix_mob_ewald_3fts (sys, mat); // mobility matrix in EXTRACTED form
+  // mobility matrix in EXTRACTED form
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
   multiply_extmat_with_extvec_3fts (np, mat, x, y); // y := M.L.(UOE)
 
   /* y := (I + M.L).(UOE) */
@@ -739,8 +399,6 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
     }
 
   /* resistance matrix in INVERSED form */
-  /*cholesky (mat, n11);*/
-  //lu_inv (mat, n11);
   lapack_inv_ (n11, mat);
   trans_ext (np, mat); // resistance matrix in EXTRACTED form
 
@@ -973,42 +631,28 @@ calc_mob_ewald_3fts_matrix (struct stokes * sys,
   double * x;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
   n11 = np * 11;
   n6 = np * 6;
   n5 = np * 5;
-  mat = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * n6 * n6);
-  mat_lh = malloc (sizeof (double) * n6 * n5);
-  mat_hl = malloc (sizeof (double) * n5 * n6);
-  mat_hh = malloc (sizeof (double) * n5 * n5);
-  mob_ll = malloc (sizeof (double) * n6 * n6);
-  mob_lh = malloc (sizeof (double) * n6 * n5);
-  mob_hl = malloc (sizeof (double) * n5 * n6);
-  mob_hh = malloc (sizeof (double) * n5 * n5);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
+  mat = (double *) malloc (sizeof (double) * n11 * n11);
+  mat_ll = (double *) malloc (sizeof (double) * n6 * n6);
+  mat_lh = (double *) malloc (sizeof (double) * n6 * n5);
+  mat_hl = (double *) malloc (sizeof (double) * n5 * n6);
+  mat_hh = (double *) malloc (sizeof (double) * n5 * n5);
+  mob_ll = (double *) malloc (sizeof (double) * n6 * n6);
+  mob_lh = (double *) malloc (sizeof (double) * n6 * n5);
+  mob_hl = (double *) malloc (sizeof (double) * n5 * n6);
+  mob_hh = (double *) malloc (sizeof (double) * n5 * n5);
+  b = (double *) malloc (sizeof (double) * n11);
+  x = (double *) malloc (sizeof (double) * n11);
 
   /* b := (FTE) */
   set_fts_by_FTS (np, b, f, t, e);
 
   /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (sys, mat);
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
   /* mat := M.T, where T.(FTS) = (FTS~) */
   trans_mat_ext2ext (np, mat);
   split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
@@ -1017,7 +661,6 @@ calc_mob_ewald_3fts_matrix (struct stokes * sys,
 		mat_hh, mat_hl, mat_lh, mat_ll,
 		mob_hh, mob_hl, mob_lh, mob_ll);
 
-  /* STEP 6 */
   merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
   dot_prod_matrix (mat, n11, n11,
 		   b, x);
@@ -1099,39 +742,24 @@ calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
   double * x;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
 
   n11 = np * 11;
   n6 = np * 6;
   n5 = np * 5;
-  mat = malloc (sizeof (double) * n11 * n11);
-  lub = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * n6 * n6);
-  mat_lh = malloc (sizeof (double) * n6 * n5);
-  mat_hl = malloc (sizeof (double) * n5 * n6);
-  mat_hh = malloc (sizeof (double) * n5 * n5);
-  mob_ll = malloc (sizeof (double) * n6 * n6);
-  mob_lh = malloc (sizeof (double) * n6 * n5);
-  mob_hl = malloc (sizeof (double) * n5 * n6);
-  mob_hh = malloc (sizeof (double) * n5 * n5);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || lub == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
+  mat = (double *) malloc (sizeof (double) * n11 * n11);
+  lub = (double *) malloc (sizeof (double) * n11 * n11);
+  mat_ll = (double *) malloc (sizeof (double) * n6 * n6);
+  mat_lh = (double *) malloc (sizeof (double) * n6 * n5);
+  mat_hl = (double *) malloc (sizeof (double) * n5 * n6);
+  mat_hh = (double *) malloc (sizeof (double) * n5 * n5);
+  mob_ll = (double *) malloc (sizeof (double) * n6 * n6);
+  mob_lh = (double *) malloc (sizeof (double) * n6 * n5);
+  mob_hl = (double *) malloc (sizeof (double) * n5 * n6);
+  mob_hh = (double *) malloc (sizeof (double) * n5 * n5);
+  b = (double *) malloc (sizeof (double) * n11);
+  x = (double *) malloc (sizeof (double) * n11);
 
   /* used at lub [] */
   I_ll = lub;
@@ -1143,7 +771,7 @@ calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
   set_fts_by_FTS (np, b, f, t, e);
 
   /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (sys, mat);
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
   /* mat := M.T, where T.(FTS) = (FTS~) */
   trans_mat_ext2ext (np, mat);
   split_matrix_3fts (np, mat, mat_ll, mat_lh, mat_hl, mat_hh);
@@ -1167,7 +795,6 @@ calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
 		    mat_ll, mat_lh, mat_hl, mat_hh,
 		    mob_ll, mob_lh, mob_hl, mob_hh);
 
-  /* STEP 6 */
   merge_matrix_3fts (np, mob_ll, mob_lh, mob_hl, mob_hh, mat);
   dot_prod_matrix (mat, n11, n11,
 		   b, x);
@@ -1526,6 +1153,7 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
   double * x;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
   nm = sys->nm;
 
@@ -1535,39 +1163,24 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
   nl = nm * 6;
   nh = n11 - nl;
 
-  mat = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * nl * nl);
-  mat_lh = malloc (sizeof (double) * nl * nh);
-  mat_hl = malloc (sizeof (double) * nh * nl);
-  mat_hh = malloc (sizeof (double) * nh * nh);
-  mob_ll = malloc (sizeof (double) * nl * nl);
-  mob_lh = malloc (sizeof (double) * nl * nh);
-  mob_hl = malloc (sizeof (double) * nh * nl);
-  mob_hh = malloc (sizeof (double) * nh * nh);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
+  mat = (double *) malloc (sizeof (double) * n11 * n11);
+  mat_ll = (double *) malloc (sizeof (double) * nl * nl);
+  mat_lh = (double *) malloc (sizeof (double) * nl * nh);
+  mat_hl = (double *) malloc (sizeof (double) * nh * nl);
+  mat_hh = (double *) malloc (sizeof (double) * nh * nh);
+  mob_ll = (double *) malloc (sizeof (double) * nl * nl);
+  mob_lh = (double *) malloc (sizeof (double) * nl * nh);
+  mob_hl = (double *) malloc (sizeof (double) * nh * nl);
+  mob_hh = (double *) malloc (sizeof (double) * nh * nh);
+  b = (double *) malloc (sizeof (double) * n11);
+  x = (double *) malloc (sizeof (double) * n11);
 
   /* b := (FTE) */
   set_fts_by_FTS (nm, b, f, t, e);
   set_fts_by_FTS (nf, b + nm11, uf, of, ef);
 
   /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (sys, mat);
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
   /* mat := M.T, where T.(FTS) = (FTS~) */
   trans_mat_ext2ext (np, mat);
   split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
@@ -1576,7 +1189,6 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
 		mat_hh, mat_hl, mat_lh, mat_ll,
 		mob_hh, mob_hl, mob_lh, mob_ll);
 
-  /* STEP 6 */
   merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
   dot_prod_matrix (mat, n11, n11,
 		   b, x);
@@ -1641,6 +1253,7 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   double * x;
 
 
+  sys->version = 2; // FTS version
   np = sys->np;
   nm = sys->nm;
 
@@ -1650,34 +1263,18 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   nl = nm * 6;
   nh = n11 - nl;
 
-  mat = malloc (sizeof (double) * n11 * n11);
-  lub = malloc (sizeof (double) * n11 * n11);
-  mat_ll = malloc (sizeof (double) * nl * nl);
-  mat_lh = malloc (sizeof (double) * nl * nh);
-  mat_hl = malloc (sizeof (double) * nh * nl);
-  mat_hh = malloc (sizeof (double) * nh * nh);
-  mob_ll = malloc (sizeof (double) * nl * nl);
-  mob_lh = malloc (sizeof (double) * nl * nh);
-  mob_hl = malloc (sizeof (double) * nh * nl);
-  mob_hh = malloc (sizeof (double) * nh * nh);
-  b = malloc (sizeof (double) * n11);
-  x = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || lub == NULL
-      || mat_ll == NULL
-      || mat_lh == NULL
-      || mat_hl == NULL
-      || mat_hh == NULL
-      || mob_ll == NULL
-      || mob_lh == NULL
-      || mob_hl == NULL
-      || mob_hh == NULL
-      || b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
-      exit (1);
-    }
+  mat = (double *) malloc (sizeof (double) * n11 * n11);
+  lub = (double *) malloc (sizeof (double) * n11 * n11);
+  mat_ll = (double *) malloc (sizeof (double) * nl * nl);
+  mat_lh = (double *) malloc (sizeof (double) * nl * nh);
+  mat_hl = (double *) malloc (sizeof (double) * nh * nl);
+  mat_hh = (double *) malloc (sizeof (double) * nh * nh);
+  mob_ll = (double *) malloc (sizeof (double) * nl * nl);
+  mob_lh = (double *) malloc (sizeof (double) * nl * nh);
+  mob_hl = (double *) malloc (sizeof (double) * nh * nl);
+  mob_hh = (double *) malloc (sizeof (double) * nh * nh);
+  b = (double *) malloc (sizeof (double) * n11);
+  x = (double *) malloc (sizeof (double) * n11);
 
   /* used at lub [] */
   I_ll = lub;
@@ -1690,7 +1287,7 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   set_fts_by_FTS (nf, b + nm11, uf, of, ef);
 
   /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3fts (sys, mat);
+  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
   /* mat := M.T, where T.(FTS) = (FTS~) */
   trans_mat_ext2ext (np, mat);
   split_matrix_fix_3fts (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
@@ -1714,7 +1311,6 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
 		    mat_ll, mat_lh, mat_hl, mat_hh,
 		    mob_ll, mob_lh, mob_hl, mob_hh);
 
-  /* STEP 6 */
   merge_matrix_fix_3fts (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
   dot_prod_matrix (mat, n11, n11,
 		   b, x);
