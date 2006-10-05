@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.3 2006/09/28 04:49:16 kichiki Exp $
+ * $Id: ewald-3fts.c,v 5.4 2006/10/05 00:28:29 kichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -47,13 +47,6 @@ void
 atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
-  int pcellx, pcelly, pcellz;
-  int kmaxx, kmaxy, kmaxz;
-  double zeta, zeta2, zaspi, za2;
-  double pi2;
-  double pivol;
-  double lx, ly, lz;
-  double *pos;
   int np_sys; /* for check */
 
   double cpu0, cpu; /* for ptime_ms_d() */
@@ -91,22 +84,6 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
 
 
   sys = (struct stokes *) user_data;
-  pcellx = sys->pcellx;
-  pcelly = sys->pcelly;
-  pcellz = sys->pcellz;
-  kmaxx  = sys->kmaxx;
-  kmaxy  = sys->kmaxy;
-  kmaxz  = sys->kmaxz;
-  zeta   = sys->zeta;
-  zeta2  = sys->zeta2;
-  zaspi  = sys->zaspi;
-  za2    = sys->za2;
-  pi2    = sys->pi2;
-  pivol  = sys->pivol;
-  lx     = sys->lx;
-  ly     = sys->ly;
-  lz     = sys->lz;
-  pos    = sys->pos;
   np_sys = sys->np;
 
   np = n / 11;
@@ -123,9 +100,9 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
     }
 
   /* diagonal part ( self part ) */
-  xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
-  xc = yc = 0.75 - zaspi * za2 * 10.0;
-  xm = ym = zm = 0.9 - zaspi * za2 * (12.0 - 30.24 * za2);
+  xa = ya      = sys->self_a;
+  xc = yc      = sys->self_c;
+  xm = ym = zm = sys->self_m;
 
   for (i = 0; i < np; i++)
     {
@@ -157,137 +134,137 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
 	  jy = jx + 1;
 	  jz = jx + 2;
 
-	  for (m1 = - pcellx; m1 <= pcellx; m1++)
+	  for (m1 = - sys->rmaxx; m1 <= sys->rmaxx; m1++)
 	    {
-	      rlx = lx * (double) m1;
-	      for (m2 = - pcelly; m2 <= pcelly; m2++)
+	      rlx = sys->lx * (double) m1;
+	      for (m2 = - sys->rmaxy; m2 <= sys->rmaxy; m2++)
 		{
-		  rly = ly * (double) m2;
-		  for (m3 = - pcellz; m3 <= pcellz; m3++)
+		  rly = sys->ly * (double) m2;
+		  for (m3 = - sys->rmaxz; m3 <= sys->rmaxz; m3++)
 		    {
-		      rlz = lz * (double) m3;
+		      rlz = sys->lz * (double) m3;
   
-		      xx = pos [jx] - pos [ix] + rlx;
-		      yy = pos [jy] - pos [iy] + rly;
-		      zz = pos [jz] - pos [iz] + rlz;
+		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
+		      yy = sys->pos [jy] - sys->pos [iy] + rly;
+		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
 		      rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-		      if (rr > 0.0)
-			{
-			  zr = zeta * rr;
-			  zr2 = zr * zr;
-			  s  = rr;
-			  s2 = s * s;
+		      if (rr == 0.0) continue; // to exclude the self part
+		      if (sys->rmax != 0.0 && rr > sys->rmax) continue;
 
-			  erfczr = erfc (zr);
-			  expzr2 = zaspi * exp (- zr2);
+		      zr = sys->zeta * rr;
+		      zr2 = zr * zr;
+		      s  = rr;
+		      s2 = s * s;
 
-			  ex = xx / rr;
-			  ey = yy / rr;
-			  ez = zz / rr;
+		      erfczr = erfc (zr);
+		      expzr2 = sys->zaspi * exp (- zr2);
 
-			  ya = (0.75 + 0.5 / s2) / s * erfczr
-			    + ((1.0 + zr2 *
-				(14.0 + 4.0 * zr2 *
-				 (- 5.0 + zr2))) / s2
-			       - 4.5 + 3.0 * zr2)
-			    * expzr2;
-			  a2 = (0.75 - 1.5 / s2) / s * erfczr
-			    + ((- 3.0 + zr2 *
-				(- 2.0 + 4.0 * zr2 *
-				 (4.0 - zr2))) / s2
-			       + 1.5 - 3.0 * zr2)
-			    * expzr2;
-			  xa = a2 + ya;
-	      
-			  yb = - 0.75 / s2 * erfczr
-			    - 1.5 * (+ 1.0 + zr2 *
-				     (- 6.0 + zr2 *
-				      (+ 2.0)))
-			    / s * expzr2;
+		      ex = xx / rr;
+		      ey = yy / rr;
+		      ez = zz / rr;
 
-			  yc = - 3.0 / 8.0 / s2 / s * erfczr
-			    - 0.75 * (+ 1.0 + zr2 *
-				      (+ 14.0 + zr2 *
-				       (-20.0 + zr2 *
-					( + 4.0))))
-			    / s2 * expzr2;
-			  c2 = 9.0 / 8.0 / s2 / s * erfczr
-			    - 0.75 * (- 3.0 + zr2 *
-				      (- 2.0 + zr2 *
-				       (+ 16.0 + zr2 *
-					(- 4.0))))
-			    / s2 * expzr2;
-			  xc = c2 + yc;
-	      
-			  xg = (2.25 - 3.6 / s2) / s2 * erfczr
-			    + (- 1.5 * (- 3.0 + zr2 *
-					(+ 6.0))
-			       - 0.8 * (+ 9.0 + zr2 *
-					(+ 6.0 + zr2 *
-					 (- 48.0 + zr2 *
-					  (+ 12.0)))) / s2)
-			    / s * expzr2;
-			  yg = 1.2 / s2 / s2 * erfczr
-			    + (- 3.0 * ( zr2 *
-					 (2.0 + zr2 *
-					  (- 1.0)))
-			       - 0.8 * (- 3.0 + zr2 *
-					(- 2.0 + zr2 *
-					 (- 26.0 + zr2 *
-					  (+ 26.0 + zr2 *
-					   (- 4.0))))) / s2)
-			    / s * expzr2;
+		      ya = (0.75 + 0.5 / s2) / s * erfczr
+			+ ((1.0 + zr2 *
+			    (14.0 + 4.0 * zr2 *
+			     (- 5.0 + zr2))) / s2
+			   - 4.5 + 3.0 * zr2)
+			* expzr2;
+		      a2 = (0.75 - 1.5 / s2) / s * erfczr
+			+ ((- 3.0 + zr2 *
+			    (- 2.0 + 4.0 * zr2 *
+			     (4.0 - zr2))) / s2
+			   + 1.5 - 3.0 * zr2)
+			* expzr2;
+		      xa = a2 + ya;
 
-			  yh = - 9.0 / 8.0 / s2 / s * erfczr
-			    + 1.5 * (- 1.5 + zr2 *
-				     (- 1.0 + zr2 *
-				      (+ 8.0 + zr2 *
-				       (- 2.0))))
-			    / s2 * expzr2;
+		      yb = - 0.75 / s2 * erfczr
+			- 1.5 * (+ 1.0 + zr2 *
+				 (- 6.0 + zr2 *
+				  (+ 2.0)))
+			/ s * expzr2;
 
-			  xm = (- 4.5 + 10.8 / s2) / s / s2 * erfczr
-			    + (+ 1.5 * (- 6.0 +  zr2 *
-					(- 12.0 + zr2 *
-					 (+ 12.0)))
-			       + 1.2 * (+ 18.0 + zr2 *
-					(+ 12.0 + zr2 *
-					 (+ 30.0 + zr2 *
-					  (- 66.0 + zr2 *
-					   (+ 12.0))))) / s2)
-			    / s2 * expzr2;
-			  ym = (+ 2.25 - 7.2 / s2) / s / s2 * erfczr
-			    + (- 1.5 * (- 3.0 +  zr2 *
-					(+ 6.0 + zr2 *
-					 (- 12.0 + zr2 *
-					  (+ 4.0))))
-			       - 1.2 * (+ 12.0 + zr2 *
-					(+ 8.0 + zr2 *
-					 (- 22.0 + zr2 *
-					  (+ 58.0 + zr2 *
-					   (- 34.0 + zr2 *
-					    (+ 4.0)))))) / s2)
-			    / s2 * expzr2;
-			  zm = + 1.8 / s2 / s / s2 * erfczr
-			    + (- 1.5 * (+ 0.0 +  zr2 *
-					(+ 8.0 + zr2 *
-					 (- 4.0)))
-			       - 1.2 * (- 3.0 + zr2 *
-					(- 2.0 + zr2 *
-					 (- 26.0 + zr2 *
-					  (+ 26.0 + zr2 *
-					   (- 4.0))))) / s2)
-			    / s2 * expzr2;
-	      
-			  matrix_fts_atimes (x + i11, y + j11,
-					     ex, ey, ez,
-					     xa, ya,
-					     yb,
-					     xc, yc,
-					     xg, yg,
-					     yh,
-					     xm, ym, zm);
-			}
+		      yc = - 3.0 / 8.0 / s2 / s * erfczr
+			- 0.75 * (+ 1.0 + zr2 *
+				  (+ 14.0 + zr2 *
+				   (-20.0 + zr2 *
+				    ( + 4.0))))
+			/ s2 * expzr2;
+		      c2 = 9.0 / 8.0 / s2 / s * erfczr
+			- 0.75 * (- 3.0 + zr2 *
+				  (- 2.0 + zr2 *
+				   (+ 16.0 + zr2 *
+				    (- 4.0))))
+			/ s2 * expzr2;
+		      xc = c2 + yc;
+
+		      xg = (2.25 - 3.6 / s2) / s2 * erfczr
+			+ (- 1.5 * (- 3.0 + zr2 *
+				    (+ 6.0))
+			   - 0.8 * (+ 9.0 + zr2 *
+				    (+ 6.0 + zr2 *
+				     (- 48.0 + zr2 *
+				      (+ 12.0)))) / s2)
+			/ s * expzr2;
+		      yg = 1.2 / s2 / s2 * erfczr
+			+ (- 3.0 * ( zr2 *
+				     (2.0 + zr2 *
+				      (- 1.0)))
+			   - 0.8 * (- 3.0 + zr2 *
+				    (- 2.0 + zr2 *
+				     (- 26.0 + zr2 *
+				      (+ 26.0 + zr2 *
+				       (- 4.0))))) / s2)
+			/ s * expzr2;
+
+		      yh = - 9.0 / 8.0 / s2 / s * erfczr
+			+ 1.5 * (- 1.5 + zr2 *
+				 (- 1.0 + zr2 *
+				  (+ 8.0 + zr2 *
+				   (- 2.0))))
+			/ s2 * expzr2;
+
+		      xm = (- 4.5 + 10.8 / s2) / s / s2 * erfczr
+			+ (+ 1.5 * (- 6.0 +  zr2 *
+				    (- 12.0 + zr2 *
+				     (+ 12.0)))
+			   + 1.2 * (+ 18.0 + zr2 *
+				    (+ 12.0 + zr2 *
+				     (+ 30.0 + zr2 *
+				      (- 66.0 + zr2 *
+				       (+ 12.0))))) / s2)
+			/ s2 * expzr2;
+		      ym = (+ 2.25 - 7.2 / s2) / s / s2 * erfczr
+			+ (- 1.5 * (- 3.0 +  zr2 *
+				    (+ 6.0 + zr2 *
+				     (- 12.0 + zr2 *
+				      (+ 4.0))))
+			   - 1.2 * (+ 12.0 + zr2 *
+				    (+ 8.0 + zr2 *
+				     (- 22.0 + zr2 *
+				      (+ 58.0 + zr2 *
+				       (- 34.0 + zr2 *
+					(+ 4.0)))))) / s2)
+			/ s2 * expzr2;
+		      zm = + 1.8 / s2 / s / s2 * erfczr
+			+ (- 1.5 * (+ 0.0 +  zr2 *
+				    (+ 8.0 + zr2 *
+				     (- 4.0)))
+			   - 1.2 * (- 3.0 + zr2 *
+				    (- 2.0 + zr2 *
+				     (- 26.0 + zr2 *
+				      (+ 26.0 + zr2 *
+				       (- 4.0))))) / s2)
+			/ s2 * expzr2;
+
+		      matrix_fts_atimes (x + i11, y + j11,
+					 ex, ey, ez,
+					 xa, ya,
+					 yb,
+					 xc, yc,
+					 xg, yg,
+					 yh,
+					 xm, ym, zm);
 		    }
 		}
 	    }
@@ -300,21 +277,24 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
   cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
-  for (m1 = - kmaxx; m1 <= kmaxx; m1++)
+  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      k1 = pi2 * (double) m1 / lx;
-      for (m2 = - kmaxy; m2 <= kmaxy; m2++)
+      k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  k2 = pi2 * (double) m2 / ly;
-	  for (m3 = - kmaxz; m3 <= kmaxz; m3++)
+	  k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      k3 = pi2 * (double) m3 / lz;
+	      k3 = 2.0 * M_PI * (double) m3 / sys->lz;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
 		  kk = k1 * k1 + k2 * k2 + k3 * k3;
 		  k = sqrt (kk);
-		  k4z = kk / 4.0 / zeta2;
-		  kexp = pivol
+
+		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
+
+		  k4z = kk / 4.0 / sys->zeta2;
+		  kexp = sys->pivol
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
@@ -342,9 +322,9 @@ atimes_ewald_3fts (int n, const double *x, double *y, void * user_data)
 			  jy = jx + 1;
 			  jz = jx + 2;
 
-			  xx = pos [jx] - pos [ix];
-			  yy = pos [jy] - pos [iy];
-			  zz = pos [jz] - pos [iz];
+			  xx = sys->pos [jx] - sys->pos [ix];
+			  yy = sys->pos [jy] - sys->pos [iy];
+			  zz = sys->pos [jz] - sys->pos [iz];
 
 			  cf = cos (+ k1 * xx
 				    + k2 * yy

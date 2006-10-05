@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.c,v 4.3 2006/09/28 04:47:32 kichiki Exp $
+ * $Id: ewald-3f.c,v 4.4 2006/10/05 00:26:53 kichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -37,7 +37,7 @@
 /* ATIMES version (for O(N^2) scheme) of
  * calc ewald-summed mobility for F version
  * INPUT
- *  n := np * 11
+ *  n := np * 3
  *  x [n * 3] : F
  *  user_data = (struct stokes *) sys : system parameters
  * OUTPUT
@@ -47,13 +47,6 @@ void
 atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
-  int pcellx, pcelly, pcellz;
-  int kmaxx, kmaxy, kmaxz;
-  double zeta, zeta2, zaspi, za2;
-  double pi2;
-  double pivol;
-  double lx, ly, lz;
-  double *pos;
   int np_sys; /* for check */
 
   double cpu0, cpu; /* for ptime_ms_d() */
@@ -86,22 +79,6 @@ atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
 
 
   sys = (struct stokes *) user_data;
-  pcellx = sys->pcellx;
-  pcelly = sys->pcelly;
-  pcellz = sys->pcellz;
-  kmaxx  = sys->kmaxx;
-  kmaxy  = sys->kmaxy;
-  kmaxz  = sys->kmaxz;
-  zeta   = sys->zeta;
-  zeta2  = sys->zeta2;
-  zaspi  = sys->zaspi;
-  za2    = sys->za2;
-  pi2    = sys->pi2;
-  pivol  = sys->pivol;
-  lx     = sys->lx;
-  ly     = sys->ly;
-  lz     = sys->lz;
-  pos    = sys->pos;
   np_sys = sys->np;
 
   np = n / 3;
@@ -118,7 +95,7 @@ atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
     }
 
   /* diagonal part ( self part ) */
-  xa = ya = 1.0 - zaspi * (6.0 - 40.0 / 3.0 * za2);
+  xa = ya = sys->self_a;
 
   for (i = 0; i < np; i++)
     {
@@ -145,53 +122,53 @@ atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
 	  jy = jx + 1;
 	  jz = jx + 2;
 
-	  for (m1 = - pcellx; m1 <= pcellx; m1++)
+	  for (m1 = - sys->rmaxx; m1 <= sys->rmaxx; m1++)
 	    {
-	      rlx = lx * (double) m1;
-	      for (m2 = - pcelly; m2 <= pcelly; m2++)
+	      rlx = sys->lx * (double) m1;
+	      for (m2 = - sys->rmaxy; m2 <= sys->rmaxy; m2++)
 		{
-		  rly = ly * (double) m2;
-		  for (m3 = - pcellz; m3 <= pcellz; m3++)
+		  rly = sys->ly * (double) m2;
+		  for (m3 = - sys->rmaxz; m3 <= sys->rmaxz; m3++)
 		    {
-		      rlz = lz * (double) m3;
+		      rlz = sys->lz * (double) m3;
   
-		      xx = pos [jx] - pos [ix] + rlx;
-		      yy = pos [jy] - pos [iy] + rly;
-		      zz = pos [jz] - pos [iz] + rlz;
+		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
+		      yy = sys->pos [jy] - sys->pos [iy] + rly;
+		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
 		      rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-		      if (rr > 0.0)
-			{
-			  zr = zeta * rr;
-			  zr2 = zr * zr;
-			  s  = rr;
-			  s2 = s * s;
+		      if (rr == 0.0) continue; // to exclude the self part
+		      if (sys->rmax != 0.0 && rr > sys->rmax) continue;
 
-			  erfczr = erfc (zr);
-			  expzr2 = zaspi * exp (- zr2);
+		      zr = sys->zeta * rr;
+		      zr2 = zr * zr;
+		      s  = rr;
+		      s2 = s * s;
 
-			  ex = xx / rr;
-			  ey = yy / rr;
-			  ez = zz / rr;
+		      erfczr = erfc (zr);
+		      expzr2 = sys->zaspi * exp (- zr2);
 
-			  ya = (0.75 + 0.5 / s2) / s * erfczr
-			    + ((1.0 + zr2 *
-				(14.0 + 4.0 * zr2 *
-				 (- 5.0 + zr2))) / s2
-			       - 4.5 + 3.0 * zr2)
-			    * expzr2;
-			  a2 = (0.75 - 1.5 / s2) / s * erfczr
-			    + ((- 3.0 + zr2 *
-				(- 2.0 + 4.0 * zr2 *
-				 (4.0 - zr2))) / s2
-			       + 1.5 - 3.0 * zr2)
-			    * expzr2;
-			  xa = a2 + ya;
+		      ex = xx / rr;
+		      ey = yy / rr;
+		      ez = zz / rr;
+
+		      ya = (0.75 + 0.5 / s2) / s * erfczr
+			+ ((1.0 + zr2 *
+			    (14.0 + 4.0 * zr2 *
+			     (- 5.0 + zr2))) / s2
+			   - 4.5 + 3.0 * zr2)
+			* expzr2;
+		      a2 = (0.75 - 1.5 / s2) / s * erfczr
+			+ ((- 3.0 + zr2 *
+			    (- 2.0 + 4.0 * zr2 *
+			     (4.0 - zr2))) / s2
+			   + 1.5 - 3.0 * zr2)
+			* expzr2;
+		      xa = a2 + ya;
 	      
-			  matrix_f_atimes (x + i3, y + j3,
-					   ex, ey, ez,
-					   xa, ya);
-			}
+		      matrix_f_atimes (x + i3, y + j3,
+				       ex, ey, ez,
+				       xa, ya);
 		    }
 		}
 	    }
@@ -204,21 +181,24 @@ atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
   cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
-  for (m1 = - kmaxx; m1 <= kmaxx; m1++)
+  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      k1 = pi2 * (double) m1 / lx;
-      for (m2 = - kmaxy; m2 <= kmaxy; m2++)
+      k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  k2 = pi2 * (double) m2 / ly;
-	  for (m3 = - kmaxz; m3 <= kmaxz; m3++)
+	  k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      k3 = pi2 * (double) m3 / lz;
+	      k3 = 2.0 * M_PI * (double) m3 / sys->lz;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
 		  kk = k1 * k1 + k2 * k2 + k3 * k3;
 		  k = sqrt (kk);
-		  k4z = kk / 4.0 / zeta2;
-		  kexp = pivol
+
+		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
+
+		  k4z = kk / 4.0 / sys->zeta2;
+		  kexp = sys->pivol
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
@@ -241,9 +221,9 @@ atimes_ewald_3f (int n, const double *x, double *y, void * user_data)
 			  jy = jx + 1;
 			  jz = jx + 2;
 
-			  xx = pos [jx] - pos [ix];
-			  yy = pos [jy] - pos [iy];
-			  zz = pos [jz] - pos [iz];
+			  xx = sys->pos [jx] - sys->pos [ix];
+			  yy = sys->pos [jy] - sys->pos [iy];
+			  zz = sys->pos [jz] - sys->pos [iz];
 
 			  cf = cos (+ k1 * xx
 				    + k2 * yy
