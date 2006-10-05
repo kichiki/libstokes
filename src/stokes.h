@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.4 2006/10/05 00:25:54 kichiki Exp $
+ * $Id: stokes.h,v 1.5 2006/10/05 21:32:10 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,12 +28,12 @@ struct stokes {
   int version; /* 0 = F, 1 = FT, 2 = FTS */
 
   /* for ewald codes */
-  double rmax;
+  double rmax2;
   int rmaxx, rmaxy, rmaxz; /* # of cell in real space */
   double kmax;
   int kmaxx, kmaxy, kmaxz; /* # of cell in reciprocal space */
 
-  double zeta,zeta2,zaspi,za2;
+  double xi, xi2, xiaspi, xia2;
   double pivol;
 
   double lx, ly, lz;
@@ -86,6 +86,8 @@ stokes_init (void);
 void
 stokes_free (struct stokes * sys);
 
+/* set np and nm and allocate the memory for pos[np*3]
+ */
 void
 stokes_set_np (struct stokes * sys,
 	       int np, int nm);
@@ -95,28 +97,12 @@ stokes_set_ll (struct stokes * sys,
 	       double lx, double ly, double lz);
 
 void
-stokes_set_zeta (struct stokes * sys,
-		 double zeta, double cutlim);
+stokes_set_xi (struct stokes * sys,
+	       double xi, double cutlim);
 
 double
-zeta_by_tratio (struct stokes * sys,
-		double tratio);
-
-/** table for lattice summation **/
-/* free ewald-table related memory from sys
- */
-void
-stokes_ewald_table_free (struct stokes * sys);
-
-/* make ewald-summation table
- * INPUT
- *  (struct stokes *) sys :
- *  cutlim   :
- * OUTPUT
- *  (struct stokes *) sys : 
- */
-void
-stokes_ewald_table_make (struct stokes * sys, double cutlim);
+xi_by_tratio (struct stokes * sys,
+	      double tratio);
 
 
 #endif /* !_STOKES_H_ */
