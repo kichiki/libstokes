@@ -1,24 +1,11 @@
 /* header file for ewald-3fts-matrix.h --
  * Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.h,v 2.3 2006/10/05 04:02:56 ichiki Exp $
+ * $Id: ewald-3fts-matrix.h,v 2.4 2006/10/05 04:55:14 ichiki Exp $
  */
 #ifndef	_EWALD_3FTS_MATRIX_H_
 #define	_EWALD_3FTS_MATRIX_H_
 
-
-/* make lubrication matrix for FTS version for all particles
- * under the periodic boundary condition
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 11 * np * 11] :
- */
-void
-make_matrix_lub_ewald_3fts (struct stokes * sys,
-			    double * mat);
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
