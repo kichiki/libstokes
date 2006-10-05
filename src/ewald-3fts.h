@@ -1,7 +1,7 @@
 /* header file for 'ewald-3fts.c' --
  * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.h,v 5.3 2006/09/27 00:47:54 ichiki Exp $
+ * $Id: ewald-3fts.h,v 5.4 2006/10/05 19:00:50 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -26,18 +26,6 @@
 #ifndef	_EWALD_3FTS_H_
 #define	_EWALD_3FTS_H_
 
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FTS version
- * INPUT
- *  n := np * 11
- *  x [n * 11] : FTS
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 11] : UOE
- */
-void
-atimes_ewald_3fts (int n, const double *x, double *y, void * user_data);
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FTS version under Ewald sum
