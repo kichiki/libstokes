@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.4 2006/10/05 00:27:44 kichiki Exp $
+ * $Id: ewald-3ft.c,v 4.5 2006/10/05 19:08:52 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -30,255 +30,9 @@
 #include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
 #include "ft.h"
+#include "ewald.h" // atimes_ewald_3all()
 
 #include "ewald-3ft.h"
-
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FT version
- * INPUT
- *  n := np * 11
- *  x [n * 6] : FT
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 6] : UO
- */
-void
-atimes_ewald_3ft (int n, const double *x, double *y, void * user_data)
-{
-  struct stokes * sys;
-  int np_sys; /* for check */
-
-  double cpu0, cpu; /* for ptime_ms_d() */
-
-  double xa, ya; 
-  double yb;
-  double xc, yc;
-
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double zr, zr2;
-  double s, s2;
-  double rlx, rly, rlz;
-
-  int np;
-  int i, j;
-  int i6, j6;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m1, m2, m3;
-
-  double k1, k2, k3, kk, k4z;
-  double k;
-  double cf, sf;
-  double kexp;
-
-  double erfczr;
-  double expzr2;
-
-  double a2, c2;
-
-
-  sys = (struct stokes *) user_data;
-  np_sys = sys->np;
-
-  np = n / 6;
-  if (np_sys != np)
-    {
-      fprintf (stderr, "wrong n %d <-> np %d\n", n, np_sys);
-      exit (1);
-    }
-
-  /* clear result */
-  for (i = 0; i < n; i ++)
-    {
-      y [i] = 0.0;
-    }
-
-  /* diagonal part ( self part ) */
-  xa = ya      = sys->self_a;
-  xc = yc      = sys->self_c;
-
-  for (i = 0; i < np; i++)
-    {
-      i6 = i * 6;
-      matrix_ft_atimes (x + i6, y + i6,
-			0.0, 0.0, 0.0,
-			xa, ya,
-			0.0,
-			xc, yc);
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu0 = ptime_ms_d ();
-
-  /* first Ewald part ( real space ) */
-  for (i = 0; i < np; i++)
-    {
-      i6 = i * 6;
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
-      for (j = 0; j < np; j++)
-	{
-	  j6 = j * 6;
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
-
-	  for (m1 = - sys->rmaxx; m1 <= sys->rmaxx; m1++)
-	    {
-	      rlx = sys->lx * (double) m1;
-	      for (m2 = - sys->rmaxy; m2 <= sys->rmaxy; m2++)
-		{
-		  rly = sys->ly * (double) m2;
-		  for (m3 = - sys->rmaxz; m3 <= sys->rmaxz; m3++)
-		    {
-		      rlz = sys->lz * (double) m3;
-  
-		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
-		      yy = sys->pos [jy] - sys->pos [iy] + rly;
-		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
-		      rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-		      if (rr == 0.0) continue; // to exclude the self part
-		      if (sys->rmax != 0.0 && rr > sys->rmax) continue;
-
-		      zr = sys->zeta * rr;
-		      zr2 = zr * zr;
-		      s  = rr;
-		      s2 = s * s;
-
-		      erfczr = erfc (zr);
-		      expzr2 = sys->zaspi * exp (- zr2);
-
-		      ex = xx / rr;
-		      ey = yy / rr;
-		      ez = zz / rr;
-
-		      ya = (0.75 + 0.5 / s2) / s * erfczr
-			+ ((1.0 + zr2 *
-			    (14.0 + 4.0 * zr2 *
-			     (- 5.0 + zr2))) / s2
-			   - 4.5 + 3.0 * zr2)
-			* expzr2;
-		      a2 = (0.75 - 1.5 / s2) / s * erfczr
-			+ ((- 3.0 + zr2 *
-			    (- 2.0 + 4.0 * zr2 *
-			     (4.0 - zr2))) / s2
-			   + 1.5 - 3.0 * zr2)
-			* expzr2;
-		      xa = a2 + ya;
-	      
-		      yb = - 0.75 / s2 * erfczr
-			- 1.5 * (+ 1.0 + zr2 *
-				 (- 6.0 + zr2 *
-				  (+ 2.0)))
-			/ s * expzr2;
-
-		      yc = - 3.0 / 8.0 / s2 / s * erfczr
-			- 0.75 * (+ 1.0 + zr2 *
-				  (+ 14.0 + zr2 *
-				   (-20.0 + zr2 *
-				    ( + 4.0))))
-			/ s2 * expzr2;
-		      c2 = 9.0 / 8.0 / s2 / s * erfczr
-			- 0.75 * (- 3.0 + zr2 *
-				  (- 2.0 + zr2 *
-				   (+ 16.0 + zr2 *
-				    (- 4.0))))
-			/ s2 * expzr2;
-		      xc = c2 + yc;
-	      
-		      matrix_ft_atimes (x + i6, y + j6,
-					ex, ey, ez,
-					xa, ya,
-					yb,
-					xc, yc);
-		    }
-		}
-	    }
-	}
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu = ptime_ms_d ();
-  sys->cpu2 = cpu - cpu0;
-  cpu0 = cpu;
-
-  /* Second Ewald part ( reciprocal space ) */
-  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
-    {
-      k1 = 2.0 * M_PI * (double) m1 / sys->lx;
-      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
-	{
-	  k2 = 2.0 * M_PI * (double) m2 / sys->ly;
-	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
-	    {
-	      k3 = 2.0 * M_PI * (double) m3 / sys->lz;
-	      if (m1 != 0 || m2 != 0 || m3 != 0)
-		{
-		  kk = k1 * k1 + k2 * k2 + k3 * k3;
-		  k = sqrt (kk);
-
-		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
-
-		  k4z = kk / 4.0 / sys->zeta2;
-		  kexp = sys->pivol
-		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
-		    / kk * exp (- k4z);
-
-		  ex = k1 / k;
-		  ey = k2 / k;
-		  ez = k3 / k;
-
-		  ya = 6.0 * (1.0 - kk / 3.0) * kexp;
-		  yb = 3.0 * k * kexp;
-		  yc = 3.0 / 2.0 * kk * kexp;
-      
-		  for (i = 0; i < np; i++)
-		    {
-		      i6 = i * 6;
-		      ix = i * 3;
-		      iy = ix + 1;
-		      iz = ix + 2;
-		      for (j = 0; j < np; j++)
-			{
-			  j6 = j * 6;
-			  jx = j * 3;
-			  jy = jx + 1;
-			  jz = jx + 2;
-
-			  xx = sys->pos [jx] - sys->pos [ix];
-			  yy = sys->pos [jy] - sys->pos [iy];
-			  zz = sys->pos [jz] - sys->pos [iz];
-
-			  cf = cos (+ k1 * xx
-				    + k2 * yy
-				    + k3 * zz);
-
-			  sf = - sin (+ k1 * xx
-				      + k2 * yy
-				      + k3 * zz);
-
-			  matrix_ft_atimes (x + i6, y + j6,
-					    ex, ey, ez,
-					    0.0, cf * ya,
-					    sf * yb,
-					    0.0, cf * yc);
-			}
-		    }
-		}
-	    }
-	}
-    }
-
-  /* for zeta code to measure CPU times */
-  cpu = ptime_ms_d ();
-  sys->cpu3 = cpu - cpu0;
-  sys->cpu1 = sys->cpu2 + sys->cpu3;
-}
 
 
 /** natural resistance problem **/
@@ -304,17 +58,12 @@ calc_res_ewald_3ft (struct stokes * sys,
   double *x;
 
 
+  sys->version = 1; // FT version
   np = sys->np;
 
   n6 = np * 6;
-  b = malloc (sizeof (double) * n6);
-  x = malloc (sizeof (double) * n6);
-  if (b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_ewald_3ft ().\n");
-      exit (1);
-    }
+  b = (double *) malloc (sizeof (double) * n6);
+  x = (double *) malloc (sizeof (double) * n6);
 
   set_ft_by_FT (np, b, u, o);
 
@@ -325,14 +74,9 @@ calc_res_ewald_3ft (struct stokes * sys,
     }
 
   solve_iter (n6, b, x,
-	      atimes_ewald_3ft, (void *) sys,
+	      atimes_ewald_3all, (void *) sys,
 	      sys->it);
-  /*
-  solve_iter_stab (n6, b, x, atimes_ewald_3ft, (void *) sys,
-		   gpb,
-		   sys->iter_max,
-		   sys->iter_log10_eps);
-  */
+  // for atimes_ewald_3all(), sys->version is 1 (FT)
 
   set_FT_by_ft (np, f, t, x);
 
@@ -362,19 +106,14 @@ calc_mob_ewald_3ft (struct stokes * sys,
   double *x;
 
 
+  sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
-  b = malloc (sizeof (double) * n6);
-  x = malloc (sizeof (double) * n6);
-  if (b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_mob_ewald_3ft ().\n");
-      exit (1);
-    }
+  b = (double *) malloc (sizeof (double) * n6);
+  x = (double *) malloc (sizeof (double) * n6);
 
   set_ft_by_FT (np, x, f, t);
-  atimes_ewald_3ft (n6, x, b, (void *) sys);
+  atimes_ewald_3all (n6, x, b, (void *) sys); // sys->version is 1 (FT)
   set_FT_by_ft (np, u, o, b);
 
   free (b);
@@ -412,6 +151,11 @@ calc_b_mob_fix_ewald_3ft (struct stokes * sys,
   double *v3_0;
 
 
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to FT.\n");
+      sys->version = 1;
+    }
   np = sys->np;
   nm = sys->nm;
 
@@ -420,14 +164,8 @@ calc_b_mob_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  x = malloc (sizeof (double) * n6);
-  v3_0 = malloc (sizeof (double) * n3);
-  if (x == NULL
-      || v3_0 == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_b_mob_ewald_3ft ().\n");
-      exit (1);
-    }
+  x = (double *) malloc (sizeof (double) * n6);
+  v3_0 = (double *) malloc (sizeof (double) * n3);
 
   for (i = 0; i < n3; ++i)
     {
@@ -437,7 +175,7 @@ calc_b_mob_fix_ewald_3ft (struct stokes * sys,
   /* set x := [(F,T)_m,(0,0)_f] */
   set_ft_by_FT (nm, x, f, t);
   set_ft_by_FT (nf, x + nm6, v3_0, v3_0);
-  atimes_ewald_3ft (n6, x, b, (void *) sys);
+  atimes_ewald_3all (n6, x, b, (void *) sys); // sys->version is 1 (FT)
 
   /* set b := M.x - [(0,0)_m,(U,O)_f] */
   for (i = 0; i < nf; ++i)
@@ -484,6 +222,11 @@ atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
 
 
   sys = (struct stokes *) user_data;
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to FT.\n");
+      sys->version = 1;
+    }
   np = sys->np;
   nm = sys->nm;
 
@@ -493,22 +236,12 @@ atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
   nm3 = nm * 3;
   nm6 = nm * 6;
 
-  z = malloc (sizeof (double) * n);
-  v3_0 = malloc (sizeof (double) * np3);
-  u = malloc (sizeof (double) * nm3);
-  o = malloc (sizeof (double) * nm3);
-  ff = malloc (sizeof (double) * nf3);
-  tf = malloc (sizeof (double) * nf3);
-  if (z == NULL
-      || v3_0 == NULL
-      || u == NULL
-      || o == NULL
-      || ff == NULL
-      || tf == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_mob_ewald_3ft ().\n");
-      exit (1);
-    }
+  z = (double *) malloc (sizeof (double) * n);
+  v3_0 = (double *) malloc (sizeof (double) * np3);
+  u = (double *) malloc (sizeof (double) * nm3);
+  o = (double *) malloc (sizeof (double) * nm3);
+  ff = (double *) malloc (sizeof (double) * nf3);
+  tf = (double *) malloc (sizeof (double) * nf3);
 
   for (i = 0; i < np3; ++i)
     {
@@ -522,7 +255,7 @@ atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
   /* set y := [(0,0)_mobile,(F,T)_fixed] */
   set_ft_by_FT (nm, y, v3_0, v3_0);
   set_ft_by_FT (nf, y + nm6, ff, tf);
-  atimes_ewald_3ft (n, y, z, (void *) sys);
+  atimes_ewald_3all (n, y, z, (void *) sys); // sys->version is 1 (FT)
 
   /* set y := [(U,O,0)_mobile,(0,0,0)_fixed] */
   set_ft_by_FT (nm, y, u, o);
@@ -572,6 +305,7 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
   double *x;
 
 
+  sys->version = 1; // FT version
   np = sys->np;
   nm = sys->nm;
 
@@ -579,14 +313,8 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  b = malloc (sizeof (double) * n6);
-  x = malloc (sizeof (double) * n6);
-  if (b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_mob_ewald_3ft ().\n");
-      exit (1);
-    }
+  b = (double *) malloc (sizeof (double) * n6);
+  x = (double *) malloc (sizeof (double) * n6);
 
   calc_b_mob_fix_ewald_3ft (sys, f, t, uf, of, b);
 
@@ -599,12 +327,6 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
   solve_iter (n6, b, x,
 	      atimes_mob_fix_ewald_3ft, (void *) sys,
 	      sys->it);
-  /*
-  solve_iter_stab (n6, b, x, atimes_mob_fix_ewald_3ft, (void *) sys,
-		   gpb,
-		   sys->iter_max,
-		   sys->iter_log10_eps);
-  */
 
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
@@ -734,18 +456,12 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
   double *lub;
 
 
+  sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
-  b = malloc (sizeof (double) * n6);
-  x = malloc (sizeof (double) * n6);
-  lub = malloc (sizeof (double) * n6);
-  if (b == NULL
-      || x == NULL
-      || lub == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_res_lub_ewald_3ft ().\n");
-      exit (1);
-    }
+  b = (double *) malloc (sizeof (double) * n6);
+  x = (double *) malloc (sizeof (double) * n6);
+  lub = (double *) malloc (sizeof (double) * n6);
 
   set_ft_by_FT (np, b, u, o);
   calc_lub_ewald_3ft (sys, b, lub);
@@ -762,14 +478,9 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
     }
 
   solve_iter (n6, b, x,
-	      atimes_ewald_3ft, (void *) sys,
+	      atimes_ewald_3all, (void *) sys,
 	      sys->it);
-  /*
-  solve_iter_stab (n6, b, x, atimes_ewald_3ft, (void *) sys,
-		   gpb,
-		   sys->iter_max,
-		   sys->iter_log10_eps);
-  */
+  // for atimes_ewald_3all(), sys->version is 1 (FT)
 
   set_FT_by_ft (np, f, t, x);
 
@@ -809,6 +520,11 @@ calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
   double *v3_0;
 
 
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to FT.\n");
+      sys->version = 1;
+    }
   np = sys->np;
   nm = sys->nm;
 
@@ -817,16 +533,9 @@ calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  x = malloc (sizeof (double) * n6);
-  y = malloc (sizeof (double) * n6);
-  v3_0 = malloc (sizeof (double) * n3);
-  if (x == NULL
-      || y == NULL
-      || v3_0 == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_b_mob_lub_ewald_3ft ().\n");
-      exit (1);
-    }
+  x = (double *) malloc (sizeof (double) * n6);
+  y = (double *) malloc (sizeof (double) * n6);
+  v3_0 = (double *) malloc (sizeof (double) * n3);
 
   for (i = 0; i < n3; ++i)
     {
@@ -850,7 +559,7 @@ calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
       x [i] -= y [i];
     }
 
-  atimes_ewald_3ft (n6, x, y, (void *) sys);
+  atimes_ewald_3all (n6, x, y, (void *) sys); // sys->version is 1 (FT)
 
   /* set b := - (I + M.L).[(0,0)_m,(U,O)_f] + M.[(F,T)_m,(0,0)_f] */
   for (i = 0; i < n6; ++i)
@@ -894,6 +603,11 @@ atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
 
 
   sys = (struct stokes *) user_data;
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to FT.\n");
+      sys->version = 1;
+    }
   np = sys->np;
   nm = sys->nm;
 
@@ -903,23 +617,13 @@ atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
   nm3 = nm * 3;
   nm6 = nm * 6;
 
-  w = malloc (sizeof (double) * n);
-  z = malloc (sizeof (double) * n);
-  v3_0 = malloc (sizeof (double) * np3);
-  u = malloc (sizeof (double) * nm3);
-  o = malloc (sizeof (double) * nm3);
-  ff = malloc (sizeof (double) * nf3);
-  tf = malloc (sizeof (double) * nf3);
-  if (z == NULL
-      || v3_0 == NULL
-      || u == NULL
-      || o == NULL
-      || ff == NULL
-      || tf == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_mob_lub_ewald_3ft ().\n");
-      exit (1);
-    }
+  w = (double *) malloc (sizeof (double) * n);
+  z = (double *) malloc (sizeof (double) * n);
+  v3_0 = (double *) malloc (sizeof (double) * np3);
+  u = (double *) malloc (sizeof (double) * nm3);
+  o = (double *) malloc (sizeof (double) * nm3);
+  ff = (double *) malloc (sizeof (double) * nf3);
+  tf = (double *) malloc (sizeof (double) * nf3);
 
   for (i = 0; i < np3; ++i)
     {
@@ -946,7 +650,7 @@ atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
       w [i] -= z [i];
     }
 
-  atimes_ewald_3ft (n, w, z, (void *) sys);
+  atimes_ewald_3all (n, w, z, (void *) sys); // sys->version is 1 (FT)
 
   /* set y := (I + M.L).[(U,O)_m,(0,0)_f] - M.[(0,0)_m,(F,T)_f] */
   for (i = 0; i < n; ++i)
@@ -994,6 +698,7 @@ calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
   double *x;
 
 
+  sys->version = 1; // FT version
   np = sys->np;
   nm = sys->nm;
 
@@ -1001,14 +706,8 @@ calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  b = malloc (sizeof (double) * n6);
-  x = malloc (sizeof (double) * n6);
-  if (b == NULL
-      || x == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_mob_ewald_3ft ().\n");
-      exit (1);
-    }
+  b = (double *) malloc (sizeof (double) * n6);
+  x = (double *) malloc (sizeof (double) * n6);
 
   calc_b_mob_lub_fix_ewald_3ft (sys, f, t, uf, of, b);
 
@@ -1021,14 +720,6 @@ calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
   solve_iter (n6, b, x,
 	       atimes_mob_lub_fix_ewald_3ft, (void *) sys,
 	       sys->it);
-  /*
-  solve_iter_stab (n6, b, x, atimes_mob_lub_fix_ewald_3ft, (void *) sys,
-		   gpb,
-		   //sta,
-		   //gpb_chk,
-		   sys->iter_max,
-		   sys->iter_log10_eps);
-  */
 
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
