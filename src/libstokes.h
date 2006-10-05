@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.5 2006/10/05 18:23:11 ichiki Exp $
+ * $Id: libstokes.h,v 1.6 2006/10/05 19:25:21 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -975,42 +975,5 @@ atimes_ewald_3all_table (int n, const double *x, double *y, void * user_data);
 void
 atimes_ewald_3all_table_matrix (int n, const double *x,
 				double *y, void * user_data);
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for F version
- * INPUT
- *  n := np * 11
- *  x [n * 3] : F
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 3] : U
- */
-void
-atimes_ewald_3f (int n, const double *x, double *y, void * user_data);
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FT version
- * INPUT
- *  n := np * 11
- *  x [n * 6] : FT
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 6] : UO
- */
-void
-atimes_ewald_3ft (int n, const double *x, double *y, void * user_data);
-
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FTS version
- * INPUT
- *  n := np * 11
- *  x [n * 11] : FTS
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 11] : UOE
- */
-void
-atimes_ewald_3fts (int n, const double *x, double *y, void * user_data);
-
 
 #endif /* !_LIBSTOKES_H_ */

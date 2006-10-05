@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.5 2006/10/05 19:08:52 ichiki Exp $
+ * $Id: ewald-3ft.c,v 4.6 2006/10/05 19:25:21 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -465,7 +465,9 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
 
   set_ft_by_FT (np, b, u, o);
   calc_lub_ewald_3ft (sys, b, lub);
-  atimes_ewald_3ft (n6, lub, x, (void *) sys); // x[] is used temporaly
+  atimes_ewald_3all (n6, lub, x, (void *) sys);
+  // sys->version is 1 (FT)
+  // x[] is used temporarily
   for (i = 0; i < n6; ++i)
     {
       b [i] += x [i];
