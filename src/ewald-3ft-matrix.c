@@ -1,6 +1,6 @@
 /* Ewald summation technique with FT version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.4 2006/10/05 04:53:14 ichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.5 2006/10/05 21:25:38 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,9 +22,9 @@
 
 #include "dgetri_c.h" /* lapack_inv_() */
 
-#include <libstokes.h> /* struct stokeks */
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/bench.h"
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/ft.h"
+#include "stokes.h"
+#include "bench.h"
+#include "ft.h"
 
 #include "ewald.h" // make_matrix_mob_ewald_3all ()
 #include "matrix.h"

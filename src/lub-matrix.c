@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.1 2006/10/05 04:48:01 ichiki Exp $
+ * $Id: lub-matrix.c,v 1.2 2006/10/05 21:26:46 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,11 +20,11 @@
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 
-#include <libstokes.h> /* struct stokeks */
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/bench.h"
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/f.h"
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/ft.h"
-#include "/home/ichiki/WORK/SF/ryuon/libstokes/fts.h"
+#include "stokes.h"
+#include "bench.h"
+#include "f.h"
+#include "ft.h"
+#include "fts.h"
 
 #include "matrix.h"
 #include "lub-matrix.h"
