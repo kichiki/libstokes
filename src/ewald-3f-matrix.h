@@ -1,7 +1,7 @@
 /* header file for ewald-3f-matrix.c --
  * Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.h,v 2.3 2006/10/05 04:29:12 ichiki Exp $
+ * $Id: ewald-3f-matrix.h,v 2.4 2006/10/05 04:52:26 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,19 +20,6 @@
 #ifndef	_EWALD_3F_MATRIX_H_
 #define	_EWALD_3F_MATRIX_H_
 
-
-/* make lubrication matrix for F version for all particles
- * under the periodic boundary condition
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 3 * np * 3] :
- */
-void
-make_matrix_lub_ewald_3f (struct stokes * sys,
-			  double * mat);
 
 /** natural resistance problem **/
 /* solve natural resistance problem in F version under Ewald sum

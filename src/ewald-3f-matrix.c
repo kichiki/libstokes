@@ -1,6 +1,6 @@
 /* Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.3 2006/10/05 04:27:51 ichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.4 2006/10/05 04:51:59 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,97 +28,9 @@
 
 #include "ewald.h" // make_matrix_mob_ewald_3all ()
 #include "matrix.h"
+#include "lub-matrix.h"
 #include "ewald-3f-matrix.h"
 
-
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (const double * x1, const double * x2)
-{
-  double x, y, z;
-  double r2;
-
-
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
-
-  r2 = x * x
-    + y * y
-    + z * z;
-
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
-    {
-      return 0;
-    }
-  else
-    {
-      return 1;
-    }
-}
-/* make lubrication matrix for F version for all particles
- * under the periodic boundary condition
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 3 * np * 3] :
- */
-void
-make_matrix_lub_ewald_3f (struct stokes * sys,
-			  double * mat)
-{
-  int np;
-  int i, j, k;
-  int i3;
-  int j3;
-  int n;
-
-  double tmp_pos [3];
-
-
-  np = sys->np;
-  n = np * 3;
-
-  /* clear result */
-  for (i = 0; i < n * n; ++i)
-    {
-      mat [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      for (j = i; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
-	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
-		{
-		  matrix_lub_f_2b (sys,
-				   i, j,
-				   sys->pos + i3, tmp_pos,
-				   n, mat);
-		}
-	    }
-	}
-    }
-
-  free (tmp_pos);
-}
 
 /** natural resistance problem **/
 /* solve natural resistance problem in F version under Ewald sum
