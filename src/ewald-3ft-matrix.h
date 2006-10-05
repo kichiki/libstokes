@@ -1,7 +1,7 @@
 /* header file for ewald-3ft-matrix.c --
  * Ewald summation technique with FT version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.h,v 2.2 2006/09/29 03:30:39 ichiki Exp $
+ * $Id: ewald-3ft-matrix.h,v 2.3 2006/10/05 04:27:18 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,18 +21,6 @@
 #define	_EWALD_3FT_MATRIX_H_
 
 
-/* ATIMES version (for O(N^2) scheme) of
- * calc ewald-summed mobility for FT version
- * INPUT
- *  n := np * 6
- *  x [n * 6] : FTS
- *  user_data = (struct stokes *) sys : system parameters
- * OUTPUT
- *  y [n * 6] : UOE
- */
-void
-atimes_ewald_3ft_matrix (int n, const double *x, double *y, void * user_data);
-
 /* make lubrication matrix for FT version for all particles
  * under the periodic boundary condition
  * INPUT
@@ -45,7 +33,6 @@ atimes_ewald_3ft_matrix (int n, const double *x, double *y, void * user_data);
 void
 make_matrix_lub_ewald_3ft (struct stokes * sys,
 			   double * mat);
-
 
 /** natural resistance problem **/
 /* solve natural resistance problem in FT version under Ewald sum
