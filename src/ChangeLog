@@ -1,3 +1,27 @@
+2006-10-04  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.4 2006/10/05 00:29:36 kichiki Exp
+	update due to stokes.h.
+
+	* ewald-3fts.c: 5.4 2006/10/05 00:28:29 kichiki Exp
+	* ewald-3ft.c: 4.4 2006/10/05 00:27:44 kichiki Exp
+	* ewald-3f.c: 4.4 2006/10/05 00:26:53 kichiki Exp
+	update for new struct stokes.
+
+	* stokes.h: 1.4 2006/10/05 00:25:54 kichiki Exp
+	* stokes.c: 2.4 2006/10/05 00:25:12 kichiki Exp
+	change the name 'pcell[xyz]' to 'rmax[xyz]' in struct stokes.
+	add 'rmax' and 'kmax' in struct stokes.
+	add self_[acm] in struct stokes.
+	add ewald-table in struct stokes.
+	(stokes_set_zeta): revised for accuracy.
+	(stokes_ewald_table_free): moved from ryuon/libstokes-matrix/ewald.c.
+	(stokes_ewald_table_make): moved from ryuon/libstokes-matrix/ewald.c.
+
+	* ewald-3.h:
+	* ewald-3.c:
+	move to ryuon/stokes.
+
 2006-09-28  Kengo Ichiki  <ichiki@tpr60>
 
 	* ewald-3fts.c: 5.3 2006/09/28 04:49:16 kichiki Exp
@@ -280,13 +304,6 @@
 	(atimes_mob_lub_fix_ewald_3fts): revise this routine; this makes twice
 	faster than before, that is, all only once at a time.
 
-2001-02-06  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
-
-	* ewald-3.c: 1.6 2001/02/06 03:47:16 ichiki Exp
-	(init_config_random): added, based on init_config_random_2d() in
-	ewald-2.c.
-	(check_overlap): copied from ewald-2.c.
-
 2001-02-05  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
 
 	* ewald-2.c: 1.1 2001/02/05 09:38:47 ichiki Exp
@@ -408,10 +425,6 @@
 	(calc_lub_ewald_2fts): change according to ewald-3.c Rev 1.5.
 	z-direction is the neglecting one under 2D codes.
 
-	* ewald-3.c: 1.5 2001/02/02 08:38:41 ichiki Exp
-	(init_ewald_3d): change order of llx[], lly[], and llz[].
-	z-direction is the neglecting one under 2D codes.
-
 	* ewald-2fts.c: 1.1 2001/02/02 08:01:53 ichiki Exp
 	initial revision.
 
@@ -443,9 +456,6 @@
 
 2001-01-29  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
 
-	* ewald-3.c: 1.4 2001/01/29 09:41:31 ichiki Exp
-	move global variables here from main ().
-
 	* ewald-3fts.c: 3.7 2001/01/29 09:34:20 ichiki Exp
 	(calc_res_ewald_3fts): revise according to bi-cgstab.c Rev 1.5.
 	(calc_mob_ewald_3fts): same above.
@@ -465,10 +475,6 @@
 	(atimes_mob_fix_ewald_3fts): added.
 
 2001-01-25  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
-
-	* ewald-3.c: 1.3 2001/01/25 08:46:40 ichiki Exp
-	(init_config_BCC): added.
-	(init_config_FCC): added.
 
 	* ewald-3fts.c: 3.4 2001/01/25 08:09:51 ichiki Exp
 	(calc_res_ewald_3fts): added.
@@ -490,14 +496,6 @@
 	* fts.c: 1.3 2001/01/24 06:48:33 ichiki Exp
 	(set_FTS_by_fts): added.
 	(set_fts_by_FTS): added.
-
-2001-01-23  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
-
-	* ewald-3.c: 1.2 2001/01/23 09:52:57 ichiki Exp
-	(init_config_SC): added.
-
-	* ewald-3.c: 1.1 2001/01/23 05:56:40 ichiki Exp
-	initial revision.
 
 2001-01-22  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
 
