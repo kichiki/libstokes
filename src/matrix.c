@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.2 2006/09/29 03:38:48 ichiki Exp $
+ * $Id: matrix.c,v 1.3 2006/10/05 18:05:04 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,12 +18,9 @@
  */
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-//#include "../../misc/ludcmp.h" /* lu_inv() */
 #include "dgetri_c.h" /* lapack_inv_() */
 
 #include "matrix.h"
-
-/* (local) global variable */
 
 
 /* solve generalized linear set of equations using LU-decomposition

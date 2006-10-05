@@ -1,4 +1,54 @@
+2006-10-05  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3fts-matrix.h: 2.4 2006/10/05 04:55:14 ichiki Exp
+	* ewald-3fts-matrix.c: 2.4 2006/10/05 04:54:45 ichiki Exp
+	(make_matrix_lub_ewald_3fts): moved to lub-matrix.c.
+
+	* ewald-3ft-matrix.h: 2.4 2006/10/05 04:53:42 ichiki Exp
+	* ewald-3ft-matrix.c: 2.4 2006/10/05 04:53:14 ichiki Exp
+	(make_matrix_lub_ewald_3ft): moved to lub-matrix.c.
+
+	* ewald-3f-matrix.h: 2.4 2006/10/05 04:52:26 ichiki Exp
+	* ewald-3f-matrix.c: 2.4 2006/10/05 04:51:59 ichiki Exp
+	(make_matrix_lub_ewald_3f) moved to lub-matrix.c.
+
+	* lub-matrix.h: 1.1 2006/10/05 04:48:18 ichiki Exp
+	* lub-matrix.c: 1.1 2006/10/05 04:48:01 ichiki Exp
+	split from ewald-3f/ft/fts-matrix.c.
+
+	* ewald-3f-matrix.h: 2.3 2006/10/05 04:29:12 ichiki Exp
+	* ewald-3f-matrix.c: 2.3 2006/10/05 04:27:51 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3f): removed. use 3all routine in ewald.c.
+	(atimes_ewald_3f_matrix): removed. use 3all routine in ewald.c.
+
+	* ewald-3ft-matrix.h: 2.3 2006/10/05 04:27:18 ichiki Exp
+	* ewald-3ft-matrix.c: 2.3 2006/10/05 04:25:47 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3ft): removed. use 3all routine in ewald.c.
+	(atimes_ewald_3ft_matrix): removed. use 3all routine in ewald.c.
+
+	* ewald.h: 1.2 2006/10/05 04:10:46 ichiki Exp
+	* ewald.c: 1.2 2006/10/05 04:10:22 ichiki Exp
+	(scalars_ewald_real): extract this part into a subroutine.
+	(atimes_ewald_3all): added. this is a generic non-table version.
+	(make_matrix_mob_ewald_3all): added. this is a generic non-table
+	version.
+	(atimes_ewald_3all_matrix): added. this is a generic non-table version.
+
+	* ewald-3fts-matrix.h: 2.3 2006/10/05 04:02:56 ichiki Exp
+	* ewald-3fts-matrix.c: 2.3 2006/10/05 04:02:32 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3fts): removed. use 3all_table routine
+	in ewald.c.
+	(atimes_ewald_3fts_matrix): removed. use 3all_table routine
+	in ewald.c.
+
 2006-10-04  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald.h: 1.1 2006/10/05 00:36:38 ichiki Exp
+	* ewald.c: 1.1 2006/10/05 00:36:19 ichiki Exp
+	initial revision.
 
 	* libstokes.h: 1.4 2006/10/05 00:29:36 kichiki Exp
 	update due to stokes.h.
@@ -22,7 +72,43 @@
 	* ewald-3.c:
 	move to ryuon/stokes.
 
+2006-09-29  Kengo Ichiki  <ichiki@tpr60>
+
+	* dgetri_c.c: 1.5 2006/09/29 04:16:22 ichiki Exp
+	typo fixed.
+
 2006-09-28  Kengo Ichiki  <ichiki@tpr60>
+
+	* matrix.h: 1.1 2006/09/29 03:39:03 ichiki Exp
+	* matrix.c: 1.2 2006/09/29 03:38:48 ichiki Exp
+	(solve_gen_linear): use lapack_inv_() instead of lu_inv().
+	(solve_linear): use lapack_inv_() instead of lu_inv().
+	(mul_matrices): put 'const for const pointers.
+	(mul_left_sq): put 'const for const pointers.
+	(add_and_mul): put 'const for const pointers.
+	(dot_prod_matrix): put 'const for const pointers.
+
+	* dgetri_c.h: 1.3 2006/09/29 03:33:18 ichiki Exp
+	* dgetri_c.c: 1.4 2006/09/29 03:32:31 ichiki Exp
+	copy from WORK/src/MD.
+	(lapack_inv_): added.
+
+	* ewald-3f-matrix.h: 2.2 2006/09/29 03:31:48 ichiki Exp
+	* ewald-3f-matrix.c: 2.2 2006/09/29 03:31:28 ichiki Exp
+	start 3F version based on ewald-3fts-matrix.[ch] Rev 2.1.
+
+	* ewald-3ft-matrix.h: 2.2 2006/09/29 03:30:39 ichiki Exp
+	* ewald-3ft-matrix.c: 2.2 2006/09/29 03:29:58 ichiki Exp
+	start 3FT version based on ewald-3fts-matrix.[ch] Rev 2.1.
+
+	* ewald-3fts-matrix.h: 2.2 2006/09/29 03:28:43 ichiki Exp
+	* ewald-3fts-matrix.c: 2.2 2006/09/29 03:28:16 ichiki Exp
+	add 'const' for const pointers.
+	(make_matrix_mob_ewald_3fts): stop asigning local variables but use
+	sys->* directory.
+	update on cpu times and cut ZETA.
+	(calc_res_ewald_3fts_matrix): use lapack_inv_() instead of lu_inv().
+	(calc_res_lub_ewald_3fts_matrix): use lapack_inv_().
 
 	* ewald-3fts.c: 5.3 2006/09/28 04:49:16 kichiki Exp
 	use sys->lubcut.
@@ -157,9 +243,6 @@
 	* libstokes.h: 1.1 2006/09/26 21:40:40 ichiki Exp
 	initial revision.
 
-	* ewald-2fts-matrix.c, ewald-2fts-matrix.h, ewald-3fts-matrix.c, ewald-3fts-matrix.h, matrix.c, matrix.h:
-	move to libstokes-matrix.
-
 	* bench.h: 1.1 2006/09/26 18:21:31 ichiki Exp
 
 	* bench.c: 1.2 2006/09/26 18:21:16 ichiki Exp
@@ -224,6 +307,32 @@
 
 	* two-body-res.c: move from LIBEXP to RYUON/libstokes.
 
+	* ewald-3fts-matrix.h: 2.1 2006/09/26 01:07:49 ichiki Exp
+
+	* ewald-3fts-matrix.c: 2.1 2006/09/26 01:07:29 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+2005-07-17  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.h: 1.2 2005/07/17 18:58:46 ichiki Exp
+	add _DGETRI_C_H_ definition.
+
+	* dgetri_c.c: 1.3 2005/07/17 18:57:08 ichiki Exp
+	-- the revision had made a long time ago --
+	(lapack_inv): add 'info' checks.
+
+2005-03-30  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.c: 1.2 2005/03/31 02:46:07 ichiki Exp
+	(lapack_inv): add free()!
+
+2005-03-29  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.h: 1.1 2005/03/29 18:48:17 ichiki Exp
+
+	* dgetri_c.c: 1.1 2005/03/29 18:48:22 ichiki Exp
+	initial revision.
+
 2003-04-25  kengo ichiki  <ichiki@tp>
 
 	* two-body-res.h: move from FINITE to LIBEXP.
@@ -256,10 +365,45 @@
 	(calc_b_mob_lub_fix_ewald_3fts): same above.
 	(atimes_mob_lub_fix_ewald_3fts): same above.
 
+2001-02-15  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts-matrix.c: 1.5 2001/02/15 04:57:13 ichiki Exp
+	finish the tests on fixed version.
+	(split_matrix_fix_3fts): fix bugs.
+	(merge_matrix_fix_3fts): fix bugs.
+	(calc_mob_fix_ewald_3fts_matrix): added.
+	(calc_mob_lub_fix_ewald_3fts_matrix): added.
+
+2001-02-14  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts-matrix.c: 1.4 2001/02/14 10:10:24 ichiki Exp
+	add utility routines for fixed version.
+	(split_matrix_3fts): added. (not tested yet!)
+	(merge_matrix_3fts): added. (not tested yet!)
+
+	* ewald-3fts-matrix.c: 1.3 2001/02/14 09:07:12 ichiki Exp
+	(trans_mat_ext2ext): added.
+	(calc_mob_ewald_3fts_matrix): revised, using routines in matrix.c.
+
+	* matrix.c: 1.1 2001/02/14 08:40:35 ichiki Exp
+	initial revision.
+
 2001-02-13  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
 
 	* fts.c: 1.12 2001/02/13 09:53:54 ichiki Exp
 	(matrix_lub_fts_2b): added for matrix version.
+
+	* ewald-3fts-matrix.c: 1.2 2001/02/13 09:52:44 ichiki Exp
+	use not cholesky() but lu_inv() for inversion.
+	(make_matrix_mob_ewald_3fts): fix a bug on particle-index for
+	routine matrix_fts_ij().
+	(atimes_ewald_3fts_matrix): added for test.
+	(calc_mob_lub_ewald_3fts_matrix): added. (not pass the test yet!)
+	(test_symmetric): added for a test.
+	(multiply_matrices): added.
+
+	* ewald-3fts-matrix.c: 1.1 2001/02/13 07:41:32 ichiki Exp
+	initial revision.
 
 2001-02-12  ICHIKI Kengo  <ichiki@esau.psdn.org>
 
