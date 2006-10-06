@@ -1,4 +1,16 @@
+2006-10-06  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3ft-matrix.c: 2.6 2006/10/06 20:32:21 kichiki Exp
+	(merge_matrix_fix_3ft): bug fixed.
+	(calc_mob_fix_ewald_3ft_matrix): bug fixed.
+
+	* ewald-3f-matrix.c: 2.6 2006/10/06 20:31:41 kichiki Exp
+	(merge_matrix_fix_3f): bug fixed.
+	(calc_mob_fix_ewald_3f_matrix): bug fixed.
+
 2006-10-05  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.2-RELEASE
 
 	* libstokes.h: 1.7 2006/10/05 21:33:29 ichiki Exp
 	updated.
