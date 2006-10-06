@@ -1,6 +1,6 @@
 /* Ewald summation technique with FT version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.5 2006/10/05 21:25:38 ichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.6 2006/10/06 20:32:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -350,7 +350,7 @@ split_matrix_fix_3ft (int np, int nm,
 	    {
 	      for (jj = 0; jj < 6; ++jj)
 		{
-		  mat_hh [((i - nm) * 6 + ii) * nl + (j - nm) * 6 + jj]
+		  mat_hh [((i - nm) * 6 + ii) * nh + (j - nm) * 6 + jj]
 		    = mat [(i6 + ii) * n6 + j6 + jj];
 		}
 	    }
@@ -452,7 +452,7 @@ merge_matrix_fix_3ft (int np, int nm,
 	      for (jj = 0; jj < 6; ++jj)
 		{
 		  mat [(i6 + ii) * n6 + j6 + jj]
-		    = mat_hh [((i - nm) * 6 + ii) * nl + (j - nm) * 6 + jj];
+		    = mat_hh [((i - nm) * 6 + ii) * nh + (j - nm) * 6 + jj];
 		}
 	    }
 	}
