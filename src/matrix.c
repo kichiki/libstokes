@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.3 2006/10/05 18:05:04 ichiki Exp $
+ * $Id: matrix.c,v 1.4 2006/10/07 00:57:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 #include "dgetri_c.h" /* lapack_inv_() */
+#include <clapack.h> // ATLAS
 
 #include "matrix.h"
 
@@ -57,7 +58,6 @@ solve_gen_linear (int n1, int n2,
   /* type 2 */
 
   /* H := H^-1 */
-  //lu_inv (H, n2);
   lapack_inv_ (n2, H);
 
   /* C := (H^-1) . C */
@@ -118,22 +118,48 @@ solve_linear (int n1, int n2,
   /* type 1 */
 
   /* A := A^-1 */
-  //lu_inv (A, n1);
   lapack_inv_ (n1, A);
 
   /* B := (A^-1).B */
-  mul_left_sq (B, n1, n2, A, n1);
+  double *tmp;
+  tmp = (double *) malloc (sizeof (double) * n1 * n2);
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       n1, n2, n1,
+	       1.0, A, n1,
+	       B, n2,
+	       0.0, tmp, n2);
+  for (i = 0; i < n1 * n2; i ++)
+    {
+      B[i] = tmp[i];
+    }
+  free (tmp);
 
   /* L [n2, n2] := D - C.(A^-1).B */
-  add_and_mul (D, n2, n2, C, n2, n1, B, n1, n2, 1.0, -1.0, L);
+  for (i = 0; i < n2 * n2; i ++)
+    {
+      L[i] = D[i];
+    }
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       n2, n2, n1,
+	       -1.0, C, n1,
+	       B, n2,
+	       1.0, L, n2);
 
   /* K := C.A */
-  mul_matrices (C, n2, n1, A, n1, n1, K);
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       n2, n1, n1,
+	       1.0, C, n1,
+	       A, n1,
+	       0.0, K, n1);
 
   for (i = 0; i < n1 * n1; ++i)
-    I [i] = A [i];
+    {
+      I [i] = A [i];
+    }
   for (i = 0; i < n1 * n2; ++i)
-    J [i] = - B [i];
+    {
+      J [i] = - B [i];
+    }
 }
 
 /*
@@ -149,27 +175,17 @@ mul_matrices (const double * A, int na1, int na2,
 	      const double * B, int nb1, int nb2,
 	      double * C)
 {
-  int i, j, k;
-
-
   if (na2 != nb1)
     {
       fprintf (stderr, "illeagal multiplication in mul_left().\n");
       exit (1);
     }
 
-  for (i = 0; i < na1; ++i)
-    {
-      for (j = 0; j < nb2; ++j)
-	{
-	  C [i * nb2 + j] = 0.0;
-	  for (k = 0; k < na2; ++k)
-	    {
-	      C [i * nb2 + j] +=
-		A [i * na2 + k] * B [k * nb2 + j];
-	    }
-	}
-    }
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       na1, nb2, na2,
+	       1.0, A, na2,
+	       B, nb2,
+	       0.0, C, nb2);
 }
 
 /*
@@ -184,7 +200,7 @@ void
 mul_left_sq (double * A, int na1, int na2,
 	     const double * B, int nb)
 {
-  int i, j, k;
+  int i;
   double * tmp;
 
 
@@ -200,23 +216,16 @@ mul_left_sq (double * A, int na1, int na2,
       fprintf (stderr, "allocation error in mul_left_sq().\n");
       exit (1);
     }
-
-  for (i = 0; i < na1; ++i)
-    {
-      for (j = 0; j < na2; ++j)
-	{
-	  tmp [i * na2 + j] = 0.0;
-	  for (k = 0; k < na1; ++k)
-	    {
-	      tmp [i * na2 + j] +=
-		B [i * nb + k]
-		* A [k * na2 + j];
-	    }
-	}
-    }
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       na1, na2, nb,
+	       1.0, B, nb,
+	       A, na2,
+	       0.0, tmp, na2);
 
   for (i = 0; i < na1 * na2; ++i)
-    A [i] = tmp [i];
+    {
+      A [i] = tmp [i];
+    }
 
   free (tmp);
 }
@@ -240,8 +249,7 @@ add_and_mul (const double * A, int na1, int na2,
 	     double a, double b,
 	     double * D)
 {
-  int i, j, k;
-
+  int i;
 
   if (nb2 != nc1
       || na1 != nb1
@@ -251,18 +259,16 @@ add_and_mul (const double * A, int na1, int na2,
       exit (1);
     }
 
-  for (i = 0; i < na1; ++i)
+  for (i = 0; i < na1 * na2; i ++)
     {
-      for (j = 0; j < na2; ++j)
-	{
-	  D [i * na2 + j] = a * A [i * na2 + j];
-	  for (k = 0; k < nc1; ++k)
-	    {
-	      D [i * na2 + j] +=
-		b * B [i * nb2 + k] * C [k * nc2 + j];
-	    }
-	}
+      D[i] = A[i];
     }
+
+  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
+	       nb1, nc2, nb2,
+	       b, B, nb2,
+	       C, nc2,
+	       a, D, na2);
 }
 
 /*
@@ -277,14 +283,8 @@ dot_prod_matrix (const double * mat, int n1, int n2,
 		 const double * x,
 		 double * y)
 {
-  int i, j;
-
-  for (i = 0; i < n1; ++i)
-    {
-      y [i] = 0.0;
-      for (j = 0; j < n2; ++j)
-	{
-	  y [i] += mat [i * n2 + j] * x [j];
-	}
-    }
+  cblas_dgemv (CblasRowMajor, CblasNoTrans, n1, n2,
+	       1.0, mat, n2,
+	       x, 1,
+	       0.0, y, 1);
 }
