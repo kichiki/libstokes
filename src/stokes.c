@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.5 2006/10/05 21:31:41 ichiki Exp $
+ * $Id: stokes.c,v 2.6 2006/10/10 17:14:55 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -580,4 +580,29 @@ xi_by_tratio (struct stokes * sys,
     / pow (sys->lx * sys->ly * sys->lz, 1.0 / 3.0);
 
   return (xi);
+}
+
+
+/* set iter param
+ * INPUT
+ *   solver : string indicating the solver
+ *            sta, sta2, gpb, otmk, or gmres (default)
+ *   eps and log10_eps
+ *   max (and restart)
+ *   debug = 0 : no debug info
+ *         = 1 : iteration numbs and residue
+ *   out   : FILE * to output debug info.
+ */
+void
+stokes_set_iter (struct stokes * sys,
+		 const char * solver,
+		 int max,
+		 int restart,
+		 double eps,
+		 int debug,
+		 FILE * out)
+{
+  sys->iter = iter_init (solver,
+			 max, restart, eps,
+			 debug, out);
 }

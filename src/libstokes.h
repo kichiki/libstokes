@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.7 2006/10/05 21:33:29 ichiki Exp $
+ * $Id: libstokes.h,v 1.8 2006/10/10 17:15:42 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -106,6 +106,25 @@ stokes_set_xi (struct stokes * sys,
 double
 xi_by_tratio (struct stokes * sys,
 	      double tratio);
+
+/* set iter param
+ * INPUT
+ *   solver : string indicating the solver
+ *            sta, sta2, gpb, otmk, or gmres (default)
+ *   eps and log10_eps
+ *   max (and restart)
+ *   debug = 0 : no debug info
+ *         = 1 : iteration numbs and residue
+ *   out   : FILE * to output debug info.
+ */
+void
+stokes_set_iter (struct stokes * sys,
+		 const char * solver,
+		 int max,
+		 int restart,
+		 double eps,
+		 int debug,
+		 FILE * out);
 
 
 /***********************************
