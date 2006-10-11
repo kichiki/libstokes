@@ -1,3 +1,15 @@
+2006-10-10  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.9 2006/10/11 03:18:52 ichiki Exp
+	* stokes.h: 1.7 2006/10/11 03:18:31 ichiki Exp
+	* stokes.c: 2.7 2006/10/11 03:18:15 ichiki Exp
+	(stokes_set_pos): added.
+
+	* libstokes.h: 1.8 2006/10/10 17:15:42 ichiki Exp
+	* stokes.h: 1.6 2006/10/10 17:15:18 ichiki Exp
+	* stokes.c: 2.6 2006/10/10 17:14:55 ichiki Exp
+	(stokes_set_iter): added.
+
 2006-10-06  Kengo Ichiki  <ichiki@tpr60>
 
 	* ewald-3ft-matrix.c: 2.6 2006/10/06 20:32:21 kichiki Exp
