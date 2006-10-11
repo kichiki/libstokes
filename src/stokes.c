@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.6 2006/10/10 17:14:55 ichiki Exp $
+ * $Id: stokes.c,v 2.7 2006/10/11 03:18:15 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -602,7 +602,23 @@ stokes_set_iter (struct stokes * sys,
 		 int debug,
 		 FILE * out)
 {
-  sys->iter = iter_init (solver,
-			 max, restart, eps,
-			 debug, out);
+  sys->it = iter_init (solver,
+		       max, restart, eps,
+		       debug, out);
+}
+
+/* set pos safely by another array
+ * INPUT
+ *  pos[np*3] :
+ */
+void
+stokes_set_pos (struct stokes * sys,
+		const double * pos)
+{
+  int i;
+
+  for (i = 0; i < sys->np * 3; i ++)
+    {
+      sys->pos[i] = pos[i];
+    }
 }

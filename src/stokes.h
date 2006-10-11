@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.6 2006/10/10 17:15:18 ichiki Exp $
+ * $Id: stokes.h,v 1.7 2006/10/11 03:18:31 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -122,5 +122,13 @@ stokes_set_iter (struct stokes * sys,
 		 double eps,
 		 int debug,
 		 FILE * out);
+
+/* set pos safely by another array
+ * INPUT
+ *  pos[np*3] :
+ */
+void
+stokes_set_pos (struct stokes * sys,
+		const double * pos);
 
 #endif /* !_STOKES_H_ */
