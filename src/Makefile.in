@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # for libstokes
-# $Id: Makefile.in,v 1.2 2006/10/09 17:33:23 ichiki Exp $
+# $Id: Makefile.in,v 1.3 2006/10/12 17:15:28 ichiki Exp $
 
 
 srcdir = @srcdir@
@@ -62,9 +62,9 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 libstokes_la_LIBADD =
 am_libstokes_la_OBJECTS = stokes.lo ewald-3f.lo ewald-3ft.lo \
 	ewald-3fts.lo ewald-2f.lo ewald-2ft.lo ewald-2fts.lo f.lo \
-	ft.lo fts.lo two-body-res.lo ewald.lo ewald-3f-matrix.lo \
-	ewald-3ft-matrix.lo ewald-3fts-matrix.lo lub-matrix.lo \
-	matrix.lo dgetri_c.lo bench.lo
+	ft.lo fts.lo two-body-res.lo lub.lo ewald.lo \
+	ewald-3f-matrix.lo ewald-3ft-matrix.lo ewald-3fts-matrix.lo \
+	lub-matrix.lo matrix.lo dgetri_c.lo bench.lo stokes-nc.lo
 libstokes_la_OBJECTS = $(am_libstokes_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -182,27 +182,29 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 lib_LTLIBRARIES = libstokes.la
 libstokes_la_SOURCES = \
- stokes.c\
- ewald-3f.c\
- ewald-3ft.c\
- ewald-3fts.c\
- ewald-2f.c\
- ewald-2ft.c\
- ewald-2fts.c\
- f.c\
- ft.c\
- fts.c\
- two-body-res.c\
- ewald.c\
- ewald-3f-matrix.c\
- ewald-3ft-matrix.c\
- ewald-3fts-matrix.c\
- lub-matrix.c\
- matrix.c\
- dgetri_c.c\
- bench.c
+	stokes.c		\
+	ewald-3f.c		\
+	ewald-3ft.c		\
+	ewald-3fts.c		\
+	ewald-2f.c		\
+	ewald-2ft.c		\
+	ewald-2fts.c		\
+	f.c			\
+	ft.c			\
+	fts.c			\
+	two-body-res.c		\
+	lub.c			\
+	ewald.c			\
+	ewald-3f-matrix.c	\
+	ewald-3ft-matrix.c	\
+	ewald-3fts-matrix.c	\
+	lub-matrix.c		\
+	matrix.c		\
+	dgetri_c.c		\
+	bench.c			\
+	stokes-nc.c
 
-libstokes_la_LDFLAGS = -version-info 1:0:0
+libstokes_la_LDFLAGS = -version-info 2:0:0
 include_HEADERS = libstokes.h
 all: all-am
 
@@ -289,7 +291,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ft.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fts.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub-matrix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matrix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-nc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/two-body-res.Plo@am__quote@
 

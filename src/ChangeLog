@@ -1,3 +1,47 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile.am: 1.3 2006/10/12 15:05:55 ichiki Exp
+	add lub.c.
+
+	* fts.c: 2.3 2006/10/12 15:05:11 ichiki Exp
+	* ft.c: 2.4 2006/10/12 15:04:44 ichiki Exp
+	* f.c: 2.3 2006/10/12 15:04:23 ichiki Exp
+	* lub-matrix.h: 1.2 2006/10/12 15:03:41 ichiki Exp
+	* lub-matrix.c: 1.4 2006/10/12 15:03:18 ichiki Exp
+	minor style update.
+
+	* lub.h: 5.1 2006/10/12 15:02:12 ichiki Exp
+	* lub.c: 5.1 2006/10/12 15:01:45 ichiki Exp
+	extract lub routines from ewald-3*.c.
+
+	* ewald-3fts.c: 5.7 2006/10/12 15:01:01 ichiki Exp
+	* ewald-3ft.c: 4.7 2006/10/12 15:00:11 ichiki Exp
+	* ewald-3f.c: 4.6 2006/10/12 14:59:48 ichiki Exp
+	split lub routines to lub.c.
+
+	* ewald-3fts-matrix.c: 2.6 2006/10/12 04:47:07 ichiki Exp
+	* ewald-3ft-matrix.c: 2.7 2006/10/12 04:46:44 ichiki Exp
+	* ewald-3f-matrix.c: 2.8 2006/10/12 04:46:23 ichiki Exp
+	revive memory-allocation check.
+
+	* lub-matrix.c: 1.3 2006/10/12 04:31:41 ichiki Exp
+	bug fixed on memory handling.
+
+2006-10-11  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.10 2006/10/12 03:55:05 ichiki Exp
+	* stokes-nc.h: 5.2 2006/10/12 03:54:21 ichiki Exp
+	* stokes-nc.c: 5.2 2006/10/12 03:53:57 ichiki Exp
+	add many utility routines.
+
+	* Makefile.am: 1.2 2006/10/11 20:31:17 ichiki Exp
+	add stokes-nc.c.
+	increment version for 0.3-release.
+
+	* stokes-nc.h: 5.1 2006/10/11 20:28:20 ichiki Exp
+	* stokes-nc.c: 5.1 2006/10/11 20:27:57 ichiki Exp
+	initial revision.
+
 2006-10-10  Kengo Ichiki  <ichiki@tpr60>
 
 	* libstokes.h: 1.9 2006/10/11 03:18:52 ichiki Exp

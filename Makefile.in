@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # top level Makefile.am for libstokes
-# $Id: Makefile.in,v 1.2 2006/10/09 17:33:23 ichiki Exp $
+# $Id: Makefile.in,v 1.3 2006/10/12 17:15:28 ichiki Exp $
 srcdir = @srcdir@
 top_srcdir = @top_srcdir@
 VPATH = @srcdir@
