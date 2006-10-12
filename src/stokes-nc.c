@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.1 2006/10/11 20:27:57 ichiki Exp $
+ * $Id: stokes-nc.c,v 5.2 2006/10/12 03:53:57 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,21 +30,81 @@ stokes_nc_error (int status, const char * message, const char * varname)
 {
   if (varname != NULL)
     {
-      fprintf (stderr, "NetCDF error %d : %s for %s\n",
-	       status, message, varname);
+      fprintf (stderr, "NetCDF error %d %s: %s for %s\n",
+	       status, nc_strerror (status),
+	       message, varname);
     }
   else
     {
-      fprintf (stderr, "NetCDF error %d : %s\n", status, message);
+      fprintf (stderr, "NetCDF error %d %s: %s\n",
+	       status, nc_strerror (status),
+	       message);
     }
   exit (0);
 }
 
 static void
-stokes_nc_init_vec (struct stokes_nc * nc,
-		    const char * name,
-		    const char * longname,
-		    int * var_id)
+stokes_nc_init_t_p_vec (struct stokes_nc * nc,
+			const char * name,
+			const char * longname,
+			int * var_id)
+{
+  int status;
+  int dimids[3];
+
+  dimids[0] = nc->time_dim;
+  dimids[1] = nc->p_dim;
+  dimids[2] = nc->vec_dim;
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 3, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_t_p_vec", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_t_p_vec", name);
+    }
+}
+static void
+stokes_nc_init_t_p_stt (struct stokes_nc * nc,
+			const char * name,
+			const char * longname,
+			int * var_id)
+{
+  int status;
+  int dimids[3];
+
+  dimids[0] = nc->time_dim;
+  dimids[1] = nc->p_dim;
+  dimids[2] = nc->stt_dim;
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 3, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_t_p_stt", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_t_p_stt", name);
+    }
+}
+
+static void
+stokes_nc_init_t_pf_vec (struct stokes_nc * nc,
+			 const char * name,
+			 const char * longname,
+			 int * var_id)
 {
   int status;
   int dimids[3];
@@ -57,7 +117,7 @@ stokes_nc_init_vec (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_def_var() in stokes_nc_init_vec", name);
+	(status, "at nc_def_var() in stokes_nc_init_t_pf_vec", name);
     }
   status = nc_put_att_text
     (nc->id, *var_id, "long_name",
@@ -65,14 +125,14 @@ stokes_nc_init_vec (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_put_att() in stokes_nc_init_vec", name);
+	(status, "at nc_put_att() in stokes_nc_init_t_pf_vec", name);
     }
 }
 static void
-stokes_nc_init_stt (struct stokes_nc * nc,
-		    const char * name,
-		    const char * longname,
-		    int * var_id)
+stokes_nc_init_t_pf_stt (struct stokes_nc * nc,
+			 const char * name,
+			 const char * longname,
+			 int * var_id)
 {
   int status;
   int dimids[3];
@@ -85,7 +145,7 @@ stokes_nc_init_stt (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_def_var() in stokes_nc_init_stt", name);
+	(status, "at nc_def_var() in stokes_nc_init_t_pf_stt", name);
     }
   status = nc_put_att_text
     (nc->id, *var_id, "long_name",
@@ -93,15 +153,70 @@ stokes_nc_init_stt (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_put_att() in stokes_nc_init_stt", name);
+	(status, "at nc_put_att() in stokes_nc_init_t_pf_stt", name);
     }
 }
 
 static void
-stokes_nc_init_vec0 (struct stokes_nc * nc,
-		     const char * name,
-		     const char * longname,
-		     int * var_id)
+stokes_nc_init_p_vec (struct stokes_nc * nc,
+		      const char * name,
+		      const char * longname,
+		      int * var_id)
+{
+  int status;
+  int dimids[2];
+
+  dimids[0] = nc->p_dim;
+  dimids[1] = nc->vec_dim;
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 2, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_p_vec", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_p_vec", name);
+    }
+}
+static void
+stokes_nc_init_p_stt (struct stokes_nc * nc,
+		      const char * name,
+		      const char * longname,
+		      int * var_id)
+{
+  int status;
+  int dimids[2];
+
+  dimids[0] = nc->p_dim;
+  dimids[1] = nc->stt_dim;
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 2, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_p_stt", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_p_stt", name);
+    }
+}
+
+static void
+stokes_nc_init_pf_vec (struct stokes_nc * nc,
+		       const char * name,
+		       const char * longname,
+		       int * var_id)
 {
   int status;
   int dimids[2];
@@ -113,7 +228,7 @@ stokes_nc_init_vec0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_def_var() in stokes_nc_init_vec0", name);
+	(status, "at nc_def_var() in stokes_nc_init_pf_vec", name);
     }
   status = nc_put_att_text
     (nc->id, *var_id, "long_name",
@@ -121,14 +236,14 @@ stokes_nc_init_vec0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_put_att() in stokes_nc_init_vec0", name);
+	(status, "at nc_put_att() in stokes_nc_init_pf_vec", name);
     }
 }
 static void
-stokes_nc_init_stt0 (struct stokes_nc * nc,
-		     const char * name,
-		     const char * longname,
-		     int * var_id)
+stokes_nc_init_pf_stt (struct stokes_nc * nc,
+		       const char * name,
+		       const char * longname,
+		       int * var_id)
 {
   int status;
   int dimids[2];
@@ -140,7 +255,7 @@ stokes_nc_init_stt0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_def_var() in stokes_nc_init_stt0", name);
+	(status, "at nc_def_var() in stokes_nc_init_pf_stt", name);
     }
   status = nc_put_att_text
     (nc->id, *var_id, "long_name",
@@ -148,9 +263,10 @@ stokes_nc_init_stt0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_put_att() in stokes_nc_init_stt0", name);
+	(status, "at nc_put_att() in stokes_nc_init_pf_stt", name);
     }
 }
+
 
 /* initialize NetCDF file for libstokes
  * INPUT
@@ -302,49 +418,49 @@ stokes_nc_init (const char * filename, int nm, int nf,
   /* x0 */
   if (flag_x0 != 0)
     {
-      stokes_nc_init_vec0 (nc, "x0",
+      stokes_nc_init_p_vec (nc, "x0",
 			   "positions of particle center at t0",
 			   &nc->x0_id);
     }
   /* U0 */
   if (flag_u0 != 0)
     {
-      stokes_nc_init_vec0 (nc, "U0",
+      stokes_nc_init_p_vec (nc, "U0",
 			   "translational velocities at t0",
 			   &nc->u0_id);
     }
   /* O0 */
   if (flag_o0 != 0)
     {
-      stokes_nc_init_vec0 (nc, "O0",
+      stokes_nc_init_p_vec (nc, "O0",
 			   "angular velocities at t0",
 			   &nc->o0_id);
     }
   /* E0 */
   if (flag_e0 != 0)
     {
-      stokes_nc_init_stt0 (nc, "E0",
+      stokes_nc_init_p_stt (nc, "E0",
 			   "rate of strain at t0",
 			   &nc->e0_id);
     }
   /* F0 */
   if (flag_f0 != 0)
     {
-      stokes_nc_init_vec0 (nc, "F0",
+      stokes_nc_init_p_vec (nc, "F0",
 			   "forces at t0",
 			   &nc->f0_id);
     }
   /* T0 */
   if (flag_t0 != 0)
     {
-      stokes_nc_init_vec0 (nc, "T0",
+      stokes_nc_init_p_vec (nc, "T0",
 			   "torques at t0",
 			   &nc->t0_id);
     }
   /* S0 */
   if (flag_s0 != 0)
     {
-      stokes_nc_init_stt0 (nc, "S0",
+      stokes_nc_init_p_stt (nc, "S0",
 			   "stresslets at t0",
 			   &nc->s0_id);
     }
@@ -353,49 +469,49 @@ stokes_nc_init (const char * filename, int nm, int nf,
   /* x */
   if (flag_x != 0)
     {
-      stokes_nc_init_vec (nc, "x",
+      stokes_nc_init_t_p_vec (nc, "x",
 			  "positions of particle center",
 			  &nc->x_id);
     }
   /* U */
   if (flag_u != 0)
     {
-      stokes_nc_init_vec (nc, "U",
+      stokes_nc_init_t_p_vec (nc, "U",
 			  "translational velocities",
 			  &nc->u_id);
     }
   /* O */
   if (flag_o != 0)
     {
-      stokes_nc_init_vec (nc, "O",
+      stokes_nc_init_t_p_vec (nc, "O",
 			  "angular velocities",
 			  &nc->o_id);
     }
   /* E */
   if (flag_e != 0)
     {
-      stokes_nc_init_stt (nc, "E",
+      stokes_nc_init_t_p_stt (nc, "E",
 			  "rate of strain",
 			  &nc->e_id);
     }
   /* F */
   if (flag_f != 0)
     {
-      stokes_nc_init_vec (nc, "F",
+      stokes_nc_init_t_p_vec (nc, "F",
 			  "forces",
 			  &nc->f_id);
     }
   /* T */
   if (flag_t != 0)
     {
-      stokes_nc_init_vec (nc, "T",
+      stokes_nc_init_t_p_vec (nc, "T",
 			  "torques",
 			  &nc->t_id);
     }
   /* S */
   if (flag_s != 0)
     {
-      stokes_nc_init_stt (nc, "S",
+      stokes_nc_init_t_p_stt (nc, "S",
 			  "stresslets",
 			  &nc->s_id);
     }
@@ -407,7 +523,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* xf0 */
       if (flag_xf0 != 0)
 	{
-	  stokes_nc_init_vec0
+	  stokes_nc_init_pf_vec
 	    (nc, "xf0",
 	     "positions of fixed particle center at t0",
 	     &nc->xf0_id);
@@ -415,7 +531,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Uf0 */
       if (flag_uf0 != 0)
 	{
-	  stokes_nc_init_vec0
+	  stokes_nc_init_pf_vec
 	    (nc, "Uf0",
 	     "translational velocities for fixed particles at t0",
 	     &nc->uf0_id);
@@ -423,7 +539,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Of0 */
       if (flag_of0 != 0)
 	{
-	  stokes_nc_init_vec0
+	  stokes_nc_init_pf_vec
 	    (nc, "Of0",
 	     "angular velocities for fixed particles at t0",
 	     &nc->of0_id);
@@ -431,7 +547,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Ef0 */
       if (flag_ef0 != 0)
 	{
-	  stokes_nc_init_stt0
+	  stokes_nc_init_pf_stt
 	    (nc, "Ef0",
 	     "rate of strain for fixed particles at t0",
 	     &nc->ef0_id);
@@ -439,7 +555,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Ff0 */
       if (flag_ff0 != 0)
 	{
-	  stokes_nc_init_vec0
+	  stokes_nc_init_pf_vec
 	    (nc, "Ff0",
 	     "forces for fixed particles at t0",
 	     &nc->ff0_id);
@@ -447,7 +563,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Tf0 */
       if (flag_tf0 != 0)
 	{
-	  stokes_nc_init_vec0
+	  stokes_nc_init_pf_vec
 	    (nc, "Tf0",
 	     "torques for fixed particles at t0",
 	     &nc->tf0_id);
@@ -455,7 +571,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* Sf0 */
       if (flag_sf0 != 0)
 	{
-	  stokes_nc_init_stt0
+	  stokes_nc_init_pf_stt
 	    (nc, "Sf0",
 	     "stresslets for fixed particles at t0",
 	     &nc->sf0_id);
@@ -465,49 +581,49 @@ stokes_nc_init (const char * filename, int nm, int nf,
       /* xf */
       if (flag_xf != 0)
 	{
-	  stokes_nc_init_vec (nc, "xf",
+	  stokes_nc_init_t_pf_vec (nc, "xf",
 			      "positions of fixed particle center",
 			      &nc->xf_id);
 	}
       /* Uf */
       if (flag_uf != 0)
 	{
-	  stokes_nc_init_vec (nc, "Uf",
+	  stokes_nc_init_t_pf_vec (nc, "Uf",
 			      "translational velocities for fixed particles",
 			      &nc->uf_id);
 	}
       /* Of */
       if (flag_of != 0)
 	{
-	  stokes_nc_init_vec (nc, "Of",
+	  stokes_nc_init_t_pf_vec (nc, "Of",
 			      "angular velocities for fixed particles",
 			      &nc->of_id);
 	}
       /* Ef */
       if (flag_ef != 0)
 	{
-	  stokes_nc_init_stt (nc, "Ef",
+	  stokes_nc_init_t_pf_stt (nc, "Ef",
 			      "rate of strain for fixed particles",
 			      &nc->ef_id);
 	}
       /* Ff */
       if (flag_ff != 0)
 	{
-	  stokes_nc_init_vec (nc, "Ff",
+	  stokes_nc_init_t_pf_vec (nc, "Ff",
 			      "forces for fixed particles",
 			      &nc->ff_id);
 	}
       /* Tf */
       if (flag_tf != 0)
 	{
-	  stokes_nc_init_vec (nc, "Tf",
+	  stokes_nc_init_t_pf_vec (nc, "Tf",
 			      "torques for fixed particles",
 			      &nc->tf_id);
 	}
       /* S */
       if (flag_sf != 0)
 	{
-	  stokes_nc_init_stt (nc, "Sf",
+	  stokes_nc_init_t_pf_stt (nc, "Sf",
 			      "stresslets for fixed particles",
 			      &nc->sf_id);
 	}
@@ -578,6 +694,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, x, u.
  */
 struct stokes_nc *
 stokes_nc_mob_f_init (const char * filename, int np)
@@ -617,6 +734,7 @@ stokes_nc_mob_f_init (const char * filename, int np)
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, t0, x, u, o.
  */
 struct stokes_nc *
 stokes_nc_mob_ft_init (const char * filename, int np)
@@ -656,6 +774,7 @@ stokes_nc_mob_ft_init (const char * filename, int np)
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, t0, e0, x, u, o, s.
  */
 struct stokes_nc *
 stokes_nc_mob_fts_init (const char * filename, int np)
@@ -696,6 +815,7 @@ stokes_nc_mob_fts_init (const char * filename, int np)
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, uf0, x, u, ff.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf)
@@ -736,6 +856,7 @@ stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf)
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf)
@@ -776,6 +897,8 @@ stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf)
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, t0, e0, uf0, of0, ef0,
+ *                         x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_fts_init (const char * filename, int nm, int nf)
@@ -831,26 +954,392 @@ stokes_nc_free (struct stokes_nc * nc)
   free (nc);
 }
 
-
+/** set nc data **/
+/* set x0
+ */
 void
-stokes_nc_append (struct stokes_nc * nc,
-		  int step, double time,
-		  const double * x,
-		  const double * u, const double * o, const double * e,
-		  const double * f, const double * t, const double * s)
+stokes_nc_set_x0 (struct stokes_nc * nc,
+		  const double * x0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->x0_id, start, count, x0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() for x0 in stokes_nc_append", NULL);
+    }
+}
+/* set u0
+ */
+void
+stokes_nc_set_u0 (struct stokes_nc * nc,
+		  const double * u0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->u0_id, start, count, u0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for u0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set o0 data
+ */
+void
+stokes_nc_set_o0 (struct stokes_nc * nc,
+		  const double * o0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->o0_id, start, count, o0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for o0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set e0 data
+ */
+void
+stokes_nc_set_e0 (struct stokes_nc * nc,
+		  const double * e0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->e0_id, start, count, e0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for e0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set f0 data
+ */
+void
+stokes_nc_set_f0 (struct stokes_nc * nc,
+		  const double * f0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->f0_id, start, count, f0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for f0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set t0 data
+ */
+void
+stokes_nc_set_t0 (struct stokes_nc * nc,
+		  const double * t0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->t0_id, start, count, t0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for t0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set s0 data
+ */
+void
+stokes_nc_set_s0 (struct stokes_nc * nc,
+		  const double * s0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->np;
+  count[1] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->s0_id, start, count, s0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for s0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set xf0
+ */
+void
+stokes_nc_set_xf0 (struct stokes_nc * nc,
+		   const double * xf0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->xf0_id, start, count, xf0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() for xf0 in stokes_nc_append", NULL);
+    }
+}
+/* set uf0
+ */
+void
+stokes_nc_set_uf0 (struct stokes_nc * nc,
+		   const double * uf0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->uf0_id, start, count, uf0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for uf0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set of0 data
+ */
+void
+stokes_nc_set_of0 (struct stokes_nc * nc,
+		   const double * of0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->of0_id, start, count, of0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for of0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set ef0 data
+ */
+void
+stokes_nc_set_ef0 (struct stokes_nc * nc,
+		   const double * ef0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->ef0_id, start, count, ef0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for ef0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set ff0 data
+ */
+void
+stokes_nc_set_ff0 (struct stokes_nc * nc,
+		   const double * ff0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->ff0_id, start, count, ff0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for ff0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set tf0 data
+ */
+void
+stokes_nc_set_tf0 (struct stokes_nc * nc,
+		   const double * tf0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->tf0_id, start, count, tf0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for tf0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set sf0 data
+ */
+void
+stokes_nc_set_sf0 (struct stokes_nc * nc,
+		   const double * sf0)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = 0;
+  start[1] = 0;
+
+  count[0] = nc->npf;
+  count[1] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->sf0_id, start, count, sf0);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for sf0"
+		       " in stokes_nc_append", NULL);
+    }
+}
+
+/* set time (step)
+ */
+void
+stokes_nc_set_time (struct stokes_nc * nc,
+		    int step, double time)
+{
+  int status;
+
+  /* write values into netCDF variable */
+  status = nc_put_var1_double (nc->id, nc->time_id, &step, &time);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() for time in stokes_nc_append", NULL);
+    }
+}
+/* set x at time (step)
+ */
+void
+stokes_nc_set_x (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * x)
 {
   size_t start[3];
   size_t count[3];
 
   int status;
-  /* write values into netCDF variable */
-  status = nc_put_var1_double (nc->id, nc->time_id, &step, &time);
 
   start[0] = step;
   start[1] = 0;
   start[2] = 0;
 
-  count[0] = 0;
+  count[0] = 1;
   count[1] = nc->np;
   count[2] = nc->nvec;
 
@@ -861,47 +1350,74 @@ stokes_nc_append (struct stokes_nc * nc,
 	(status,
 	 "at nc_put_vara_double() for x in stokes_nc_append", NULL);
     }
+}
+/* set u at time (step)
+ */
+void
+stokes_nc_set_u (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * u)
+{
+  size_t start[3];
+  size_t count[3];
 
-  if (u != NULL)
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->np;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->u_id, start, count, u);
+  if (status != NC_NOERR)
     {
-      status = nc_put_vara_double(nc->id, nc->u_id, start, count, u);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for u"
-			   " in stokes_nc_append", NULL);
-	}
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for u"
+		       " in stokes_nc_append", NULL);
     }
-  if (f != NULL)
+}
+/* set o at time (step)
+ */
+void
+stokes_nc_set_o (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * o)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->np;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->o_id, start, count, o);
+  if (status != NC_NOERR)
     {
-      status = nc_put_vara_double(nc->id, nc->f_id, start, count, f);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for f"
-			   " in stokes_nc_append", NULL);
-	}
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for o"
+		       " in stokes_nc_append", NULL);
     }
-  if (o != NULL)
-    {
-      status = nc_put_vara_double(nc->id, nc->o_id, start, count, o);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for o"
-			   " in stokes_nc_append", NULL);
-	}
-    }
-  if (t != NULL)
-    {
-      status = nc_put_vara_double(nc->id, nc->t_id, start, count, t);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for t"
-			   " in stokes_nc_append", NULL);
-	}
-    }
+}
+/* set e at time (step)
+ */
+void
+stokes_nc_set_e (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * e)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
 
   start[0] = step;
   start[1] = 0;
@@ -911,26 +1427,293 @@ stokes_nc_append (struct stokes_nc * nc,
   count[1] = nc->np;
   count[2] = nc->nstt;
 
-  if (e != NULL)
+  status = nc_put_vara_double(nc->id, nc->e_id, start, count, e);
+  if (status != NC_NOERR)
     {
-      status = nc_put_vara_double(nc->id, nc->e_id, start, count, e);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for e"
-			   " in stokes_nc_append", NULL);
-	}
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for e"
+		       " in stokes_nc_append", NULL);
     }
-  if (s != NULL)
+}
+/* set f at time (step)
+ */
+void
+stokes_nc_set_f (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * f)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->np;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->f_id, start, count, f);
+  if (status != NC_NOERR)
     {
-      status = nc_put_vara_double(nc->id, nc->s_id, start, count, s);
-      if (status != NC_NOERR)
-	{
-	  stokes_nc_error (status,
-			   "at nc_put_vara_double() for s"
-			   " in stokes_nc_append", NULL);
-	}
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for f"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set t at time (step)
+ */
+void
+stokes_nc_set_t (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * t)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->np;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->t_id, start, count, t);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for t"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set s at time (step)
+ */
+void
+stokes_nc_set_s (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * s)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 0;
+  count[1] = nc->np;
+  count[2] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->s_id, start, count, s);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for s"
+		       " in stokes_nc_append", NULL);
     }
 }
 
+/* set xf at time (step)
+ */
+void
+stokes_nc_set_xf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * xf)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->npf;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->xf_id, start, count, xf);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() for xf in stokes_nc_append", NULL);
+    }
+}
+/* set uf at time (step)
+ */
+void
+stokes_nc_set_uf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * uf)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->npf;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->uf_id, start, count, uf);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for uf"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set of at time (step)
+ */
+void
+stokes_nc_set_of (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * of)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->npf;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->of_id, start, count, of);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for of"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set ef at time (step)
+ */
+void
+stokes_nc_set_ef (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * ef)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 0;
+  count[1] = nc->npf;
+  count[2] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->ef_id, start, count, ef);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for ef"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set ff at time (step)
+ */
+void
+stokes_nc_set_ff (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * ff)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->npf;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->ff_id, start, count, ff);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for ff"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set tf at time (step)
+ */
+void
+stokes_nc_set_tf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * tf)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->npf;
+  count[2] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->tf_id, start, count, tf);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for tf"
+		       " in stokes_nc_append", NULL);
+    }
+}
+/* set sf at time (step)
+ */
+void
+stokes_nc_set_sf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * sf)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 0;
+  count[1] = nc->npf;
+  count[2] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->sf_id, start, count, sf);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_put_vara_double() for sf"
+		       " in stokes_nc_append", NULL);
+    }
+}
 

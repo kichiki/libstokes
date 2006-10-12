@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.1 2006/10/11 20:28:20 ichiki Exp $
+ * $Id: stokes-nc.h,v 5.2 2006/10/12 03:54:21 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,6 +115,7 @@ struct stokes_nc {
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, x, u.
  */
 struct stokes_nc *
 stokes_nc_mob_f_init (const char * filename, int np);
@@ -123,6 +124,7 @@ stokes_nc_mob_f_init (const char * filename, int np);
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, t0, x, u, o.
  */
 struct stokes_nc *
 stokes_nc_mob_ft_init (const char * filename, int np);
@@ -131,6 +133,7 @@ stokes_nc_mob_ft_init (const char * filename, int np);
  *  np : number of MOBILE particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, f0, t0, e0, x, u, o, s.
  */
 struct stokes_nc *
 stokes_nc_mob_fts_init (const char * filename, int np);
@@ -140,6 +143,7 @@ stokes_nc_mob_fts_init (const char * filename, int np);
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, uf0, x, u, ff.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf);
@@ -149,6 +153,7 @@ stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf);
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf);
@@ -158,6 +163,8 @@ stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf);
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
+ *  activated entries are, xf0, f0, t0, e0, uf0, of0, ef0,
+ *                         x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
 stokes_nc_mob_fix_fts_init (const char * filename, int nm, int nf);
@@ -169,13 +176,167 @@ void
 stokes_nc_free (struct stokes_nc * nc);
 
 
+/** set nc data **/
+/* set x0
+ */
 void
-stokes_nc_append (struct stokes_nc * nc,
-		  int step, double time,
-		  const double * x,
-		  const double * u, const double * o, const double * e,
-		  const double * f, const double * t, const double * s);
+stokes_nc_set_x0 (struct stokes_nc * nc,
+		  const double * x0);
+/* set u0
+ */
+void
+stokes_nc_set_u0 (struct stokes_nc * nc,
+		  const double * u0);
+/* set o0 data
+ */
+void
+stokes_nc_set_o0 (struct stokes_nc * nc,
+		  const double * o0);
+/* set e0 data
+ */
+void
+stokes_nc_set_e0 (struct stokes_nc * nc,
+		  const double * e0);
+/* set f0 data
+ */
+void
+stokes_nc_set_f0 (struct stokes_nc * nc,
+		  const double * f0);
+/* set t0 data
+ */
+void
+stokes_nc_set_t0 (struct stokes_nc * nc,
+		  const double * t0);
+/* set s0 data
+ */
+void
+stokes_nc_set_s0 (struct stokes_nc * nc,
+		  const double * s0);
+/* set xf0
+ */
+void
+stokes_nc_set_xf0 (struct stokes_nc * nc,
+		   const double * xf0);
+/* set uf0
+ */
+void
+stokes_nc_set_uf0 (struct stokes_nc * nc,
+		   const double * uf0);
+/* set of0 data
+ */
+void
+stokes_nc_set_of0 (struct stokes_nc * nc,
+		   const double * of0);
+/* set ef0 data
+ */
+void
+stokes_nc_set_ef0 (struct stokes_nc * nc,
+		   const double * ef0);
+/* set ff0 data
+ */
+void
+stokes_nc_set_ff0 (struct stokes_nc * nc,
+		   const double * ff0);
+/* set tf0 data
+ */
+void
+stokes_nc_set_tf0 (struct stokes_nc * nc,
+		   const double * tf0);
+/* set sf0 data
+ */
+void
+stokes_nc_set_sf0 (struct stokes_nc * nc,
+		   const double * sf0);
 
+/* set time (step)
+ */
+void
+stokes_nc_set_time (struct stokes_nc * nc,
+		    int step, double time);
+/* set x at time (step)
+ */
+void
+stokes_nc_set_x (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * x);
+/* set u at time (step)
+ */
+void
+stokes_nc_set_u (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * u);
+/* set o at time (step)
+ */
+void
+stokes_nc_set_o (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * o);
+/* set e at time (step)
+ */
+void
+stokes_nc_set_e (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * e);
+/* set f at time (step)
+ */
+void
+stokes_nc_set_f (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * f);
+/* set t at time (step)
+ */
+void
+stokes_nc_set_t (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * t);
+/* set s at time (step)
+ */
+void
+stokes_nc_set_s (struct stokes_nc * nc,
+		 int step, double time,
+		 const double * s);;
+/* set xf at time (step)
+ */
+void
+stokes_nc_set_xf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * xf);
+/* set uf at time (step)
+ */
+void
+stokes_nc_set_uf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * uf);
+/* set of at time (step)
+ */
+void
+stokes_nc_set_of (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * of);
+/* set ef at time (step)
+ */
+void
+stokes_nc_set_ef (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * ef);
+/* set ff at time (step)
+ */
+void
+stokes_nc_set_ff (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * ff);
+/* set tf at time (step)
+ */
+void
+stokes_nc_set_tf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * tf);
+/* set sf at time (step)
+ */
+void
+stokes_nc_set_sf (struct stokes_nc * nc,
+		  int step, double time,
+		  const double * sf);
 
 
 #endif /* !_STOKES_NC_H_ */
