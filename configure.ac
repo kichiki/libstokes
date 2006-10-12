@@ -1,8 +1,9 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
+# $Id: configure.ac,v 1.2 2006/10/12 17:26:54 ichiki Exp $
 
 AC_PREREQ(2.59)
-AC_INIT(libstokes, 0.2, kichiki@users.sourceforge.net)
+AC_INIT(libstokes, 0.3, kichiki@users.sourceforge.net)
 AC_CONFIG_SRCDIR([src/bench.c])
 AC_CONFIG_HEADER([config.h])
 AM_INIT_AUTOMAKE
