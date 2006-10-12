@@ -1,6 +1,6 @@
 /* Ewald summation technique with FT version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.6 2006/10/06 20:32:21 kichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.7 2006/10/12 04:46:44 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,9 +50,9 @@ calc_res_ewald_3ft_matrix (struct stokes * sys,
   int np;
   int n6;
 
-  double * mat;
-  double * b;
-  double * x;
+  double * mat = NULL;
+  double * b   = NULL;
+  double * x   = NULL;
 
 
   sys->version = 1; // FT version
@@ -62,6 +62,14 @@ calc_res_ewald_3ft_matrix (struct stokes * sys,
   mat = (double *) malloc (sizeof (double) * n6 * n6);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (mat == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_res_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   /* b := (UO) */
   set_ft_by_FT (np, b, u, o);
@@ -99,10 +107,10 @@ calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
   int i;
   int n6;
 
-  double * mob;
-  double * lub;
-  double * b;
-  double * x;
+  double * mob = NULL;
+  double * lub = NULL;
+  double * b = NULL;
+  double * x = NULL;
 
 
   sys->version = 1; // FT version
@@ -112,6 +120,15 @@ calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
   lub = (double *) malloc (sizeof (double) * n6 * n6);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (mob == NULL ||
+      lub == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_res_lub_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   // M matrix
   make_matrix_mob_ewald_3all (sys, mob); // sys->version is 1 (FT)
@@ -167,10 +184,19 @@ calc_mob_ewald_3ft_matrix (struct stokes * sys,
 
   sys->version = 1; // FT version
   np = sys->np;
+
   n6 = np * 6;
   mat = malloc (sizeof (double) * n6 * n6);
   b = malloc (sizeof (double) * n6);
   x = malloc (sizeof (double) * n6);
+  if (mat == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_mob_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   /* b := (FTE) */
   set_ft_by_FT (np, b, f, t);
@@ -205,11 +231,11 @@ calc_mob_lub_ewald_3ft_matrix (struct stokes * sys,
   int i;
   int n6;
 
-  double * mat;
-  double * lub;
-  double * iml;
-  double * b;
-  double * x;
+  double * mat = NULL;
+  double * lub = NULL;
+  double * iml = NULL;
+  double * b = NULL;
+  double * x = NULL;
 
 
   sys->version = 1; // FT version
@@ -221,6 +247,16 @@ calc_mob_lub_ewald_3ft_matrix (struct stokes * sys,
   iml = (double *) malloc (sizeof (double) * n6 * n6);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (mat == NULL ||
+      lub == NULL ||
+      iml == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_mob_lub_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   // M
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
@@ -512,6 +548,22 @@ calc_mob_fix_ewald_3ft_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * nh * nh);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (mat == NULL ||
+      mat_ll == NULL ||
+      mat_lh == NULL ||
+      mat_hl == NULL ||
+      mat_hh == NULL ||
+      mob_ll == NULL ||
+      mob_lh == NULL ||
+      mob_hl == NULL ||
+      mob_hh == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_mob_fix_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   /* b := (FT,UfOf) */
   set_ft_by_FT (nm, b, f, t);
@@ -607,6 +659,24 @@ calc_mob_lub_fix_ewald_3ft_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * nh * nh);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (mat == NULL ||
+      lub == NULL ||
+      tmp == NULL ||
+      mat_ll == NULL ||
+      mat_lh == NULL ||
+      mat_hl == NULL ||
+      mat_hh == NULL ||
+      mob_ll == NULL ||
+      mob_lh == NULL ||
+      mob_hl == NULL ||
+      mob_hh == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at calc_mob_lub_fix_ewald_3ft_matrix()\n");
+      exit (1);
+    }
 
   /* used at lub [] */
   I_ll = lub;
