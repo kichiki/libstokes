@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.6 2006/10/05 19:25:21 ichiki Exp $
+ * $Id: ewald-3ft.c,v 4.7 2006/10/12 15:00:11 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -31,6 +31,7 @@
 #include "stokes.h" /* struct stokeks */
 #include "ft.h"
 #include "ewald.h" // atimes_ewald_3all()
+#include "lub.h" // calc_lub_ewald_3ft()
 
 #include "ewald-3ft.h"
 
@@ -336,102 +337,6 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
 }
 
 /** natural resistance problem with lubrication **/
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (const double * x1, const double * x2)
-{
-  double x, y, z;
-  double r2;
-
-
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
-
-  r2 = x * x
-    + y * y
-    + z * z;
-
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
-    {
-      return 0;
-    }
-  else
-    {
-      return 1;
-    }
-}
-/* calculate lubrication ft by uoe for all particles
- * under the periodic boundary condition
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- *   uo [np * 6] : velocity, angular velocity, strain
- * OUTPUT
- *   ft [np * 6] : force, torque, stresslet
- */
-static void
-calc_lub_ewald_3ft (struct stokes * sys,
-		    const double * uo, double * ft)
-{
-  int np;
-  int i, j, k;
-  int i3, i6;
-  int j3, j6;
-
-  double * tmp_pos;
-
-
-  np = sys->np;
-
-  tmp_pos = malloc (sizeof (double) * 3);
-  if (tmp_pos == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3ft().\n");
-      exit (1);
-    }
-
-  /* clear ft [np * 6] */
-  for (i = 0; i < np * 6; ++i)
-    {
-      ft [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      i6 = i * 6;
-      for (j = i; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  j6 = j * 6;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
-	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
-		{
-		  calc_lub_ft_2b (sys,
-				  uo + i6, uo + j6,
-				  sys->pos + i3, tmp_pos,
-				  ft + i6, ft + j6);
-		}
-	    }
-	}
-    }
-
-  free (tmp_pos);
-}
 /* solve natural resistance problem with lubrication
  * in FT version under Ewald sum
  * INPUT
