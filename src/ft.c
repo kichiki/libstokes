@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.3 2006/09/28 04:42:13 kichiki Exp $
+ * $Id: ft.c,v 2.4 2006/10/12 15:04:44 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -479,7 +479,7 @@ calc_lub_ft_2b (struct stokes * sys,
   double xc12, yc12;
 
 
-  res2b = malloc (sizeof (double) * 44);
+  res2b = (double *) malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_2b ().\n");

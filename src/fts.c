@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.2 2006/09/28 04:44:01 kichiki Exp $
+ * $Id: fts.c,v 2.3 2006/10/12 15:05:11 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -631,7 +631,7 @@ matrix_fts_atimes (const double *x,
   double *z; // modefied for extracted matrix elements
 
 
-  z = malloc (sizeof (double) * 11);
+  z = (double *) malloc (sizeof (double) * 11);
   if (z == NULL)
     {
       fprintf (stderr, "allocation error in matrix_fts_atimes ().\n");
@@ -1402,7 +1402,7 @@ calc_lub_fts_2b (struct stokes * sys,
   double xm11, xm12, ym11, ym12, zm11, zm12;
 
 
-  res2b = malloc (sizeof (double) * 44);
+  res2b = (double *) malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_2b ().\n");
@@ -1522,7 +1522,7 @@ matrix_lub_fts_2b (struct stokes * sys,
   double xm11, xm12, ym11, ym12, zm11, zm12;
 
 
-  res2b = malloc (sizeof (double) * 44);
+  res2b = (double *) malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_2b ().\n");

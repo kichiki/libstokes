@@ -1,7 +1,7 @@
 /* header file for lub-matrix.c --
  * lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.h,v 1.1 2006/10/05 04:48:18 ichiki Exp $
+ * $Id: lub-matrix.h,v 1.2 2006/10/12 15:03:41 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,4 +58,4 @@ void
 make_matrix_lub_ewald_3fts (struct stokes * sys,
 			    double * mat);
 
-#endif /* !_EWALD_3F_MATRIX_H_ */
+#endif /* !_LUB_MATRIX_H_ */

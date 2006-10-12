@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.2 2006/09/28 04:40:52 kichiki Exp $
+ * $Id: f.c,v 2.3 2006/10/12 15:04:23 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -281,7 +281,7 @@ calc_lub_f_2b (struct stokes * sys,
   double xa12, ya12;
 
 
-  res2b = malloc (sizeof (double) * 44);
+  res2b = (double *) malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_f_2b ().\n");
@@ -357,7 +357,7 @@ matrix_lub_f_2b (struct stokes * sys,
   double xa12, ya12;
 
 
-  res2b = malloc (sizeof (double) * 44);
+  res2b = (double *) malloc (sizeof (double) * 44);
   if (res2b == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_2b ().\n");
