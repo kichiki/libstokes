@@ -1,0 +1,9 @@
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* configure.ac: 1.2 2006/10/12 17:26:54 ichiki Exp
+	update configure.ac for 0.3-release.
+
+2006-10-09  Kengo Ichiki  <ichiki@tpr60>
+
+	* configure.ac, Makefile.am:
+	restructure the directory.
