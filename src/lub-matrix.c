@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.2 2006/10/05 21:26:46 ichiki Exp $
+ * $Id: lub-matrix.c,v 1.3 2006/10/12 04:31:41 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -116,8 +116,6 @@ make_matrix_lub_ewald_3f (struct stokes * sys,
 	    }
 	}
     }
-
-  free (tmp_pos);
 }
 
 /* make lubrication matrix for FT version for all particles
@@ -172,8 +170,6 @@ make_matrix_lub_ewald_3ft (struct stokes * sys,
 	    }
 	}
     }
-
-  free (tmp_pos);
 }
 
 /* make lubrication matrix for FTS version for all particles
@@ -194,18 +190,10 @@ make_matrix_lub_ewald_3fts (struct stokes * sys,
   int i3, j3;
   int n;
 
-  double * tmp_pos;
+  double tmp_pos [3];
 
 
   np = sys->np;
-
-  tmp_pos = malloc (sizeof (double) * 3);
-  if (tmp_pos == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
-      exit (1);
-    }
-
   n = np * 11;
 
   /* clear result */
@@ -236,7 +224,5 @@ make_matrix_lub_ewald_3fts (struct stokes * sys,
 	    }
 	}
     }
-
-  free (tmp_pos);
 }
 
