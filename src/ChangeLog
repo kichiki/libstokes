@@ -1,5 +1,27 @@
 2006-10-19  Kengo Ichiki  <ichiki@tpr60>
 
+	* ewald-3fts-matrix.c: 2.8 2006/10/19 18:27:24 ichiki Exp
+	* ewald-3fts.c: 5.9 2006/10/19 18:27:03 ichiki Exp
+	* ewald-3ft-matrix.c: 2.9 2006/10/19 18:26:39 ichiki Exp
+	* ewald-3ft.c: 4.9 2006/10/19 18:26:22 ichiki Exp
+	* ewald-3f-matrix.c: 2.10 2006/10/19 18:26:00 ichiki Exp
+	* ewald-3f.c: 4.8 2006/10/19 18:25:29 ichiki Exp
+	implement shift between labo and fluid-rest frames for all solvers.
+
+	* fts.h: 2.3 2006/10/19 18:24:28 ichiki Exp
+	* fts.c: 2.4 2006/10/19 18:24:06 ichiki Exp
+	(shift_labo_to_rest_E): added.
+
+	* ft.h: 2.4 2006/10/19 18:23:38 ichiki Exp
+	* ft.c: 2.5 2006/10/19 18:23:12 ichiki Exp
+	(shift_labo_to_rest_O): added.
+	(shift_rest_to_labo_O): added.
+
+	* f.h: 2.3 2006/10/19 18:22:35 ichiki Exp
+	* f.c: 2.4 2006/10/19 18:22:10 ichiki Exp
+	(shift_labo_to_rest_U): added.
+	(shift_rest_to_labo_U): added.
+
 	* libstokes.h: 1.11 2006/10/19 04:32:17 ichiki Exp
 	add entries from stokes-nc-read.h and stokes-guile.h.
 	update for all ewald codes.
