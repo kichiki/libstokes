@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.7 2006/10/12 15:00:11 ichiki Exp $
+ * $Id: ewald-3ft.c,v 4.8 2006/10/19 04:13:10 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -47,9 +47,9 @@
  *   t [np * 3] :
  */
 void
-calc_res_ewald_3ft (struct stokes * sys,
-		    const double *u, const double *o,
-		    double *f, double *t)
+solve_res_ewald_3ft (struct stokes * sys,
+		     const double *u, const double *o,
+		     double *f, double *t)
 {
   int np;
   int i;
@@ -96,9 +96,9 @@ calc_res_ewald_3ft (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-calc_mob_ewald_3ft (struct stokes * sys,
-		    const double *f, const double *t,
-		    double *u, double *o)
+solve_mob_ewald_3ft (struct stokes * sys,
+		     const double *f, const double *t,
+		     double *u, double *o)
 {
   int np;
   int n6;
@@ -135,10 +135,10 @@ calc_mob_ewald_3ft (struct stokes * sys,
  *  b [np * 6] : constant vector
  */
 static void
-calc_b_mob_fix_ewald_3ft (struct stokes * sys,
-			  const double *f, const double *t,
-			  const double *uf, const double *of,
-			  double *b)
+calc_b_mix_ewald_3ft (struct stokes * sys,
+		      const double *f, const double *t,
+		      const double *uf, const double *of,
+		      double *b)
 {
   int np, nm;
   int i;
@@ -203,7 +203,7 @@ calc_b_mob_fix_ewald_3ft (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
+atimes_mix_ewald_3ft (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -290,11 +290,11 @@ atimes_mob_fix_ewald_3ft (int n, const double *x, double *y, void * user_data)
  *   tf [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3ft (struct stokes * sys,
-			const double *f, const double *t,
-			const double *uf, const double *of,
-			double *u, double *o,
-			double *ff, double *tf)
+solve_mix_ewald_3ft (struct stokes * sys,
+		     const double *f, const double *t,
+		     const double *uf, const double *of,
+		     double *u, double *o,
+		     double *ff, double *tf)
 {
   int np, nm;
   int i;
@@ -314,10 +314,40 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
+  double *uf0;
+  double *of0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  of0 = (double *) malloc (sizeof (double) * nf * 3);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (uf0 == NULL ||
+      of0 == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_mix_ewald_3ft()\n");
+      exit (1);
+    }
 
-  calc_b_mob_fix_ewald_3ft (sys, f, t, uf, of, b);
+  int ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+      of0 [ix] = of[ix] - sys->Oi[0];
+      of0 [iy] = of[iy] - sys->Oi[1];
+      of0 [iz] = of[iz] - sys->Oi[2];
+    }
+
+  //calc_b_mix_ewald_3ft (sys, f, t, uf, of, b);
+  calc_b_mix_ewald_3ft (sys, f, t, uf0, of0, b);
+  free (uf0);
+  free (of0);
 
   /* first guess */
   for (i = 0; i < n6; ++i)
@@ -326,11 +356,24 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
     }
 
   solve_iter (n6, b, x,
-	      atimes_mob_fix_ewald_3ft, (void *) sys,
+	      atimes_mix_ewald_3ft, (void *) sys,
 	      sys->it);
 
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+      o [ix] += sys->Oi[0];
+      o [iy] += sys->Oi[1];
+      o [iz] += sys->Oi[2];
+    }
 
   free (b);
   free (x);
@@ -348,9 +391,9 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_lub_ewald_3ft (struct stokes * sys,
-			const double *u, const double *o,
-			double *f, double *t)
+solve_res_lub_ewald_3ft (struct stokes * sys,
+			 const double *u, const double *o,
+			 double *f, double *t)
 {
   int np;
   int i;
@@ -411,10 +454,10 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
  *  b [np * 6] : constant vector
  */
 static void
-calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
-			      const double *f, const double *t,
-			      const double *uf, const double *of,
-			      double *b)
+calc_b_mix_lub_ewald_3ft (struct stokes * sys,
+			  const double *f, const double *t,
+			  const double *uf, const double *of,
+			  double *b)
 {
   int np, nm;
   int i;
@@ -488,8 +531,8 @@ calc_b_mob_lub_fix_ewald_3ft (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
-			      double *y, void * user_data)
+atimes_mix_lub_ewald_3ft (int n, const double *x,
+			  double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -588,11 +631,11 @@ atimes_mob_lub_fix_ewald_3ft (int n, const double *x,
  *   tf [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
-			    const double *f, const double *t,
-			    const double *uf, const double *of,
-			    double *u, double *o,
-			    double *ff, double *tf)
+solve_mix_lub_ewald_3ft (struct stokes * sys,
+			 const double *f, const double *t,
+			 const double *uf, const double *of,
+			 double *u, double *o,
+			 double *ff, double *tf)
 {
   int np, nm;
 
@@ -613,10 +656,40 @@ calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
+  double *uf0;
+  double *of0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  of0 = (double *) malloc (sizeof (double) * nf * 3);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+  if (uf0 == NULL ||
+      of0 == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_mix_lub_ewald_3ft()\n");
+      exit (1);
+    }
 
-  calc_b_mob_lub_fix_ewald_3ft (sys, f, t, uf, of, b);
+  int ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+      of0 [ix] = of[ix] - sys->Oi[0];
+      of0 [iy] = of[iy] - sys->Oi[1];
+      of0 [iz] = of[iz] - sys->Oi[2];
+    }
+
+  //calc_b_mix_lub_ewald_3ft (sys, f, t, uf, of, b);
+  calc_b_mix_lub_ewald_3ft (sys, f, t, uf0, of0, b);
+  free (uf0);
+  free (of0);
 
   /* first guess */
   for (i = 0; i < n6; ++i)
@@ -625,11 +698,24 @@ calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
     }
 
   solve_iter (n6, b, x,
-	       atimes_mob_lub_fix_ewald_3ft, (void *) sys,
+	       atimes_mix_lub_ewald_3ft, (void *) sys,
 	       sys->it);
 
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+      o [ix] += sys->Oi[0];
+      o [iy] += sys->Oi[1];
+      o [iz] += sys->Oi[2];
+    }
 
   free (b);
   free (x);
