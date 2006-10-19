@@ -1,7 +1,7 @@
 /* header file for ewald-3ft-matrix.c --
  * Ewald summation technique with FT version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.h,v 2.4 2006/10/05 04:53:42 ichiki Exp $
+ * $Id: ewald-3ft-matrix.h,v 2.5 2006/10/19 04:14:17 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,9 +32,9 @@
  *   t [np * 3] :
  */
 void
-calc_res_ewald_3ft_matrix (struct stokes * sys,
-			   const double *u, const double *o,
-			   double *f, double *t);
+solve_res_ewald_3ft_matrix (struct stokes * sys,
+			    const double *u, const double *o,
+			    double *f, double *t);
 
 /* solve natural resistance problem in FT version under Ewald sum
  * INPUT
@@ -46,9 +46,9 @@ calc_res_ewald_3ft_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
-			       const double *u, const double *o,
-			       double *f, double *t);
+solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
+				const double *u, const double *o,
+				double *f, double *t);
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FT version under Ewald sum
@@ -61,9 +61,9 @@ calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-calc_mob_ewald_3ft_matrix (struct stokes * sys,
-			   const double *f, const double *t,
-			   double *u, double *o);
+solve_mob_ewald_3ft_matrix (struct stokes * sys,
+			    const double *f, const double *t,
+			    double *u, double *o);
 
 /* solve natural mobility problem in FT version under Ewald sum
  * INPUT
@@ -75,9 +75,9 @@ calc_mob_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-calc_mob_lub_ewald_3ft_matrix (struct stokes * sys,
-			       const double *f, const double *t,
-			       double *u, double *o);
+solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
+				const double *f, const double *t,
+				double *u, double *o);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with lubrication
@@ -95,11 +95,11 @@ calc_mob_lub_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3ft_matrix (struct stokes * sys,
-			       const double *f, const double *t,
-			       const double *uf, const double *of,
-			       double *u, double *o,
-			       double *ff, double *tf);
+solve_mix_ewald_3ft_matrix (struct stokes * sys,
+			    const double *f, const double *t,
+			    const double *uf, const double *of,
+			    double *u, double *o,
+			    double *ff, double *tf);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
@@ -117,10 +117,10 @@ calc_mob_fix_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3ft_matrix (struct stokes * sys,
-				   const double *f, const double *t,
-				   const double *uf, const double *of,
-				   double *u, double *o,
-				   double *ff, double *tf);
+solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
+				const double *f, const double *t,
+				const double *uf, const double *of,
+				double *u, double *o,
+				double *ff, double *tf);
 
 #endif /* !_EWALD_3FT_MATRIX_H_ */
