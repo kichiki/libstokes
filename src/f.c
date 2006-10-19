@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.3 2006/10/12 15:04:23 ichiki Exp $
+ * $Id: f.c,v 2.4 2006/10/19 18:22:10 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -408,4 +408,107 @@ matrix_lub_f_2b (struct stokes * sys,
 	       n, mat);
 
   free (res2b);
+}
+
+/* pre-process for imposed flow shifting, that is, converting U
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  u[np*3] : velocity in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  u0[np*3] : velocity in the labo frame
+ */
+void
+shift_labo_to_rest_U (struct stokes * sys,
+		      int np, const double *u,
+		      double *u0)
+{
+  int i, ix, iy, iz;
+  double uOx, uOy, uOz;
+  double uEx, uEy, uEz;
+  double Ezz;
+  Ezz = - sys->Ei[0] - sys->Ei[4];
+
+  for (i = 0; i < np; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+
+      // O\times x
+      uOx = sys->Oi[1] * sys->pos[iz] - sys->Oi[2] * sys->pos[iy];
+      uOy = sys->Oi[2] * sys->pos[ix] - sys->Oi[0] * sys->pos[iz];
+      uOz = sys->Oi[0] * sys->pos[iy] - sys->Oi[1] * sys->pos[ix];
+
+      // E.x
+      uEx = sys->Ei[0] * sys->pos[ix] // xx . x
+	+   sys->Ei[1] * sys->pos[iy] // xy . y
+	+   sys->Ei[2] * sys->pos[iz];// xz . z
+      uEy = sys->Ei[1] * sys->pos[ix] // yx . x
+	+   sys->Ei[4] * sys->pos[iy] // yy . y
+	+   sys->Ei[3] * sys->pos[iz];// yz . z
+      uEz = sys->Ei[2] * sys->pos[ix] // zx . x
+	+   sys->Ei[3] * sys->pos[iy] // zy . y
+	+   Ezz        * sys->pos[iz];// zz . z
+
+      u0 [ix] = u[ix] - (sys->Ui[0] + uOx + uEx);
+      u0 [iy] = u[iy] - (sys->Ui[1] + uOy + uEy);
+      u0 [iz] = u[iz] - (sys->Ui[2] + uOz + uEz);
+    }
+}
+
+/* post-process for imposed flow shifting, that is, converting U
+ * from the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * to the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  u[np*3] : velocity in the fluid-rest frame
+ *            (data is overwritten after the process)
+ * OUTPUT
+ *  u[np*3] : velocity in the labo frame
+ */
+void
+shift_rest_to_labo_U (struct stokes * sys,
+		      int np, double *u)
+{
+  int i, ix, iy, iz;
+  double uOx, uOy, uOz;
+  double uEx, uEy, uEz;
+  double Ezz;
+  Ezz = - sys->Ei[0] - sys->Ei[4];
+
+  for (i = 0; i < np; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+
+      // O\times x
+      uOx = sys->Oi[1] * sys->pos[iz] - sys->Oi[2] * sys->pos[iy];
+      uOy = sys->Oi[2] * sys->pos[ix] - sys->Oi[0] * sys->pos[iz];
+      uOz = sys->Oi[0] * sys->pos[iy] - sys->Oi[1] * sys->pos[ix];
+
+      // E.x
+      uEx = sys->Ei[0] * sys->pos[ix] // xx . x
+	+   sys->Ei[1] * sys->pos[iy] // xy . y
+	+   sys->Ei[2] * sys->pos[iz];// xz . z
+      uEy = sys->Ei[1] * sys->pos[ix] // yx . x
+	+   sys->Ei[4] * sys->pos[iy] // yy . y
+	+   sys->Ei[3] * sys->pos[iz];// yz . z
+      uEz = sys->Ei[2] * sys->pos[ix] // zx . x
+	+   sys->Ei[3] * sys->pos[iy] // zy . y
+	+   Ezz        * sys->pos[iz];// zz . z
+
+      u [ix] += sys->Ui[0] + uOx + uEx;
+      u [iy] += sys->Ui[1] + uOy + uEy;
+      u [iz] += sys->Ui[2] + uOz + uEz;
+    }
 }
