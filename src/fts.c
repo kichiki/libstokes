@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.3 2006/10/12 15:05:11 ichiki Exp $
+ * $Id: fts.c,v 2.4 2006/10/19 18:24:06 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1612,3 +1612,34 @@ matrix_lub_fts_2b (struct stokes * sys,
 
   free (res2b);
 }
+
+/* pre-process for imposed flow shifting, that is, converting E
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  e[np*5] : strain in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  e0[np*5] : strain in the fluid-rest frame
+ */
+void
+shift_labo_to_rest_E (struct stokes * sys,
+		      int np, const double *e,
+		      double *e0)
+{
+  int i, i5;
+  for (i = 0; i < np; i ++)
+    {
+      i5 = i*5;
+      e0 [i5+0] = e[i5+0] - sys->Ei[0];
+      e0 [i5+1] = e[i5+1] - sys->Ei[1];
+      e0 [i5+2] = e[i5+2] - sys->Ei[2];
+      e0 [i5+3] = e[i5+3] - sys->Ei[3];
+      e0 [i5+4] = e[i5+4] - sys->Ei[4];
+    }
+}
+
