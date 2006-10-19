@@ -1,7 +1,7 @@
 /* Ewald summation technique under 2D
  * this is a wrapper package for ewald-3f.c
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-2f.c,v 1.5 2006/09/27 00:06:28 ichiki Exp $
+ * $Id: ewald-2f.c,v 1.6 2006/10/19 04:16:11 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 2D configuration
@@ -41,9 +41,9 @@
  *   f [np * 3] : results are given in 3D form
  */
 void
-calc_res_ewald_2f (struct stokes * sys,
-		   const double *u,
-		   double *f)
+solve_res_ewald_2f (struct stokes * sys,
+		    const double *u,
+		    double *f)
 {
   int np;
   int i;
@@ -58,7 +58,7 @@ calc_res_ewald_2f (struct stokes * sys,
   u3 = (double *) malloc (sizeof (double) * np3);
   if (u3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_res_ewald_2f ().\n");
+      fprintf (stderr, "allocation error in solve_res_ewald_2f ().\n");
       exit (1);
     }
 
@@ -71,7 +71,7 @@ calc_res_ewald_2f (struct stokes * sys,
       u3 [i3 + 1] = u [i2 + 1];
       u3 [i3 + 2] = 0.0;
     }
-  calc_res_ewald_3f (sys, u3, f);
+  solve_res_ewald_3f (sys, u3, f);
 
   free (u3);
 }
@@ -84,9 +84,9 @@ calc_res_ewald_2f (struct stokes * sys,
  *   u [np * 3] : results are given in 3D form
  */
 void
-calc_mob_ewald_2f (struct stokes * sys,
-		   const double *f,
-		   double *u)
+solve_mob_ewald_2f (struct stokes * sys,
+		    const double *f,
+		    double *u)
 {
   int np;
   int i;
@@ -101,7 +101,7 @@ calc_mob_ewald_2f (struct stokes * sys,
   f3 = (double *) malloc (sizeof (double) * np3);
   if (f3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_ewald_2f ().\n");
+      fprintf (stderr, "allocation error in solve_mob_ewald_2f ().\n");
       exit (1);
     }
 
@@ -114,7 +114,7 @@ calc_mob_ewald_2f (struct stokes * sys,
       f3 [i3 + 1] = f [i2 + 1];
       f3 [i3 + 2] = 0.0;
     }
-  calc_mob_ewald_3f (sys, f3, u);
+  solve_mob_ewald_3f (sys, f3, u);
 
   free (f3);
 }
@@ -131,11 +131,11 @@ calc_mob_ewald_2f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_fix_ewald_2f (struct stokes * sys,
-		       const double *f,
-		       const double *uf,
-		       double *u,
-		       double *ff)
+solve_mix_ewald_2f (struct stokes * sys,
+		    const double *f,
+		    const double *uf,
+		    double *u,
+		    double *ff)
 {
   int np, nm;
   int i;
@@ -159,7 +159,7 @@ calc_mob_fix_ewald_2f (struct stokes * sys,
   if (f3 == NULL
       || uf3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_fix_ewald_2f ().\n");
+      fprintf (stderr, "allocation error in solve_mix_ewald_2f ().\n");
       exit (1);
     }
 
@@ -183,7 +183,7 @@ calc_mob_fix_ewald_2f (struct stokes * sys,
       uf3 [i3 + 2] = 0.0;
     }
 
-  calc_mob_fix_ewald_3f (sys, f3, uf3, u, ff);
+  solve_mix_ewald_3f (sys, f3, uf3, u, ff);
 
   free (f3);
   free (uf3);
@@ -199,9 +199,9 @@ calc_mob_fix_ewald_2f (struct stokes * sys,
  *   f [np * 3] : results are given in 3D form
  */
 void
-calc_res_lub_ewald_2f (struct stokes * sys,
-		       const double *u,
-		       double *f)
+solve_res_lub_ewald_2f (struct stokes * sys,
+			const double *u,
+			double *f)
 {
   int np;
   int i;
@@ -216,7 +216,7 @@ calc_res_lub_ewald_2f (struct stokes * sys,
   u3 = (double *) malloc (sizeof (double) * np3);
   if (u3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_res_ewald_2f ().\n");
+      fprintf (stderr, "allocation error in solve_res_ewald_2f ().\n");
       exit (1);
     }
 
@@ -229,7 +229,7 @@ calc_res_lub_ewald_2f (struct stokes * sys,
       u3 [i3 + 1] = u [i2 + 1];
       u3 [i3 + 2] = 0.0;
     }
-  calc_res_lub_ewald_3f (sys, u3, f);
+  solve_res_lub_ewald_3f (sys, u3, f);
 
   free (u3);
 }
@@ -246,11 +246,11 @@ calc_res_lub_ewald_2f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_2f (struct stokes * sys,
-			   const double *f,
-			   const double *uf,
-			   double *u,
-			   double *ff)
+solve_mix_lub_ewald_2f (struct stokes * sys,
+			const double *f,
+			const double *uf,
+			double *u,
+			double *ff)
 {
   int np, nm;
   int i;
@@ -274,7 +274,7 @@ calc_mob_lub_fix_ewald_2f (struct stokes * sys,
   if (f3 == NULL
       || uf3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_fix_ewald_2f ().\n");
+      fprintf (stderr, "allocation error in solve_mix_ewald_2f ().\n");
       exit (1);
     }
 
@@ -298,7 +298,7 @@ calc_mob_lub_fix_ewald_2f (struct stokes * sys,
       uf3 [i3 + 2] = 0.0;
     }
 
-  calc_mob_lub_fix_ewald_3f (sys, f3, uf3, u, ff);
+  solve_mix_lub_ewald_3f (sys, f3, uf3, u, ff);
 
   free (f3);
   free (uf3);

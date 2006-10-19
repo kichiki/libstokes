@@ -1,7 +1,7 @@
 /* Ewald summation technique under 2D
  * this is a wrapper package for ewald-3fts.c
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-2fts.c,v 1.5 2006/09/27 00:03:29 ichiki Exp $
+ * $Id: ewald-2fts.c,v 1.6 2006/10/19 04:17:29 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 2D configuration
@@ -45,9 +45,9 @@
  *   s [np * 5] :
  */
 void
-calc_res_ewald_2fts (struct stokes * sys,
-		     const double *u, const double *o, const double *e,
-		     double *f, double *t, double *s)
+solve_res_ewald_2fts (struct stokes * sys,
+		      const double *u, const double *o, const double *e,
+		      double *f, double *t, double *s)
 {
   int np;
   int i;
@@ -67,7 +67,7 @@ calc_res_ewald_2fts (struct stokes * sys,
       || o3 == NULL
       || e3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_res_ewald_2fts ().\n");
+      fprintf (stderr, "allocation error in solve_res_ewald_2fts ().\n");
       exit (1);
     }
 
@@ -91,7 +91,7 @@ calc_res_ewald_2fts (struct stokes * sys,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_res_ewald_3fts (sys, u3, o3, e3,
+  solve_res_ewald_3fts (sys, u3, o3, e3,
 		       f, t, s);
 
   free (u3);
@@ -111,9 +111,9 @@ calc_res_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_mob_ewald_2fts (struct stokes * sys,
-		     const double *f, const double *t3, const double *e,
-		     double *u, double *o, double *s)
+solve_mob_ewald_2fts (struct stokes * sys,
+		      const double *f, const double *t3, const double *e,
+		      double *u, double *o, double *s)
 {
   int np;
   int i;
@@ -131,7 +131,7 @@ calc_mob_ewald_2fts (struct stokes * sys,
   if (f3 == NULL
       || e3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_ewald_2fts ().\n");
+      fprintf (stderr, "allocation error in solve_mob_ewald_2fts ().\n");
       exit (1);
     }
 
@@ -151,7 +151,7 @@ calc_mob_ewald_2fts (struct stokes * sys,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_mob_ewald_3fts (sys, f3, t3, e3,
+  solve_mob_ewald_3fts (sys, f3, t3, e3,
 		       u, o, s);
 
   free (f3);
@@ -178,11 +178,11 @@ calc_mob_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_fix_ewald_2fts (struct stokes * sys,
-			 const double *f, const double *t3, const double *e,
-			 const double *uf, const double *of, const double *ef,
-			 double *u, double *o, double *s,
-			 double *ff, double *tf, double *sf)
+solve_mix_ewald_2fts (struct stokes * sys,
+		      const double *f, const double *t3, const double *e,
+		      const double *uf, const double *of, const double *ef,
+		      double *u, double *o, double *s,
+		      double *ff, double *tf, double *sf)
 {
   int np, nm;
   int i;
@@ -215,7 +215,7 @@ calc_mob_fix_ewald_2fts (struct stokes * sys,
       || of3 == NULL
       || ef3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_fix_ewald_2fts ().\n");
+      fprintf (stderr, "allocation error in solve_mix_ewald_2fts ().\n");
       exit (1);
     }
 
@@ -257,7 +257,7 @@ calc_mob_fix_ewald_2fts (struct stokes * sys,
       ef3 [i5 + 4] = - ef [i2 + 0]; /* yy */
     }
 
-  calc_mob_fix_ewald_3fts (sys,
+  solve_mix_ewald_3fts (sys,
 			   f3, t3, e3, uf3, of3, ef3,
 			   u, o, s, ff, tf, sf);
 
@@ -282,9 +282,9 @@ calc_mob_fix_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_2fts (struct stokes * sys,
-			 const double *u, const double *o, const double *e,
-			 double *f, double *t, double *s)
+solve_res_lub_ewald_2fts (struct stokes * sys,
+			  const double *u, const double *o, const double *e,
+			  double *f, double *t, double *s)
 {
   int np;
   int i;
@@ -304,7 +304,7 @@ calc_res_lub_ewald_2fts (struct stokes * sys,
       || o3 == NULL
       || e3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_res_ewald_2fts ().\n");
+      fprintf (stderr, "allocation error in solve_res_ewald_2fts ().\n");
       exit (1);
     }
 
@@ -328,7 +328,7 @@ calc_res_lub_ewald_2fts (struct stokes * sys,
       e3 [i5 + 3] = 0.0; /* yz */
       e3 [i5 + 4] = - e [i2 + 0]; /* yy */
     }
-  calc_res_lub_ewald_3fts (sys, u3, o3, e3,
+  solve_res_lub_ewald_3fts (sys, u3, o3, e3,
 			   f, t, s);
 
   free (u3);
@@ -356,13 +356,13 @@ calc_res_lub_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
-			     const double *f, const double *t3,
-			     const double *e,
-			     const double *uf, const double *of,
-			     const double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf)
+solve_mix_lub_ewald_2fts (struct stokes * sys,
+			  const double *f, const double *t3,
+			  const double *e,
+			  const double *uf, const double *of,
+			  const double *ef,
+			  double *u, double *o, double *s,
+			  double *ff, double *tf, double *sf)
 {
   int np, nm;
   int i;
@@ -395,7 +395,7 @@ calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
       || of3 == NULL
       || ef3 == NULL)
     {
-      fprintf (stderr, "allocation error in calc_mob_fix_ewald_2fts ().\n");
+      fprintf (stderr, "allocation error in solve_mix_ewald_2fts ().\n");
       exit (1);
     }
 
@@ -437,9 +437,9 @@ calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
       ef3 [i5 + 4] = - ef [i2 + 0]; /* yy */
     }
 
-  calc_mob_lub_fix_ewald_3fts (sys,
-			       f3, t3, e3, uf3, of3, ef3,
-			       u, o, s, ff, tf, sf);
+  solve_mix_lub_ewald_3fts (sys,
+			    f3, t3, e3, uf3, of3, ef3,
+			    u, o, s, ff, tf, sf);
 
   free (f3);
   free (e3);
