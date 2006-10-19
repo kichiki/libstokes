@@ -1,6 +1,6 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.6 2006/10/12 04:47:07 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.7 2006/10/19 04:15:26 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -201,9 +201,9 @@ trans_ext (int np, double *r)
  *   s [np * 5] :
  */
 void
-calc_res_ewald_3fts_matrix (struct stokes * sys,
-			    const double *u, const double *o, const double *e,
-			    double *f, double *t, double *s)
+solve_res_ewald_3fts_matrix (struct stokes * sys,
+			     const double *u, const double *o, const double *e,
+			     double *f, double *t, double *s)
 {
   int np;
   int n11;
@@ -225,7 +225,7 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at calc_res_ewald_3fts_matrix()\n");
+	       " at solve_res_ewald_3fts_matrix()\n");
       exit (1);
     }
 
@@ -264,10 +264,10 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
-				const double *u, const double *o,
-				const double *e,
-				double *f, double *t, double *s)
+solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *u, const double *o,
+				 const double *e,
+				 double *f, double *t, double *s)
 {
   int np;
   int i;
@@ -291,7 +291,7 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
       || x == NULL
       || y == NULL)
     {
-      fprintf (stderr, "allocation error in calc_res_ewald_3fts_matrix().\n");
+      fprintf (stderr, "allocation error in solve_res_ewald_3fts_matrix().\n");
       exit (1);
     }
 
@@ -530,9 +530,9 @@ merge_matrix_3fts (int np,
  *   s [np * 5] :
  */
 void
-calc_mob_ewald_3fts_matrix (struct stokes * sys,
-			    const double *f, const double *t, const double *e,
-			    double *u, double *o, double *s)
+solve_mob_ewald_3fts_matrix (struct stokes * sys,
+			     const double *f, const double *t, const double *e,
+			     double *u, double *o, double *s)
 {
   int np;
   int n11, n6, n5;
@@ -573,7 +573,7 @@ calc_mob_ewald_3fts_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at calc_mob_fix_ewald_3fts_matrix()\n");
+	       " at solve_mob_fix_ewald_3fts_matrix()\n");
       exit (1);
     }
 
@@ -653,10 +653,10 @@ multiply_matrices (int n, double *a, const double *b)
  *   s [np * 5] :
  */
 void
-calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *e,
-				double *u, double *o, double *s)
+solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *f, const double *t,
+				 const double *e,
+				 double *u, double *o, double *s)
 {
   int np;
   int i;
@@ -703,7 +703,7 @@ calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at calc_mob_lub_ewald_3fts_matrix()\n");
+	       " at solve_mob_lub_ewald_3fts_matrix()\n");
       exit (1);
     }
 
@@ -1079,13 +1079,13 @@ merge_matrix_fix_3fts (int np, int nm,
  *   sf [nf * 5] :
  */
 void
-calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *e,
-				const double *uf, const double *of,
-				const double *ef,
-				double *u, double *o, double *s,
-				double *ff, double *tf, double *sf)
+solve_mix_ewald_3fts_matrix (struct stokes * sys,
+			     const double *f, const double *t,
+			     const double *e,
+			     const double *uf, const double *of,
+			     const double *ef,
+			     double *u, double *o, double *s,
+			     double *ff, double *tf, double *sf)
 {
   int np, nm;
   int n11;
@@ -1109,6 +1109,14 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
   nl = nm * 6;
   nh = n11 - nl;
 
+  double *uf0;
+  double *of0;
+  double *ef0;
+  double *e0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  of0 = (double *) malloc (sizeof (double) * nf * 3);
+  ef0 = (double *) malloc (sizeof (double) * nf * 5);
+  e0  = (double *) malloc (sizeof (double) * nm * 5);
   mat = (double *) malloc (sizeof (double) * n11 * n11);
   mat_ll = (double *) malloc (sizeof (double) * nl * nl);
   mat_lh = (double *) malloc (sizeof (double) * nl * nh);
@@ -1120,7 +1128,11 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * nh * nh);
   b = (double *) malloc (sizeof (double) * n11);
   x = (double *) malloc (sizeof (double) * n11);
-  if (mat == NULL ||
+  if (uf0 == NULL ||
+      of0 == NULL ||
+      ef0 == NULL ||
+      e0  == NULL ||
+      mat == NULL ||
       mat_ll == NULL ||
       mat_lh == NULL ||
       mat_hl == NULL ||
@@ -1133,13 +1145,50 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at calc_mob_fix_ewald_3fts_matrix()\n");
+	       " at solve_mix_ewald_3fts_matrix()\n");
       exit (1);
     }
 
+  int i, i5, ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      i5 = i*5;
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+
+      of0 [ix] = of[ix] - sys->Oi[0];
+      of0 [iy] = of[iy] - sys->Oi[1];
+      of0 [iz] = of[iz] - sys->Oi[2];
+
+      ef0 [i5+0] = ef[i5+0] - sys->Ei[0];
+      ef0 [i5+1] = ef[i5+1] - sys->Ei[1];
+      ef0 [i5+2] = ef[i5+2] - sys->Ei[2];
+      ef0 [i5+3] = ef[i5+3] - sys->Ei[3];
+      ef0 [i5+4] = ef[i5+4] - sys->Ei[4];
+    }
+  for (i = 0; i < nm; i ++)
+    {
+      i5 = i*5;
+      e0 [i5+0] = e[i5+0] - sys->Ei[0];
+      e0 [i5+1] = e[i5+1] - sys->Ei[1];
+      e0 [i5+2] = e[i5+2] - sys->Ei[2];
+      e0 [i5+3] = e[i5+3] - sys->Ei[3];
+      e0 [i5+4] = e[i5+4] - sys->Ei[4];
+    }
+
   /* b := (FTE) */
-  set_fts_by_FTS (nm, b, f, t, e);
-  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+  //set_fts_by_FTS (nm, b, f, t, e);
+  //set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+  set_fts_by_FTS (nm, b, f, t, e0);
+  set_fts_by_FTS (nf, b + nm11, uf0, of0, ef0);
+  free (uf0);
+  free (of0);
+  free (ef0);
+  free (e0);
 
   /* mobility matrix in EXTRACTED form */
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
@@ -1157,6 +1206,20 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+
+      o [ix] += sys->Oi[0];
+      o [iy] += sys->Oi[1];
+      o [iz] += sys->Oi[2];
+    }
 
   free (mat);
   free (mat_ll);
@@ -1191,13 +1254,13 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
-				    const double *f, const double *t,
-				    const double *e,
-				    const double *uf, const double *of,
-				    const double *ef,
-				    double *u, double *o, double *s,
-				    double *ff, double *tf, double *sf)
+solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *f, const double *t,
+				 const double *e,
+				 const double *uf, const double *of,
+				 const double *ef,
+				 double *u, double *o, double *s,
+				 double *ff, double *tf, double *sf)
 {
   int np, nm;
 
@@ -1225,6 +1288,14 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   nl = nm * 6;
   nh = n11 - nl;
 
+  double *uf0;
+  double *of0;
+  double *ef0;
+  double *e0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  of0 = (double *) malloc (sizeof (double) * nf * 3);
+  ef0 = (double *) malloc (sizeof (double) * nf * 5);
+  e0  = (double *) malloc (sizeof (double) * nm * 5);
   mat = (double *) malloc (sizeof (double) * n11 * n11);
   lub = (double *) malloc (sizeof (double) * n11 * n11);
   mat_ll = (double *) malloc (sizeof (double) * nl * nl);
@@ -1237,7 +1308,11 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * nh * nh);
   b = (double *) malloc (sizeof (double) * n11);
   x = (double *) malloc (sizeof (double) * n11);
-  if (mat == NULL ||
+  if (uf0 == NULL ||
+      of0 == NULL ||
+      ef0 == NULL ||
+      e0  == NULL ||
+      mat == NULL ||
       lub == NULL ||
       mat_ll == NULL ||
       mat_lh == NULL ||
@@ -1251,8 +1326,39 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at calc_mob_lub_fix_ewald_3fts_matrix()\n");
+	       " at solve_mix_lub_ewald_3fts_matrix()\n");
       exit (1);
+    }
+
+  int i5, ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      i5 = i*5;
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+
+      of0 [ix] = of[ix] - sys->Oi[0];
+      of0 [iy] = of[iy] - sys->Oi[1];
+      of0 [iz] = of[iz] - sys->Oi[2];
+
+      ef0 [i5+0] = ef[i5+0] - sys->Ei[0];
+      ef0 [i5+1] = ef[i5+1] - sys->Ei[1];
+      ef0 [i5+2] = ef[i5+2] - sys->Ei[2];
+      ef0 [i5+3] = ef[i5+3] - sys->Ei[3];
+      ef0 [i5+4] = ef[i5+4] - sys->Ei[4];
+    }
+  for (i = 0; i < nm; i ++)
+    {
+      i5 = i*5;
+      e0 [i5+0] = e[i5+0] - sys->Ei[0];
+      e0 [i5+1] = e[i5+1] - sys->Ei[1];
+      e0 [i5+2] = e[i5+2] - sys->Ei[2];
+      e0 [i5+3] = e[i5+3] - sys->Ei[3];
+      e0 [i5+4] = e[i5+4] - sys->Ei[4];
     }
 
   /* used at lub [] */
@@ -1262,8 +1368,14 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
   I_hh = I_hl + nh * nl;
 
   /* b := (FTE) */
-  set_fts_by_FTS (nm, b, f, t, e);
-  set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+  //set_fts_by_FTS (nm, b, f, t, e);
+  //set_fts_by_FTS (nf, b + nm11, uf, of, ef);
+  set_fts_by_FTS (nm, b, f, t, e0);
+  set_fts_by_FTS (nf, b + nm11, uf0, of0, ef0);
+  free (uf0);
+  free (of0);
+  free (ef0);
+  free (e0);
 
   /* mobility matrix in EXTRACTED form */
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
@@ -1296,6 +1408,20 @@ calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
 
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+
+      o [ix] += sys->Oi[0];
+      o [iy] += sys->Oi[1];
+      o [iz] += sys->Oi[2];
+    }
 
   free (mat);
   free (lub);
