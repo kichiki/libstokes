@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.3 2006/10/12 15:05:55 ichiki Exp $
+# $Id: Makefile.am,v 1.4 2006/10/19 04:18:59 ichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -24,8 +24,10 @@ libstokes_la_SOURCES = \
 	matrix.c		\
 	dgetri_c.c		\
 	bench.c			\
-	stokes-nc.c
+	stokes-nc.c		\
+	stokes-nc-read.c	\
+	stokes-guile.c
 
-libstokes_la_LDFLAGS = -version-info 2:0:0
+libstokes_la_LDFLAGS = -version-info 3:0:0
 
 include_HEADERS = libstokes.h
