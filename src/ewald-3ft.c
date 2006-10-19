@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.8 2006/10/19 04:13:10 ichiki Exp $
+ * $Id: ewald-3ft.c,v 4.9 2006/10/19 18:26:22 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -30,6 +30,7 @@
 #include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
 #include "ft.h"
+#include "f.h"
 #include "ewald.h" // atimes_ewald_3all()
 #include "lub.h" // calc_lub_ewald_3ft()
 
@@ -61,12 +62,32 @@ solve_res_ewald_3ft (struct stokes * sys,
 
   sys->version = 1; // FT version
   np = sys->np;
-
   n6 = np * 6;
-  b = (double *) malloc (sizeof (double) * n6);
-  x = (double *) malloc (sizeof (double) * n6);
 
-  set_ft_by_FT (np, b, u, o);
+  double *u0;
+  double *o0;
+  u0 = (double *) malloc (sizeof (double) * np * 3);
+  o0 = (double *) malloc (sizeof (double) * np * 3);
+  b  = (double *) malloc (sizeof (double) * n6);
+  x  = (double *) malloc (sizeof (double) * n6);
+  if (u0 == NULL ||
+      o0 == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_res_ewald_3ft()\n");
+      exit (1);
+    }
+
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  set_ft_by_FT (np, b, u0, o0);
+  free (u0);
+  free (o0);
 
   /* first guess */
   for (i = 0; i < n6; ++i)
@@ -83,6 +104,10 @@ solve_res_ewald_3ft (struct stokes * sys,
 
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 /** natural mobility problem **/
@@ -110,8 +135,12 @@ solve_mob_ewald_3ft (struct stokes * sys,
   sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
+
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
+
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   set_ft_by_FT (np, x, f, t);
   atimes_ewald_3all (n6, x, b, (void *) sys); // sys->version is 1 (FT)
@@ -119,6 +148,11 @@ solve_mob_ewald_3ft (struct stokes * sys,
 
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+  shift_rest_to_labo_O (sys, sys->np, o);
 }
 
 
@@ -330,21 +364,11 @@ solve_mix_ewald_3ft (struct stokes * sys,
       exit (1);
     }
 
-  int ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-      of0 [ix] = of[ix] - sys->Oi[0];
-      of0 [iy] = of[iy] - sys->Oi[1];
-      of0 [iz] = of[iz] - sys->Oi[2];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  shift_labo_to_rest_O (sys, nf, of, of0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
-  //calc_b_mix_ewald_3ft (sys, f, t, uf, of, b);
   calc_b_mix_ewald_3ft (sys, f, t, uf0, of0, b);
   free (uf0);
   free (of0);
@@ -362,21 +386,13 @@ solve_mix_ewald_3ft (struct stokes * sys,
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-      o [ix] += sys->Oi[0];
-      o [iy] += sys->Oi[1];
-      o [iz] += sys->Oi[2];
-    }
-
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
+  shift_rest_to_labo_O (sys, nm, o);
 }
 
 /** natural resistance problem with lubrication **/
@@ -407,11 +423,34 @@ solve_res_lub_ewald_3ft (struct stokes * sys,
   sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
+
+  double *u0;
+  double *o0;
+  u0  = (double *) malloc (sizeof (double) * np * 3);
+  o0  = (double *) malloc (sizeof (double) * np * 3);
   b = (double *) malloc (sizeof (double) * n6);
   x = (double *) malloc (sizeof (double) * n6);
   lub = (double *) malloc (sizeof (double) * n6);
+  if (u0 == NULL ||
+      o0 == NULL ||
+      b == NULL ||
+      x == NULL ||
+      lub == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_res_lub_ewald_3ft()\n");
+      exit (1);
+    }
 
-  set_ft_by_FT (np, b, u, o);
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  set_ft_by_FT (np, b, u0, o0);
+  free (u0);
+  free (o0);
+
   calc_lub_ewald_3ft (sys, b, lub);
   atimes_ewald_3all (n6, lub, x, (void *) sys);
   // sys->version is 1 (FT)
@@ -437,6 +476,10 @@ solve_res_lub_ewald_3ft (struct stokes * sys,
   free (b);
   free (x);
   free (lub);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 
@@ -672,21 +715,11 @@ solve_mix_lub_ewald_3ft (struct stokes * sys,
       exit (1);
     }
 
-  int ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-      of0 [ix] = of[ix] - sys->Oi[0];
-      of0 [iy] = of[iy] - sys->Oi[1];
-      of0 [iz] = of[iz] - sys->Oi[2];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  shift_labo_to_rest_O (sys, nf, of, of0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
-  //calc_b_mix_lub_ewald_3ft (sys, f, t, uf, of, b);
   calc_b_mix_lub_ewald_3ft (sys, f, t, uf0, of0, b);
   free (uf0);
   free (of0);
@@ -704,19 +737,11 @@ solve_mix_lub_ewald_3ft (struct stokes * sys,
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-      o [ix] += sys->Oi[0];
-      o [iy] += sys->Oi[1];
-      o [iz] += sys->Oi[2];
-    }
-
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
+  shift_rest_to_labo_O (sys, nm, o);
 }

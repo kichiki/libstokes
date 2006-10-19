@@ -1,6 +1,6 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.7 2006/10/19 04:15:26 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.8 2006/10/19 18:27:24 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +25,8 @@
 #include "stokes.h"
 #include "bench.h"
 #include "fts.h"
+#include "ft.h"
+#include "f.h"
 
 #include "ewald.h" // make_matrix_mob_ewald_3all ()
 #include "matrix.h"
@@ -215,12 +217,21 @@ solve_res_ewald_3fts_matrix (struct stokes * sys,
 
   sys->version = 2; // FTS version
   np = sys->np;
-
   n11 = np * 11;
+
+  double *u0;
+  double *o0;
+  double *e0;
+  u0 = (double *) malloc (sizeof (double) * np * 3);
+  o0 = (double *) malloc (sizeof (double) * np * 3);
+  e0 = (double *) malloc (sizeof (double) * np * 5);
   mat = (double *) malloc (sizeof (double) * n11 * n11);
   b = (double *) malloc (sizeof (double) * n11);
   x = (double *) malloc (sizeof (double) * n11);
-  if (mat == NULL ||
+  if (u0 == NULL ||
+      o0 == NULL ||
+      e0 == NULL ||
+      mat == NULL ||
       b == NULL ||
       x == NULL)
     {
@@ -229,8 +240,14 @@ solve_res_ewald_3fts_matrix (struct stokes * sys,
       exit (1);
     }
 
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   /* b := (UOE) */
-  set_fts_by_FTS (np, b, u, o, e);
+  set_fts_by_FTS (np, b, u0, o0, e0);
 
   // mobility matrix in EXTRACTED form
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
@@ -249,6 +266,10 @@ solve_res_ewald_3fts_matrix (struct stokes * sys,
   free (mat);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 
@@ -282,21 +303,41 @@ solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
   sys->version = 2; // FTS version
   np = sys->np;
   n11 = np * 11;
+
+  double *u0;
+  double *o0;
+  double *e0;
+  u0 = (double *) malloc (sizeof (double) * np * 3);
+  o0 = (double *) malloc (sizeof (double) * np * 3);
+  e0 = (double *) malloc (sizeof (double) * np * 5);
   mat = malloc (sizeof (double) * n11 * n11);
   b = malloc (sizeof (double) * n11);
   x = malloc (sizeof (double) * n11);
   y = malloc (sizeof (double) * n11);
-  if (mat == NULL
-      || b == NULL
-      || x == NULL
-      || y == NULL)
+  if (u0 == NULL ||
+      o0 == NULL ||
+      e0 == NULL ||
+      mat == NULL ||
+      b == NULL ||
+      x == NULL ||
+      y == NULL)
     {
-      fprintf (stderr, "allocation error in solve_res_ewald_3fts_matrix().\n");
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_res_lub_ewald_3fts_matrix()\n");
       exit (1);
     }
 
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   /* b := (UOE) */
-  set_fts_by_FTS (np, b, u, o, e);
+  set_fts_by_FTS (np, b, u0, o0, e0);
+  free (u0);
+  free (o0);
+  free (e0);
 
   make_matrix_lub_ewald_3fts (sys, mat); // lub matrix in EXTRACTED form
   multiply_extmat_with_extvec_3fts (np, mat, b, x); // x := L.(UOE)
@@ -324,6 +365,10 @@ solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
   free (b);
   free (x);
   free (y);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 /** natural mobility problem **/
@@ -549,6 +594,9 @@ solve_mob_ewald_3fts_matrix (struct stokes * sys,
   n11 = np * 11;
   n6 = np * 6;
   n5 = np * 5;
+
+  double *e0;
+  e0 = (double *) malloc (sizeof (double) * np * 5);
   mat = (double *) malloc (sizeof (double) * n11 * n11);
   mat_ll = (double *) malloc (sizeof (double) * n6 * n6);
   mat_lh = (double *) malloc (sizeof (double) * n6 * n5);
@@ -560,7 +608,8 @@ solve_mob_ewald_3fts_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * n5 * n5);
   b = (double *) malloc (sizeof (double) * n11);
   x = (double *) malloc (sizeof (double) * n11);
-  if (mat == NULL ||
+  if (e0 == NULL ||
+      mat == NULL ||
       mat_ll == NULL ||
       mat_lh == NULL ||
       mat_hl == NULL ||
@@ -577,8 +626,13 @@ solve_mob_ewald_3fts_matrix (struct stokes * sys,
       exit (1);
     }
 
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   /* b := (FTE) */
-  set_fts_by_FTS (np, b, f, t, e);
+  set_fts_by_FTS (np, b, f, t, e0);
+  free (e0);
 
   /* mobility matrix in EXTRACTED form */
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
@@ -607,6 +661,11 @@ solve_mob_ewald_3fts_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+  shift_rest_to_labo_O (sys, sys->np, o);
 }
 
 /* return A_ij = A_ik . B_kj
@@ -673,10 +732,12 @@ solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
 
   sys->version = 2; // FTS version
   np = sys->np;
-
   n11 = np * 11;
   n6 = np * 6;
   n5 = np * 5;
+
+  double *e0;
+  e0 = (double *) malloc (sizeof (double) * np * 5);
   mat = (double *) malloc (sizeof (double) * n11 * n11);
   lub = (double *) malloc (sizeof (double) * n11 * n11);
   mat_ll = (double *) malloc (sizeof (double) * n6 * n6);
@@ -689,7 +750,8 @@ solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
   mob_hh = (double *) malloc (sizeof (double) * n5 * n5);
   b = (double *) malloc (sizeof (double) * n11);
   x = (double *) malloc (sizeof (double) * n11);
-  if (mat == NULL ||
+  if (e0 == NULL ||
+      mat == NULL ||
       lub == NULL ||
       mat_ll == NULL ||
       mat_lh == NULL ||
@@ -707,6 +769,10 @@ solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
       exit (1);
     }
 
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   /* used at lub [] */
   I_ll = lub;
   I_lh = I_ll + n6 * n6;
@@ -714,7 +780,8 @@ solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
   I_hh = I_hl + n5 * n6;
 
   /* b := (FTE) */
-  set_fts_by_FTS (np, b, f, t, e);
+  set_fts_by_FTS (np, b, f, t, e0);
+  free (e0);
 
   /* mobility matrix in EXTRACTED form */
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 2 (FTS)
@@ -759,6 +826,11 @@ solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+  shift_rest_to_labo_O (sys, sys->np, o);
 }
 
 /** natural mobility problem with fixed particles **/
@@ -1149,40 +1221,14 @@ solve_mix_ewald_3fts_matrix (struct stokes * sys,
       exit (1);
     }
 
-  int i, i5, ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      i5 = i*5;
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-
-      of0 [ix] = of[ix] - sys->Oi[0];
-      of0 [iy] = of[iy] - sys->Oi[1];
-      of0 [iz] = of[iz] - sys->Oi[2];
-
-      ef0 [i5+0] = ef[i5+0] - sys->Ei[0];
-      ef0 [i5+1] = ef[i5+1] - sys->Ei[1];
-      ef0 [i5+2] = ef[i5+2] - sys->Ei[2];
-      ef0 [i5+3] = ef[i5+3] - sys->Ei[3];
-      ef0 [i5+4] = ef[i5+4] - sys->Ei[4];
-    }
-  for (i = 0; i < nm; i ++)
-    {
-      i5 = i*5;
-      e0 [i5+0] = e[i5+0] - sys->Ei[0];
-      e0 [i5+1] = e[i5+1] - sys->Ei[1];
-      e0 [i5+2] = e[i5+2] - sys->Ei[2];
-      e0 [i5+3] = e[i5+3] - sys->Ei[3];
-      e0 [i5+4] = e[i5+4] - sys->Ei[4];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  shift_labo_to_rest_O (sys, nf, of, of0);
+  shift_labo_to_rest_E (sys, nf, ef, ef0);
+  shift_labo_to_rest_E (sys, nm, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   /* b := (FTE) */
-  //set_fts_by_FTS (nm, b, f, t, e);
-  //set_fts_by_FTS (nf, b + nm11, uf, of, ef);
   set_fts_by_FTS (nm, b, f, t, e0);
   set_fts_by_FTS (nf, b + nm11, uf0, of0, ef0);
   free (uf0);
@@ -1207,20 +1253,6 @@ solve_mix_ewald_3fts_matrix (struct stokes * sys,
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-
-      o [ix] += sys->Oi[0];
-      o [iy] += sys->Oi[1];
-      o [iz] += sys->Oi[2];
-    }
-
   free (mat);
   free (mat_ll);
   free (mat_lh);
@@ -1232,6 +1264,11 @@ solve_mix_ewald_3fts_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
+  shift_rest_to_labo_O (sys, nm, o);
 }
 
 /** natural mobility problem with lubrication with fixed particles **/
@@ -1330,36 +1367,12 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
       exit (1);
     }
 
-  int i5, ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      i5 = i*5;
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-
-      of0 [ix] = of[ix] - sys->Oi[0];
-      of0 [iy] = of[iy] - sys->Oi[1];
-      of0 [iz] = of[iz] - sys->Oi[2];
-
-      ef0 [i5+0] = ef[i5+0] - sys->Ei[0];
-      ef0 [i5+1] = ef[i5+1] - sys->Ei[1];
-      ef0 [i5+2] = ef[i5+2] - sys->Ei[2];
-      ef0 [i5+3] = ef[i5+3] - sys->Ei[3];
-      ef0 [i5+4] = ef[i5+4] - sys->Ei[4];
-    }
-  for (i = 0; i < nm; i ++)
-    {
-      i5 = i*5;
-      e0 [i5+0] = e[i5+0] - sys->Ei[0];
-      e0 [i5+1] = e[i5+1] - sys->Ei[1];
-      e0 [i5+2] = e[i5+2] - sys->Ei[2];
-      e0 [i5+3] = e[i5+3] - sys->Ei[3];
-      e0 [i5+4] = e[i5+4] - sys->Ei[4];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  shift_labo_to_rest_O (sys, nf, of, of0);
+  shift_labo_to_rest_E (sys, nf, ef, ef0);
+  shift_labo_to_rest_E (sys, nm, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   /* used at lub [] */
   I_ll = lub;
@@ -1368,8 +1381,6 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
   I_hh = I_hl + nh * nl;
 
   /* b := (FTE) */
-  //set_fts_by_FTS (nm, b, f, t, e);
-  //set_fts_by_FTS (nf, b + nm11, uf, of, ef);
   set_fts_by_FTS (nm, b, f, t, e0);
   set_fts_by_FTS (nf, b + nm11, uf0, of0, ef0);
   free (uf0);
@@ -1409,20 +1420,6 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
   set_FTS_by_fts (nm, u, o, s, x);
   set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-
-      o [ix] += sys->Oi[0];
-      o [iy] += sys->Oi[1];
-      o [iz] += sys->Oi[2];
-    }
-
   free (mat);
   free (lub);
   free (mat_ll);
@@ -1435,4 +1432,9 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
+  shift_rest_to_labo_O (sys, nm, o);
 }

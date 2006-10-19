@@ -1,6 +1,6 @@
 /* Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.9 2006/10/19 04:12:24 ichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.10 2006/10/19 18:26:00 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,21 +51,34 @@ solve_res_ewald_3f_matrix (struct stokes * sys,
 
   sys->version = 0; // F version
   n3 = sys->np * 3;
+
+  double *u0;
+  u0  = (double *) malloc (sizeof (double) * n3);
   mat = (double *) malloc (sizeof (double) * n3 * n3);
-  if (mat == NULL)
+  if (u0 == NULL ||
+      mat == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
 	       " at solve_res_ewald_3f_matrix()\n");
       exit (1);
     }
 
+  shift_labo_to_rest_U (sys, sys->np, u, u0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 0 (F)
   lapack_inv_ (n3, mat);
 
   // f := M^-1.u
-  dot_prod_matrix (mat, n3, n3, u, f);
+  dot_prod_matrix (mat, n3, n3, u0, f);
+  free (u0);
 
   free (mat);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 
@@ -91,17 +104,24 @@ solve_res_lub_ewald_3f_matrix (struct stokes * sys,
 
   sys->version = 0; // F version
   np = sys->np;
-
   n3 = np * 3;
+
+  double *u0;
+  u0  = (double *) malloc (sizeof (double) * n3);
   mob = (double *) malloc (sizeof (double) * n3 * n3);
   lub = (double *) malloc (sizeof (double) * n3 * n3);
-  if (mob == NULL ||
+  if (u0 == NULL ||
+      mob == NULL ||
       lub == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
 	       " at solve_res_lub_ewald_3f_matrix()\n");
       exit (1);
     }
+
+  shift_labo_to_rest_U (sys, sys->np, u, u0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   // M matrix
   make_matrix_mob_ewald_3all (sys, mob); // sys->version is 0 (F)
@@ -119,9 +139,14 @@ solve_res_lub_ewald_3f_matrix (struct stokes * sys,
   free (mob);
 
   // x := (M^-1 + L).(UO)
-  dot_prod_matrix (lub, n3, n3, u, f);
+  dot_prod_matrix (lub, n3, n3, u0, f);
+  free (u0);
 
   free (lub);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 /** natural mobility problem **/
@@ -138,7 +163,15 @@ solve_mob_ewald_3f_matrix (struct stokes * sys,
 			   double *u)
 {
   sys->version = 0; // F version
+
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   atimes_ewald_3all_matrix (sys->np * 3, f, u, (void *) sys);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
 }
 
 /* solve natural mobility problem in F version under Ewald sum
@@ -181,6 +214,9 @@ solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
       exit (1);
     }
 
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
   // M
   make_matrix_mob_ewald_3all (sys, mat); // sys->version is 0 (F)
   // L
@@ -208,6 +244,10 @@ solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
   free (mat);
   free (iml);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
 }
 
 /** natural mobility problem with fixed particles **/
@@ -491,21 +531,13 @@ solve_mix_ewald_3f_matrix (struct stokes * sys,
       exit (1);
     }
 
-  int i, ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   /* b := (F,Uf) */
   // note: set_F_by_f() == set_f_by_F() so not implemented explicitely
   set_F_by_f (nm, b, f);
-  //set_F_by_f (nf, b + nm3, uf);
   set_F_by_f (nf, b + nm3, uf0);
   free (uf0);
 
@@ -524,16 +556,6 @@ solve_mix_ewald_3f_matrix (struct stokes * sys,
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-    }
-
   free (mat);
   free (mat_ll);
   free (mat_lh);
@@ -545,6 +567,10 @@ solve_mix_ewald_3f_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
 }
 
 /** natural mobility problem with lubrication with fixed particles **/
@@ -625,21 +651,13 @@ solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
       exit (1);
     }
 
-  int ix, iy, iz;
-  for (i = 0; i < nf; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      uf0 [ix] = uf[ix] - sys->Ui[0];
-      uf0 [iy] = uf[iy] - sys->Ui[1];
-      uf0 [iz] = uf[iz] - sys->Ui[2];
-    }
+  shift_labo_to_rest_U (sys, nf, uf, uf0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
 
   /* b := (F,Uf) */
   // note: set_F_by_f() == set_f_by_F() so not implemented explicitely
   set_F_by_f (nm, b, f);
-  //set_F_by_f (nf, b + nm3, uf);
   set_F_by_f (nf, b + nm3, uf0);
   free (uf0);
 
@@ -681,16 +699,6 @@ solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
 
-  for (i = 0; i < nm; i ++)
-    {
-      ix = i*3;
-      iy = ix + 1;
-      iz = ix + 2;
-      u [ix] += sys->Ui[0];
-      u [iy] += sys->Ui[1];
-      u [iz] += sys->Ui[2];
-    }
-
   free (mat);
   free (mat_ll);
   free (mat_lh);
@@ -702,4 +710,8 @@ solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
   free (mob_hh);
   free (b);
   free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, nm, u);
 }
