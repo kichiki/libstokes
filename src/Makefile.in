@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # for libstokes
-# $Id: Makefile.in,v 1.4 2006/10/12 17:33:26 ichiki Exp $
+# $Id: Makefile.in,v 1.5 2006/10/19 04:35:53 ichiki Exp $
 
 
 srcdir = @srcdir@
@@ -64,7 +64,8 @@ am_libstokes_la_OBJECTS = stokes.lo ewald-3f.lo ewald-3ft.lo \
 	ewald-3fts.lo ewald-2f.lo ewald-2ft.lo ewald-2fts.lo f.lo \
 	ft.lo fts.lo two-body-res.lo lub.lo ewald.lo \
 	ewald-3f-matrix.lo ewald-3ft-matrix.lo ewald-3fts-matrix.lo \
-	lub-matrix.lo matrix.lo dgetri_c.lo bench.lo stokes-nc.lo
+	lub-matrix.lo matrix.lo dgetri_c.lo bench.lo stokes-nc.lo \
+	stokes-nc-read.lo stokes-guile.lo
 libstokes_la_OBJECTS = $(am_libstokes_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -202,9 +203,11 @@ libstokes_la_SOURCES = \
 	matrix.c		\
 	dgetri_c.c		\
 	bench.c			\
-	stokes-nc.c
+	stokes-nc.c		\
+	stokes-nc-read.c	\
+	stokes-guile.c
 
-libstokes_la_LDFLAGS = -version-info 2:0:0
+libstokes_la_LDFLAGS = -version-info 3:0:0
 include_HEADERS = libstokes.h
 all: all-am
 
@@ -293,6 +296,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub-matrix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matrix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-guile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-nc-read.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-nc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/two-body-res.Plo@am__quote@

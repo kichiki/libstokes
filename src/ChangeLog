@@ -1,3 +1,90 @@
+2006-10-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.11 2006/10/19 04:32:17 ichiki Exp
+	add entries from stokes-nc-read.h and stokes-guile.h.
+	update for all ewald codes.
+
+	* Makefile.am: 1.4 2006/10/19 04:18:59 ichiki Exp
+	add stokes-nc-read.c and stokes-guile.c.
+	increment the library version.
+
+	* ewald-2fts.h: 1.3 2006/10/19 04:17:51 ichiki Exp
+	* ewald-2fts.c: 1.6 2006/10/19 04:17:29 ichiki Exp
+	* ewald-2ft.h: 1.3 2006/10/19 04:17:11 ichiki Exp
+	* ewald-2ft.c: 1.5 2006/10/19 04:16:51 ichiki Exp
+	* ewald-2f.h: 1.3 2006/10/19 04:16:32 ichiki Exp
+	* ewald-2f.c: 1.6 2006/10/19 04:16:11 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+
+	* ewald-3fts-matrix.h: 2.5 2006/10/19 04:15:49 ichiki Exp
+	* ewald-3fts-matrix.c: 2.7 2006/10/19 04:15:26 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3fts_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3fts_matrix): take into account the imposed
+	flow.
+
+	* ewald-3fts.h: 5.5 2006/10/19 04:15:01 ichiki Exp
+	* ewald-3fts.c: 5.8 2006/10/19 04:14:40 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3fts): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3fts): take into account the imposed flow.
+
+	* ewald-3ft-matrix.h: 2.5 2006/10/19 04:14:17 ichiki Exp
+	* ewald-3ft-matrix.c: 2.8 2006/10/19 04:13:54 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3ft_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3ft_matrix): take into account the imposed
+	flow.
+
+	* ewald-3ft.h: 4.4 2006/10/19 04:13:31 ichiki Exp
+	* ewald-3ft.c: 4.8 2006/10/19 04:13:10 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3ft): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3ft): take into account the imposed flow.
+
+	* ewald-3f-matrix.h: 2.5 2006/10/19 04:12:45 ichiki Exp
+	* ewald-3f-matrix.c: 2.9 2006/10/19 04:12:24 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3f_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3f_matrix): take into account the imposed flow.
+
+	* ewald-3f.h: 4.4 2006/10/19 04:11:58 ichiki Exp
+	* ewald-3f.c: 4.7 2006/10/19 04:11:28 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3f): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3f): take into account the imposed flow.
+
+2006-10-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes.h: 1.8 2006/10/19 03:15:51 ichiki Exp
+	* stokes.c: 2.8 2006/10/19 03:15:31 ichiki Exp
+	add imposed flow informations into struct stokes.
+	(stokes_set_l): change the name from stokes_set_ll().
+
+	* stokes-guile.h: 5.1 2006/10/19 03:11:55 ichiki Exp
+	* stokes-guile.c: 5.1 2006/10/19 03:11:30 ichiki Exp
+	initial revision.
+	imported from stokes-src.
+
+	* stokes-nc-read.h: 5.1 2006/10/19 02:45:38 ichiki Exp
+	* stokes-nc-read.c: 5.1 2006/10/19 02:45:11 ichiki Exp
+	initial revision.
+	imported from stokes-src.
+
+	* stokes-nc.h: 5.3 2006/10/19 02:44:30 ichiki Exp
+	* stokes-nc.c: 5.3 2006/10/19 02:44:03 ichiki Exp
+	add infomations about imposed flows.
+	(stokes_nc_error): make this public (drop 'static') for
+	stokes-nc-read.c.
+	(stokes_nc_print_actives): added.
+
 2006-10-12  Kengo Ichiki  <ichiki@tpr60>
 
 	* Makefile.am: 1.3 2006/10/12 15:05:55 ichiki Exp
