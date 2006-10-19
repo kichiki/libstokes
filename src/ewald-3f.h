@@ -1,7 +1,7 @@
 /* header file for 'ewald-3f.c' --
  * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.h,v 4.3 2006/10/05 19:23:59 ichiki Exp $
+ * $Id: ewald-3f.h,v 4.4 2006/10/19 04:11:58 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -36,9 +36,9 @@
  *  f [np * 3] :
  */
 void
-calc_res_ewald_3f (struct stokes * sys,
-		   const double *u,
-		   double *f);
+solve_res_ewald_3f (struct stokes * sys,
+		    const double *u,
+		    double *f);
 
 /** natural mobility problem **/
 /* solve natural mobility problem in F version under Ewald sum
@@ -49,9 +49,9 @@ calc_res_ewald_3f (struct stokes * sys,
  *  u [np * 3] :
  */
 void
-calc_mob_ewald_3f (struct stokes * sys,
-		   const double *f,
-		   double *u);
+solve_mob_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    double *u);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in F version
@@ -65,11 +65,11 @@ calc_mob_ewald_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3f (struct stokes * sys,
-		       const double *f,
-		       const double *uf,
-		       double *u,
-		       double *ff);
+solve_mix_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    const double *uf,
+		    double *u,
+		    double *ff);
 
 /** natural resistance problem with lubrication **/
 /* solve natural resistance problem with lubrication
@@ -81,9 +81,9 @@ calc_mob_fix_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-calc_res_lub_ewald_3f (struct stokes * sys,
-		       const double *u,
-		       double *f);
+solve_res_lub_ewald_3f (struct stokes * sys,
+			const double *u,
+			double *f);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
@@ -97,10 +97,10 @@ calc_res_lub_ewald_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3f (struct stokes * sys,
-			   const double *f,
-			   const double *uf,
-			   double *u,
-			   double *ff);
+solve_mix_lub_ewald_3f (struct stokes * sys,
+			const double *f,
+			const double *uf,
+			double *u,
+			double *ff);
 
 #endif /* !_EWALD_3F_H_ */

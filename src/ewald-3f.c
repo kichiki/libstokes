@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.c,v 4.6 2006/10/12 14:59:48 ichiki Exp $
+ * $Id: ewald-3f.c,v 4.7 2006/10/19 04:11:28 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -45,9 +45,9 @@
  *  f [np * 3] :
  */
 void
-calc_res_ewald_3f (struct stokes * sys,
-		   const double *u,
-		   double *f)
+solve_res_ewald_3f (struct stokes * sys,
+		    const double *u,
+		    double *f)
 {
   int np;
   int i;
@@ -79,9 +79,9 @@ calc_res_ewald_3f (struct stokes * sys,
  *  u [np * 3] :
  */
 void
-calc_mob_ewald_3f (struct stokes * sys,
-		   const double *f,
-		   double *u)
+solve_mob_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    double *u)
 {
   sys->version = 0; // F version
   atimes_ewald_3all (sys->np * 3, f, u, (void *) sys);
@@ -100,10 +100,10 @@ calc_mob_ewald_3f (struct stokes * sys,
  *  b [np * 3] : constant vector
  */
 static void
-calc_b_mob_fix_ewald_3f (struct stokes * sys,
-			 const double *f,
-			 const double *uf,
-			 double *b)
+calc_b_mix_ewald_3f (struct stokes * sys,
+		     const double *f,
+		     const double *uf,
+		     double *b)
 {
   int np, nm;
   int i;
@@ -167,7 +167,7 @@ calc_b_mob_fix_ewald_3f (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_fix_ewald_3f (int n, const double *x, double *y, void * user_data)
+atimes_mix_ewald_3f (int n, const double *x, double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -243,11 +243,11 @@ atimes_mob_fix_ewald_3f (int n, const double *x, double *y, void * user_data)
  *   ff [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3f (struct stokes * sys,
-		       const double *f,
-		       const double *uf,
-		       double *u,
-		       double *ff)
+solve_mix_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    const double *uf,
+		    double *u,
+		    double *ff)
 {
   int np, nm;
   int i;
@@ -272,10 +272,33 @@ calc_mob_fix_ewald_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
+  double *uf0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
   b = (double *) malloc (sizeof (double) * n3);
   x = (double *) malloc (sizeof (double) * n3);
+  if (uf0 == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_mix_ewald_3f()\n");
+      exit (1);
+    }
 
-  calc_b_mob_fix_ewald_3f (sys, f, uf, b);
+  int ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+    }
+
+  //calc_b_mix_ewald_3f (sys, f, uf, b);
+  calc_b_mix_ewald_3f (sys, f, uf0, b);
+  free (uf0);
 
   /* first guess */
   for (i = 0; i < n3; ++i)
@@ -284,11 +307,21 @@ calc_mob_fix_ewald_3f (struct stokes * sys,
     }
 
   solve_iter (n3, b, x,
-	      atimes_mob_fix_ewald_3f, (void *) sys,
+	      atimes_mix_ewald_3f, (void *) sys,
 	      sys->it);
 
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+    }
 
   free (b);
   free (x);
@@ -306,9 +339,9 @@ calc_mob_fix_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-calc_res_lub_ewald_3f (struct stokes * sys,
-		       const double *u,
-		       double *f)
+solve_res_lub_ewald_3f (struct stokes * sys,
+			const double *u,
+			double *f)
 {
   int np;
   int i;
@@ -357,10 +390,10 @@ calc_res_lub_ewald_3f (struct stokes * sys,
  *  b [np * 3] : constant vector
  */
 static void
-calc_b_mob_lub_fix_ewald_3f (struct stokes * sys,
-			     const double *f,
-			     const double *uf,
-			     double *b)
+calc_b_mix_lub_ewald_3f (struct stokes * sys,
+			 const double *f,
+			 const double *uf,
+			 double *b)
 {
   int np, nm;
   int i;
@@ -434,8 +467,8 @@ calc_b_mob_lub_fix_ewald_3f (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mob_lub_fix_ewald_3f (int n, const double *x,
-			     double *y, void * user_data)
+atimes_mix_lub_ewald_3f (int n, const double *x,
+			 double *y, void * user_data)
 {
   struct stokes * sys;
 
@@ -523,11 +556,11 @@ atimes_mob_lub_fix_ewald_3f (int n, const double *x,
  *   ff [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3f (struct stokes * sys,
-			   const double *f,
-			   const double *uf,
-			   double *u,
-			   double *ff)
+solve_mix_lub_ewald_3f (struct stokes * sys,
+			const double *f,
+			const double *uf,
+			double *u,
+			double *ff)
 {
   int np, nm;
 
@@ -548,10 +581,33 @@ calc_mob_lub_fix_ewald_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
+  double *uf0;
+  uf0 = (double *) malloc (sizeof (double) * nf * 3);
   b = (double *) malloc (sizeof (double) * n3);
   x = (double *) malloc (sizeof (double) * n3);
+  if (uf0 == NULL ||
+      b == NULL ||
+      x == NULL)
+    {
+      fprintf (stderr, "libstokes: allocation error"
+	       " at solve_mix_lub_ewald_3f()\n");
+      exit (1);
+    }
 
-  calc_b_mob_lub_fix_ewald_3f (sys, f, uf, b);
+  int ix, iy, iz;
+  for (i = 0; i < nf; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      uf0 [ix] = uf[ix] - sys->Ui[0];
+      uf0 [iy] = uf[iy] - sys->Ui[1];
+      uf0 [iz] = uf[iz] - sys->Ui[2];
+    }
+
+  //calc_b_mix_lub_ewald_3f (sys, f, uf, b);
+  calc_b_mix_lub_ewald_3f (sys, f, uf0, b);
+  free (uf0);
 
   /* first guess */
   for (i = 0; i < n3; ++i)
@@ -561,11 +617,21 @@ calc_mob_lub_fix_ewald_3f (struct stokes * sys,
 
   //NUMB_mobile_particles = nm;
   solve_iter (n3, b, x,
-	      atimes_mob_lub_fix_ewald_3f, (void *) sys,
+	      atimes_mix_lub_ewald_3f, (void *) sys,
 	      sys->it);
 
   set_F_by_f (nm, u, x);
   set_F_by_f (nf, ff, x + nm3);
+
+  for (i = 0; i < nm; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+      u [ix] += sys->Ui[0];
+      u [iy] += sys->Ui[1];
+      u [iz] += sys->Ui[2];
+    }
 
   free (b);
   free (x);
