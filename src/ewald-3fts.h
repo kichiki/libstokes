@@ -1,7 +1,7 @@
 /* header file for 'ewald-3fts.c' --
  * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.h,v 5.4 2006/10/05 19:00:50 ichiki Exp $
+ * $Id: ewald-3fts.h,v 5.5 2006/10/19 04:15:01 ichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -40,9 +40,9 @@
  *   s [np * 5] :
  */
 void
-calc_res_ewald_3fts (struct stokes * sys,
-		     const double *u, const double *o, const double *e,
-		     double *f, double *t, double *s);
+solve_res_ewald_3fts (struct stokes * sys,
+		      const double *u, const double *o, const double *e,
+		      double *f, double *t, double *s);
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FTS version under Ewald sum
@@ -57,9 +57,9 @@ calc_res_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_mob_ewald_3fts (struct stokes * sys,
-		     const double *f, const double *t, const double *e,
-		     double *u, double *o, double *s);
+solve_mob_ewald_3fts (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      double *u, double *o, double *s);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FTS version
@@ -81,11 +81,11 @@ calc_mob_ewald_3fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_fix_ewald_3fts (struct stokes * sys,
-			 const double *f, const double *t, const double *e,
-			 const double *uf, const double *of, const double *ef,
-			 double *u, double *o, double *s,
-			 double *ff, double *tf, double *sf);
+solve_mix_ewald_3fts (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      const double *uf, const double *of, const double *ef,
+		      double *u, double *o, double *s,
+		      double *ff, double *tf, double *sf);
 
 /** natural resistance problem with lubrication **/
 /* solve natural resistance problem with lubrication
@@ -101,9 +101,9 @@ calc_mob_fix_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_3fts (struct stokes * sys,
-			 const double *u, const double *o, const double *e,
-			 double *f, double *t, double *s);
+solve_res_lub_ewald_3fts (struct stokes * sys,
+			  const double *u, const double *o, const double *e,
+			  double *f, double *t, double *s);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
@@ -125,11 +125,11 @@ calc_res_lub_ewald_3fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_3fts (struct stokes * sys,
-			     const double *f, const double *t, const double *e,
-			     const double *uf, const double *of,
-			     const double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf);
+solve_mix_lub_ewald_3fts (struct stokes * sys,
+			  const double *f, const double *t, const double *e,
+			  const double *uf, const double *of,
+			  const double *ef,
+			  double *u, double *o, double *s,
+			  double *ff, double *tf, double *sf);
 
 #endif /* !_EWALD_3FTS_H_ */
