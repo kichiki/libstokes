@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.2 2006/10/12 03:54:21 ichiki Exp $
+ * $Id: stokes-nc.h,v 5.3 2006/10/19 02:44:30 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,6 +43,14 @@ struct stokes_nc {
   int time_dim;
   int time_id;
 
+  int l_id;
+  int ui0_id;
+  int oi0_id;
+  int ei0_id;
+  int ui_id;
+  int oi_id;
+  int ei_id;
+
   int x0_id;
   int u0_id;
   int o0_id;
@@ -77,6 +85,13 @@ struct stokes_nc {
 
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
+  int flag_ui0;
+  int flag_oi0;
+  int flag_ei0;
+  int flag_ui;
+  int flag_oi;
+  int flag_ei;
+
   int flag_x0;
   int flag_u0;
   int flag_o0;
@@ -110,6 +125,15 @@ struct stokes_nc {
   int flag_sf;
 };
 
+
+void
+stokes_nc_error (int status, const char * message, const char * varname);
+
+void
+stokes_nc_print_actives (struct stokes_nc * nc,
+			 FILE * out);
+
+
 /* initialize NetCDF file for libstokes for mob_F problem
  * INPUT
  *  np : number of MOBILE particles
@@ -137,37 +161,77 @@ stokes_nc_mob_ft_init (const char * filename, int np);
  */
 struct stokes_nc *
 stokes_nc_mob_fts_init (const char * filename, int np);
+
 /* initialize NetCDF file for libstokes for mob_fix_F problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, uf0, x, u, ff.
+ *  activated entries are, ui0, xf0, f0, uf0, x, u, ff.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_f_i0_init (const char * filename, int nm, int nf);
 /* initialize NetCDF file for libstokes for mob_fix_FT problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *  activated entries are, ui0, oi0, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_ft_i0_init (const char * filename, int nm, int nf);
 /* initialize NetCDF file for libstokes for mob_fix_FTS problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, t0, e0, uf0, of0, ef0,
+ *  activated entries are, ui0, oi0, ei0,
+ *                         xf0, f0, t0, e0, uf0, of0, ef0,
  *                         x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_fts_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_fts_i0_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_F problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, xf0, f0, uf0, x, u, ff.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_f_it_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_FT problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, oi, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_ft_it_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_FTS problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, oi, ei,
+ *                         xf0, f0, t0, e0, uf0, of0, ef0,
+ *                         x, u, o, s, ff, tf, sf.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_fts_it_init (const char * filename, int nm, int nf);
 
 
 /* close (and write if necessary) NetCDF file for libstokes
@@ -177,6 +241,26 @@ stokes_nc_free (struct stokes_nc * nc);
 
 
 /** set nc data **/
+/* set l = (lx, ly, lz)
+ */
+void
+stokes_nc_set_l (struct stokes_nc * nc,
+		 const double * l);
+/* set ui
+ */
+void
+stokes_nc_set_ui (struct stokes_nc * nc,
+		  const double * ui);
+/* set oi
+ */
+void
+stokes_nc_set_oi (struct stokes_nc * nc,
+		  const double * oi);
+/* set ei
+ */
+void
+stokes_nc_set_ei (struct stokes_nc * nc,
+		  const double * ei);
 /* set x0
  */
 void
