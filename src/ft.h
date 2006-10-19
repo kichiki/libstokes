@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.3 2006/09/28 04:42:52 kichiki Exp $
+ * $Id: ft.h,v 2.4 2006/10/19 18:23:38 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -191,5 +191,41 @@ matrix_lub_ft_2b (struct stokes * sys,
 		  int i, int j,
 		  const double *x1, const double *x2,
 		  int n, double * mat);
+
+/* pre-process for imposed flow shifting, that is, converting U,O
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  o0[np*3] : angular velocity in the labo frame
+ */
+void
+shift_labo_to_rest_O (struct stokes * sys,
+		      int np, const double *o,
+		      double *o0);
+
+/* post-process for imposed flow shifting, that is, converting U,O
+ * from the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * to the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is overwritten after the process)
+ * OUTPUT
+ *  o[np*3] : angular velocity in the labo frame
+ */
+void
+shift_rest_to_labo_O (struct stokes * sys,
+		      int np, double *o);
+
 
 #endif /* !_FT_H_ */

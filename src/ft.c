@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.4 2006/10/12 15:04:44 ichiki Exp $
+ * $Id: ft.c,v 2.5 2006/10/19 18:23:12 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -637,4 +637,65 @@ matrix_lub_ft_2b (struct stokes * sys,
 		n, mat);
 
   free (res2b);
+}
+
+/* pre-process for imposed flow shifting, that is, converting U,O
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  o0[np*3] : angular velocity in the labo frame
+ */
+void
+shift_labo_to_rest_O (struct stokes * sys,
+		      int np, const double *o,
+		      double *o0)
+{
+  int i, ix, iy, iz;
+  for (i = 0; i < np; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+
+      o0 [ix] = o[ix] - sys->Oi[0];
+      o0 [iy] = o[iy] - sys->Oi[1];
+      o0 [iz] = o[iz] - sys->Oi[2];
+    }
+}
+
+/* post-process for imposed flow shifting, that is, converting U,O
+ * from the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * to the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is overwritten after the process)
+ * OUTPUT
+ *  o[np*3] : angular velocity in the labo frame
+ */
+void
+shift_rest_to_labo_O (struct stokes * sys,
+		      int np, double *o)
+{
+  int i, ix, iy, iz;
+  for (i = 0; i < np; i ++)
+    {
+      ix = i*3;
+      iy = ix + 1;
+      iz = ix + 2;
+
+      o [ix] += sys->Oi[0];
+      o [iy] += sys->Oi[1];
+      o [iz] += sys->Oi[2];
+    }
 }
