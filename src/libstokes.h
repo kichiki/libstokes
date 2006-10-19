@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.10 2006/10/12 03:55:05 ichiki Exp $
+ * $Id: libstokes.h,v 1.11 2006/10/19 04:32:17 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,6 +31,11 @@ struct stokes {
   double * pos; /* position of particles */
 
   int version; /* 0 = F, 1 = FT, 2 = FTS */
+
+  /* imposed flow */
+  double Ui[3];
+  double Oi[3];
+  double Ei[5];
 
   /* for ewald codes */
   double rmax2;
@@ -98,8 +103,19 @@ stokes_set_np (struct stokes * sys,
 	       int np, int nm);
 
 void
-stokes_set_ll (struct stokes * sys,
-	       double lx, double ly, double lz);
+stokes_set_Ui (struct stokes * sys,
+	       double uix, double uiy, double uiz);
+void
+stokes_set_Oi (struct stokes * sys,
+	       double oix, double oiy, double oiz);
+void
+stokes_set_Ei (struct stokes * sys,
+	       double eixx, double eixy, double eixz,
+	       double eiyz, double eiyy);
+
+void
+stokes_set_l (struct stokes * sys,
+	      double lx, double ly, double lz);
 
 void
 stokes_set_xi (struct stokes * sys,
@@ -162,6 +178,14 @@ struct stokes_nc {
   int time_dim;
   int time_id;
 
+  int l_id;
+  int ui0_id;
+  int oi0_id;
+  int ei0_id;
+  int ui_id;
+  int oi_id;
+  int ei_id;
+
   int x0_id;
   int u0_id;
   int o0_id;
@@ -196,6 +220,13 @@ struct stokes_nc {
 
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
+  int flag_ui0;
+  int flag_oi0;
+  int flag_ei0;
+  int flag_ui;
+  int flag_oi;
+  int flag_ei;
+
   int flag_x0;
   int flag_u0;
   int flag_o0;
@@ -229,6 +260,15 @@ struct stokes_nc {
   int flag_sf;
 };
 
+
+void
+stokes_nc_error (int status, const char * message, const char * varname);
+
+void
+stokes_nc_print_actives (struct stokes_nc * nc,
+			 FILE * out);
+
+
 /* initialize NetCDF file for libstokes for mob_F problem
  * INPUT
  *  np : number of MOBILE particles
@@ -256,37 +296,77 @@ stokes_nc_mob_ft_init (const char * filename, int np);
  */
 struct stokes_nc *
 stokes_nc_mob_fts_init (const char * filename, int np);
+
 /* initialize NetCDF file for libstokes for mob_fix_F problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, uf0, x, u, ff.
+ *  activated entries are, ui0, xf0, f0, uf0, x, u, ff.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_f_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_f_i0_init (const char * filename, int nm, int nf);
 /* initialize NetCDF file for libstokes for mob_fix_FT problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *  activated entries are, ui0, oi0, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_ft_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_ft_i0_init (const char * filename, int nm, int nf);
 /* initialize NetCDF file for libstokes for mob_fix_FTS problem
+ * with a constant imposed flow
  * INPUT
  *  nm : number of MOBILE particles
  *  nf : number of fixed particles
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, xf0, f0, t0, e0, uf0, of0, ef0,
+ *  activated entries are, ui0, oi0, ei0,
+ *                         xf0, f0, t0, e0, uf0, of0, ef0,
  *                         x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
-stokes_nc_mob_fix_fts_init (const char * filename, int nm, int nf);
+stokes_nc_mob_fix_fts_i0_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_F problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, xf0, f0, uf0, x, u, ff.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_f_it_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_FT problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, oi, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_ft_it_init (const char * filename, int nm, int nf);
+/* initialize NetCDF file for libstokes for mob_fix_FTS problem
+ * with a time-changing imposed flow
+ * INPUT
+ *  nm : number of MOBILE particles
+ *  nf : number of fixed particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  activated entries are, ui, oi, ei,
+ *                         xf0, f0, t0, e0, uf0, of0, ef0,
+ *                         x, u, o, s, ff, tf, sf.
+ */
+struct stokes_nc *
+stokes_nc_mob_fix_fts_it_init (const char * filename, int nm, int nf);
 
 
 /* close (and write if necessary) NetCDF file for libstokes
@@ -296,6 +376,26 @@ stokes_nc_free (struct stokes_nc * nc);
 
 
 /** set nc data **/
+/* set l = (lx, ly, lz)
+ */
+void
+stokes_nc_set_l (struct stokes_nc * nc,
+		 const double * l);
+/* set ui
+ */
+void
+stokes_nc_set_ui (struct stokes_nc * nc,
+		  const double * ui);
+/* set oi
+ */
+void
+stokes_nc_set_oi (struct stokes_nc * nc,
+		  const double * oi);
+/* set ei
+ */
+void
+stokes_nc_set_ei (struct stokes_nc * nc,
+		  const double * ei);
 /* set x0
  */
 void
@@ -458,6 +558,83 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 		  const double * sf);
 
 
+/* from stokes-nc-read.h
+ */
+void
+stokes_nc_print_actives (struct stokes_nc * nc,
+			 FILE * out);
+struct stokes_nc *
+stokes_nc_open (const char * filename);
+
+void
+stokes_nc_get_data0 (struct stokes_nc * nc,
+		     const char * name,
+		     double * x);
+void
+stokes_nc_get_data (struct stokes_nc * nc,
+		    const char * name,
+		    int step,
+		    double * x);
+
+
+/************************************
+ ** Guile interface for libstokes  **
+ ************************************/
+/* this utility function (original name is does_scm_symbol_exist)
+ * written by Michael Gran is taken from
+ * http://www.lonelycactus.com/guilebook/c319.html
+ */
+int
+guile_check_symbol (const char *name);
+
+/* check boolean
+ * INPUT
+ *  var : string of the SCM variable
+ * OUTPUT
+ *  true  : if var is not nil
+ *  false : if var is nil or even not defined
+ */
+int
+guile_get_bool (const char * var);
+
+/*
+ * INPUT
+ *  var : string of the SCM variable
+ *  i0  : default value (for the undefined case)
+ * OUTPUT
+ */
+int
+guile_get_int (const char * var, int i0);
+
+/*
+ * INPUT
+ *  var : string of the SCM variable
+ *  d0  : default value (for the undefined case)
+ * OUTPUT
+ */
+double
+guile_get_double (const char * var, double d0);
+
+/*
+ * OUTPUT
+ *  returned value : 0 = failed (not defined)
+ *                   1 = success
+ */
+int
+guile_get_doubles (const char * var, int n, double * x);
+
+/*
+ */
+char *
+guile_get_string (const char * var);
+
+/*
+ */
+FILE *
+guile_open_file (const char * var, const char * mode);
+
+
+
 /***********************************
  ** resistance problems           **
  ***********************************/
@@ -470,9 +647,10 @@ stokes_nc_set_sf (struct stokes_nc * nc,
  *  f [np * 3] :
  */
 void
-calc_res_ewald_3f (struct stokes * sys,
-		   const double *u,
-		   double *f);
+solve_res_ewald_3f (struct stokes * sys,
+		    const double *u,
+		    double *f);
+
 /* solve natural resistance problem with lubrication
  * in F version under Ewald sum
  * INPUT
@@ -482,9 +660,9 @@ calc_res_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-calc_res_lub_ewald_3f (struct stokes * sys,
-		       const double *u,
-		       double *f);
+solve_res_lub_ewald_3f (struct stokes * sys,
+			const double *u,
+			double *f);
 
 /* solve natural resistance problem in F version under Ewald sum
  * INPUT
@@ -494,9 +672,10 @@ calc_res_lub_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-calc_res_ewald_3f_matrix (struct stokes * sys,
-			  const double *u,
-			  double *f);
+solve_res_ewald_3f_matrix (struct stokes * sys,
+			   const double *u,
+			   double *f);
+
 /* solve natural resistance problem in F version under Ewald sum
  * INPUT
  *  sys : system parameters
@@ -505,9 +684,9 @@ calc_res_ewald_3f_matrix (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-calc_res_lub_ewald_3f_matrix (struct stokes * sys,
-			      const double *u,
-			      double *f);
+solve_res_lub_ewald_3f_matrix (struct stokes * sys,
+			       const double *u,
+			       double *f);
 
 /* solve natural resistance problem in FT version under Ewald sum
  * INPUT
@@ -519,9 +698,10 @@ calc_res_lub_ewald_3f_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_ewald_3ft (struct stokes * sys,
-		    const double *u, const double *o,
-		    double *f, double *t);
+solve_res_ewald_3ft (struct stokes * sys,
+		     const double *u, const double *o,
+		     double *f, double *t);
+
 /* solve natural resistance problem with lubrication
  * in FT version under Ewald sum
  * INPUT
@@ -533,9 +713,9 @@ calc_res_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_lub_ewald_3ft (struct stokes * sys,
-			const double *u, const double *o,
-			double *f, double *t);
+solve_res_lub_ewald_3ft (struct stokes * sys,
+			 const double *u, const double *o,
+			 double *f, double *t);
 
 /* solve natural resistance problem in FT version under Ewald sum
  * INPUT
@@ -547,9 +727,10 @@ calc_res_lub_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_ewald_3ft_matrix (struct stokes * sys,
-			   const double *u, const double *o,
-			   double *f, double *t);
+solve_res_ewald_3ft_matrix (struct stokes * sys,
+			    const double *u, const double *o,
+			    double *f, double *t);
+
 /* solve natural resistance problem in FT version under Ewald sum
  * INPUT
  *  sys : system parameters
@@ -560,9 +741,9 @@ calc_res_ewald_3ft_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
-			       const double *u, const double *o,
-			       double *f, double *t);
+solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
+				const double *u, const double *o,
+				double *f, double *t);
 
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
@@ -576,9 +757,10 @@ calc_res_lub_ewald_3ft_matrix (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_ewald_3fts (struct stokes * sys,
-		     const double *u, const double *o, const double *e,
-		     double *f, double *t, double *s);
+solve_res_ewald_3fts (struct stokes * sys,
+		      const double *u, const double *o, const double *e,
+		      double *f, double *t, double *s);
+
 /* solve natural resistance problem with lubrication
  * in FTS version under Ewald sum
  * INPUT
@@ -592,9 +774,9 @@ calc_res_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_3fts (struct stokes * sys,
-			 const double *u, const double *o, const double *e,
-			 double *f, double *t, double *s);
+solve_res_lub_ewald_3fts (struct stokes * sys,
+			  const double *u, const double *o, const double *e,
+			  double *f, double *t, double *s);
 
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
@@ -608,9 +790,10 @@ calc_res_lub_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_ewald_3fts_matrix (struct stokes * sys,
-			    const double *u, const double *o, const double *e,
-			    double *f, double *t, double *s);
+solve_res_ewald_3fts_matrix (struct stokes * sys,
+			     const double *u, const double *o, const double *e,
+			     double *f, double *t, double *s);
+
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
  *  sys : system parameters
@@ -623,15 +806,10 @@ calc_res_ewald_3fts_matrix (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
-				const double *u, const double *o,
-				const double *e,
-				double *f, double *t, double *s);
-
-/***********************************
- ** resistance problems           **
- ** monolayer configurations (2D) **
- ***********************************/
+solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *u, const double *o,
+				 const double *e,
+				 double *f, double *t, double *s);
 
 /* solve natural resistance problem in F version under Ewald sum
  * INPUT
@@ -641,9 +819,10 @@ calc_res_lub_ewald_3fts_matrix (struct stokes * sys,
  *   f [np * 3] : results are given in 3D form
  */
 void
-calc_res_ewald_2f (struct stokes * sys,
-		   const double *u,
-		   double *f);
+solve_res_ewald_2f (struct stokes * sys,
+		    const double *u,
+		    double *f);
+
 /* solve natural resistance problem with lubrication
  * in F version under Ewald sum
  * INPUT
@@ -653,9 +832,9 @@ calc_res_ewald_2f (struct stokes * sys,
  *   f [np * 3] : results are given in 3D form
  */
 void
-calc_res_lub_ewald_2f (struct stokes * sys,
-		       const double *u,
-		       double *f);
+solve_res_lub_ewald_2f (struct stokes * sys,
+			const double *u,
+			double *f);
 
 /* solve natural resistance problem in FT version under Ewald sum
  * INPUT
@@ -667,9 +846,10 @@ calc_res_lub_ewald_2f (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_ewald_2ft (struct stokes * sys,
-		    const double *u, const double *o,
-		    double *f, double *t);
+solve_res_ewald_2ft (struct stokes * sys,
+		     const double *u, const double *o,
+		     double *f, double *t);
+
 /* solve natural resistance problem with lubrication
  * in FT version under Ewald sum
  * INPUT
@@ -681,9 +861,9 @@ calc_res_ewald_2ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-calc_res_lub_ewald_2ft (struct stokes * sys,
-			const double *u, const double *o,
-			double *f, double *t);
+solve_res_lub_ewald_2ft (struct stokes * sys,
+			 const double *u, const double *o,
+			 double *f, double *t);
 
 /* solve natural resistance problem in FTS version under Ewald sum
  * INPUT
@@ -697,9 +877,10 @@ calc_res_lub_ewald_2ft (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_ewald_2fts (struct stokes * sys,
-		     const double *u, const double *o, const double *e,
-		     double *f, double *t, double *s);
+solve_res_ewald_2fts (struct stokes * sys,
+		      const double *u, const double *o, const double *e,
+		      double *f, double *t, double *s);
+
 /* solve natural resistance problem with lubrication
  * in FTS version under Ewald sum
  * INPUT
@@ -713,9 +894,9 @@ calc_res_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-calc_res_lub_ewald_2fts (struct stokes * sys,
-			 const double *u, const double *o, const double *e,
-			 double *f, double *t, double *s);
+solve_res_lub_ewald_2fts (struct stokes * sys,
+			  const double *u, const double *o, const double *e,
+			  double *f, double *t, double *s);
 
 /***********************************
  ** mobility problems             **
@@ -729,9 +910,168 @@ calc_res_lub_ewald_2fts (struct stokes * sys,
  *  u [np * 3] :
  */
 void
-calc_mob_ewald_3f (struct stokes * sys,
-		   const double *f,
-		   double *u);
+solve_mob_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    double *u);
+
+/* solve natural mobility problem in F version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ */
+void
+solve_mob_ewald_3f_matrix (struct stokes * sys,
+			   const double *f,
+			   double *u);
+
+/* solve natural mobility problem in F version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ */
+void
+solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
+			       const double *f,
+			       double *u);
+
+/* solve natural mobility problem in FT version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ */
+void
+solve_mob_ewald_3ft (struct stokes * sys,
+		     const double *f, const double *t,
+		     double *u, double *o);
+
+/* solve natural mobility problem in FT version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ */
+void
+solve_mob_ewald_3ft_matrix (struct stokes * sys,
+			    const double *f, const double *t,
+			    double *u, double *o);
+
+/* solve natural mobility problem in FT version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ */
+void
+solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
+				const double *f, const double *t,
+				double *u, double *o);
+
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_ewald_3fts (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      double *u, double *o, double *s);
+
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_ewald_3fts_matrix (struct stokes * sys,
+			     const double *f, const double *t, const double *e,
+			     double *u, double *o, double *s);
+
+/* solve natural mobility problem in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *f, const double *t,
+				 const double *e,
+				 double *u, double *o, double *s);
+
+/* solve natural mobility problem in F version under Ewald sum
+ *  sys : system parameters
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ * OUTPUT
+ *   u [np * 3] : results are given in 3D form
+ */
+void
+solve_mob_ewald_2f (struct stokes * sys,
+		    const double *f,
+		    double *u);
+
+/* solve natural mobility problem in FT version under Ewald sum
+ *  sys : system parameters
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [np * 3] : OK, this is 3D form
+ * OUTPUT
+ *   u [np * 3] : results are given in 3D form
+ *   o [np * 3] :
+ */
+void
+solve_mob_ewald_2ft (struct stokes * sys,
+		     const double *f, const double *t3,
+		     double *u, double *o);
+
+/* solve natural mobility problem in FTS version under Ewald sum
+ *  sys : system parameters
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [np * 3] : OK, this is 3D form
+ *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   u [np * 3] : results are given in 3D form
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_ewald_2fts (struct stokes * sys,
+		      const double *f, const double *t3, const double *e,
+		      double *u, double *o, double *s);
+
+/***********************************
+ ** mixed problems                **
+ ***********************************/
+
 /* solve natural mobility problem with fixed particles in F version
  * under Ewald sum
  * INPUT
@@ -743,11 +1083,12 @@ calc_mob_ewald_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3f (struct stokes * sys,
-		       const double *f,
-		       const double *uf,
-		       double *u,
-		       double *ff);
+solve_mix_ewald_3f (struct stokes * sys,
+		    const double *f,
+		    const double *uf,
+		    double *u,
+		    double *ff);
+
 /* solve natural mobility problem with lubrication
  * with fixed particles in F version under Ewald sum
  * INPUT
@@ -759,23 +1100,12 @@ calc_mob_fix_ewald_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3f (struct stokes * sys,
-			   const double *f,
-			   const double *uf,
-			   double *u,
-			   double *ff);
+solve_mix_lub_ewald_3f (struct stokes * sys,
+			const double *f,
+			const double *uf,
+			double *u,
+			double *ff);
 
-/* solve natural mobility problem in F version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- */
-void
-calc_mob_ewald_3f_matrix (struct stokes * sys,
-			  const double *f,
-			  double *u);
 /* solve natural mobility problem with lubrication
  * with fixed particles in FT version under Ewald sum
  * INPUT
@@ -791,21 +1121,10 @@ calc_mob_ewald_3f_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3f_matrix (struct stokes * sys,
-			      const double *f, const double *uf,
-			      double *u, double *ff);
+solve_mix_ewald_3f_matrix (struct stokes * sys,
+			   const double *f, const double *uf,
+			   double *u, double *ff);
 
-/* solve natural mobility problem in F version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- */
-void
-calc_mob_lub_ewald_3f_matrix (struct stokes * sys,
-			      const double *f,
-			      double *u);
 /* solve natural mobility problem with lubrication
  * with fixed particles in F version under Ewald sum
  * INPUT
@@ -817,24 +1136,10 @@ calc_mob_lub_ewald_3f_matrix (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3f_matrix (struct stokes * sys,
-				  const double *f, const double *uf,
-				  double *u, double *ff);
+solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
+			       const double *f, const double *uf,
+			       double *u, double *ff);
 
-
-/* solve natural mobility problem in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-calc_mob_ewald_3ft (struct stokes * sys,
-		    const double *f, const double *t,
-		    double *u, double *o);
 /* solve natural mobility problem with fixed particles in FT version
  * under Ewald sum
  * INPUT
@@ -850,11 +1155,12 @@ calc_mob_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3ft (struct stokes * sys,
-			const double *f, const double *t,
-			const double *uf, const double *of,
-			double *u, double *o,
-			double *ff, double *tf);
+solve_mix_ewald_3ft (struct stokes * sys,
+		     const double *f, const double *t,
+		     const double *uf, const double *of,
+		     double *u, double *o,
+		     double *ff, double *tf);
+
 /* solve natural mobility problem with lubrication
  * with fixed particles in FT version under Ewald sum
  * INPUT
@@ -870,25 +1176,33 @@ calc_mob_fix_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_lub_fix_ewald_3ft (struct stokes * sys,
+solve_mix_lub_ewald_3ft (struct stokes * sys,
+			 const double *f, const double *t,
+			 const double *uf, const double *of,
+			 double *u, double *o,
+			 double *ff, double *tf);
+
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FT version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ */
+void
+solve_mix_ewald_3ft_matrix (struct stokes * sys,
 			    const double *f, const double *t,
 			    const double *uf, const double *of,
 			    double *u, double *o,
 			    double *ff, double *tf);
 
-/* solve natural mobility problem in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-calc_mob_ewald_3ft_matrix (struct stokes * sys,
-			   const double *f, const double *t,
-			   double *u, double *o);
 /* solve natural mobility problem with lubrication
  * with fixed particles in FT version under Ewald sum
  * INPUT
@@ -904,167 +1218,37 @@ calc_mob_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-calc_mob_fix_ewald_3ft_matrix (struct stokes * sys,
-			       const double *f, const double *t,
-			       const double *uf, const double *of,
-			       double *u, double *o,
-			       double *ff, double *tf);
-/* solve natural mobility problem in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-calc_mob_lub_ewald_3ft_matrix (struct stokes * sys,
-			       const double *f, const double *t,
-			       double *u, double *o);
-/* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- */
-void
-calc_mob_lub_fix_ewald_3ft_matrix (struct stokes * sys,
-				   const double *f, const double *t,
-				   const double *uf, const double *of,
-				   double *u, double *o,
-				   double *ff, double *tf);
-
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_ewald_3fts (struct stokes * sys,
-		     const double *f, const double *t, const double *e,
-		     double *u, double *o, double *s);
-/* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_fix_ewald_3fts (struct stokes * sys,
-			 const double *f, const double *t, const double *e,
-			 const double *uf, const double *of, const double *ef,
-			 double *u, double *o, double *s,
-			 double *ff, double *tf, double *sf);
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_lub_fix_ewald_3fts (struct stokes * sys,
-			     const double *f, const double *t, const double *e,
-			     const double *uf, const double *of,
-			     const double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf);
-
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_ewald_3fts_matrix (struct stokes * sys,
-			    const double *f, const double *t, const double *e,
-			    double *u, double *o, double *s);
-/* solve natural mobility problem in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_lub_ewald_3fts_matrix (struct stokes * sys,
+solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
 				const double *f, const double *t,
-				const double *e,
-				double *u, double *o, double *s);
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *e,
 				const double *uf, const double *of,
-				const double *ef,
-				double *u, double *o, double *s,
-				double *ff, double *tf, double *sf);
+				double *u, double *o,
+				double *ff, double *tf);
+
+/* solve natural mobility problem with fixed particles in FTS version
+ * under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+solve_mix_ewald_3fts (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      const double *uf, const double *of, const double *ef,
+		      double *u, double *o, double *s,
+		      double *ff, double *tf, double *sf);
+
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version under Ewald sum
  * INPUT
@@ -1084,165 +1268,25 @@ calc_mob_fix_ewald_3fts_matrix (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_3fts_matrix (struct stokes * sys,
-				    const double *f, const double *t,
-				    const double *e,
-				    const double *uf, const double *of,
-				    const double *ef,
-				    double *u, double *o, double *s,
-				    double *ff, double *tf, double *sf);
+solve_mix_lub_ewald_3fts (struct stokes * sys,
+			  const double *f, const double *t, const double *e,
+			  const double *uf, const double *of,
+			  const double *ef,
+			  double *u, double *o, double *s,
+			  double *ff, double *tf, double *sf);
 
-/***********************************
- ** mobility problems             **
- ** monolayer configurations (2D) **
- ***********************************/
-
-/* solve natural mobility problem in F version under Ewald sum
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- */
-void
-calc_mob_ewald_2f (struct stokes * sys,
-		   const double *f,
-		   double *u);
-/* solve natural mobility problem with fixed particles in F version
- * under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- * OUTPUT
- *   u [nm * 3] : results are given in 3D form
- *   ff [nf * 3] :
- */
-void
-calc_mob_fix_ewald_2f (struct stokes * sys,
-		       const double *f,
-		       const double *uf,
-		       double *u,
-		       double *ff);
-/* solve natural mobility problem with lubrication
- * with fixed particles in F version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- * OUTPUT
- *   u [nm * 3] : results are given in 3D form
- *   ff [nf * 3] :
- */
-void
-calc_mob_lub_fix_ewald_2f (struct stokes * sys,
-			   const double *f,
-			   const double *uf,
-			   double *u,
-			   double *ff);
-
-/* solve natural mobility problem in FT version under Ewald sum
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [np * 3] : OK, this is 3D form
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- *   o [np * 3] :
- */
-void
-calc_mob_ewald_2ft (struct stokes * sys,
-		    const double *f, const double *t3,
-		    double *u, double *o);
-/* solve natural mobility problem with fixed particles in FT version
- * under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [nm * 3] : OK, this is 3D form
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- * OUTPUT
- *   u [nm * 3] : results are given in 3D form
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- */
-void
-calc_mob_fix_ewald_2ft (struct stokes * sys,
-			const double *f, const double *t3,
-			const double *uf, const double *of,
-			double *u, double *o,
-			double *ff, double *tf);
-/* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [nm * 3] : OK, this is 3D form
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- * OUTPUT
- *   u [nm * 3] : results are given in 3D form
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- */
-void
-calc_mob_lub_fix_ewald_2ft (struct stokes * sys,
-			    const double *f, const double *t3,
-			    const double *uf, const double *of,
-			    double *u, double *o,
-			    double *ff, double *tf);
-
-/* solve natural mobility problem in FTS version under Ewald sum
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [np * 3] : OK, this is 3D form
- *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-calc_mob_ewald_2fts (struct stokes * sys,
-		     const double *f, const double *t3, const double *e,
-		     double *u, double *o, double *s);
-/* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [nm * 3] : OK, this is 3D form
- *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- *   ef [nf * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   u [nm * 3] : results are given in 3D form
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
- */
-void
-calc_mob_fix_ewald_2fts (struct stokes * sys,
-			 const double *f, const double *t3, const double *e,
-			 const double *uf, const double *of, const double *ef,
-			 double *u, double *o, double *s,
-			 double *ff, double *tf, double *sf);
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version under Ewald sum
  * INPUT
  *  sys : system parameters
- *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [nm * 3] : OK, this is 3D form
- *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- *   ef [nf * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
  * OUTPUT
- *   u [nm * 3] : results are given in 3D form
+ *   u [nm * 3] :
  *   o [nm * 3] :
  *   s [nm * 5] :
  *   ff [nf * 3] :
@@ -1250,18 +1294,174 @@ calc_mob_fix_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
-			     const double *f, const double *t3,
+solve_mix_ewald_3fts_matrix (struct stokes * sys,
+			     const double *f, const double *t,
 			     const double *e,
 			     const double *uf, const double *of,
 			     const double *ef,
 			     double *u, double *o, double *s,
 			     double *ff, double *tf, double *sf);
 
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 3] :
+ *   t [nm * 3] :
+ *   e [nm * 5] :
+ *   uf [nf * 3] :
+ *   of [nf * 3] :
+ *   ef [nf * 5] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
+				 const double *f, const double *t,
+				 const double *e,
+				 const double *uf, const double *of,
+				 const double *ef,
+				 double *u, double *o, double *s,
+				 double *ff, double *tf, double *sf);
+
+/* solve natural mobility problem with fixed particles in F version
+ * under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   ff [nf * 3] :
+ */
+void
+solve_mix_ewald_2f (struct stokes * sys,
+		    const double *f,
+		    const double *uf,
+		    double *u,
+		    double *ff);
+
+/* solve natural mobility problem with lubrication
+ * with fixed particles in F version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   ff [nf * 3] :
+ */
+void
+solve_mix_lub_ewald_2f (struct stokes * sys,
+			const double *f,
+			const double *uf,
+			double *u,
+			double *ff);
+
+/* solve natural mobility problem with fixed particles in FT version
+ * under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [nm * 3] : OK, this is 3D form
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   o [nm * 3] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ */
+void
+solve_mix_ewald_2ft (struct stokes * sys,
+		     const double *f, const double *t3,
+		     const double *uf, const double *of,
+		     double *u, double *o,
+		     double *ff, double *tf);
+
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FT version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [nm * 3] : OK, this is 3D form
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   o [nm * 3] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ */
+void
+solve_mix_lub_ewald_2ft (struct stokes * sys,
+			 const double *f, const double *t3,
+			 const double *uf, const double *of,
+			 double *u, double *o,
+			 double *ff, double *tf);
+
+/* solve natural mobility problem with fixed particles in FTS version
+ * under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [nm * 3] : OK, this is 3D form
+ *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   ef [nf * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+solve_mix_ewald_2fts (struct stokes * sys,
+		      const double *f, const double *t3, const double *e,
+		      const double *uf, const double *of, const double *ef,
+		      double *u, double *o, double *s,
+		      double *ff, double *tf, double *sf);
+
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version under Ewald sum
+ * INPUT
+ *  sys : system parameters
+ *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [nm * 3] : OK, this is 3D form
+ *   e [nm * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ *   uf [nf * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   of [nf * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   ef [nf * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   u [nm * 3] : results are given in 3D form
+ *   o [nm * 3] :
+ *   s [nm * 5] :
+ *   ff [nf * 3] :
+ *   tf [nf * 3] :
+ *   sf [nf * 5] :
+ */
+void
+solve_mix_lub_ewald_2fts (struct stokes * sys,
+			  const double *f, const double *t3,
+			  const double *e,
+			  const double *uf, const double *of,
+			  const double *ef,
+			  double *u, double *o, double *s,
+			  double *ff, double *tf, double *sf);
 
 /************************************************
  ** atimes forms (unnatural mobility problems) **
  ************************************************/
+
+/** table version **/
 
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * with the ewald table
@@ -1274,6 +1474,17 @@ calc_mob_lub_fix_ewald_2fts (struct stokes * sys,
  */
 void
 atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
+/* make ewald-summed mobility matrix for F/FT/FTS versions
+ * with the ewald table
+ * INPUT
+ * sys : system parameters
+ * OUTPUT
+ *  mat [np * 3  * np * 3 ] : for F version
+ *  mat [np * 6  * np * 6 ] : for FT version
+ *  mat [np * 11 * np * 11] : for FTS version
+ */
+void
+make_matrix_mob_ewald_3all (struct stokes * sys, double * mat);
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * through matrix with the ewald table
  * INPUT
@@ -1287,6 +1498,8 @@ void
 atimes_ewald_3all_matrix (int n, const double *x,
 			  double *y, void * user_data);
 
+/** non-table version **/
+
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
@@ -1298,6 +1511,16 @@ atimes_ewald_3all_matrix (int n, const double *x,
 void
 atimes_ewald_3all_notbl (int n, const double *x,
 			 double *y, void * user_data);
+/* make ewald-summed mobility matrix for F/FT/FTS versions
+ * INPUT
+ * sys : system parameters
+ * OUTPUT
+ *  mat [np * 3  * np * 3 ] : for F version
+ *  mat [np * 6  * np * 6 ] : for FT version
+ *  mat [np * 11 * np * 11] : for FTS version
+ */
+void
+make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat);
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * through matrix
  * INPUT
