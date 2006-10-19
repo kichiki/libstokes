@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.7 2006/10/11 03:18:31 ichiki Exp $
+ * $Id: stokes.h,v 1.8 2006/10/19 03:15:51 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,11 @@ struct stokes {
   double * pos; /* position of particles */
 
   int version; /* 0 = F, 1 = FT, 2 = FTS */
+
+  /* imposed flow */
+  double Ui[3];
+  double Oi[3];
+  double Ei[5];
 
   /* for ewald codes */
   double rmax2;
@@ -93,8 +98,19 @@ stokes_set_np (struct stokes * sys,
 	       int np, int nm);
 
 void
-stokes_set_ll (struct stokes * sys,
-	       double lx, double ly, double lz);
+stokes_set_Ui (struct stokes * sys,
+	       double uix, double uiy, double uiz);
+void
+stokes_set_Oi (struct stokes * sys,
+	       double oix, double oiy, double oiz);
+void
+stokes_set_Ei (struct stokes * sys,
+	       double eixx, double eixy, double eixz,
+	       double eiyz, double eiyy);
+
+void
+stokes_set_l (struct stokes * sys,
+	      double lx, double ly, double lz);
 
 void
 stokes_set_xi (struct stokes * sys,

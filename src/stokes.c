@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.7 2006/10/11 03:18:15 ichiki Exp $
+ * $Id: stokes.c,v 2.8 2006/10/19 03:15:31 ichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -298,6 +298,20 @@ stokes_init (void)
 
   sys->version = 0;
 
+  sys->Ui[0] = 0.0;
+  sys->Ui[1] = 0.0;
+  sys->Ui[2] = 0.0;
+
+  sys->Oi[0] = 0.0;
+  sys->Oi[1] = 0.0;
+  sys->Oi[2] = 0.0;
+
+  sys->Ei[0] = 0.0;
+  sys->Ei[1] = 0.0;
+  sys->Ei[2] = 0.0;
+  sys->Ei[3] = 0.0;
+  sys->Ei[4] = 0.0;
+
   /* # of cell in real space */
   sys->rmax2 = 0.0;
   sys->rmaxx = 0;
@@ -414,10 +428,37 @@ stokes_set_np (struct stokes * sys,
   sys->pos = (double *) malloc (sizeof (double) * np * 3);
 }
 
+void
+stokes_set_Ui (struct stokes * sys,
+	       double uix, double uiy, double uiz)
+{
+  sys->Ui[0] = uix;
+  sys->Ui[1] = uiy;
+  sys->Ui[2] = uiz;
+}
+void
+stokes_set_Oi (struct stokes * sys,
+	       double oix, double oiy, double oiz)
+{
+  sys->Oi[0] = oix;
+  sys->Oi[1] = oiy;
+  sys->Oi[2] = oiz;
+}
+void
+stokes_set_Ei (struct stokes * sys,
+	       double eixx, double eixy, double eixz,
+	       double eiyz, double eiyy)
+{
+  sys->Ei[0] = eixx;
+  sys->Ei[1] = eixy;
+  sys->Ei[2] = eixz;
+  sys->Ei[3] = eiyz;
+  sys->Ei[4] = eiyy;
+}
 
 void
-stokes_set_ll (struct stokes * sys,
-	       double lx, double ly, double lz)
+stokes_set_l (struct stokes * sys,
+	      double lx, double ly, double lz)
 {
   sys->pivol = M_PI / lx / ly / lz;
 
