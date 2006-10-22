@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.4 2006/10/07 00:57:27 kichiki Exp $
+ * $Id: matrix.c,v 1.5 2006/10/22 22:47:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,76 @@
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 #include "dgetri_c.h" /* lapack_inv_() */
-#include <clapack.h> // ATLAS
+
+#ifdef HAVE_CBLAS_H
+/* use ATLAS' CBLAS routines */
+
+#include <cblas.h>
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+/* use Fortran BLAS routines */
+
+#include "dgemm_c.h"
+#include "dgemv_c.h"
+
+# else // !HAVE_BLAS_H
+/* use local BLAS routines */
+
+/* y = alpha * A.x + beta y
+ * INPUT
+ *  a[m,n] : (i,j) element is allocated at a[i*lda+j]
+ *  y[m]   : (i)   element is allocated at y[i*incy]
+ *  x[n]   : (j)   element is allocated at x[i*incx]
+ */
+static void
+my_dgemv (int m, int n,
+	  double alpha, const double *a, int lda,
+	  const double *x, int incx, double beta,
+	  double *y, int incy)
+{
+  int i, j;
+
+  for (i = 0; i < m; i ++)
+    {
+      y[i] = beta * y[i];
+      for (j = 0; j < n; j ++)
+	{
+	  y[i] += a[i*lda+j] * x[j];
+	}
+    }
+}
+
+/* C = A.B + beta C
+ * INPUT
+ *  c[m,n]
+ *  a[m,k]
+ *  b[k,n]
+ */
+static void
+my_dgemm (int m, int n, int k,
+	  double alpha, const double *a, int lda,
+	  const double *b, int ldb,
+	  double beta, double *c, int ldc)
+{
+  int i, j, l;
+  for (i = 0; i < m; i ++)
+    {
+      for (j = 0; j < n; j ++)
+	{
+	  c[i*ldc + j] = beta * c[i*ldc + j];
+	  for (l = 0; l < k; l ++)
+	    {
+	      c[i*ldc + j] += a[i*lda + l] * b[l*ldb + j];
+	    }
+	}
+    }
+}
+
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
+
 
 #include "matrix.h"
 
@@ -123,11 +192,33 @@ solve_linear (int n1, int n2,
   /* B := (A^-1).B */
   double *tmp;
   tmp = (double *) malloc (sizeof (double) * n1 * n2);
+
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
   cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	       n1, n2, n1,
 	       1.0, A, n1,
 	       B, n2,
 	       0.0, tmp, n2);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemm_wrap (n1, n2, n1,
+	      1.0, A,
+	      b,
+	      0.0, tmp);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemm (n1, n2, n1,
+	    1.0, A, n1,
+	    B, n2,
+	    0.0, tmp, n2);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
+
   for (i = 0; i < n1 * n2; i ++)
     {
       B[i] = tmp[i];
@@ -139,6 +230,8 @@ solve_linear (int n1, int n2,
     {
       L[i] = D[i];
     }
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
   cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	       n2, n2, n1,
 	       -1.0, C, n1,
@@ -151,6 +244,35 @@ solve_linear (int n1, int n2,
 	       1.0, C, n1,
 	       A, n1,
 	       0.0, K, n1);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemm_wrap (n2, n2, n1,
+	      -1.0, C,
+	      B,
+	      1.0, L);
+
+  /* K := C.A */
+  dgemm_wrap (n2, n1, n1,
+	      1.0, C,
+	      A,
+	      0.0, K);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemm (n2, n2, n1,
+	    -1.0, C, n1,
+	    B, n2,
+	    1.0, L, n2);
+
+  my_dgemm (n2, n1, n1,
+	    1.0, C, n1,
+	    A, n1,
+	    0.0, K, n1);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
 
   for (i = 0; i < n1 * n1; ++i)
     {
@@ -181,11 +303,31 @@ mul_matrices (const double * A, int na1, int na2,
       exit (1);
     }
 
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
   cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	       na1, nb2, na2,
 	       1.0, A, na2,
 	       B, nb2,
 	       0.0, C, nb2);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemm_wrap (na1, nb2, na2,
+	      1.0, A,
+	      B,
+	      1.0, C);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemm (na1, nb2, na2,
+	    1.0, A, na2,
+	    B, nb2,
+	    0.0, C, nb2);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
 }
 
 /*
@@ -216,11 +358,31 @@ mul_left_sq (double * A, int na1, int na2,
       fprintf (stderr, "allocation error in mul_left_sq().\n");
       exit (1);
     }
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
   cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	       na1, na2, nb,
 	       1.0, B, nb,
 	       A, na2,
 	       0.0, tmp, na2);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemm_wrap (na1, na2, nb,
+	      1.0, B,
+	      A,
+	      0.0, tmp);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemm (na1, na2, nb,
+	    1.0, B, nb,
+	    A, na2,
+	    0.0, tmp, na2);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
 
   for (i = 0; i < na1 * na2; ++i)
     {
@@ -264,11 +426,31 @@ add_and_mul (const double * A, int na1, int na2,
       D[i] = A[i];
     }
 
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
   cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
 	       nb1, nc2, nb2,
 	       b, B, nb2,
 	       C, nc2,
 	       a, D, na2);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemm_wrap (nb1, nc2, nb2,
+	      b, B,
+	      C,
+	      a, D);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemm (nb1, nc2, nb2,
+	    b, B, nb2,
+	    C, nc2,
+	    a, D, na2);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
 }
 
 /*
@@ -283,8 +465,29 @@ dot_prod_matrix (const double * mat, int n1, int n2,
 		 const double * x,
 		 double * y)
 {
-  cblas_dgemv (CblasRowMajor, CblasNoTrans, n1, n2,
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
+  cblas_dgemv (CblasRowMajor, CblasNoTrans,
+	       n1, n2,
 	       1.0, mat, n2,
 	       x, 1,
 	       0.0, y, 1);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemv_wrap (n1, n2,
+	      1.0, mat,
+	      x,
+	      0.0, y);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemv (n1, n2,
+	    1.0, mat, n2,
+	    x, 1,
+	    0.0, y, 1);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
 }
