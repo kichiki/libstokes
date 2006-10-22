@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.1 2006/10/19 02:45:11 ichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.2 2006/10/22 22:34:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,30 +22,9 @@
 
 #include <netcdf.h>
 
-#include <libstokes.h>
+#include "stokes-nc.h"
+#include "stokes-nc-read.h"
 
-
-static void
-stokes_nc_get_dim (int ncid,
-		   const char * name,
-		   int * id,
-		   int * dim)
-{
-  int status;
-
-  status = nc_inq_dimid (ncid, name, id);
-  if (status != NC_NOERR)
-    {
-      stokes_nc_error
-	(status, "at nc_inq_dimid() in stokes_nc_open", name);
-    }
-  status = nc_inq_dimlen (ncid, *id, dim);
-  if (status != NC_NOERR)
-    {
-      stokes_nc_error
-	(status, "at nc_inq_dim() in stokes_nc_open", name);
-    }
-}
 
 static void
 stokes_nc_check_1 (int id,
@@ -172,18 +151,50 @@ stokes_nc_open (const char * filename)
   fprintf (stdout, "ngatts     = %d\n", ngatts);
   fprintf (stdout, "unlimdimid = %d\n", unlimdimid);
 
-  int ntime;
-  stokes_nc_get_dim (nc->id, "p",    &(nc->p_dim),    &(nc->np));
-  stokes_nc_get_dim (nc->id, "pf",   &(nc->pf_dim),   &(nc->npf));
-  stokes_nc_get_dim (nc->id, "vec",  &(nc->vec_dim),  &(nc->nvec));
-  stokes_nc_get_dim (nc->id, "stt",  &(nc->stt_dim),  &(nc->nstt));
-  stokes_nc_get_dim (nc->id, "time", &(nc->time_dim), &ntime);
+  int i;
+  char name[NC_MAX_NAME+1];
+  int len;
+    nc->npf = 0; // to detect the case of nf == 0
+  for (i = 0; i < ndims; i ++)
+    {
+      status = nc_inq_dim (nc->id, i, name, &len);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status, "at nc_inq_dim() in stokes_nc_open", NULL);
+	}
+      if (strcmp ("p", name) == 0)
+	{
+	  nc->p_dim = i;
+	  nc->np = len;
+	}
+      else if (strcmp ("pf", name) == 0)
+	{
+	  nc->pf_dim = i;
+	  nc->npf = len;
+	}
+      else if (strcmp ("vec", name) == 0)
+	{
+	  nc->vec_dim = i;
+	  nc->nvec = len;
+	}
+      else if (strcmp ("stt", name) == 0)
+	{
+	  nc->stt_dim = i;
+	  nc->nstt = len;
+	}
+      else if (strcmp ("time", name) == 0)
+	{
+	  nc->time_dim = i;
+	  nc->ntime = len;
+	}
+    }
 
   fprintf (stdout, "np   = %d\n", nc->np);
   fprintf (stdout, "npf  = %d\n", nc->npf);
   fprintf (stdout, "vec  = %d\n", nc->nvec);
   fprintf (stdout, "stt  = %d\n", nc->nstt);
-  fprintf (stdout, "time = %d\n", ntime);
+  fprintf (stdout, "time = %d\n", nc->ntime);
 
   /* check active vars */
   nc->flag_ui0 = 0;
@@ -225,8 +236,6 @@ stokes_nc_open (const char * filename)
   nc->flag_tf = 0;
   nc->flag_sf = 0;
 
-  int i;
-  char name[NC_MAX_NAME+1];
   nc_type xtype;
   int nd;
   int d_ids[NC_MAX_VAR_DIMS];
