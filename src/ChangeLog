@@ -1,3 +1,19 @@
+2006-10-22  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.12 2006/10/22 04:21:23 kichiki Exp
+	update for stokes-guile.h.
+	import coll.h, periodicity.h, and bench.h.
+
+	* stokes-guile.h: 5.2 2006/10/22 04:17:51 kichiki Exp
+	* stokes-guile.c: 5.2 2006/10/22 04:17:51 kichiki Exp
+	(guile_get_doubles_, guile_get_length): added.
+
+	* periodicity.h: 1.1 2006/10/22 04:05:33 kichiki Exp
+	* periodicity.c: 1.1 2006/10/22 04:05:33 kichiki Exp
+	* coll.h: 1.1 2006/10/22 04:05:33 kichiki Exp
+	* coll.c: 1.1 2006/10/22 04:05:33 kichiki Exp
+	import from stokes-src.
+
 2006-10-19  Kengo Ichiki  <ichiki@tpr60>
 
 	* ewald-3fts-matrix.c: 2.8 2006/10/19 18:27:24 ichiki Exp
