@@ -1,6 +1,6 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.8 2006/10/19 18:27:24 ichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.9 2006/10/22 22:26:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1174,6 +1174,13 @@ solve_mix_ewald_3fts_matrix (struct stokes * sys,
   sys->version = 2; // FTS version
   np = sys->np;
   nm = sys->nm;
+  if (np == nm)
+    {
+      solve_mob_ewald_3fts_matrix (sys,
+				   f, t, e, uf, of, ef,
+				   u, o, s, ff, tf, sf);
+      return;
+    }
 
   n11 = np * 11;
   nf = np - nm;
@@ -1318,6 +1325,13 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
   sys->version = 2; // FTS version
   np = sys->np;
   nm = sys->nm;
+  if (np == nm)
+    {
+      solve_mob_lub_ewald_3fts_matrix (sys,
+				       f, t, e, uf, of, ef,
+				       u, o, s, ff, tf, sf);
+      return;
+    }
 
   n11 = np * 11;
   nf = np - nm;
