@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.3 2006/10/19 02:44:30 ichiki Exp $
+ * $Id: stokes-nc.h,v 5.4 2006/10/22 22:31:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,7 @@ struct stokes_nc {
   int stt_dim;
   int stt_id;
 
+  int ntime;
   int time_dim;
   int time_id;
 
@@ -341,85 +342,85 @@ stokes_nc_set_time (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_x (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * x);
 /* set u at time (step)
  */
 void
 stokes_nc_set_u (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * u);
 /* set o at time (step)
  */
 void
 stokes_nc_set_o (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * o);
 /* set e at time (step)
  */
 void
 stokes_nc_set_e (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * e);
 /* set f at time (step)
  */
 void
 stokes_nc_set_f (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * f);
 /* set t at time (step)
  */
 void
 stokes_nc_set_t (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * t);
 /* set s at time (step)
  */
 void
 stokes_nc_set_s (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * s);;
 /* set xf at time (step)
  */
 void
 stokes_nc_set_xf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * xf);
 /* set uf at time (step)
  */
 void
 stokes_nc_set_uf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * uf);
 /* set of at time (step)
  */
 void
 stokes_nc_set_of (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * of);
 /* set ef at time (step)
  */
 void
 stokes_nc_set_ef (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * ef);
 /* set ff at time (step)
  */
 void
 stokes_nc_set_ff (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * ff);
 /* set tf at time (step)
  */
 void
 stokes_nc_set_tf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * tf);
 /* set sf at time (step)
  */
 void
 stokes_nc_set_sf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * sf);
 
 
