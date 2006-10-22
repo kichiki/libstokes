@@ -1,6 +1,6 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
-# $Id: configure.ac,v 1.3 2006/10/19 04:33:14 ichiki Exp $
+# $Id: configure.ac,v 1.4 2006/10/22 23:06:06 kichiki Exp $
 
 AC_PREREQ(2.59)
 AC_INIT(libstokes, 0.4, kichiki@users.sourceforge.net)
@@ -17,6 +17,8 @@ AC_PROG_CC
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h sys/time.h])
+AC_CHECK_HEADERS([cblas.h])
+AC_CHECK_HEADERS([blas.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
