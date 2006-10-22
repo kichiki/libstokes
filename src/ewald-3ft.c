@@ -1,6 +1,6 @@
 /* Beenakker's formulation of Ewald summation technique for RP tensor in 3D
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.10 2006/10/22 22:22:45 kichiki Exp $
+ * $Id: ewald-3ft.c,v 4.11 2006/10/22 23:00:28 kichiki Exp $
  *
  * 3 dimensional hydrodynamics
  * 3D configuration
@@ -345,8 +345,8 @@ solve_mix_ewald_3ft (struct stokes * sys,
   nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_ewald_3ft (sys, f, t, uf, of,
-			   u, o, ff, tf);
+      solve_mob_ewald_3ft (sys, f, t,
+			   u, o);
       return;
     }
 
@@ -702,8 +702,11 @@ solve_mix_lub_ewald_3ft (struct stokes * sys,
   nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_lub_ewald_3ft (sys, f, t, uf, of,
-			       u, o, ff, tf);
+      //solve_mob_lub_ewald_3ft (sys, f, t, u, o);
+      fprintf (stderr, "solve_mix_lub_ewald_3ft:"
+	       " no fixed particle. mob_lub is not implemented yet."
+	       " call plain mob solver\n");
+      solve_mob_ewald_3ft (sys, f, t, u, o);
       return;
     }
 
