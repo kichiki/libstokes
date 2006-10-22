@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.3 2006/10/19 02:44:03 ichiki Exp $
+ * $Id: stokes-nc.c,v 5.4 2006/10/22 22:35:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -600,7 +600,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
 		       "at nc_def_dim() for time in stokes_nc_init", NULL);
     }
   dimids[0] = nc->time_dim;
-  status = nc_def_var (nc->id, "time", NC_INT, 1, dimids, &(nc->time_id));
+  status = nc_def_var (nc->id, "time", NC_DOUBLE, 1, dimids, &(nc->time_id));
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
@@ -1848,7 +1848,7 @@ stokes_nc_set_time (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_x (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * x)
 {
   size_t start[3];
@@ -1876,7 +1876,7 @@ stokes_nc_set_x (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_u (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * u)
 {
   size_t start[3];
@@ -1904,7 +1904,7 @@ stokes_nc_set_u (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_o (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * o)
 {
   size_t start[3];
@@ -1932,7 +1932,7 @@ stokes_nc_set_o (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_e (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * e)
 {
   size_t start[3];
@@ -1960,7 +1960,7 @@ stokes_nc_set_e (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_f (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * f)
 {
   size_t start[3];
@@ -1988,7 +1988,7 @@ stokes_nc_set_f (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_t (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * t)
 {
   size_t start[3];
@@ -2016,7 +2016,7 @@ stokes_nc_set_t (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_s (struct stokes_nc * nc,
-		 int step, double time,
+		 int step,
 		 const double * s)
 {
   size_t start[3];
@@ -2045,7 +2045,7 @@ stokes_nc_set_s (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_xf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * xf)
 {
   size_t start[3];
@@ -2073,7 +2073,7 @@ stokes_nc_set_xf (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_uf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * uf)
 {
   size_t start[3];
@@ -2101,7 +2101,7 @@ stokes_nc_set_uf (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_of (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * of)
 {
   size_t start[3];
@@ -2129,7 +2129,7 @@ stokes_nc_set_of (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_ef (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * ef)
 {
   size_t start[3];
@@ -2157,7 +2157,7 @@ stokes_nc_set_ef (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_ff (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * ff)
 {
   size_t start[3];
@@ -2185,7 +2185,7 @@ stokes_nc_set_ff (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_tf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * tf)
 {
   size_t start[3];
@@ -2213,7 +2213,7 @@ stokes_nc_set_tf (struct stokes_nc * nc,
  */
 void
 stokes_nc_set_sf (struct stokes_nc * nc,
-		  int step, double time,
+		  int step,
 		  const double * sf)
 {
   size_t start[3];
@@ -2237,4 +2237,3 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 		       " in stokes_nc_append", NULL);
     }
 }
-
