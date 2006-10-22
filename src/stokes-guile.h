@@ -1,7 +1,7 @@
 /* header file for stokes-guile.c --
  * guile interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-guile.h,v 5.1 2006/10/19 03:11:55 ichiki Exp $
+ * $Id: stokes-guile.h,v 5.2 2006/10/22 04:17:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,13 +56,25 @@ guile_get_int (const char * var, int i0);
 double
 guile_get_double (const char * var, double d0);
 
-/*
+/* get doubles from SCM list or vector with length check
  * OUTPUT
  *  returned value : 0 = failed (not defined)
  *                   1 = success
  */
 int
 guile_get_doubles (const char * var, int n, double * x);
+/* get doubles from SCM list or vector with unknown length
+ * OUTPUT
+ *  returned value : NULL = failed (not defined)
+ */
+double *
+guile_get_doubles_ (const char * var);
+/* get length of SCM list or vector
+ * OUTPUT
+ *  returned value : length (not defined, 0 is returned)
+ */
+int
+guile_get_length (const char * var);
 
 /*
  */
