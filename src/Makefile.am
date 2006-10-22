@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.4 2006/10/19 04:18:59 ichiki Exp $
+# $Id: Makefile.am,v 1.5 2006/10/22 04:23:48 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -26,7 +26,10 @@ libstokes_la_SOURCES = \
 	bench.c			\
 	stokes-nc.c		\
 	stokes-nc-read.c	\
-	stokes-guile.c
+	stokes-guile.c		\
+	coll.c			\
+	periodicity.c
+
 
 libstokes_la_LDFLAGS = -version-info 3:0:0
 

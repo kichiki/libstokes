@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # for libstokes
-# $Id: Makefile.in,v 1.5 2006/10/19 04:35:53 ichiki Exp $
+# $Id: Makefile.in,v 1.6 2006/10/22 04:23:48 kichiki Exp $
 
 
 srcdir = @srcdir@
@@ -65,7 +65,7 @@ am_libstokes_la_OBJECTS = stokes.lo ewald-3f.lo ewald-3ft.lo \
 	ft.lo fts.lo two-body-res.lo lub.lo ewald.lo \
 	ewald-3f-matrix.lo ewald-3ft-matrix.lo ewald-3fts-matrix.lo \
 	lub-matrix.lo matrix.lo dgetri_c.lo bench.lo stokes-nc.lo \
-	stokes-nc-read.lo stokes-guile.lo
+	stokes-nc-read.lo stokes-guile.lo coll.lo periodicity.lo
 libstokes_la_OBJECTS = $(am_libstokes_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -205,7 +205,9 @@ libstokes_la_SOURCES = \
 	bench.c			\
 	stokes-nc.c		\
 	stokes-nc-read.c	\
-	stokes-guile.c
+	stokes-guile.c		\
+	coll.c			\
+	periodicity.c
 
 libstokes_la_LDFLAGS = -version-info 3:0:0
 include_HEADERS = libstokes.h
@@ -279,6 +281,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/bench.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/coll.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dgetri_c.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ewald-2f.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ewald-2ft.Plo@am__quote@
@@ -296,6 +299,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub-matrix.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/lub.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/matrix.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/periodicity.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-guile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-nc-read.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/stokes-nc.Plo@am__quote@

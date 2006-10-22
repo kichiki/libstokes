@@ -1,5 +1,7 @@
 2006-10-22  Kengo Ichiki  <ichiki@tpr60>
 
+	* 0.4-RELEASE
+
 	* libstokes.h: 1.12 2006/10/22 04:21:23 kichiki Exp
 	update for stokes-guile.h.
 	import coll.h, periodicity.h, and bench.h.
@@ -124,6 +126,8 @@
 	(stokes_nc_print_actives): added.
 
 2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.3-RELEASE
 
 	* Makefile.am: 1.3 2006/10/12 15:05:55 ichiki Exp
 	add lub.c.
