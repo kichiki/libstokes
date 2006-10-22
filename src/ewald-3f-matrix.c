@@ -1,6 +1,6 @@
 /* Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.10 2006/10/19 18:26:00 ichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.11 2006/10/22 22:19:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -609,6 +609,12 @@ solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
   sys->version = 0; // F version
   np = sys->np;
   nm = sys->nm;
+
+  if (np == nm)
+    {
+      solve_mob_lub_ewald_3f_matrix (sys, f, u);
+      return;
+    }
 
   n3 = np * 3;
   nf = np - nm;
