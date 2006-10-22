@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.11 2006/10/19 04:32:17 ichiki Exp $
+ * $Id: libstokes.h,v 1.12 2006/10/22 04:21:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -615,13 +615,25 @@ guile_get_int (const char * var, int i0);
 double
 guile_get_double (const char * var, double d0);
 
-/*
+/* get doubles from SCM list or vector with length check
  * OUTPUT
  *  returned value : 0 = failed (not defined)
  *                   1 = success
  */
 int
 guile_get_doubles (const char * var, int n, double * x);
+/* get doubles from SCM list or vector with unknown length
+ * OUTPUT
+ *  returned value : NULL = failed (not defined)
+ */
+double *
+guile_get_doubles_ (const char * var);
+/* get length of SCM list or vector
+ * OUTPUT
+ *  returned value : length (not defined, 0 is returned)
+ */
+int
+guile_get_length (const char * var);
 
 /*
  */
@@ -633,6 +645,114 @@ guile_get_string (const char * var);
 FILE *
 guile_open_file (const char * var, const char * mode);
 
+
+/************************************
+ ** miscellaneous routines         **
+ ************************************/
+/* from coll.h */
+/*
+ * INPUT
+ *  sys : system parameters
+ *  x [np * 3] : position of particles
+ *  v [nm * 3] : velocity of particles before collisions
+ *  en : elastic constant
+ * OUTPUT
+ *  v [nm * 3] : velocity of particles after collisions
+ */
+void
+collide_particles (struct stokes * sys,
+		   double * x, double * v, double en);
+
+/*
+ * INPUT
+ *  sys : system parameters
+ *  x [np * 3] : position of particles
+ *  v [nm * 3] : velocity of particles before collisions
+ *  en : elastic constant
+ *  x_wall : position of the wall
+ *  v_wall : 
+ * OUTPUT
+ *  v [nm * 3] : velocity of particles after collisions
+ */
+void
+collide_wall_x (struct stokes * sys,
+		double * x, double * v, double en,
+		double x_wall, double v_wall);
+void
+collide_wall_y (struct stokes * sys,
+		double * x, double * v, double en,
+		double y_wall, double v_wall);
+void
+collide_wall_z (struct stokes * sys,
+		double * x, double * v, double en,
+		double z_wall, double v_wall);
+
+/*
+ * INPUT
+ *  sys : system parameters
+ *  x [np * 2] : position of particles
+ *  v [nm * 2] : velocity of particles before collisions
+ *  en : elastic constant
+ * OUTPUT
+ *  v [nm * 2] : velocity of particles after collisions
+ */
+void
+collide_particles_2d (struct stokes * sys,
+		      double * x, double * v, double en);
+
+/* from periodicity.h */
+/*
+ * INTPUT
+ *  sys : system parameters
+ * OUTPUT
+ *  x [np * 3] : position to check; the range is [0, l[xyz])
+ */
+void
+check_periodic (struct stokes * sys,
+		double *x);
+
+/*
+ * INTPUT
+ *  sys : system parameters
+ * OUTPUT
+ *  angle [np * 3] : angle to check; the range is [0, 2\pi)
+ */
+void
+check_angle (struct stokes * sys, double *angle);
+
+/*
+ * INTPUT
+ *  sys : system parameters
+ * OUTPUT
+ *  x [np * 2] : position to check; the range is [0, l[xy])
+ */
+void
+check_periodic_2d (struct stokes * sys,
+		   double *x);
+/*
+ * INTPUT
+ *  sys : system parameters
+ * OUTPUT
+ *  angle [np] : angle to check; the range is [0, 2\pi)
+ */
+void
+check_angle_2d (struct stokes * sys, double *angle);
+
+/* from bench.h */
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
+long
+ptime_ms (void);
+
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
+double
+ptime_ms_d (void);
+
+/* return the current process time in mili-seconds
+ * NOTE: not the difference of the times */
+long
+ptime_micros (void);
 
 
 /***********************************
