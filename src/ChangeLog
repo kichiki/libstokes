@@ -1,6 +1,81 @@
 2006-10-22  Kengo Ichiki  <ichiki@tpr60>
 
-	* 0.4-RELEASE
+	* put a tag LIBSTOKES_0_4_1_RELEASE
+
+	* libstokes.h: 1.14 2006/10/23 00:21:30 kichiki Exp
+	* stokes.h: 1.9 2006/10/23 00:21:30 kichiki Exp
+	* stokes.c: 2.9 2006/10/23 00:21:30 kichiki Exp
+	change the name of (local) variable cutlim to ewald_eps.
+
+	* ewald-3f-matrix.c: 2.12 2006/10/23 00:22:04 kichiki Exp
+	(solve_mob_lub_ewald_3f_matrix): bug fixed on n3.
+
+	* ewald-3fts.c: 5.11 2006/10/22 23:01:44 kichiki Exp
+	* ewald-3ft.c: 4.11 2006/10/22 23:00:28 kichiki Exp
+	* ewald-3f.c: 4.10 2006/10/22 22:59:28 kichiki Exp
+	for mix_lub, here in atimes scheme, mob_lub routines are not
+	implemented, so that call plain mob for time being.
+
+	* ewald-3fts-matrix.c: 2.10 2006/10/22 22:58:57 kichiki Exp
+	* ewald-3ft-matrix.c: 2.11 2006/10/22 22:58:57 kichiki Exp
+	trivial bug fixed.
+
+	* matrix.c: 1.5 2006/10/22 22:47:10 kichiki Exp
+	add conditions for BLAS libraries.
+
+	* dgemv_c.h: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemv_c.c: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemm_c.h: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemm_c.c: 1.1 2006/10/22 22:43:44 kichiki Exp
+	import from stokes-src for plain BLAS environment.
+
+	* libstokes.h: 1.13 2006/10/22 22:37:30 kichiki Exp
+	from stokes-nc.h,
+	add ntime in struct stokes_nc.
+	(stokes_nc_set_*): remove time from the argument, because it is not
+	assigned anywhere.
+
+	* stokes-nc.c: 5.4 2006/10/22 22:35:42 kichiki Exp
+	(stokes_nc_init): bug fixed on definition of "time" from int to double.
+	(stokes_nc_set_*): remove time from the argument, because it is not
+	assigned anywhere.
+
+	* stokes-nc-read.c: 5.2 2006/10/22 22:34:05 kichiki Exp
+	(stokes_nc_get_dim): removed -- this is internal routine.
+	(stokes_nc_open): get dim information in a proper way.
+	use nc->ntime to return the current number of elements in (unlimited)
+	time array.
+
+	* stokes-nc.h: 5.4 2006/10/22 22:31:01 kichiki Exp
+	add ntime in struct stokes_nc.
+	(stokes_nc_set_*): remove time from the argument, because it is not
+	assigned anywhere.
+
+	* ewald-3fts-matrix.c: 2.9 2006/10/22 22:26:57 kichiki Exp
+	(solve_mix_ewald_3fts_matrix, solve_mix_lub_ewald_3fts_matrix): 
+	call mob routine if np == nm.
+
+	* ewald-3fts.c: 5.10 2006/10/22 22:25:25 kichiki Exp
+	(solve_mix_ewald_3fts, solve_mix_lub_ewald_3fts): 
+	call mob routine if np == nm.
+
+	* ewald-3ft-matrix.c: 2.10 2006/10/22 22:23:58 kichiki Exp
+	(solve_mix_ewald_3ft_matrix, solve_mix_lub_ewald_3ft_matrix): 
+	call mob routine if np == nm.
+
+	* ewald-3ft.c: 4.10 2006/10/22 22:22:45 kichiki Exp
+	(solve_mix_ewald_3ft, solve_mix_lub_ewald_3ft):
+	call mob routine if np == nm.
+
+	* ewald-3f-matrix.c: 2.11 2006/10/22 22:19:32 kichiki Exp
+	(solve_mix_lub_ewald_3f_matrix):
+	call mob routine if np == nm.
+
+	* ewald-3f.c: 4.9 2006/10/22 22:17:54 kichiki Exp
+	(solve_mix_ewald_3f, solve_mix_lub_ewald_3f):
+	call mob routine if np == nm.
+
+	* put a tag LIBSTOKES_0_4_RELEASE
 
 	* libstokes.h: 1.12 2006/10/22 04:21:23 kichiki Exp
 	update for stokes-guile.h.
