@@ -1,6 +1,6 @@
 /* Ewald summation technique with F version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.11 2006/10/22 22:19:32 kichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.12 2006/10/23 00:22:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -199,7 +199,7 @@ solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
   sys->version = 0; // F version
   np = sys->np;
 
-  n3 = np * 6;
+  n3 = np * 3;
   mat = (double *) malloc (sizeof (double) * n3 * n3);
   lub = (double *) malloc (sizeof (double) * n3 * n3);
   iml = (double *) malloc (sizeof (double) * n3 * n3);
@@ -235,12 +235,11 @@ solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
   // IML^-1
   lapack_inv_ (n3, iml);
 
-  // x := M.(FT)
+  // x := M.F
   dot_prod_matrix (mat, n3, n3, f, x);
 
-  // u := (I+M.L)^-1.M.(FT)
+  // u := (I+M.L)^-1.M.F
   dot_prod_matrix (iml, n3, n3, x, u);
-
   free (mat);
   free (iml);
   free (x);
