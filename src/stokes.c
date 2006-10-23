@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.8 2006/10/19 03:15:31 ichiki Exp $
+ * $Id: stokes.c,v 2.9 2006/10/23 00:21:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -139,12 +139,12 @@ ewald_k_append (struct stokes * e,
 /* make ewald-summation table
  * INPUT
  *  (struct stokes *) sys :
- *  cutlim   :
+ *  ewald_eps   :
  * OUTPUT
  *  (struct stokes *) sys : 
  */
 static void
-stokes_ewald_table_make (struct stokes * sys, double cutlim)
+stokes_ewald_table_make (struct stokes * sys, double ewald_eps)
 {
   double ya; 
   double yb;
@@ -551,7 +551,7 @@ ewald_recip (double k, double xi)
 
 void
 stokes_set_xi (struct stokes * sys,
-	       double xi, double cutlim)
+	       double xi, double ewald_eps)
 {
   sys->xi  = xi;
   sys->xi2 = xi * xi;
@@ -580,11 +580,11 @@ stokes_set_xi (struct stokes * sys,
   if (lmax < sys->lz) lmax = sys->lz;
   dk = 2.0 * M_PI / lmax;
   /* in real space */
-  rmax = 10.0 * sqrt (- log (cutlim)) / sys->xi;
+  rmax = 10.0 * sqrt (- log (ewald_eps)) / sys->xi;
   for (;
        (ewald_real (rmax * red_factor, sys->xi)
 	+ 6.0 * ewald_real (rmax * red_factor + dr, sys->xi))
-	 < cutlim;
+	 < ewald_eps;
        rmax *= red_factor);
   sys->rmax2 = rmax * rmax;
 
@@ -593,11 +593,11 @@ stokes_set_xi (struct stokes * sys,
   sys->rmaxz = (int) (rmax / sys->lz) + 1;
 
   /* in reciprocal space */
-  kmax = 10.0 * sqrt (- log (cutlim)) * 2.0 * sys->xi;
+  kmax = 10.0 * sqrt (- log (ewald_eps)) * 2.0 * sys->xi;
   for (;
        (ewald_recip (kmax * red_factor, sys->xi)
 	+ 6.0 * ewald_recip (kmax * red_factor + dk, sys->xi))
-	 < cutlim;
+	 < ewald_eps;
        kmax *= red_factor);
   sys->kmax = kmax;
 
@@ -606,7 +606,7 @@ stokes_set_xi (struct stokes * sys,
   sys->kmaxz = (int) (kmax * sys->lz / 2.0 / M_PI);
 
   /* now ewald summation lattice table is default */
-  stokes_ewald_table_make (sys, cutlim);
+  stokes_ewald_table_make (sys, ewald_eps);
 }
 
 

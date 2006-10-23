@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.8 2006/10/19 03:15:51 ichiki Exp $
+ * $Id: stokes.h,v 1.9 2006/10/23 00:21:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -114,7 +114,7 @@ stokes_set_l (struct stokes * sys,
 
 void
 stokes_set_xi (struct stokes * sys,
-	       double xi, double cutlim);
+	       double xi, double ewald_eps);
 
 double
 xi_by_tratio (struct stokes * sys,

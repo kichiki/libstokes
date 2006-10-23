@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.13 2006/10/22 22:37:30 kichiki Exp $
+ * $Id: libstokes.h,v 1.14 2006/10/23 00:21:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -119,7 +119,7 @@ stokes_set_l (struct stokes * sys,
 
 void
 stokes_set_xi (struct stokes * sys,
-	       double xi, double cutlim);
+	       double xi, double ewald_eps);
 
 double
 xi_by_tratio (struct stokes * sys,
