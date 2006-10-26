@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.14 2006/10/23 00:21:30 kichiki Exp $
+ * $Id: libstokes.h,v 1.15 2006/10/26 01:50:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -576,6 +576,36 @@ stokes_nc_get_data (struct stokes_nc * nc,
 		    const char * name,
 		    int step,
 		    double * x);
+
+/* read lattice vector
+ * INPUT
+ *  l[nc->nvec]
+ * OUTPUT
+ *  l[nc->nvec]
+ */
+void
+stokes_nc_get_l (struct stokes_nc * nc,
+		 double * l);
+
+/* read (the whole) time vector
+ * INPUT
+ *  time[nc->ntime]
+ * OUTPUT
+ *  time[nc->ntime]
+ */
+void
+stokes_nc_get_time (struct stokes_nc * nc,
+		    double * time);
+
+/* read time at a step
+ * INPUT
+ *  step
+ * OUTPUT
+ *  returned value : time[step]
+ */
+double
+stokes_nc_get_time_step (struct stokes_nc * nc,
+			 int step);
 
 
 /************************************

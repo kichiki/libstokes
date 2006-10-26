@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.2 2006/10/22 22:34:05 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.3 2006/10/26 01:49:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -146,15 +146,17 @@ stokes_nc_open (const char * filename)
       stokes_nc_error
 	(status, "at nc_inq() in stokes_nc_open", NULL);
     }
+  /*
   fprintf (stdout, "ndims      = %d\n", ndims);
   fprintf (stdout, "nvars      = %d\n", nvars);
   fprintf (stdout, "ngatts     = %d\n", ngatts);
   fprintf (stdout, "unlimdimid = %d\n", unlimdimid);
+  */
 
   int i;
   char name[NC_MAX_NAME+1];
   int len;
-    nc->npf = 0; // to detect the case of nf == 0
+  nc->npf = 0; // to detect the case of nf == 0
   for (i = 0; i < ndims; i ++)
     {
       status = nc_inq_dim (nc->id, i, name, &len);
@@ -189,12 +191,13 @@ stokes_nc_open (const char * filename)
 	  nc->ntime = len;
 	}
     }
-
+  /*
   fprintf (stdout, "np   = %d\n", nc->np);
   fprintf (stdout, "npf  = %d\n", nc->npf);
   fprintf (stdout, "vec  = %d\n", nc->nvec);
   fprintf (stdout, "stt  = %d\n", nc->nstt);
   fprintf (stdout, "time = %d\n", nc->ntime);
+  */
 
   /* check active vars */
   nc->flag_ui0 = 0;
@@ -240,6 +243,7 @@ stokes_nc_open (const char * filename)
   int nd;
   int d_ids[NC_MAX_VAR_DIMS];
   int natts;
+  int flag_dummy;
   for (i = 0; i < nvars; i ++)
     {
       status = nc_inq_var (nc->id, i, name, &xtype, &nd, d_ids, &natts);
@@ -248,8 +252,76 @@ stokes_nc_open (const char * filename)
 	  stokes_nc_error
 	    (status, "at nc_inq_var() in stokes_nc_open", NULL);
 	}
+      /* dimension data */
+      if (strcmp ("p", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable p"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->p_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("pf", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable pf"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->pf_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("vec", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable vec"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->vec_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("stt", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable stt"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->stt_id = d_ids[0];
+	    }
+	}
+      /* system data */
+      else if (strcmp ("l", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->vec_dim,
+			     &(nc->l_id),
+			     &flag_dummy);
+	}
+      else if (strcmp ("time", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->time_dim,
+			     &(nc->time_id),
+			     &flag_dummy);
+	}
       /* data of imposed flow */
-      if (strcmp ("Ui0", name) == 0)
+      else if (strcmp ("Ui0", name) == 0)
 	{
 	  stokes_nc_check_1 (i, xtype, nd, d_ids,
 			     nc->vec_dim,
@@ -490,6 +562,11 @@ stokes_nc_open (const char * filename)
 			     nc->time_dim, nc->pf_dim, nc->stt_dim,
 			     &(nc->sf_id),
 			     &(nc->flag_sf));
+	}
+      else
+	{
+	  fprintf (stderr, "variable %s is not a member of stokes-nc\n",
+		   name);
 	}
     }
 
@@ -923,4 +1000,90 @@ stokes_nc_get_data (struct stokes_nc * nc,
 	     "at nc_get_vara_double() in stokes_nc_get_data", name);
 	}
     }
+}
+
+/* read lattice vector
+ * INPUT
+ *  l[nc->nvec]
+ * OUTPUT
+ *  l[nc->nvec]
+ */
+void
+stokes_nc_get_l (struct stokes_nc * nc,
+		 double * l)
+{
+  size_t start;
+  size_t count;
+  int status;
+
+
+  start = 0;
+  count = nc->nvec;
+
+  status = nc_get_vara_double (nc->id, nc->l_id,
+			       &start, &count,
+			       l);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_double() in stokes_nc_get_l", "l");
+    }
+}
+
+/* read (the whole) time vector
+ * INPUT
+ *  time[nc->ntime]
+ * OUTPUT
+ *  time[nc->ntime]
+ */
+void
+stokes_nc_get_time (struct stokes_nc * nc,
+		    double * time)
+{
+  size_t start;
+  size_t count;
+  int status;
+
+
+  start = 0;
+  count = nc->ntime;
+
+  status = nc_get_vara_double (nc->id, nc->time_id,
+			       &start, &count,
+			       time);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_double() in stokes_nc_get_time", "time");
+    }
+}
+
+/* read time at a step
+ * INPUT
+ *  step
+ * OUTPUT
+ *  returned value : time[step]
+ */
+double
+stokes_nc_get_time_step (struct stokes_nc * nc,
+			 int step)
+{
+  double time;
+  size_t index;
+  int status;
+
+
+  index = step;
+  status = nc_get_var1_double (nc->id, nc->time_id,
+			       &index,
+			       &time);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_double() in stokes_nc_get_time", "time");
+    }
+  return (time);
 }

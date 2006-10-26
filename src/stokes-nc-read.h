@@ -1,7 +1,7 @@
 /* header file for stokes-nc-read.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.h,v 5.1 2006/10/19 02:45:38 ichiki Exp $
+ * $Id: stokes-nc-read.h,v 5.2 2006/10/26 01:49:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,5 +36,35 @@ stokes_nc_get_data (struct stokes_nc * nc,
 		    const char * name,
 		    int step,
 		    double * x);
+
+/* read lattice vector
+ * INPUT
+ *  l[nc->nvec]
+ * OUTPUT
+ *  l[nc->nvec]
+ */
+void
+stokes_nc_get_l (struct stokes_nc * nc,
+		 double * l);
+
+/* read (the whole) time vector
+ * INPUT
+ *  time[nc->ntime]
+ * OUTPUT
+ *  time[nc->ntime]
+ */
+void
+stokes_nc_get_time (struct stokes_nc * nc,
+		    double * time);
+
+/* read time at a step
+ * INPUT
+ *  step
+ * OUTPUT
+ *  returned value : time[step]
+ */
+double
+stokes_nc_get_time_step (struct stokes_nc * nc,
+			 int step);
 
 #endif /* !_STOKES_READ_NC_H_ */
