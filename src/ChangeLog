@@ -1,4 +1,19 @@
+2006-10-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile.am: 1.7 2006/10/26 01:51:35 kichiki Exp
+	according to addition of functions in stokes-nc-read.c,
+	update version-info from 3:0:0 to 4:0:1.
+
+	* libstokes.h: 1.15 2006/10/26 01:50:34 kichiki Exp
+	* stokes-nc-read.h: 5.2 2006/10/26 01:49:52 kichiki Exp
+	* stokes-nc-read.c: 5.3 2006/10/26 01:49:11 kichiki Exp
+	(stokes_nc_get_l): added.
+	(stokes_nc_get_time): added.
+	(stokes_nc_get_time_step): added.
+
 2006-10-22  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.4-RELEASE
 
 	* put a tag LIBSTOKES_0_4_1_RELEASE
 
@@ -489,6 +504,8 @@
 
 	* ewald-3fts.h: 5.3 2006/09/27 00:47:54 ichiki Exp
 	minor change.
+
+	* 0.1-RELEASE
 
 	* bench.h: 1.2 2006/09/27 00:19:49 ichiki Exp
 

@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # for libstokes
-# $Id: Makefile.in,v 1.7 2006/10/23 00:29:33 kichiki Exp $
+# $Id: Makefile.in,v 1.8 2006/10/26 02:54:13 kichiki Exp $
 
 
 srcdir = @srcdir@
@@ -212,7 +212,7 @@ libstokes_la_SOURCES = \
 	coll.c			\
 	periodicity.c
 
-libstokes_la_LDFLAGS = -version-info 3:0:0
+libstokes_la_LDFLAGS = -version-info 4:0:1
 include_HEADERS = libstokes.h
 all: all-am
 
