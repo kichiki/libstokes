@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.4 2006/10/12 15:03:18 ichiki Exp $
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: lub-matrix.c,v 1.5 2007/02/15 03:29:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -99,18 +99,33 @@ make_matrix_lub_ewald_3f (struct stokes * sys,
       for (j = i; j < np; ++j)
 	{
 	  j3 = j * 3;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  matrix_lub_f_2b (sys,
 				   i, j,
-				   sys->pos + i3, tmp_pos,
+				   sys->pos + i3, sys->pos + j3,
 				   n, mat);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      matrix_lub_f_2b (sys,
+				       i, j,
+				       sys->pos + i3, tmp_pos,
+				       n, mat);
+		    }
 		}
 	    }
 	}
@@ -153,18 +168,33 @@ make_matrix_lub_ewald_3ft (struct stokes * sys,
       for (j = i; j < np; ++j)
 	{
 	  j3 = j * 3;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  matrix_lub_ft_2b (sys,
 				    i, j,
-				    sys->pos + i3, tmp_pos,
+				    sys->pos + i3, sys->pos + j3,
 				    n, mat);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      matrix_lub_ft_2b (sys,
+					i, j,
+					sys->pos + i3, tmp_pos,
+					n, mat);
+		    }
 		}
 	    }
 	}
@@ -207,18 +237,33 @@ make_matrix_lub_ewald_3fts (struct stokes * sys,
       for (j = i; j < np; ++j)
 	{
 	  j3 = j * 3;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  matrix_lub_fts_2b (sys,
 				     i, j,
-				     sys->pos + i3, tmp_pos,
+				     sys->pos + i3, sys->pos + j3,
 				     n, mat);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      matrix_lub_fts_2b (sys,
+					 i, j,
+					 sys->pos + i3, tmp_pos,
+					 n, mat);
+		    }
 		}
 	    }
 	}
