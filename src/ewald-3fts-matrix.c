@@ -1,6 +1,6 @@
 /* Ewald summation technique with FTS version -- MATRIX procedure
  * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.10 2006/10/22 22:58:57 kichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.11 2007/02/15 03:39:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,49 +33,6 @@
 #include "lub-matrix.h"
 #include "ewald-3fts-matrix.h"
 
-
-/** copy from test-fts-atimes.c Rev 1.5 **/
-/* utility routine for matrix in the extracted form
- * INPUT
- *  np : # particles (not # elements!)
- *  m [np *11 * np *11] : matrix in the extracted form
- *  x [np *11] : vector in the extracted form
- * INPUT
- *  y [np *11] : output vector in the extracted form (:= m.x)
- */
-static void
-multiply_extmat_with_extvec_3fts (int np, const double * m, const double * x,
-				  double * y)
-{
-  int n11;
-  int i;
-  int j;
-  int j11;
-  int jj;
-
-
-  n11 = np * 11;
-
-  for (i = 0; i < n11; ++i)
-    {
-      y [i] = 0.0;
-      for (j = 0; j < np; ++j)
-	{
-	  j11 = j * 11;
-	  for (jj = 0; jj < 6; ++jj)
-	    {
-	      y [i] += m [i * n11 + j11 + jj] * x [j11 + jj];
-	    }
-	  y [i] += m [i * n11 + j11 + 6]
-	    * (2.0 * x [j11 + 6] + x [j11 + 10]);
-	  y [i] += m [i * n11 + j11 + 7] * 2.0 * x [j11 + 7];
-	  y [i] += m [i * n11 + j11 + 8] * 2.0 * x [j11 + 8];
-	  y [i] += m [i * n11 + j11 + 9] * 2.0 * x [j11 + 9];
-	  y [i] += m [i * n11 + j11 + 10]
-	    * (2.0 * x [j11 + 10] + x [j11 + 6]);
-	}
-    }
-}
 
 /** natural resistance problem **/
 /* this is just a test routine */
