@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
- * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.9 2006/10/23 00:21:30 kichiki Exp $
+ * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.c,v 2.10 2007/02/15 03:23:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -297,6 +297,7 @@ stokes_init (void)
   sys->pos = NULL;
 
   sys->version = 0;
+  sys->periodic = 0;
 
   sys->Ui[0] = 0.0;
   sys->Ui[1] = 0.0;

@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
- * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.9 2006/10/23 00:21:30 kichiki Exp $
+ * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.h,v 1.10 2007/02/15 03:24:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,6 +31,8 @@ struct stokes {
   double Ui[3];
   double Oi[3];
   double Ei[5];
+
+  int periodic; // 0 = non periodic, 1 = periodic
 
   /* for ewald codes */
   double rmax2;
