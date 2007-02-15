@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.15 2006/10/26 01:50:34 kichiki Exp $
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: libstokes.h,v 1.16 2007/02/15 03:41:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,6 +36,8 @@ struct stokes {
   double Ui[3];
   double Oi[3];
   double Ei[5];
+
+  int periodic; // 0 = non periodic, 1 = periodic
 
   /* for ewald codes */
   double rmax2;
@@ -1616,6 +1618,7 @@ solve_mix_lub_ewald_2fts (struct stokes * sys,
 
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -1625,8 +1628,10 @@ solve_mix_lub_ewald_2fts (struct stokes * sys,
  */
 void
 atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
+
 /* make ewald-summed mobility matrix for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  * sys : system parameters
  * OUTPUT
@@ -1636,8 +1641,10 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
  */
 void
 make_matrix_mob_ewald_3all (struct stokes * sys, double * mat);
+
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * through matrix with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
