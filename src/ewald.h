@@ -1,7 +1,7 @@
 /* header file for ewald.c --
  * utility for Ewald summation calculation
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.h,v 1.3 2006/10/05 21:31:15 ichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald.h,v 1.4 2007/02/15 03:27:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,7 @@ scalars_ewald_real (int version,
 
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -58,8 +59,10 @@ scalars_ewald_real (int version,
  */
 void
 atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
+
 /* make ewald-summed mobility matrix for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  * sys : system parameters
  * OUTPUT
@@ -69,8 +72,10 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
  */
 void
 make_matrix_mob_ewald_3all (struct stokes * sys, double * mat);
+
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * through matrix with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS

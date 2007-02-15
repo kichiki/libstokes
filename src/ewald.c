@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.3 2006/10/05 21:30:45 ichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald.c,v 1.4 2007/02/15 03:27:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,14 +19,14 @@
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
-#include <libiter.h> /* solve_iter() */
 
 #include "stokes.h"
 #include "bench.h"
-#include "f.h"
-#include "ft.h"
-#include "fts.h"
-#include "matrix.h"
+#include "f.h"      // matrix_f_ij() matrix_f_atimes()
+#include "ft.h"     // matrix_ft_ij() matrix_ft_atimes()
+#include "fts.h"    // matrix_fts_ij() matrix_fts_atimes()
+#include "matrix.h" // dot_prod_matrix() multiply_extmat_with_extvec_3fts()
+#include "non-ewald.h" // atimes_3all() make_matrix_mob_3all()
 
 #include "ewald.h"
 
@@ -189,6 +189,7 @@ scalars_ewald_real (int version,
 
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -225,6 +226,14 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 
 
   sys = (struct stokes *) user_data;
+
+  if (sys->periodic == 0)
+    {
+      // non-periodic
+      atimes_3all (n, x, y, user_data);
+      return;
+    }
+
 
   /* clear result */
   for (i = 0; i < n; i ++)
@@ -418,6 +427,7 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 
 /* make ewald-summed mobility matrix for F/FT/FTS versions
  * with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  * sys : system parameters
  * OUTPUT
@@ -450,6 +460,14 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 
   double k1, k2, k3;
   double cf, sf;
+
+
+  if (sys->periodic == 0)
+    {
+      // non-periodic
+      make_matrix_mob_3all (sys, mat);
+      return;
+    }
 
 
   if (sys->version == 0) // F version
@@ -664,50 +682,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 }
 
 
-/** copy from test-fts-atimes.c Rev 1.5 **/
-/* utility routine for matrix in the extracted form
- * INPUT
- *  np : # particles (not # elements!)
- *  m [np *11 * np *11] : matrix in the extracted form
- *  x [np *11] : vector in the extracted form
- * INPUT
- *  y [np *11] : output vector in the extracted form (:= m.x)
- */
-static void
-multiply_extmat_with_extvec_3fts (int np, const double * m, const double * x,
-				  double * y)
-{
-  int n11;
-  int i;
-  int j;
-  int j11;
-  int jj;
-
-
-  n11 = np * 11;
-
-  for (i = 0; i < n11; ++i)
-    {
-      y [i] = 0.0;
-      for (j = 0; j < np; ++j)
-	{
-	  j11 = j * 11;
-	  for (jj = 0; jj < 6; ++jj)
-	    {
-	      y [i] += m [i * n11 + j11 + jj] * x [j11 + jj];
-	    }
-	  y [i] += m [i * n11 + j11 + 6]
-	    * (2.0 * x [j11 + 6] + x [j11 + 10]);
-	  y [i] += m [i * n11 + j11 + 7] * 2.0 * x [j11 + 7];
-	  y [i] += m [i * n11 + j11 + 8] * 2.0 * x [j11 + 8];
-	  y [i] += m [i * n11 + j11 + 9] * 2.0 * x [j11 + 9];
-	  y [i] += m [i * n11 + j11 + 10]
-	    * (2.0 * x [j11 + 10] + x [j11 + 6]);
-	}
-    }
-}
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * through matrix with the ewald table
+ * this routine also can handle non-periodic case seamlessly
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
