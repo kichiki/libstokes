@@ -1,7 +1,7 @@
 /* header file for stokes-nc-read.c --
  * NetCDF interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.h,v 5.2 2006/10/26 01:49:52 kichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc-read.h,v 5.3 2007/02/15 23:55:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,9 +21,6 @@
 #define	_STOKES_READ_NC_H_
 
 
-void
-stokes_nc_print_actives (struct stokes_nc * nc,
-			 FILE * out);
 struct stokes_nc *
 stokes_nc_open (const char * filename);
 

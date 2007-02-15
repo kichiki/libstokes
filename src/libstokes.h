@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.16 2007/02/15 03:41:37 kichiki Exp $
+ * $Id: libstokes.h,v 1.17 2007/02/15 23:56:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -563,9 +563,6 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 
 /* from stokes-nc-read.h
  */
-void
-stokes_nc_print_actives (struct stokes_nc * nc,
-			 FILE * out);
 struct stokes_nc *
 stokes_nc_open (const char * filename);
 
