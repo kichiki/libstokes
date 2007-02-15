@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.1 2006/10/12 15:01:45 ichiki Exp $
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: lub.c,v 5.2 2007/02/15 03:28:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -84,7 +84,7 @@ calc_lub_ewald_3f (struct stokes * sys,
 
   np = sys->np;
 
-  tmp_pos = malloc (sizeof (double) * 3);
+  tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_ewald_3f().\n");
@@ -103,18 +103,33 @@ calc_lub_ewald_3f (struct stokes * sys,
       for (j = i; j < np; ++j)
 	{
 	  j3 = j * 3;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  calc_lub_f_2b (sys,
 				 u + i3, u + j3,
-				 sys->pos + i3, tmp_pos,
+				 sys->pos + i3, sys->pos + j3,
 				 f + i3, f + j3);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      calc_lub_f_2b (sys,
+				     u + i3, u + j3,
+				     sys->pos + i3, tmp_pos,
+				     f + i3, f + j3);
+		    }
 		}
 	    }
 	}
@@ -147,7 +162,7 @@ calc_lub_ewald_3ft (struct stokes * sys,
 
   np = sys->np;
 
-  tmp_pos = malloc (sizeof (double) * 3);
+  tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_ewald_3ft().\n");
@@ -168,18 +183,33 @@ calc_lub_ewald_3ft (struct stokes * sys,
 	{
 	  j3 = j * 3;
 	  j6 = j * 6;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  calc_lub_ft_2b (sys,
 				  uo + i6, uo + j6,
-				  sys->pos + i3, tmp_pos,
+				  sys->pos + i3, sys->pos + j3,
 				  ft + i6, ft + j6);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      calc_lub_ft_2b (sys,
+				      uo + i6, uo + j6,
+				      sys->pos + i3, tmp_pos,
+				      ft + i6, ft + j6);
+		    }
 		}
 	    }
 	}
@@ -212,7 +242,7 @@ calc_lub_ewald_3fts (struct stokes * sys,
 
   np = sys->np;
 
-  tmp_pos = malloc (sizeof (double) * 3);
+  tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
       fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
@@ -233,18 +263,33 @@ calc_lub_ewald_3fts (struct stokes * sys,
 	{
 	  j3 = j * 3;
 	  j11 = j * 11;
-	  /* all image cells */
-	  for (k = 0; k < 27; ++k)
+
+	  if (sys->periodic == 0)
 	    {
-	      tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
-	      tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
-	      tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-	      if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+	      // non-periodic
+	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
 		{
 		  calc_lub_fts_2b (sys,
 				   uoe + i11, uoe + j11,
-				   sys->pos + i3, tmp_pos,
+				   sys->pos + i3, sys->pos + j3,
 				   fts + i11, fts + j11);
+		}
+	    }
+	  else
+	    {
+	      /* all image cells */
+	      for (k = 0; k < 27; ++k)
+		{
+		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
+		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
+		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
+		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		    {
+		      calc_lub_fts_2b (sys,
+				       uoe + i11, uoe + j11,
+				       sys->pos + i3, tmp_pos,
+				       fts + i11, fts + j11);
+		    }
 		}
 	    }
 	}
