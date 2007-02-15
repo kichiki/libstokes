@@ -1,7 +1,7 @@
 /* header file for matrix.c --
  * matrix-manipulating routines
- * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.h,v 1.1 2006/09/29 03:39:03 ichiki Exp $
+ * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: matrix.h,v 1.2 2007/02/15 03:25:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,5 +81,18 @@ void
 dot_prod_matrix (const double * mat, int n1, int n2,
 		 const double * x,
 		 double * y);
+
+/* utility routine for matrix in the extracted form
+ * INPUT
+ *  np : # particles (not # elements!)
+ *  m [np *11 * np *11] : matrix in the extracted form
+ *  x [np *11] : vector in the extracted form
+ * INPUT
+ *  y [np *11] : output vector in the extracted form (:= m.x)
+ */
+void
+multiply_extmat_with_extvec_3fts (int np, const double * m, const double * x,
+				  double * y);
+
 
 #endif /* !_MATRIX_H_ */
