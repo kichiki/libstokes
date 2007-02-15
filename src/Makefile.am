@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.7 2006/10/26 01:51:35 kichiki Exp $
+# $Id: Makefile.am,v 1.8 2007/02/15 03:42:29 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -17,6 +17,7 @@ libstokes_la_SOURCES = \
 	two-body-res.c		\
 	lub.c			\
 	ewald.c			\
+	non-ewald.c		\
 	ewald-3f-matrix.c	\
 	ewald-3ft-matrix.c	\
 	ewald-3fts-matrix.c	\
@@ -33,6 +34,6 @@ libstokes_la_SOURCES = \
 	periodicity.c
 
 
-libstokes_la_LDFLAGS = -version-info 4:0:1
+libstokes_la_LDFLAGS = -version-info 4:1:1
 
 include_HEADERS = libstokes.h
