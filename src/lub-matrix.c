@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.5 2007/02/15 03:29:35 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.6 2007/03/07 21:33:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ cond_lub (const double * x1, const double * x2)
 }
 
 /* make lubrication matrix for F version for all particles
- * under the periodic boundary condition
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -72,8 +72,8 @@ cond_lub (const double * x1, const double * x2)
  *  mat [np * 3 * np * 3] :
  */
 void
-make_matrix_lub_ewald_3f (struct stokes * sys,
-			  double * mat)
+make_matrix_lub_3f (struct stokes * sys,
+		    double * mat)
 {
   int np;
   int i, j, k;
@@ -133,7 +133,7 @@ make_matrix_lub_ewald_3f (struct stokes * sys,
 }
 
 /* make lubrication matrix for FT version for all particles
- * under the periodic boundary condition
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -142,8 +142,8 @@ make_matrix_lub_ewald_3f (struct stokes * sys,
  *  mat [np * 6 * np * 6] :
  */
 void
-make_matrix_lub_ewald_3ft (struct stokes * sys,
-			   double * mat)
+make_matrix_lub_3ft (struct stokes * sys,
+		     double * mat)
 {
   int np;
   int i, j, k;
@@ -202,7 +202,7 @@ make_matrix_lub_ewald_3ft (struct stokes * sys,
 }
 
 /* make lubrication matrix for FTS version for all particles
- * under the periodic boundary condition
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -211,8 +211,8 @@ make_matrix_lub_ewald_3ft (struct stokes * sys,
  *  mat [np * 11 * np * 11] :
  */
 void
-make_matrix_lub_ewald_3fts (struct stokes * sys,
-			    double * mat)
+make_matrix_lub_3fts (struct stokes * sys,
+		      double * mat)
 {
   int np;
   int i, j, k;
