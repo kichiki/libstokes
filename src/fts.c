@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
- * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.4 2006/10/19 18:24:06 ichiki Exp $
+ * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: fts.c,v 2.5 2007/03/07 20:35:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1322,51 +1322,6 @@ scalar_minv_fts (double s,  double * scalar_fts)
   scalar_fts [19] = ym12;
   scalar_fts [20] = zm11;
   scalar_fts [21] = zm12;
-}
-
-/* calculate lubrication fts by uoe for all particles
- * INPUT
- *   sys : sys->pos [np * 3] : position of particles
- *         sys->np           : # particles
- *   uoe [np * 11] : velocity, angular velocity, strain
- * OUTPUT
- *   fts [np * 11] : force, torque, stresslet
- */
-void
-calc_lub_3fts (struct stokes * sys,
-	       const double * uoe,
-	       double * fts)
-{
-  int np; 
-
-  int i, j;
-  int i3, i11;
-  int j3, j11;
-
-
-  np = sys->np;
-
-  /* clear fts [np * 11] */
-  for (i = 0; i < np * 11; ++i)
-    {
-      fts [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      i11 = i * 11;
-      for (j = i + 1; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  j11 = j * 11;
-	  calc_lub_fts_2b (sys,
-			   uoe + i11, uoe + j11,
-			   sys->pos + i3, sys->pos + j3,
-			   fts + i11, fts + j11);
-	  
-	}
-    }
 }
 
 /* calculate fts by uoe for pair of particles 1 and 2

@@ -1,7 +1,7 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
- * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 2.3 2006/10/19 18:24:28 ichiki Exp $
+ * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: fts.h,v 2.4 2007/03/07 20:35:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -183,19 +183,6 @@ set_fts_by_FTS (int n,
  */
 void
 scalar_minv_fts (double s,  double * scalar_fts);
-
-/* calculate lubrication fts by uoe for all particles
- * INPUT
- *   sys : sys->pos [np * 3] : position of particles
- *         sys->np           : # particles
- *   uoe [np * 11] : velocity, angular velocity, strain
- * OUTPUT
- *   fts [np * 11] : force, torque, stresslet
- */
-void
-calc_lub_3fts (struct stokes * sys,
-	       const double * uoe,
-	       double * fts);
 
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
