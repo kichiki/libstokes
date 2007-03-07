@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
- * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.5 2006/10/19 18:23:12 ichiki Exp $
+ * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ft.c,v 2.6 2007/03/07 20:34:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -402,51 +402,6 @@ scalar_minv_ft (double s, double * scalar_ft)
   scalar_ft [7] = xc12;
   scalar_ft [8] = yc11;
   scalar_ft [9] = yc12;
-}
-
-/* calculate lubrication ft by uoe for all particles
- * INPUT
- *   sys : sys->pos [np * 3] : position of particles
- *         sys->np           : # particles
- *   uo [np * 6] : velocity, angular velocity
- * OUTPUT
- *   ft [np * 6] : force, torque
- */
-void
-calc_lub_3ft (struct stokes * sys,
-	      const double * uo,
-	      double * ft)
-{
-  int np; 
-
-  int i, j;
-  int i3, i6;
-  int j3, j6;
-
-
-  np = sys->np;
-
-  /* clear ft [np * 6] */
-  for (i = 0; i < np * 6; ++i)
-    {
-      ft [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      i6 = i * 6;
-      for (j = i + 1; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  j6 = j * 6;
-	  calc_lub_ft_2b (sys,
-			  uo + i6, uo + j6,
-			  sys->pos + i3, sys->pos + j3,
-			  ft + i6, ft + j6);
-	  
-	}
-    }
 }
 
 /* calculate ft by uoe for pair of particles 1 and 2

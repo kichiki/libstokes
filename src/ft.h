@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
- * Copyright (C) 2000-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.4 2006/10/19 18:23:38 ichiki Exp $
+ * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ft.h,v 2.5 2007/03/07 20:34:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -142,19 +142,6 @@ set_ft_by_FT (int n,
  */
 void
 scalar_minv_ft (double s, double * scalar_ft);
-
-/* calculate lubrication ft by uoe for all particles
- * INPUT
- *   sys : sys->pos [np * 3] : position of particles
- *         sys->np           : # particles
- *   uo [np * 6] : velocity, angular velocity
- * OUTPUT
- *   ft [np * 6] : force, torque
- */
-void
-calc_lub_3ft (struct stokes * sys,
-	      const double * uo,
-	      double * ft);
 
 /* calculate ft by uoe for pair of particles 1 and 2
  * INPUT
