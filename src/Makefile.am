@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.8 2007/02/15 03:42:29 kichiki Exp $
+# $Id: Makefile.am,v 1.9 2007/03/07 23:12:39 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -34,6 +34,6 @@ libstokes_la_SOURCES = \
 	periodicity.c
 
 
-libstokes_la_LDFLAGS = -version-info 4:1:1
+libstokes_la_LDFLAGS = -version-info 5:0:0
 
 include_HEADERS = libstokes.h
