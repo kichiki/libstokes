@@ -1,7 +1,7 @@
 /* header file for ewald-3ft-matrix.c --
- * Ewald summation technique with FT version -- MATRIX procedure
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.h,v 2.5 2006/10/19 04:14:17 ichiki Exp $
+ * Solvers for 3 dimensional FT version problems by MATRIX procedure
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3ft-matrix.h,v 2.6 2007/03/07 22:08:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,8 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -32,11 +33,12 @@
  *   t [np * 3] :
  */
 void
-solve_res_ewald_3ft_matrix (struct stokes * sys,
-			    const double *u, const double *o,
-			    double *f, double *t);
+solve_res_3ft_matrix (struct stokes * sys,
+		      const double *u, const double *o,
+		      double *f, double *t);
 
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -46,12 +48,13 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *u, const double *o,
-				double *f, double *t);
+solve_res_lub_3ft_matrix (struct stokes * sys,
+			  const double *u, const double *o,
+			  double *f, double *t);
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -61,11 +64,12 @@ solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    double *u, double *o);
+solve_mob_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      double *u, double *o);
 
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -75,13 +79,14 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				double *u, double *o);
+solve_mob_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  double *u, double *o);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -95,15 +100,16 @@ solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    const double *uf, const double *of,
-			    double *u, double *o,
-			    double *ff, double *tf);
+solve_mix_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      const double *uf, const double *of,
+		      double *u, double *o,
+		      double *ff, double *tf);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -117,10 +123,11 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *uf, const double *of,
-				double *u, double *o,
-				double *ff, double *tf);
+solve_mix_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  const double *uf, const double *of,
+			  double *u, double *o,
+			  double *ff, double *tf);
+
 
 #endif /* !_EWALD_3FT_MATRIX_H_ */

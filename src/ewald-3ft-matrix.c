@@ -1,6 +1,6 @@
-/* Ewald summation technique with FT version -- MATRIX procedure
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.11 2006/10/22 22:58:57 kichiki Exp $
+/* Solvers for 3 dimensional FT version problems by MATRIX procedure
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3ft-matrix.c,v 2.12 2007/03/07 22:07:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,14 +27,15 @@
 #include "ft.h"
 #include "f.h"
 
-#include "ewald.h" // make_matrix_mob_ewald_3all ()
+#include "ewald.h" // make_matrix_mob_3all ()
 #include "matrix.h"
 #include "lub-matrix.h"
 #include "ewald-3ft-matrix.h"
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -44,9 +45,9 @@
  *   t [np * 3] :
  */
 void
-solve_res_ewald_3ft_matrix (struct stokes * sys,
-			    const double *u, const double *o,
-			    double *f, double *t)
+solve_res_3ft_matrix (struct stokes * sys,
+		      const double *u, const double *o,
+		      double *f, double *t)
 {
   int np;
   int n6;
@@ -74,7 +75,7 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_ewald_3ft_matrix()\n");
+	       " at solve_res_3ft_matrix()\n");
       exit (1);
     }
 
@@ -88,7 +89,7 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
   free (u0);
   free (o0);
 
-  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
   lapack_inv_ (n6, mat);
 
   // x := M^-1.b
@@ -107,7 +108,8 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
 }
 
 
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -117,9 +119,9 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *u, const double *o,
-				double *f, double *t)
+solve_res_lub_3ft_matrix (struct stokes * sys,
+			  const double *u, const double *o,
+			  double *f, double *t)
 {
   int np;
   int i;
@@ -151,7 +153,7 @@ solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_lub_ewald_3ft_matrix()\n");
+	       " at solve_res_lub_3ft_matrix()\n");
       exit (1);
     }
 
@@ -161,12 +163,12 @@ solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
    * u(x)=0 as |x|-> infty */
 
   // M matrix
-  make_matrix_mob_ewald_3all (sys, mob); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mob); // sys->version is 1 (FT)
   // M^-1
   lapack_inv_ (n6, mob);
 
   // L matrix
-  make_matrix_lub_ewald_3ft (sys, lub);
+  make_matrix_lub_3ft (sys, lub);
 
   // M^-1 + L
   for (i = 0; i < n6 * n6; i ++)
@@ -196,7 +198,8 @@ solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
 }
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -206,9 +209,9 @@ solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    double *u, double *o)
+solve_mob_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      double *u, double *o)
 {
   int np;
   int n6;
@@ -230,7 +233,7 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mob_ewald_3ft_matrix()\n");
+	       " at solve_mob_3ft_matrix()\n");
       exit (1);
     }
 
@@ -241,7 +244,7 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
   set_ft_by_FT (np, b, f, t);
 
   // M
-  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
   // x = M.b
   dot_prod_matrix (mat, n6, n6, b, x);
 
@@ -257,7 +260,8 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
   shift_rest_to_labo_O (sys, sys->np, o);
 }
 
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -267,9 +271,9 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				double *u, double *o)
+solve_mob_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  double *u, double *o)
 {
   int np;
   int i;
@@ -298,7 +302,7 @@ solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mob_lub_ewald_3ft_matrix()\n");
+	       " at solve_mob_lub_3ft_matrix()\n");
       exit (1);
     }
 
@@ -306,9 +310,9 @@ solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
    * u(x)=0 as |x|-> infty */
 
   // M
-  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
   // L
-  make_matrix_lub_ewald_3ft (sys, lub);
+  make_matrix_lub_3ft (sys, lub);
   // IML := M.L
   mul_matrices (mat, n6, n6,
 		lub, n6, n6,
@@ -547,7 +551,8 @@ merge_matrix_fix_3ft (int np, int nm,
     }
 }
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -561,11 +566,11 @@ merge_matrix_fix_3ft (int np, int nm,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    const double *uf, const double *of,
-			    double *u, double *o,
-			    double *ff, double *tf)
+solve_mix_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      const double *uf, const double *of,
+		      double *u, double *o,
+		      double *ff, double *tf)
 {
   int np, nm;
   int n6;
@@ -584,8 +589,8 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
   nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_ewald_3ft_matrix (sys, f, t,
-				  u, o);
+      solve_mob_3ft_matrix (sys, f, t,
+			    u, o);
       return;
     }
 
@@ -625,7 +630,7 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_ewald_3ft_matrix()\n");
+	       " at solve_mix_3ft_matrix()\n");
       exit (1);
     }
 
@@ -642,7 +647,7 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
   free (of0);
 
   /* mobility matrix in EXTRACTED form */
-  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
   split_matrix_fix_3ft (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
 
   solve_linear (nh, nl,
@@ -676,7 +681,8 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -690,11 +696,11 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *uf, const double *of,
-				double *u, double *o,
-				double *ff, double *tf)
+solve_mix_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  const double *uf, const double *of,
+			  double *u, double *o,
+			  double *ff, double *tf)
 {
   int np, nm;
 
@@ -718,8 +724,8 @@ solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
   nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_lub_ewald_3ft_matrix (sys, f, t,
-				      u, o);
+      solve_mob_lub_3ft_matrix (sys, f, t,
+				u, o);
       return;
     }
 
@@ -763,7 +769,7 @@ solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
       x == NULL)
     {
       fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_lub_ewald_3ft_matrix()\n");
+	       " at solve_mix_lub_3ft_matrix()\n");
       exit (1);
     }
 
@@ -786,11 +792,11 @@ solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
   free (of0);
 
   /* mob */
-  make_matrix_mob_ewald_3all (sys, mat); // sys->version is 1 (FT)
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
   split_matrix_fix_3ft (np, nm, mat, mat_ll, mat_lh, mat_hl, mat_hh);
 
   /* lub */
-  make_matrix_lub_ewald_3ft (sys, lub);
+  make_matrix_lub_3ft (sys, lub);
   /* tmp := M.L */
   mul_matrices (mat, n6, n6, lub, n6, n6, tmp);
   /* note: at this point, lub[] is free to use. */
