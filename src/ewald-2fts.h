@@ -1,14 +1,8 @@
 /* header file for ewald-2fts.c --
- * Ewald summation technique under 2D
+ * Solvers for 2 dimensional (monolayer) FTS version problems
  * this is a wrapper package for ewald-3fts.c
- * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-2fts.h,v 1.3 2006/10/19 04:17:51 ichiki Exp $
- *
- * 3 dimensional hydrodynamics
- * 2D configuration
- * periodic boundary condition in 3 direction
- * FTS version
- * non-dimension formulation
+ * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-2fts.h,v 1.4 2007/03/07 22:26:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +23,8 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FTS version under Ewald sum
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -41,12 +36,14 @@
  *   s [np * 5] :
  */
 void
-solve_res_ewald_2fts (struct stokes * sys,
-		      const double *u, const double *o, const double *e,
-		      double *f, double *t, double *s);
+solve_res_2fts (struct stokes * sys,
+		const double *u, const double *o, const double *e,
+		double *f, double *t, double *s);
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FTS version under Ewald sum
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
  *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [np * 3] : OK, this is 3D form
@@ -57,13 +54,13 @@ solve_res_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_mob_ewald_2fts (struct stokes * sys,
-		      const double *f, const double *t3, const double *e,
-		      double *u, double *o, double *s);
+solve_mob_2fts (struct stokes * sys,
+		const double *f, const double *t3, const double *e,
+		double *u, double *o, double *s);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -81,15 +78,15 @@ solve_mob_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_ewald_2fts (struct stokes * sys,
-		      const double *f, const double *t3, const double *e,
-		      const double *uf, const double *of, const double *ef,
-		      double *u, double *o, double *s,
-		      double *ff, double *tf, double *sf);
+solve_mix_2fts (struct stokes * sys,
+		const double *f, const double *t3, const double *e,
+		const double *uf, const double *of, const double *ef,
+		double *u, double *o, double *s,
+		double *ff, double *tf, double *sf);
 
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication
- * in FTS version under Ewald sum
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -101,13 +98,14 @@ solve_mix_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_lub_ewald_2fts (struct stokes * sys,
-			  const double *u, const double *o, const double *e,
-			  double *f, double *t, double *s);
+solve_res_lub_2fts (struct stokes * sys,
+		    const double *u, const double *o, const double *e,
+		    double *f, double *t, double *s);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
+ * with fixed particles in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -125,12 +123,13 @@ solve_res_lub_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_lub_ewald_2fts (struct stokes * sys,
-			  const double *f, const double *t3,
-			  const double *e,
-			  const double *uf, const double *of,
-			  const double *ef,
-			  double *u, double *o, double *s,
-			  double *ff, double *tf, double *sf);
+solve_mix_lub_2fts (struct stokes * sys,
+		    const double *f, const double *t3,
+		    const double *e,
+		    const double *uf, const double *of,
+		    const double *ef,
+		    double *u, double *o, double *s,
+		    double *ff, double *tf, double *sf);
+
 
 #endif /* !_EWALD_2FTS_H_ */
