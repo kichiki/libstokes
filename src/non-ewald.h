@@ -1,7 +1,7 @@
 /* header file for non-ewald.c --
  * utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.h,v 1.1 2007/02/15 03:26:22 kichiki Exp $
+ * $Id: non-ewald.h,v 1.2 2007/03/07 22:32:29 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@ scalars_nonewald (int version,
 		  double *xm, double *ym, double *zm);
 
 
-/* ATIMES of calc plain mobility for F/FT/FTS versions
+/* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -55,10 +55,10 @@ scalars_nonewald (int version,
  *  y [n] : U, UO, or UOE
  */
 void
-atimes_3all (int n, const double *x, double *y, void * user_data);
+atimes_nonewald_3all (int n, const double *x, double *y, void * user_data);
 
 
-/* make plain mobility matrix for F/FT/FTS versions
+/* make plain mobility matrix for F/FT/FTS versions for non-periodic case
  * INPUT
  * sys : system parameters
  * OUTPUT
@@ -67,10 +67,10 @@ atimes_3all (int n, const double *x, double *y, void * user_data);
  *  mat [np * 11 * np * 11] : for FTS version
  */
 void
-make_matrix_mob_3all (struct stokes * sys, double * mat);
+make_matrix_mob_nonewald_3all (struct stokes * sys, double * mat);
 
 
-/* ATIMES of calc plain mobility for F/FT/FTS versions
+/* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
  * through matrix with the ewald table
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
@@ -80,8 +80,8 @@ make_matrix_mob_3all (struct stokes * sys, double * mat);
  *  y [n] : U, UO, or UOE
  */
 void
-atimes_3all_matrix (int n, const double *x,
-		    double *y, void * user_data);
+atimes_nonewald_3all_matrix (int n, const double *x,
+			     double *y, void * user_data);
 
 
 #endif /* !_NON_EWALD_H_ */
