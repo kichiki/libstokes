@@ -1,13 +1,7 @@
 /* header file for 'ewald-3ft.c' --
- * Beenakker's formulation of Ewald summation technique for RP tensor in 3D
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.h,v 4.4 2006/10/19 04:13:31 ichiki Exp $
- *
- * 3 dimensional hydrodynamics
- * 3D configuration
- * periodic boundary condition in 3 direction
- * FT version
- * non-dimension formulation
+ * Solvers for 3 dimensional FT version problems
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-3ft.h,v 4.5 2007/03/07 21:03:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +22,8 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -38,12 +33,13 @@
  *   t [np * 3] :
  */
 void
-solve_res_ewald_3ft (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t);
+solve_res_3ft (struct stokes * sys,
+	       const double *u, const double *o,
+	       double *f, double *t);
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -53,13 +49,13 @@ solve_res_ewald_3ft (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_3ft (struct stokes * sys,
-		     const double *f, const double *t,
-		     double *u, double *o);
+solve_mob_3ft (struct stokes * sys,
+	       const double *f, const double *t,
+	       double *u, double *o);
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FT version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -73,15 +69,15 @@ solve_mob_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3ft (struct stokes * sys,
-		     const double *f, const double *t,
-		     const double *uf, const double *of,
-		     double *u, double *o,
-		     double *ff, double *tf);
+solve_mix_3ft (struct stokes * sys,
+	       const double *f, const double *t,
+	       const double *uf, const double *of,
+	       double *u, double *o,
+	       double *ff, double *tf);
 
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication
- * in FT version under Ewald sum
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -91,13 +87,14 @@ solve_mix_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_3ft (struct stokes * sys,
-			 const double *u, const double *o,
-			 double *f, double *t);
+solve_res_lub_3ft (struct stokes * sys,
+		   const double *u, const double *o,
+		   double *f, double *t);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -111,10 +108,11 @@ solve_res_lub_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3ft (struct stokes * sys,
-			 const double *f, const double *t,
-			 const double *uf, const double *of,
-			 double *u, double *o,
-			 double *ff, double *tf);
+solve_mix_lub_3ft (struct stokes * sys,
+		   const double *f, const double *t,
+		   const double *uf, const double *of,
+		   double *u, double *o,
+		   double *ff, double *tf);
+
 
 #endif /* !_EWALD_3FT_H_ */
