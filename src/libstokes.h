@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.17 2007/02/15 23:56:53 kichiki Exp $
+ * $Id: libstokes.h,v 1.18 2007/03/07 22:51:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,8 +26,8 @@
  ** system parameters             **
  ***********************************/
 struct stokes {
-  int np; /* number of all particles */
-  int nm; /* number of mobile particles */
+  int np;       /* number of all particles */
+  int nm;       /* number of mobile particles */
   double * pos; /* position of particles */
 
   int version; /* 0 = F, 1 = FT, 2 = FTS */
@@ -789,7 +789,9 @@ ptime_micros (void);
  ** resistance problems           **
  ***********************************/
 
-/* solve natural resistance problem in F version under Ewald sum
+/** natural resistance problem **/
+/* solve natural resistance problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *  u [np * 3] :
@@ -797,12 +799,12 @@ ptime_micros (void);
  *  f [np * 3] :
  */
 void
-solve_res_ewald_3f (struct stokes * sys,
-		    const double *u,
-		    double *f);
+solve_res_3f (struct stokes * sys,
+	      const double *u,
+	      double *f);
 
-/* solve natural resistance problem with lubrication
- * in F version under Ewald sum
+/* solve natural resistance problem with lubrication in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *  u [np * 3] :
@@ -810,11 +812,12 @@ solve_res_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-solve_res_lub_ewald_3f (struct stokes * sys,
-			const double *u,
-			double *f);
+solve_res_lub_3f (struct stokes * sys,
+		  const double *u,
+		  double *f);
 
-/* solve natural resistance problem in F version under Ewald sum
+/* solve natural resistance problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -822,11 +825,12 @@ solve_res_lub_ewald_3f (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-solve_res_ewald_3f_matrix (struct stokes * sys,
-			   const double *u,
-			   double *f);
+solve_res_3f_matrix (struct stokes * sys,
+		     const double *u,
+		     double *f);
 
-/* solve natural resistance problem in F version under Ewald sum
+/* solve natural resistance problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -834,26 +838,12 @@ solve_res_ewald_3f_matrix (struct stokes * sys,
  *   f [np * 3] :
  */
 void
-solve_res_lub_ewald_3f_matrix (struct stokes * sys,
-			       const double *u,
-			       double *f);
+solve_res_lub_3f_matrix (struct stokes * sys,
+			 const double *u,
+			 double *f);
 
-/* solve natural resistance problem in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_ewald_3ft (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t);
-
-/* solve natural resistance problem with lubrication
- * in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -863,11 +853,12 @@ solve_res_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_3ft (struct stokes * sys,
-			 const double *u, const double *o,
-			 double *f, double *t);
+solve_res_3ft (struct stokes * sys,
+	       const double *u, const double *o,
+	       double *f, double *t);
 
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -877,11 +868,12 @@ solve_res_lub_ewald_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_ewald_3ft_matrix (struct stokes * sys,
-			    const double *u, const double *o,
-			    double *f, double *t);
+solve_res_lub_3ft (struct stokes * sys,
+		   const double *u, const double *o,
+		   double *f, double *t);
 
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -891,28 +883,27 @@ solve_res_ewald_3ft_matrix (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *u, const double *o,
-				double *f, double *t);
+solve_res_3ft_matrix (struct stokes * sys,
+		      const double *u, const double *o,
+		      double *f, double *t);
 
-/* solve natural resistance problem in FTS version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
  *   o [np * 3] :
- *   e [np * 5] :
  * OUTPUT
  *   f [np * 3] :
  *   t [np * 3] :
- *   s [np * 5] :
  */
 void
-solve_res_ewald_3fts (struct stokes * sys,
-		      const double *u, const double *o, const double *e,
-		      double *f, double *t, double *s);
+solve_res_lub_3ft_matrix (struct stokes * sys,
+			  const double *u, const double *o,
+			  double *f, double *t);
 
-/* solve natural resistance problem with lubrication
- * in FTS version under Ewald sum
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -924,11 +915,12 @@ solve_res_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_lub_ewald_3fts (struct stokes * sys,
-			  const double *u, const double *o, const double *e,
-			  double *f, double *t, double *s);
+solve_res_3fts (struct stokes * sys,
+		const double *u, const double *o, const double *e,
+		double *f, double *t, double *s);
 
-/* solve natural resistance problem in FTS version under Ewald sum
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -940,11 +932,12 @@ solve_res_lub_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_ewald_3fts_matrix (struct stokes * sys,
-			     const double *u, const double *o, const double *e,
-			     double *f, double *t, double *s);
+solve_res_lub_3fts (struct stokes * sys,
+		    const double *u, const double *o, const double *e,
+		    double *f, double *t, double *s);
 
-/* solve natural resistance problem in FTS version under Ewald sum
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 3] :
@@ -956,12 +949,30 @@ solve_res_ewald_3fts_matrix (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
-				 const double *u, const double *o,
-				 const double *e,
-				 double *f, double *t, double *s);
+solve_res_3fts_matrix (struct stokes * sys,
+		       const double *u, const double *o, const double *e,
+		       double *f, double *t, double *s);
 
-/* solve natural resistance problem in F version under Ewald sum
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_lub_3fts_matrix (struct stokes * sys,
+			   const double *u, const double *o,
+			   const double *e,
+			   double *f, double *t, double *s);
+
+/* solve natural resistance problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -969,12 +980,12 @@ solve_res_lub_ewald_3fts_matrix (struct stokes * sys,
  *   f [np * 3] : results are given in 3D form
  */
 void
-solve_res_ewald_2f (struct stokes * sys,
-		    const double *u,
-		    double *f);
+solve_res_2f (struct stokes * sys,
+	      const double *u,
+	      double *f);
 
-/* solve natural resistance problem with lubrication
- * in F version under Ewald sum
+/* solve natural resistance problem with lubrication in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -982,11 +993,12 @@ solve_res_ewald_2f (struct stokes * sys,
  *   f [np * 3] : results are given in 3D form
  */
 void
-solve_res_lub_ewald_2f (struct stokes * sys,
-			const double *u,
-			double *f);
+solve_res_lub_2f (struct stokes * sys,
+		  const double *u,
+		  double *f);
 
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -996,12 +1008,12 @@ solve_res_lub_ewald_2f (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_ewald_2ft (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t);
+solve_res_2ft (struct stokes * sys,
+	       const double *u, const double *o,
+	       double *f, double *t);
 
-/* solve natural resistance problem with lubrication
- * in FT version under Ewald sum
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -1011,28 +1023,12 @@ solve_res_ewald_2ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_2ft (struct stokes * sys,
-			 const double *u, const double *o,
-			 double *f, double *t);
+solve_res_lub_2ft (struct stokes * sys,
+		   const double *u, const double *o,
+		   double *f, double *t);
 
-/* solve natural resistance problem in FTS version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_ewald_2fts (struct stokes * sys,
-		      const double *u, const double *o, const double *e,
-		      double *f, double *t, double *s);
-
-/* solve natural resistance problem with lubrication
- * in FTS version under Ewald sum
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -1044,15 +1040,34 @@ solve_res_ewald_2fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_lub_ewald_2fts (struct stokes * sys,
-			  const double *u, const double *o, const double *e,
-			  double *f, double *t, double *s);
+solve_res_2fts (struct stokes * sys,
+		const double *u, const double *o, const double *e,
+		double *f, double *t, double *s);
+
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_lub_2fts (struct stokes * sys,
+		    const double *u, const double *o, const double *e,
+		    double *f, double *t, double *s);
+
 
 /***********************************
  ** mobility problems             **
  ***********************************/
 
-/* solve natural mobility problem in F version under Ewald sum
+/* solve natural mobility problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *  f [np * 3] :
@@ -1060,11 +1075,12 @@ solve_res_lub_ewald_2fts (struct stokes * sys,
  *  u [np * 3] :
  */
 void
-solve_mob_ewald_3f (struct stokes * sys,
-		    const double *f,
-		    double *u);
+solve_mob_3f (struct stokes * sys,
+	      const double *f,
+	      double *u);
 
-/* solve natural mobility problem in F version under Ewald sum
+/* solve natural mobility problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1072,11 +1088,12 @@ solve_mob_ewald_3f (struct stokes * sys,
  *   u [np * 3] :
  */
 void
-solve_mob_ewald_3f_matrix (struct stokes * sys,
-			   const double *f,
-			   double *u);
+solve_mob_3f_matrix (struct stokes * sys,
+		     const double *f,
+		     double *u);
 
-/* solve natural mobility problem in F version under Ewald sum
+/* solve natural mobility problem in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1084,25 +1101,12 @@ solve_mob_ewald_3f_matrix (struct stokes * sys,
  *   u [np * 3] :
  */
 void
-solve_mob_lub_ewald_3f_matrix (struct stokes * sys,
-			       const double *f,
-			       double *u);
+solve_mob_lub_3f_matrix (struct stokes * sys,
+			 const double *f,
+			 double *u);
 
-/* solve natural mobility problem in FT version under Ewald sum
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-solve_mob_ewald_3ft (struct stokes * sys,
-		     const double *f, const double *t,
-		     double *u, double *o);
-
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1112,11 +1116,12 @@ solve_mob_ewald_3ft (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    double *u, double *o);
+solve_mob_3ft (struct stokes * sys,
+	       const double *f, const double *t,
+	       double *u, double *o);
 
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1126,27 +1131,27 @@ solve_mob_ewald_3ft_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				double *u, double *o);
+solve_mob_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      double *u, double *o);
 
-/* solve natural mobility problem in FTS version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
  *   t [np * 3] :
- *   e [np * 5] :
  * OUTPUT
  *   u [np * 3] :
  *   o [np * 3] :
- *   s [np * 5] :
  */
 void
-solve_mob_ewald_3fts (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      double *u, double *o, double *s);
+solve_mob_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  double *u, double *o);
 
-/* solve natural mobility problem in FTS version under Ewald sum
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1158,11 +1163,12 @@ solve_mob_ewald_3fts (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_mob_ewald_3fts_matrix (struct stokes * sys,
-			     const double *f, const double *t, const double *e,
-			     double *u, double *o, double *s);
+solve_mob_3fts (struct stokes * sys,
+		const double *f, const double *t, const double *e,
+		double *u, double *o, double *s);
 
-/* solve natural mobility problem in FTS version under Ewald sum
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [np * 3] :
@@ -1174,23 +1180,43 @@ solve_mob_ewald_3fts_matrix (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_mob_lub_ewald_3fts_matrix (struct stokes * sys,
-				 const double *f, const double *t,
-				 const double *e,
-				 double *u, double *o, double *s);
+solve_mob_3fts_matrix (struct stokes * sys,
+		       const double *f, const double *t, const double *e,
+		       double *u, double *o, double *s);
 
-/* solve natural mobility problem in F version under Ewald sum
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_lub_3fts_matrix (struct stokes * sys,
+			   const double *f, const double *t,
+			   const double *e,
+			   double *u, double *o, double *s);
+
+/* solve natural mobility problem in F version
+ * for both periodic and non-periodic boundary conditions
  *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  * OUTPUT
  *   u [np * 3] : results are given in 3D form
  */
 void
-solve_mob_ewald_2f (struct stokes * sys,
-		    const double *f,
-		    double *u);
+solve_mob_2f (struct stokes * sys,
+	      const double *f,
+	      double *u);
 
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
  *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [np * 3] : OK, this is 3D form
@@ -1199,11 +1225,13 @@ solve_mob_ewald_2f (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_2ft (struct stokes * sys,
-		     const double *f, const double *t3,
-		     double *u, double *o);
+solve_mob_2ft (struct stokes * sys,
+	       const double *f, const double *t3,
+	       double *u, double *o);
 
-/* solve natural mobility problem in FTS version under Ewald sum
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
  *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [np * 3] : OK, this is 3D form
@@ -1214,16 +1242,16 @@ solve_mob_ewald_2ft (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_mob_ewald_2fts (struct stokes * sys,
-		      const double *f, const double *t3, const double *e,
-		      double *u, double *o, double *s);
+solve_mob_2fts (struct stokes * sys,
+		const double *f, const double *t3, const double *e,
+		double *u, double *o, double *s);
+
 
 /***********************************
  ** mixed problems                **
  ***********************************/
 
 /* solve natural mobility problem with fixed particles in F version
- * under Ewald sum
  * INPUT
  *  sys : system parameters
  *  f [nm * 3] :
@@ -1233,14 +1261,15 @@ solve_mob_ewald_2fts (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_ewald_3f (struct stokes * sys,
-		    const double *f,
-		    const double *uf,
-		    double *u,
-		    double *ff);
+solve_mix_3f (struct stokes * sys,
+	      const double *f,
+	      const double *uf,
+	      double *u,
+	      double *ff);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in F version under Ewald sum
+ * with fixed particles in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *  f [nm * 3] :
@@ -1250,14 +1279,15 @@ solve_mix_ewald_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3f (struct stokes * sys,
-			const double *f,
-			const double *uf,
-			double *u,
-			double *ff);
+solve_mix_lub_3f (struct stokes * sys,
+		  const double *f,
+		  const double *uf,
+		  double *u,
+		  double *ff);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1271,12 +1301,13 @@ solve_mix_lub_ewald_3f (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3f_matrix (struct stokes * sys,
-			   const double *f, const double *uf,
-			   double *u, double *ff);
+solve_mix_3f_matrix (struct stokes * sys,
+		     const double *f, const double *uf,
+		     double *u, double *ff);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in F version under Ewald sum
+ * with fixed particles in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1286,12 +1317,12 @@ solve_mix_ewald_3f_matrix (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
-			       const double *f, const double *uf,
-			       double *u, double *ff);
+solve_mix_lub_3f_matrix (struct stokes * sys,
+			 const double *f, const double *uf,
+			 double *u, double *ff);
 
 /* solve natural mobility problem with fixed particles in FT version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1305,14 +1336,15 @@ solve_mix_lub_ewald_3f_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3ft (struct stokes * sys,
-		     const double *f, const double *t,
-		     const double *uf, const double *of,
-		     double *u, double *o,
-		     double *ff, double *tf);
+solve_mix_3ft (struct stokes * sys,
+	       const double *f, const double *t,
+	       const double *uf, const double *of,
+	       double *u, double *o,
+	       double *ff, double *tf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1326,14 +1358,15 @@ solve_mix_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3ft (struct stokes * sys,
-			 const double *f, const double *t,
-			 const double *uf, const double *of,
-			 double *u, double *o,
-			 double *ff, double *tf);
+solve_mix_lub_3ft (struct stokes * sys,
+		   const double *f, const double *t,
+		   const double *uf, const double *of,
+		   double *u, double *o,
+		   double *ff, double *tf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1347,14 +1380,15 @@ solve_mix_lub_ewald_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_3ft_matrix (struct stokes * sys,
-			    const double *f, const double *t,
-			    const double *uf, const double *of,
-			    double *u, double *o,
-			    double *ff, double *tf);
+solve_mix_3ft_matrix (struct stokes * sys,
+		      const double *f, const double *t,
+		      const double *uf, const double *of,
+		      double *u, double *o,
+		      double *ff, double *tf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1368,14 +1402,14 @@ solve_mix_ewald_3ft_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
-				const double *f, const double *t,
-				const double *uf, const double *of,
-				double *u, double *o,
-				double *ff, double *tf);
+solve_mix_lub_3ft_matrix (struct stokes * sys,
+			  const double *f, const double *t,
+			  const double *uf, const double *of,
+			  double *u, double *o,
+			  double *ff, double *tf);
 
 /* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1393,14 +1427,15 @@ solve_mix_lub_ewald_3ft_matrix (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_ewald_3fts (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      const double *uf, const double *of, const double *ef,
-		      double *u, double *o, double *s,
-		      double *ff, double *tf, double *sf);
+solve_mix_3fts (struct stokes * sys,
+		const double *f, const double *t, const double *e,
+		const double *uf, const double *of, const double *ef,
+		double *u, double *o, double *s,
+		double *ff, double *tf, double *sf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
+ * with fixed particles in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1418,15 +1453,16 @@ solve_mix_ewald_3fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_lub_ewald_3fts (struct stokes * sys,
-			  const double *f, const double *t, const double *e,
-			  const double *uf, const double *of,
-			  const double *ef,
-			  double *u, double *o, double *s,
-			  double *ff, double *tf, double *sf);
+solve_mix_lub_3fts (struct stokes * sys,
+		    const double *f, const double *t, const double *e,
+		    const double *uf, const double *of,
+		    const double *ef,
+		    double *u, double *o, double *s,
+		    double *ff, double *tf, double *sf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
+ * with fixed particles in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1444,16 +1480,17 @@ solve_mix_lub_ewald_3fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_ewald_3fts_matrix (struct stokes * sys,
-			     const double *f, const double *t,
-			     const double *e,
-			     const double *uf, const double *of,
-			     const double *ef,
-			     double *u, double *o, double *s,
-			     double *ff, double *tf, double *sf);
+solve_mix_3fts_matrix (struct stokes * sys,
+		       const double *f, const double *t,
+		       const double *e,
+		       const double *uf, const double *of,
+		       const double *ef,
+		       double *u, double *o, double *s,
+		       double *ff, double *tf, double *sf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
+ * with fixed particles in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 3] :
@@ -1471,16 +1508,16 @@ solve_mix_ewald_3fts_matrix (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
-				 const double *f, const double *t,
-				 const double *e,
-				 const double *uf, const double *of,
-				 const double *ef,
-				 double *u, double *o, double *s,
-				 double *ff, double *tf, double *sf);
+solve_mix_lub_3fts_matrix (struct stokes * sys,
+			   const double *f, const double *t,
+			   const double *e,
+			   const double *uf, const double *of,
+			   const double *ef,
+			   double *u, double *o, double *s,
+			   double *ff, double *tf, double *sf);
 
 /* solve natural mobility problem with fixed particles in F version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1490,14 +1527,15 @@ solve_mix_lub_ewald_3fts_matrix (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_ewald_2f (struct stokes * sys,
-		    const double *f,
-		    const double *uf,
-		    double *u,
-		    double *ff);
+solve_mix_2f (struct stokes * sys,
+	      const double *f,
+	      const double *uf,
+	      double *u,
+	      double *ff);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in F version under Ewald sum
+ * with fixed particles in F version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1507,14 +1545,14 @@ solve_mix_ewald_2f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_lub_ewald_2f (struct stokes * sys,
-			const double *f,
-			const double *uf,
-			double *u,
-			double *ff);
+solve_mix_lub_2f (struct stokes * sys,
+		  const double *f,
+		  const double *uf,
+		  double *u,
+		  double *ff);
 
 /* solve natural mobility problem with fixed particles in FT version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1528,14 +1566,15 @@ solve_mix_lub_ewald_2f (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_2ft (struct stokes * sys,
-		     const double *f, const double *t3,
-		     const double *uf, const double *of,
-		     double *u, double *o,
-		     double *ff, double *tf);
+solve_mix_2ft (struct stokes * sys,
+	       const double *f, const double *t3,
+	       const double *uf, const double *of,
+	       double *u, double *o,
+	       double *ff, double *tf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1549,14 +1588,14 @@ solve_mix_ewald_2ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_2ft (struct stokes * sys,
-			 const double *f, const double *t3,
-			 const double *uf, const double *of,
-			 double *u, double *o,
-			 double *ff, double *tf);
+solve_mix_lub_2ft (struct stokes * sys,
+		   const double *f, const double *t3,
+		   const double *uf, const double *of,
+		   double *u, double *o,
+		   double *ff, double *tf);
 
 /* solve natural mobility problem with fixed particles in FTS version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1574,14 +1613,15 @@ solve_mix_lub_ewald_2ft (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_ewald_2fts (struct stokes * sys,
-		      const double *f, const double *t3, const double *e,
-		      const double *uf, const double *of, const double *ef,
-		      double *u, double *o, double *s,
-		      double *ff, double *tf, double *sf);
+solve_mix_2fts (struct stokes * sys,
+		const double *f, const double *t3, const double *e,
+		const double *uf, const double *of, const double *ef,
+		double *u, double *o, double *s,
+		double *ff, double *tf, double *sf);
 
 /* solve natural mobility problem with lubrication
- * with fixed particles in FTS version under Ewald sum
+ * with fixed particles in FTS version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -1599,94 +1639,13 @@ solve_mix_ewald_2fts (struct stokes * sys,
  *   sf [nf * 5] :
  */
 void
-solve_mix_lub_ewald_2fts (struct stokes * sys,
-			  const double *f, const double *t3,
-			  const double *e,
-			  const double *uf, const double *of,
-			  const double *ef,
-			  double *u, double *o, double *s,
-			  double *ff, double *tf, double *sf);
+solve_mix_lub_2fts (struct stokes * sys,
+		    const double *f, const double *t3,
+		    const double *e,
+		    const double *uf, const double *of,
+		    const double *ef,
+		    double *u, double *o, double *s,
+		    double *ff, double *tf, double *sf);
 
-/************************************************
- ** atimes forms (unnatural mobility problems) **
- ************************************************/
-
-/** table version **/
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * with the ewald table
- * this routine also can handle non-periodic case seamlessly
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
-
-/* make ewald-summed mobility matrix for F/FT/FTS versions
- * with the ewald table
- * this routine also can handle non-periodic case seamlessly
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_ewald_3all (struct stokes * sys, double * mat);
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * through matrix with the ewald table
- * this routine also can handle non-periodic case seamlessly
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_matrix (int n, const double *x,
-			  double *y, void * user_data);
-
-/** non-table version **/
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_notbl (int n, const double *x,
-			 double *y, void * user_data);
-/* make ewald-summed mobility matrix for F/FT/FTS versions
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat);
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * through matrix
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_matrix_notbl (int n, const double *x,
-				double *y, void * user_data);
 
 #endif /* !_LIBSTOKES_H_ */
