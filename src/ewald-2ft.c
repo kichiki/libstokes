@@ -1,13 +1,7 @@
-/* Ewald summation technique under 2D
+/* Solvers for 2 dimensional (monolayer) FT version problems
  * this is a wrapper package for ewald-3fts.c
- * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-2ft.c,v 1.5 2006/10/19 04:16:51 ichiki Exp $
- *
- * 3 dimensional hydrodynamics
- * 2D configuration
- * periodic boundary condition in 3 direction
- * FT version
- * non-dimension formulation
+ * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ewald-2ft.c,v 1.6 2007/03/07 22:25:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +27,8 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FT version under Ewald sum
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -43,9 +38,9 @@
  *   t [np * 3] :
  */
 void
-solve_res_ewald_2ft (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t)
+solve_res_2ft (struct stokes * sys,
+	       const double *u, const double *o,
+	       double *f, double *t)
 {
   int np;
   int i;
@@ -62,7 +57,7 @@ solve_res_ewald_2ft (struct stokes * sys,
   if (u3 == NULL
       || o3 == NULL)
     {
-      fprintf (stderr, "allocation error in solve_res_ewald_2ft ().\n");
+      fprintf (stderr, "allocation error in solve_res_2ft ().\n");
       exit (1);
     }
 
@@ -79,14 +74,16 @@ solve_res_ewald_2ft (struct stokes * sys,
       o3 [i3 + 1] = 0.0;
       o3 [i3 + 2] = o [i];
     }
-  solve_res_ewald_3ft (sys, u3, o3, f, t);
+  solve_res_3ft (sys, u3, o3, f, t);
 
   free (u3);
   free (o3);
 }
 
 /** natural mobility problem **/
-/* solve natural mobility problem in FT version under Ewald sum
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
  *  sys : system parameters
  *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  *   t3 [np * 3] : OK, this is 3D form
@@ -95,9 +92,9 @@ solve_res_ewald_2ft (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_ewald_2ft (struct stokes * sys,
-		     const double *f, const double *t3,
-		     double *u, double *o)
+solve_mob_2ft (struct stokes * sys,
+	       const double *f, const double *t3,
+	       double *u, double *o)
 {
   int np;
   int i;
@@ -112,7 +109,7 @@ solve_mob_ewald_2ft (struct stokes * sys,
   f3 = (double *) malloc (sizeof (double) * np3);
   if (f3 == NULL)
     {
-      fprintf (stderr, "allocation error in solve_mob_ewald_2ft ().\n");
+      fprintf (stderr, "allocation error in solve_mob_2ft ().\n");
       exit (1);
     }
 
@@ -125,14 +122,14 @@ solve_mob_ewald_2ft (struct stokes * sys,
       f3 [i3 + 1] = f [i2 + 1];
       f3 [i3 + 2] = 0.0;
     }
-  solve_mob_ewald_3ft (sys, f3, t3, u, o);
+  solve_mob_3ft (sys, f3, t3, u, o);
 
   free (f3);
 }
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FT version
- * under Ewald sum
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -146,11 +143,11 @@ solve_mob_ewald_2ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_ewald_2ft (struct stokes * sys,
-		     const double *f, const double *t3,
-		     const double *uf, const double *of,
-		     double *u, double *o,
-		     double *ff, double *tf)
+solve_mix_2ft (struct stokes * sys,
+	       const double *f, const double *t3,
+	       const double *uf, const double *of,
+	       double *u, double *o,
+	       double *ff, double *tf)
 {
   int np, nm;
   int i;
@@ -176,7 +173,7 @@ solve_mix_ewald_2ft (struct stokes * sys,
       || uf3 == NULL
       || of3 == NULL)
     {
-      fprintf (stderr, "allocation error in solve_mix_ewald_2ft ().\n");
+      fprintf (stderr, "allocation error in solve_mix_2ft ().\n");
       exit (1);
     }
 
@@ -204,9 +201,9 @@ solve_mix_ewald_2ft (struct stokes * sys,
       of3 [i3 + 2] = of [i];
     }
 
-  solve_mix_ewald_3ft (sys,
-			  f3, t3, uf3, of3,
-			  u, o, ff, tf);
+  solve_mix_3ft (sys,
+		 f3, t3, uf3, of3,
+		 u, o, ff, tf);
 
   free (f3);
   free (uf3);
@@ -214,8 +211,8 @@ solve_mix_ewald_2ft (struct stokes * sys,
 }
 
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication
- * in FT version under Ewald sum
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
@@ -225,9 +222,9 @@ solve_mix_ewald_2ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_ewald_2ft (struct stokes * sys,
-			 const double *u, const double *o,
-			 double *f, double *t)
+solve_res_lub_2ft (struct stokes * sys,
+		   const double *u, const double *o,
+		   double *f, double *t)
 {
   int np;
   int i;
@@ -244,7 +241,7 @@ solve_res_lub_ewald_2ft (struct stokes * sys,
   if (u3 == NULL
       || o3 == NULL)
     {
-      fprintf (stderr, "allocation error in solve_res_ewald_2ft ().\n");
+      fprintf (stderr, "allocation error in solve_res_2ft ().\n");
       exit (1);
     }
 
@@ -261,7 +258,7 @@ solve_res_lub_ewald_2ft (struct stokes * sys,
       o3 [i3 + 1] = 0.0;
       o3 [i3 + 2] = o [i];
     }
-  solve_res_lub_ewald_3ft (sys, u3, o3, f, t);
+  solve_res_lub_3ft (sys, u3, o3, f, t);
 
   free (u3);
   free (o3);
@@ -269,7 +266,8 @@ solve_res_lub_ewald_2ft (struct stokes * sys,
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
- * with fixed particles in FT version under Ewald sum
+ * with fixed particles in FT version
+ * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
  *   f [nm * 2] : f_x, f_y are given (and f_z = 0 is assumed)
@@ -283,11 +281,11 @@ solve_res_lub_ewald_2ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_ewald_2ft (struct stokes * sys,
-			 const double *f, const double *t3,
-			 const double *uf, const double *of,
-			 double *u, double *o,
-			 double *ff, double *tf)
+solve_mix_lub_2ft (struct stokes * sys,
+		   const double *f, const double *t3,
+		   const double *uf, const double *of,
+		   double *u, double *o,
+		   double *ff, double *tf)
 {
   int np, nm;
   int i;
@@ -313,7 +311,7 @@ solve_mix_lub_ewald_2ft (struct stokes * sys,
       || uf3 == NULL
       || of3 == NULL)
     {
-      fprintf (stderr, "allocation error in solve_mix_ewald_2ft ().\n");
+      fprintf (stderr, "allocation error in solve_mix_2ft ().\n");
       exit (1);
     }
 
@@ -341,9 +339,9 @@ solve_mix_lub_ewald_2ft (struct stokes * sys,
       of3 [i3 + 2] = of [i];
     }
 
-  solve_mix_lub_ewald_3ft (sys,
-			   f3, t3, uf3, of3,
-			   u, o, ff, tf);
+  solve_mix_lub_3ft (sys,
+		     f3, t3, uf3, of3,
+		     u, o, ff, tf);
 
   free (f3);
   free (uf3);
