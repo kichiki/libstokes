@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.4 2006/10/19 18:22:10 ichiki Exp $
+ * $Id: f.c,v 2.5 2007/03/07 20:33:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -170,7 +170,7 @@ set_F_by_f (int n,
     }
 }
 
-/* calc scalar functions of (M^inf)^-1 in FT
+/* calc scalar functions of (M^inf)^-1 in F
  * INPUT
  *   s : distance of particles
  * OUTPUT
@@ -210,48 +210,6 @@ scalar_minv_f (double s, double * scalar_f)
   scalar_f [1] = xa12;
   scalar_f [2] = ya11;
   scalar_f [3] = ya12;
-}
-
-/* calculate lubrication f by u for all particles
- * INPUT
- *  sys : system parameters
- *   u [np * 3] : velocity
- * OUTPUT
- *   f [np * 3] : force
- */
-void
-calc_lub_3f (struct stokes * sys,
-	     const double * u,
-	     double * f)
-{
-  int np; 
-
-  int i, j;
-  int i3;
-  int j3;
-
-
-  np = sys->np;
-
-  /* clear f [np * 3] */
-  for (i = 0; i < np * 3; ++i)
-    {
-      f [i] = 0.0;
-    }
-
-  for (i = 0; i < np; ++i)
-    {
-      i3 = i * 3;
-      for (j = i + 1; j < np; ++j)
-	{
-	  j3 = j * 3;
-	  calc_lub_f_2b (sys,
-			 u + i3, u + j3,
-			 sys->pos + i3, sys->pos + j3,
-			 f + i3, f + j3);
-	  
-	}
-    }
 }
 
 /* calculate f by u for pair of particles 1 and 2

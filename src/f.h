@@ -1,7 +1,7 @@
 /* header file for f.c --
  * subroutine for the procedure of F version
  * Copyright (C) 2001-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.h,v 2.3 2006/10/19 18:22:35 ichiki Exp $
+ * $Id: f.h,v 2.4 2007/03/07 20:33:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -85,7 +85,7 @@ set_F_by_f (int n,
 	    double *f1,
 	    const double *f2);
 
-/* calc scalar functions of (M^inf)^-1 in FT
+/* calc scalar functions of (M^inf)^-1 in F
  * INPUT
  *   s : distance of particles
  * OUTPUT
@@ -93,18 +93,6 @@ set_F_by_f (int n,
  */
 void
 scalar_minv_f (double s, double * scalar_f);
-
-/* calculate lubrication f by u for all particles
- * INPUT
- *  sys : system parameters
- *   u [np * 3] : velocity
- * OUTPUT
- *   f [np * 3] : force
- */
-void
-calc_lub_3f (struct stokes * sys,
-	     const double * u,
-	     double * f);
 
 /* calculate f by u for pair of particles 1 and 2
  * INPUT
