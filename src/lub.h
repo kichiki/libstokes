@@ -1,7 +1,7 @@
 /* header file for lub.c --
  * lubrication routines -- atimes procedure
- * Copyright (C) 1993-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.h,v 5.1 2006/10/12 15:02:12 ichiki Exp $
+ * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: lub.h,v 5.2 2007/03/07 20:37:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 
 
 /* calculate lubrication f by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -32,11 +32,12 @@
  *   f [np * 3] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3f (struct stokes * sys,
-		   const double * u,
-		   double * f);
+calc_lub_3f (struct stokes * sys,
+	     const double * u,
+	     double * f);
+
 /* calculate lubrication ft by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -46,10 +47,11 @@ calc_lub_ewald_3f (struct stokes * sys,
  *   ft [np * 6] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3ft (struct stokes * sys,
-		    const double * uo, double * ft);
+calc_lub_3ft (struct stokes * sys,
+	      const double * uo, double * ft);
+
 /* calculate lubrication fts by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -59,8 +61,8 @@ calc_lub_ewald_3ft (struct stokes * sys,
  *   fts [np * 11] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3fts (struct stokes * sys,
-		     const double * uoe, double * fts);
+calc_lub_3fts (struct stokes * sys,
+	       const double * uoe, double * fts);
 
 
 #endif /* !_LUB_H_ */

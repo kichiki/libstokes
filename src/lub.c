@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.2 2007/02/15 03:28:46 kichiki Exp $
+ * $Id: lub.c,v 5.3 2007/03/07 20:36:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ cond_lub (const double * x1, const double * x2)
     }
 }
 /* calculate lubrication f by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -70,9 +70,9 @@ cond_lub (const double * x1, const double * x2)
  *   f [np * 3] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3f (struct stokes * sys,
-		   const double * u,
-		   double * f)
+calc_lub_3f (struct stokes * sys,
+	     const double * u,
+	     double * f)
 {
   int np;
   int i, j, k;
@@ -87,7 +87,7 @@ calc_lub_ewald_3f (struct stokes * sys,
   tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3f().\n");
+      fprintf (stderr, "allocation error in calc_lub_3f().\n");
       exit (1);
     }
 
@@ -139,7 +139,7 @@ calc_lub_ewald_3f (struct stokes * sys,
 }
 
 /* calculate lubrication ft by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -149,8 +149,8 @@ calc_lub_ewald_3f (struct stokes * sys,
  *   ft [np * 6] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3ft (struct stokes * sys,
-		    const double * uo, double * ft)
+calc_lub_3ft (struct stokes * sys,
+	      const double * uo, double * ft)
 {
   int np;
   int i, j, k;
@@ -165,7 +165,7 @@ calc_lub_ewald_3ft (struct stokes * sys,
   tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3ft().\n");
+      fprintf (stderr, "allocation error in calc_lub_3ft().\n");
       exit (1);
     }
 
@@ -219,7 +219,7 @@ calc_lub_ewald_3ft (struct stokes * sys,
 }
 
 /* calculate lubrication fts by uoe for all particles
- * under the periodic boundary condition
+ * for both under the periodic and non-periodic boundary conditions
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -229,8 +229,8 @@ calc_lub_ewald_3ft (struct stokes * sys,
  *   fts [np * 11] : force, torque, stresslet
  */
 void
-calc_lub_ewald_3fts (struct stokes * sys,
-		     const double * uoe, double * fts)
+calc_lub_3fts (struct stokes * sys,
+	       const double * uoe, double * fts)
 {
   int np;
   int i, j, k;
@@ -245,7 +245,7 @@ calc_lub_ewald_3fts (struct stokes * sys,
   tmp_pos = (double *) malloc (sizeof (double) * 3);
   if (tmp_pos == NULL)
     {
-      fprintf (stderr, "allocation error in calc_lub_ewald_3fts().\n");
+      fprintf (stderr, "allocation error in calc_lub_3fts().\n");
       exit (1);
     }
 
