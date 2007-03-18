@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.5 2007/03/07 22:33:26 kichiki Exp $
+ * $Id: ewald.c,v 1.6 2007/03/18 22:31:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -396,15 +396,16 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 				  &yh,
 				  &xm, &ym, &zm);
 
+	      // note that interaction (i,j) should be for (U[i], F[j])
 	      if (sys->version == 0) // F version
 		{
-		  matrix_f_atimes (x + i*3, y + j*3,
+		  matrix_f_atimes (x + j*3, y + i*3,
 				   ex, ey, ez,
 				   xa, ya);
 		}
 	      else if (sys->version == 1) // FT version
 		{
-		  matrix_ft_atimes (x + i*6, y + j*6,
+		  matrix_ft_atimes (x + j*6, y + i*6,
 				    ex, ey, ez,
 				    xa, ya,
 				    yb,
@@ -412,7 +413,7 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		}
 	      else // FTS version
 		{
-		  matrix_fts_atimes (x + i*11, y + j*11,
+		  matrix_fts_atimes (x + j*11, y + i*11,
 				     ex, ey, ez,
 				     xa, ya,
 				     yb,
@@ -468,9 +469,10 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 			+ k2 * yy
 			+ k3 * zz);
 
+	      // note that interaction (i,j) should be for (U[i], F[j])
 	      if (sys->version == 0) // F version
 		{
-		  matrix_f_atimes (x + i*3, y + j*3,
+		  matrix_f_atimes (x + j*3, y + i*3,
 				   ex, ey, ez,
 				   0.0, cf * ya);
 		}
@@ -480,7 +482,7 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 			      + k2 * yy
 			      + k3 * zz);
 
-		  matrix_ft_atimes (x + i*6, y + j*6,
+		  matrix_ft_atimes (x + j*6, y + i*6,
 				    ex, ey, ez,
 				    0.0, cf * ya,
 				    sf * yb,
@@ -492,7 +494,7 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 			      + k2 * yy
 			      + k3 * zz);
 
-		  matrix_fts_atimes (x + i*11, y + j*11,
+		  matrix_fts_atimes (x + j*11, y + i*11,
 				     ex, ey, ez,
 				     0.0, cf * ya,
 				     sf * yb,
