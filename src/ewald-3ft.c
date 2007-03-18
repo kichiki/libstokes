@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FT version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.12 2007/03/07 21:03:11 kichiki Exp $
+ * $Id: ewald-3ft.c,v 4.13 2007/03/18 23:46:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,6 +28,8 @@
 #include "ewald.h" // atimes_3all()
 #include "lub.h" // calc_lub_3ft()
 
+#include "memory-check.h" // macro CHECK_MALLOC
+
 #include "ewald-3ft.h"
 
 
@@ -51,29 +53,24 @@ solve_res_3ft (struct stokes * sys,
   int i;
   int n6;
 
-  double *b;
-  double *x;
-
 
   sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
 
-  double *u0;
-  double *o0;
+  double *u0 = NULL;
   u0 = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (u0, "solve_res_3ft");
+  double *o0 = NULL;
   o0 = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (o0, "solve_res_3ft");
+  double *b = NULL;
   b  = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_res_3ft");
+  double *x = NULL;
   x  = (double *) malloc (sizeof (double) * n6);
-  if (u0 == NULL ||
-      o0 == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_3ft()\n");
-      exit (1);
-    }
+  CHECK_MALLOC (x, "solve_res_3ft");
+
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -124,16 +121,17 @@ solve_mob_3ft (struct stokes * sys,
   int np;
   int n6;
 
-  double *b;
-  double *x;
-
 
   sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
 
+  double *b = NULL;
   b = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_mob_3ft");
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (x, "solve_mob_3ft");
 
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
@@ -179,9 +177,6 @@ calc_b_mix_3ft (struct stokes * sys,
   int n3, n6;
   int nm6;
 
-  double *x;
-  double *v3_0;
-
 
   if (sys->version != 1)
     {
@@ -196,8 +191,12 @@ calc_b_mix_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (x, "calc_b_mix_3ft");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (v3_0, "calc_b_mix_3ft");
 
   for (i = 0; i < n3; ++i)
     {
@@ -246,13 +245,6 @@ atimes_mix_3ft (int n, const double *x, double *y, void * user_data)
   int nf3;
   int nm3, nm6;
 
-  double *z;
-  double *v3_0;
-  double *u;
-  double *o;
-  double *ff;
-  double *tf;
-
 
   sys = (struct stokes *) user_data;
   if (sys->version != 1)
@@ -269,12 +261,24 @@ atimes_mix_3ft (int n, const double *x, double *y, void * user_data)
   nm3 = nm * 3;
   nm6 = nm * 6;
 
+  double *z = NULL;
   z = (double *) malloc (sizeof (double) * n);
+  CHECK_MALLOC (z, "atimes_mix_3ft");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * np3);
+  CHECK_MALLOC (v3_0, "atimes_mix_3ft");
+  double *u = NULL;
   u = (double *) malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (u, "atimes_mix_3ft");
+  double *o = NULL;
   o = (double *) malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (o, "atimes_mix_3ft");
+  double *ff = NULL;
   ff = (double *) malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (ff, "atimes_mix_3ft");
+  double *tf = NULL;
   tf = (double *) malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (tf, "atimes_mix_3ft");
 
   for (i = 0; i < np3; ++i)
     {
@@ -334,9 +338,6 @@ solve_mix_3ft (struct stokes * sys,
   int nf;
   int nm6;
 
-  double *b;
-  double *x;
-
 
   sys->version = 1; // FT version
   np = sys->np;
@@ -352,21 +353,19 @@ solve_mix_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  double *uf0;
-  double *of0;
+  double *uf0 = NULL;
   uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (uf0, "solve_mix_3ft");
+  double *of0 = NULL;
   of0 = (double *) malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (of0, "solve_mix_3ft");
+  double *b = NULL;
   b = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_mix_3ft");
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
-  if (uf0 == NULL ||
-      of0 == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_3ft()\n");
-      exit (1);
-    }
+  CHECK_MALLOC (x, "solve_mix_3ft");
+
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
@@ -419,32 +418,27 @@ solve_res_lub_3ft (struct stokes * sys,
   int i;
   int n6;
 
-  double *b;
-  double *x;
-  double *lub;
-
 
   sys->version = 1; // FT version
   np = sys->np;
   n6 = np * 6;
 
-  double *u0;
-  double *o0;
+  double *u0 = NULL;
   u0  = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (u0, "solve_res_lub_3ft");
+  double *o0 = NULL;
   o0  = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (o0, "solve_res_lub_3ft");
+  double *b = NULL;
   b = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_res_lub_3ft");
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (x, "solve_res_lub_3ft");
+  double *lub = NULL;
   lub = (double *) malloc (sizeof (double) * n6);
-  if (u0 == NULL ||
-      o0 == NULL ||
-      b == NULL ||
-      x == NULL ||
-      lub == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_lub_3ft()\n");
-      exit (1);
-    }
+  CHECK_MALLOC (lub, "solve_res_lub_3ft");
+
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -487,6 +481,98 @@ solve_res_lub_3ft (struct stokes * sys,
 }
 
 
+/** mob_lub_3ft **/
+static void
+atimes_mob_lub_3ft (int n, const double *x,
+		    double *y, void *user_data)
+{
+  struct stokes *sys;
+  sys = (struct stokes *) user_data;
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to FT.\n");
+      sys->version = 1;
+    }
+
+  double *lub = NULL;
+  lub = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (lub, "atimes_mob_lub_3ft");
+
+  calc_lub_3ft (sys, x, y);
+  atimes_3all (n, y, lub, (void *) sys);
+  // lub = M.L.(UO)
+
+  int i;
+  for (i = 0; i < n; i ++)
+    {
+      y [i] = x [i] + lub [i];
+    }
+  // y = (I + M.L).(UO)
+
+  free (lub);
+}
+
+/* solve natural mobility problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ */
+void
+solve_mob_lub_3ft (struct stokes * sys,
+		   const double *f, const double *t,
+		   double *u, double *o)
+{
+  sys->version = 1; // FT version
+
+  int np;
+  np = sys->np;
+  int n6;
+  n6 = np * 6;
+
+  double *b = NULL;
+  b = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_mob_lub_3ft");
+  double *x = NULL;
+  x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (x, "solve_mob_lub_3ft");
+
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  set_ft_by_FT (np, x, f, t);
+
+  atimes_3all (n6, x, b, (void *) sys); // sys->version is 1 (FT)
+  // b = M.(FT)
+
+  /* first guess */
+  int i;
+  for (i = 0; i < n6; ++i)
+    {
+      x [i] = 0.0;
+    }
+
+  solve_iter (n6, b, x,
+	      atimes_mob_lub_3ft, (void *) sys,
+	      sys->it);
+  // x = (I + M.L)^-1 . b
+
+  set_FT_by_ft (np, u, o, x);
+
+  free (b);
+  free (x);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+  shift_rest_to_labo_O (sys, sys->np, o);
+}
+
+
 /** natural mobility problem with lubrication with fixed particles **/
 /* calc b-term (constant term) of (natural) mobility problem with lubrication
  * for both periodic and non-periodic boundary conditions
@@ -512,10 +598,6 @@ calc_b_mix_lub_3ft (struct stokes * sys,
   int n3, n6;
   int nm6;
 
-  double *x;
-  double *y;
-  double *v3_0;
-
 
   if (sys->version != 1)
     {
@@ -530,9 +612,15 @@ calc_b_mix_lub_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (x, "calc_b_mix_lub_3ft");
+  double *y = NULL;
   y = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (y, "calc_b_mix_lub_3ft");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (v3_0, "calc_b_mix_lub_3ft");
 
   for (i = 0; i < n3; ++i)
     {
@@ -591,14 +679,6 @@ atimes_mix_lub_3ft (int n, const double *x,
   int nf3;
   int nm3, nm6;
 
-  double *w;
-  double *z;
-  double *v3_0;
-  double *u;
-  double *o;
-  double *ff;
-  double *tf;
-
 
   sys = (struct stokes *) user_data;
   if (sys->version != 1)
@@ -615,13 +695,27 @@ atimes_mix_lub_3ft (int n, const double *x,
   nm3 = nm * 3;
   nm6 = nm * 6;
 
+  double *w = NULL;
   w = (double *) malloc (sizeof (double) * n);
+  CHECK_MALLOC (w, "atimes_mix_lub_3ft");
+  double *z = NULL;
   z = (double *) malloc (sizeof (double) * n);
+  CHECK_MALLOC (z, "atimes_mix_lub_3ft");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * np3);
+  CHECK_MALLOC (v3_0, "atimes_mix_lub_3ft");
+  double *u = NULL;
   u = (double *) malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (u, "atimes_mix_lub_3ft");
+  double *o = NULL;
   o = (double *) malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (o, "atimes_mix_lub_3ft");
+  double *ff = NULL;
   ff = (double *) malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (ff, "atimes_mix_lub_3ft");
+  double *tf = NULL;
   tf = (double *) malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (tf, "atimes_mix_lub_3ft");
 
   for (i = 0; i < np3; ++i)
     {
@@ -693,20 +787,13 @@ solve_mix_lub_3ft (struct stokes * sys,
   int nf;
   int nm6;
 
-  double *b;
-  double *x;
-
 
   sys->version = 1; // FT version
   np = sys->np;
   nm = sys->nm;
   if (np == nm)
     {
-      //solve_mob_lub_3ft (sys, f, t, u, o);
-      fprintf (stderr, "solve_mix_lub_3ft:"
-	       " no fixed particle. mob_lub is not implemented yet."
-	       " call plain mob solver\n");
-      solve_mob_3ft (sys, f, t, u, o);
+      solve_mob_lub_3ft (sys, f, t, u, o);
       return;
     }
 
@@ -714,21 +801,19 @@ solve_mix_lub_3ft (struct stokes * sys,
   n6 = np * 6;
   nm6 = nm * 6;
 
-  double *uf0;
-  double *of0;
+  double *uf0 = NULL;
   uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (uf0, "solve_mix_lub_3ft");
+  double *of0 = NULL;
   of0 = (double *) malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (of0, "solve_mix_lub_3ft");
+  double *b = NULL;
   b = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_mix_lub_3ft");
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n6);
-  if (uf0 == NULL ||
-      of0 == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_lub_3ft()\n");
-      exit (1);
-    }
+  CHECK_MALLOC (x, "solve_mix_lub_3ft");
+
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
