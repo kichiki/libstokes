@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.2 2007/03/07 22:32:04 kichiki Exp $
+ * $Id: non-ewald.c,v 1.3 2007/03/18 22:28:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -202,15 +202,16 @@ atimes_nonewald_3all (int n, const double *x, double *y, void * user_data)
 			    &yh,
 			    &xm, &ym, &zm);
 
+	  // note that interaction (i,j) should be for (U[i], F[j])
 	  if (sys->version == 0) // F version
 	    {
-	      matrix_f_atimes (x + i*3, y + j*3,
+	      matrix_f_atimes (x + j*3, y + i*3,
 			       ex, ey, ez,
 			       xa, ya);
 	    }
 	  else if (sys->version == 1) // FT version
 	    {
-	      matrix_ft_atimes (x + i*6, y + j*6,
+	      matrix_ft_atimes (x + j*6, y + i*6,
 				ex, ey, ez,
 				xa, ya,
 				yb,
@@ -218,7 +219,7 @@ atimes_nonewald_3all (int n, const double *x, double *y, void * user_data)
 	    }
 	  else // FTS version
 	    {
-	      matrix_fts_atimes (x + i*11, y + j*11,
+	      matrix_fts_atimes (x + j*11, y + i*11,
 				 ex, ey, ez,
 				 xa, ya,
 				 yb,
