@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.c,v 4.11 2007/03/07 21:02:07 kichiki Exp $
+ * $Id: ewald-3f.c,v 4.12 2007/03/18 23:45:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,8 @@
 #include "f.h"
 #include "ewald.h" // atimes_3all()
 #include "lub.h" // calc_lub_3f()
+
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "ewald-3f.h"
 
@@ -53,14 +55,9 @@ solve_res_3f (struct stokes * sys,
   np = sys->np;
   n3 = np * 3;
 
-  double *u0;
-  u0 = (double *) malloc (sizeof (double) * n3);
-  if (u0 == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_3f()\n");
-      exit (1);
-    }
+  double *u0 = NULL;
+  u0 = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (u0, "solve_res_3f");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -137,9 +134,6 @@ calc_b_mix_3f (struct stokes * sys,
   int n3;
   int nm3;
 
-  double *x;
-  double *v3_0;
-
 
   if (sys->version != 0)
     {
@@ -153,8 +147,13 @@ calc_b_mix_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
-  x = (double *) malloc (sizeof (double) * n3);
-  v3_0 = (double *) malloc (sizeof (double) * n3);
+  double *x = NULL;
+  x = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (x, "calc_b_mix_3f");
+
+  double *v3_0 = NULL;
+  v3_0 = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (v3_0, "calc_b_mix_3f");
 
   for (i = 0; i < n3; ++i)
     {
@@ -202,11 +201,6 @@ atimes_mix_3f (int n, const double *x, double *y, void * user_data)
   int nf3;
   int nm3;
 
-  double *z;
-  double *v3_0;
-  double *u;
-  double *ff;
-
 
   sys = (struct stokes *) user_data;
   if (sys->version != 0)
@@ -222,10 +216,21 @@ atimes_mix_3f (int n, const double *x, double *y, void * user_data)
   nf3 = nf * 3;
   nm3 = nm * 3;
 
-  z = (double *) malloc (sizeof (double) * n);
-  v3_0 = (double *) malloc (sizeof (double) * np3);
-  u = (double *) malloc (sizeof (double) * nm3);
-  ff = (double *) malloc (sizeof (double) * nf3);
+  double *z = NULL;
+  z = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (z, "atimes_mix_3f");
+
+  double *v3_0 = NULL;
+  v3_0 = (double *)malloc (sizeof (double) * np3);
+  CHECK_MALLOC (v3_0, "atimes_mix_3f");
+
+  double *u = NULL;
+  u = (double *)malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (u, "atimes_mix_3f");
+
+  double *ff = NULL;
+  ff = (double *)malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (ff, "atimes_mix_3f");
 
   for (i = 0; i < np3; ++i)
     {
@@ -278,9 +283,6 @@ solve_mix_3f (struct stokes * sys,
   int nf;
   int nm3;
 
-  double *b;
-  double *x;
-
 
   sys->version = 0; // F version
   np = sys->np;
@@ -295,18 +297,16 @@ solve_mix_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
-  double *uf0;
-  uf0 = (double *) malloc (sizeof (double) * nf * 3);
-  b = (double *) malloc (sizeof (double) * n3);
-  x = (double *) malloc (sizeof (double) * n3);
-  if (uf0 == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_3f()\n");
-      exit (1);
-    }
+  double *uf0 = NULL;
+  uf0 = (double *)malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (uf0, "solve_mix_3f");
+  double *b = NULL;
+  b = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (b, "solve_mix_3f");
+  double *x = NULL;
+  x = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (x, "solve_mix_3f");
+
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -356,23 +356,18 @@ solve_res_lub_3f (struct stokes * sys,
   int i;
   int n3;
 
-  double *lub;
-
 
   sys->version = 0; // F version
   np = sys->np;
   n3 = np * 3;
 
-  double *u0;
-  u0  = (double *) malloc (sizeof (double) * n3);
-  lub = (double *) malloc (sizeof (double) * n3);
-  if (u0 == NULL ||
-      lub == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_lub_3f()\n");
-      exit (1);
-    }
+  double *u0 = NULL;
+  u0  = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (u0, "solve_res_lub_3f");
+  double *lub = NULL;
+  lub = (double *)malloc (sizeof (double) * n3);
+  CHECK_MALLOC (lub, "solve_res_lub_3f");
+
 
   shift_labo_to_rest_U (sys, np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -406,6 +401,89 @@ solve_res_lub_3f (struct stokes * sys,
   // here, no velocity in output, we do nothing
 }
 
+
+/** mob_lub_3f **/
+static void
+atimes_mob_lub_3f (int n, const double *x,
+		   double *y, void *user_data)
+{
+  struct stokes *sys;
+  sys = (struct stokes *) user_data;
+  if (sys->version != 0)
+    {
+      fprintf (stderr, "libstokes: version is wrong. reset to F.\n");
+      sys->version = 0;
+    }
+
+  double *lub = NULL;
+  lub = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (lub, "atimes_mob_lub_3f");
+
+  calc_lub_3f (sys, x, y);
+  atimes_3all (n, y, lub, (void *) sys);
+  // lub = M.L.U
+
+  int i;
+  for (i = 0; i < n; i ++)
+    {
+      y [i] = x [i] + lub [i];
+    }
+  // y = (I + M.L).U
+
+  free (lub);
+}
+
+/* solve natural mobility problem with lubrication in F version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ */
+void
+solve_mob_lub_3f (struct stokes * sys,
+		  const double *f,
+		  double *u)
+{
+  sys->version = 0; // F version
+
+  int np;
+  np = sys->np;
+  int n3;
+  n3 = np * 3;
+
+  double *b = NULL;
+  b = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (b, "solve_mob_lub_3f");
+
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  // f itself is F
+  atimes_3all (n3, f, b, (void *) sys); // sys->version is 1 (FT)
+  // b = M.F
+
+  /* first guess */
+  int i;
+  for (i = 0; i < n3; ++i)
+    {
+      u [i] = 0.0;
+    }
+
+  solve_iter (n3, b, u,
+	      atimes_mob_lub_3f, (void *) sys,
+	      sys->it);
+  // u = (I + M.L)^-1 . b
+
+  free (b);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+}
+
+
 /** natural mobility problem with lubrication with fixed particles **/
 /* calc b-term (constant term) of (natural) mobility problem with lubrication
  * for both periodic and non-periodic boundary conditions
@@ -429,10 +507,6 @@ calc_b_mix_lub_3f (struct stokes * sys,
   int n3;
   int nm3;
 
-  double *x;
-  double *y;
-  double *v3_0;
-
 
   if (sys->version != 0)
     {
@@ -446,9 +520,15 @@ calc_b_mix_lub_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (x, "calc_b_mix_lub_3f");
+  double *y = NULL;
   y = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (y, "calc_b_mix_lub_3f");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (v3_0, "calc_b_mix_lub_3f");
 
   for (i = 0; i < n3; ++i)
     {
@@ -508,12 +588,6 @@ atimes_mix_lub_3f (int n, const double *x,
   int nf3;
   int nm3;
 
-  double *w;
-  double *z;
-  double *v3_0;
-  double *u;
-  double *ff;
-
 
   sys = (struct stokes *) user_data;
   if (sys->version != 0)
@@ -529,11 +603,21 @@ atimes_mix_lub_3f (int n, const double *x,
   nf3 = nf * 3;
   nm3 = nm * 3;
 
+  double *w = NULL;
   w = (double *) malloc (sizeof (double) * n);
+  CHECK_MALLOC (w, "atimes_mix_lub_3f");
+  double *z = NULL;
   z = (double *) malloc (sizeof (double) * n);
+  CHECK_MALLOC (z, "atimes_mix_lub_3f");
+  double *v3_0 = NULL;
   v3_0 = (double *) malloc (sizeof (double) * np3);
+  CHECK_MALLOC (v3_0, "atimes_mix_lub_3f");
+  double *u = NULL;
   u = (double *) malloc (sizeof (double) * nm3);
+  CHECK_MALLOC (u, "atimes_mix_lub_3f");
+  double *ff = NULL;
   ff = (double *) malloc (sizeof (double) * nf3);
+  CHECK_MALLOC (ff, "atimes_mix_lub_3f");
 
   for (i = 0; i < np3; ++i)
     {
@@ -599,20 +683,19 @@ solve_mix_lub_3f (struct stokes * sys,
   int nf;
   int nm3;
 
-  double * b;
-  double * x;
-
 
   sys->version = 0; // F version
   np = sys->np;
   nm = sys->nm;
   if (np == nm)
     {
-      //solve_mob_lub_3f (sys, f, u);
+      solve_mob_lub_3f (sys, f, u);
+      /*
       fprintf (stderr, "solve_mix_lub_3f:"
 	       " no fixed particle. mob_lub is not implemented yet."
 	       " call plain mob solver\n");
       solve_mob_3f (sys, f, u);
+      */
       return;
     }
 
@@ -620,18 +703,16 @@ solve_mix_lub_3f (struct stokes * sys,
   n3 = np * 3;
   nm3 = nm * 3;
 
-  double *uf0;
+  double *uf0 = NULL;
   uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  CHECK_MALLOC (uf0, "solve_mix_lub_3f");
+  double *b = NULL;
   b = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (b, "solve_mix_lub_3f");
+  double *x = NULL;
   x = (double *) malloc (sizeof (double) * n3);
-  if (uf0 == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_lub_3f()\n");
-      exit (1);
-    }
+  CHECK_MALLOC (x, "solve_mix_lub_3f");
+
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   /* the main calculation is done in the the fluid-rest frame;
