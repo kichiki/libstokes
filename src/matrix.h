@@ -1,7 +1,7 @@
 /* header file for matrix.c --
  * matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.h,v 1.2 2007/02/15 03:25:25 kichiki Exp $
+ * $Id: matrix.h,v 1.3 2007/03/18 22:58:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,35 +41,6 @@ void
 mul_matrices (const double * A, int na1, int na2,
 	      const double * B, int nb1, int nb2,
 	      double * C);
-/*
- * INPUT
- *  A [na1, na2]
- *  B [nb, nb] : square matrix!
- *  where (nb == na1)
- * OUTPUT
- *  A [na1, na2] = B [nb, nb] . A [na1, na2]
- */
-void
-mul_left_sq (double * A, int na1, int na2,
-	     const double * B, int nb);
-/*
- * INPUT
- *  A [na1, na2]
- *  B [nb1, nb2]
- *  C [nc1, nc2]
- *  a
- *  b
- *  where (nb2 == nc1) && (na1 = nb1) && (na2 == nc2)
- * OUTPUT
- *  D [na1, na2] = a * A [na1, na2] + b * B [nb1, nb2] . C [nc1, nc2]
- *  D could be same to A itself!
- */
-void
-add_and_mul (const double * A, int na1, int na2,
-	     const double * B, int nb1, int nb2,
-	     const double * C, int nc1, int nc2,
-	     double a, double b,
-	     double * D);
 /*
  * INPUT
  *  mat [n1, n2]

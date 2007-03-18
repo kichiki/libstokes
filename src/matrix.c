@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.6 2007/02/15 03:24:57 kichiki Exp $
+ * $Id: matrix.c,v 1.7 2007/03/18 22:57:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -90,8 +90,81 @@ my_dgemm (int m, int n, int k,
 #endif // !HAVE_CBLAS_H
 
 
+#include "memory-check.h" // macro CHECK_MALLOC
 #include "matrix.h"
 
+
+/* return B . A in A, where B is square matrix
+ * Remark!! this is not A.B!!
+ * INPUT
+ *  A [na1, na2]
+ *  B [nb, nb] : square matrix!
+ *  where (nb == na1)
+ * OUTPUT
+ *  A [na1, na2] = B [nb, nb] . A [na1, na2]
+ */
+static void
+mul_left_sq (double * A, int na1, int na2,
+	     const double * B)
+{
+  int i;
+  int nb = na1;
+
+  double *tmp = NULL;
+  tmp = (double *) malloc (sizeof (double) * na1 * na2);
+  CHECK_MALLOC (tmp, "mul_left_sq");
+
+  mul_matrices (B, nb, nb,
+		A, na1, na2,
+		tmp);
+
+  for (i = 0; i < na1 * na2; ++i)
+    {
+      A [i] = tmp [i];
+    }
+
+  free (tmp);
+}
+
+/*
+ * INPUT
+ *  A [na1, na2]
+ *  B [nb1, nb2]
+ *  C [nc1, nc2]
+ *  a
+ *  b
+ *  where (nb2 == nc1) && (na1 = nb1) && (na2 == nc2)
+ * OUTPUT
+ *  D [na1, na2] = a * A [na1, na2] + b * B [nb1, nb2] . C [nc1, nc2]
+ */
+static void
+add_and_mul (const double *A, int na1, int na2,
+	     const double *B, int nb1, int nb2,
+	     const double *C, int nc1, int nc2,
+	     double a, double b,
+	     double *D)
+{
+  if (nb2 != nc1
+      || na1 != nb1
+      || na2 != nc2)
+    {
+      fprintf (stderr, "illeagal multiplication in add_and_mul().\n");
+      exit (1);
+    }
+  if (A == D)
+    {
+      fprintf (stderr, "illeagal pointer D in add_and_mul().\n");
+      exit (1);
+    }
+
+  mul_matrices (B, nb1, nb2, C, nc1, nc2, D);
+
+  int i;
+  for (i = 0; i < na1*na2; i ++)
+    {
+      D[i] = a * A[i] + b * D[i];
+    }
+}
 
 /* solve generalized linear set of equations using LU-decomposition
  * INPUT
@@ -124,37 +197,50 @@ solve_gen_linear (int n1, int n2,
 		  double * E, double * F, double * G, double * H,
 		  double * I, double * J, double * K, double * L)
 {
-  /* type 2 */
-
   /* H := H^-1 */
   lapack_inv_ (n2, H);
 
   /* C := (H^-1) . C */
-  mul_left_sq (C, n2, n1, H, n2);
+  mul_left_sq (C, n2, n1, H);
   /* G := (H^-1) . G */
-  mul_left_sq (G, n2, n1, H, n2);
+  mul_left_sq (G, n2, n1, H);
   /* D := (H^-1) . D */
-  mul_left_sq (D, n2, n2, H, n2);
+  mul_left_sq (D, n2, n2, H);
 
-  /* A [n1, n1] := A - F.(H^-1).C */
-  add_and_mul (A, n1, n1, F, n1, n2, C, n2, n1, 1.0, -1.0, A);
-  /* E [n1, n1] := E - F.(H^-1).G */
-  add_and_mul (E, n1, n1, F, n1, n2, G, n2, n1, 1.0, -1.0, E);
-  /* B [n1, n2] := - B + F.(H^-1).D */
-  add_and_mul (B, n1, n2, F, n1, n2, D, n2, n2, -1.0, 1.0, B);
 
-  /* A := (A-F.(H^-1).C)^-1 */
-  //lu_inv (A, n1);
-  lapack_inv_ (n1, A);
+  double *a = NULL;
+  a = (double *)malloc (sizeof (double) * n1 * n1);
+  CHECK_MALLOC (a, "solve_gen_linear");
+  double *e = NULL;
+  e = (double *)malloc (sizeof (double) * n1 * n1);
+  CHECK_MALLOC (e, "solve_gen_linear");
+  double *b = NULL;
+  b = (double *)malloc (sizeof (double) * n1 * n2);
+  CHECK_MALLOC (b, "solve_gen_linear");
 
-  /* I := A.E */
-  mul_matrices (A, n1, n1, E, n1, n1, I);
-  /* J := A.B */
-  mul_matrices (A, n1, n1, B, n1, n2, J);
+  /* a [n1, n1] := A - F.(H^-1).C */
+  add_and_mul (A, n1, n1, F, n1, n2, C, n2, n1, 1.0, -1.0, a);
+  // e [n1, n1] := E - F.(H^-1).G
+  add_and_mul (E, n1, n1, F, n1, n2, G, n2, n1, 1.0, -1.0, e);
+  // b [n1, n2] := - B + F.(H^-1).D
+  add_and_mul (B, n1, n2, F, n1, n2, D, n2, n2, -1.0, 1.0, b);
 
-  /* K := - G + C.I */
+  /* a := (A-F.(H^-1).C)^-1 */
+  lapack_inv_ (n1, a);
+
+  /* I := a.e */
+  mul_matrices (a, n1, n1, e, n1, n1, I);
+  /* J := a.b */
+  mul_matrices (a, n1, n1, b, n1, n2, J);
+
+  free (a);
+  free (e);
+  free (b);
+
+
+  // K := - G + C.I
   add_and_mul (G, n2, n1, C, n2, n1, I, n1, n1, -1.0, 1.0, K);
-  /* L := D + C.J */
+  // L := D + C.J
   add_and_mul (D, n2, n2, C, n2, n1, J, n1, n2, 1.0, 1.0, L);
 }
 
@@ -190,34 +276,13 @@ solve_linear (int n1, int n2,
   lapack_inv_ (n1, A);
 
   /* B := (A^-1).B */
-  double *tmp;
+  double *tmp = NULL;
   tmp = (double *) malloc (sizeof (double) * n1 * n2);
+  CHECK_MALLOC (tmp, "solve_linear");
 
-#ifdef HAVE_CBLAS_H
-  /* use ATLAS' CBLAS routines */
-  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	       n1, n2, n1,
-	       1.0, A, n1,
-	       B, n2,
-	       0.0, tmp, n2);
-
-#else // !HAVE_CBLAS_H
-# ifdef HAVE_BLAS_H
-  /* use Fortran BLAS routines */
-  dgemm_wrap (n1, n2, n1,
-	      1.0, A,
-	      b,
-	      0.0, tmp);
-
-# else // !HAVE_BLAS_H
-  /* use local BLAS routines */
-  my_dgemm (n1, n2, n1,
-	    1.0, A, n1,
-	    B, n2,
-	    0.0, tmp, n2);
-
-# endif // !HAVE_BLAS_H
-#endif // !HAVE_CBLAS_H
+  mul_matrices (A, n1, n1,
+		B, n1, n2,
+		tmp);
 
   for (i = 0; i < n1 * n2; i ++)
     {
@@ -225,54 +290,10 @@ solve_linear (int n1, int n2,
     }
   free (tmp);
 
-  /* L [n2, n2] := D - C.(A^-1).B */
-  for (i = 0; i < n2 * n2; i ++)
-    {
-      L[i] = D[i];
-    }
-#ifdef HAVE_CBLAS_H
-  /* use ATLAS' CBLAS routines */
-  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	       n2, n2, n1,
-	       -1.0, C, n1,
-	       B, n2,
-	       1.0, L, n2);
-
-  /* K := C.A */
-  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	       n2, n1, n1,
-	       1.0, C, n1,
-	       A, n1,
-	       0.0, K, n1);
-
-#else // !HAVE_CBLAS_H
-# ifdef HAVE_BLAS_H
-  /* use Fortran BLAS routines */
-  dgemm_wrap (n2, n2, n1,
-	      -1.0, C,
-	      B,
-	      1.0, L);
-
-  /* K := C.A */
-  dgemm_wrap (n2, n1, n1,
-	      1.0, C,
-	      A,
-	      0.0, K);
-
-# else // !HAVE_BLAS_H
-  /* use local BLAS routines */
-  my_dgemm (n2, n2, n1,
-	    -1.0, C, n1,
-	    B, n2,
-	    1.0, L, n2);
-
-  my_dgemm (n2, n1, n1,
-	    1.0, C, n1,
-	    A, n1,
-	    0.0, K, n1);
-
-# endif // !HAVE_BLAS_H
-#endif // !HAVE_CBLAS_H
+  // L [n2, n2] := D - C.(A^-1).B
+  add_and_mul (D, n2, n2, C, n2, n1, B, n1, n2, 1.0, -1.0, L);
+  // K := C.A
+  mul_matrices (C, n2, n1, A, n1, n1, K);
 
   for (i = 0; i < n1 * n1; ++i)
     {
@@ -293,13 +314,18 @@ solve_linear (int n1, int n2,
  *  C [na1, nb2] = A [na1, na2] . B [nb1, nb2]
  */
 void
-mul_matrices (const double * A, int na1, int na2,
-	      const double * B, int nb1, int nb2,
-	      double * C)
+mul_matrices (const double *A, int na1, int na2,
+	      const double *B, int nb1, int nb2,
+	      double *C)
 {
   if (na2 != nb1)
     {
-      fprintf (stderr, "illeagal multiplication in mul_left().\n");
+      fprintf (stderr, "illeagal multiplication in mul_matrices().\n");
+      exit (1);
+    }
+  if (A == C || B == C)
+    {
+      fprintf (stderr, "illeagal output pointer in mul_matrices().\n");
       exit (1);
     }
 
@@ -317,7 +343,7 @@ mul_matrices (const double * A, int na1, int na2,
   dgemm_wrap (na1, nb2, na2,
 	      1.0, A,
 	      B,
-	      1.0, C);
+	      0.0, C);
 
 # else // !HAVE_BLAS_H
   /* use local BLAS routines */
@@ -330,128 +356,6 @@ mul_matrices (const double * A, int na1, int na2,
 #endif // !HAVE_CBLAS_H
 }
 
-/*
- * INPUT
- *  A [na1, na2]
- *  B [nb, nb] : square matrix!
- *  where (nb == na1)
- * OUTPUT
- *  A [na1, na2] = B [nb, nb] . A [na1, na2]
- */
-void
-mul_left_sq (double * A, int na1, int na2,
-	     const double * B, int nb)
-{
-  int i;
-  double * tmp;
-
-
-  if (nb != na1)
-    {
-      fprintf (stderr, "illeagal multiplication in mul_left_sq().\n");
-      exit (1);
-    }
-
-  tmp = (double *) malloc (sizeof (double) * na1 * na2);
-  if (tmp == NULL)
-    {
-      fprintf (stderr, "allocation error in mul_left_sq().\n");
-      exit (1);
-    }
-#ifdef HAVE_CBLAS_H
-  /* use ATLAS' CBLAS routines */
-  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	       na1, na2, nb,
-	       1.0, B, nb,
-	       A, na2,
-	       0.0, tmp, na2);
-
-#else // !HAVE_CBLAS_H
-# ifdef HAVE_BLAS_H
-  /* use Fortran BLAS routines */
-  dgemm_wrap (na1, na2, nb,
-	      1.0, B,
-	      A,
-	      0.0, tmp);
-
-# else // !HAVE_BLAS_H
-  /* use local BLAS routines */
-  my_dgemm (na1, na2, nb,
-	    1.0, B, nb,
-	    A, na2,
-	    0.0, tmp, na2);
-
-# endif // !HAVE_BLAS_H
-#endif // !HAVE_CBLAS_H
-
-  for (i = 0; i < na1 * na2; ++i)
-    {
-      A [i] = tmp [i];
-    }
-
-  free (tmp);
-}
-
-/*
- * INPUT
- *  A [na1, na2]
- *  B [nb1, nb2]
- *  C [nc1, nc2]
- *  a
- *  b
- *  where (nb2 == nc1) && (na1 = nb1) && (na2 == nc2)
- * OUTPUT
- *  D [na1, na2] = a * A [na1, na2] + b * B [nb1, nb2] . C [nc1, nc2]
- *  D could be same to A itself!
- */
-void
-add_and_mul (const double * A, int na1, int na2,
-	     const double * B, int nb1, int nb2,
-	     const double * C, int nc1, int nc2,
-	     double a, double b,
-	     double * D)
-{
-  int i;
-
-  if (nb2 != nc1
-      || na1 != nb1
-      || na2 != nc2)
-    {
-      fprintf (stderr, "illeagal multiplication in add_and_mul().\n");
-      exit (1);
-    }
-
-  for (i = 0; i < na1 * na2; i ++)
-    {
-      D[i] = A[i];
-    }
-
-#ifdef HAVE_CBLAS_H
-  /* use ATLAS' CBLAS routines */
-  cblas_dgemm (CblasRowMajor, CblasNoTrans, CblasNoTrans,
-	       nb1, nc2, nb2,
-	       b, B, nb2,
-	       C, nc2,
-	       a, D, na2);
-
-#else // !HAVE_CBLAS_H
-# ifdef HAVE_BLAS_H
-  /* use Fortran BLAS routines */
-  dgemm_wrap (nb1, nc2, nb2,
-	      b, B,
-	      C,
-	      a, D);
-
-# else // !HAVE_BLAS_H
-  /* use local BLAS routines */
-  my_dgemm (nb1, nc2, nb2,
-	    b, B, nb2,
-	    C, nc2,
-	    a, D, na2);
-
-# endif // !HAVE_BLAS_H
-#endif // !HAVE_CBLAS_H
-}
 
 /*
  * INPUT
