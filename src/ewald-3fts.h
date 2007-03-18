@@ -1,7 +1,7 @@
 /* header file for 'ewald-3fts.c' --
  * Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.h,v 5.6 2007/03/07 21:04:54 kichiki Exp $
+ * $Id: ewald-3fts.h,v 5.7 2007/03/18 23:49:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -100,6 +100,23 @@ void
 solve_res_lub_3fts (struct stokes * sys,
 		    const double *u, const double *o, const double *e,
 		    double *f, double *t, double *s);
+
+/* solve natural mobility problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_lub_3fts (struct stokes * sys,
+		    const double *f, const double *t, const double *e,
+		    double *u, double *o, double *s);
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
