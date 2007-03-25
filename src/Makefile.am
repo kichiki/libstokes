@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.9 2007/03/07 23:12:39 kichiki Exp $
+# $Id: Makefile.am,v 1.10 2007/03/25 03:45:12 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -15,6 +15,20 @@ libstokes_la_SOURCES = \
 	ft.c			\
 	fts.c			\
 	two-body-res.c		\
+        XA.c			\
+        YA.c			\
+        YB.c			\
+        XC.c			\
+        YC.c			\
+        XG.c			\
+        YG.c			\
+        YH.c			\
+        XM.c			\
+        YM.c			\
+        ZM.c			\
+	XP.c			\
+	XQ.c			\
+	twobody.c		\
 	lub.c			\
 	ewald.c			\
 	non-ewald.c		\
