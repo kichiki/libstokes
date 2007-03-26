@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.6 2007/03/07 21:33:45 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.7 2007/03/26 03:56:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,12 +32,13 @@
 /* condition for lubrication
  * INPUT
  *  x1 [3], x2 [3] : position
+ *  lubmax2 : square of the max distance (0 means no limit)
  * OUTPUT (return value)
  *  0 : r != 0 and r < 3.0
  *  1 : otherwise
  */
 static int
-cond_lub (const double * x1, const double * x2)
+cond_lub (const double * x1, const double * x2, double lubmax2)
 {
   double x, y, z;
   double r2;
@@ -51,14 +52,25 @@ cond_lub (const double * x1, const double * x2)
     + y * y
     + z * z;
 
-  if (r2 != 0.0
-      && r2 < 9.0) // r = 3.0 is the critical separation for lubrication now.
+  if (r2 == 0.0)
     {
-      return 0;
+      // self part
+      return 1; // false
+    }
+  else if (lubmax2 <= 0.0)
+    {
+      // no limit
+      return 0; // true
+    }
+  else if (r2 < lubmax2)
+    {
+      // within the limit
+      return 0; // true
     }
   else
     {
-      return 1;
+      // out of the limit
+      return 1; // false
     }
 }
 
@@ -103,7 +115,8 @@ make_matrix_lub_3f (struct stokes * sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
+	      if (cond_lub (sys->pos + i3, sys->pos + j3,
+			    sys->lubmax2) == 0)
 		{
 		  matrix_lub_f_2b (sys,
 				   i, j,
@@ -119,7 +132,8 @@ make_matrix_lub_3f (struct stokes * sys,
 		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
 		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
 		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		  if (cond_lub (sys->pos + i3, tmp_pos,
+				sys->lubmax2) == 0)
 		    {
 		      matrix_lub_f_2b (sys,
 				       i, j,
@@ -172,7 +186,8 @@ make_matrix_lub_3ft (struct stokes * sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
+	      if (cond_lub (sys->pos + i3, sys->pos + j3,
+			    sys->lubmax2) == 0)
 		{
 		  matrix_lub_ft_2b (sys,
 				    i, j,
@@ -188,7 +203,8 @@ make_matrix_lub_3ft (struct stokes * sys,
 		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
 		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
 		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		  if (cond_lub (sys->pos + i3, tmp_pos,
+				sys->lubmax2) == 0)
 		    {
 		      matrix_lub_ft_2b (sys,
 					i, j,
@@ -241,7 +257,8 @@ make_matrix_lub_3fts (struct stokes * sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3) == 0)
+	      if (cond_lub (sys->pos + i3, sys->pos + j3,
+			    sys->lubmax2) == 0)
 		{
 		  matrix_lub_fts_2b (sys,
 				     i, j,
@@ -257,7 +274,8 @@ make_matrix_lub_3fts (struct stokes * sys,
 		  tmp_pos [0] = sys->pos [j3 + 0] + sys->llx [k];
 		  tmp_pos [1] = sys->pos [j3 + 1] + sys->lly [k];
 		  tmp_pos [2] = sys->pos [j3 + 2] + sys->llz [k];
-		  if (cond_lub (sys->pos + i3, tmp_pos) == 0)
+		  if (cond_lub (sys->pos + i3, tmp_pos,
+				sys->lubmax2) == 0)
 		    {
 		      matrix_lub_fts_2b (sys,
 					 i, j,
