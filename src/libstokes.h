@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.19 2007/03/18 23:51:06 kichiki Exp $
+ * $Id: libstokes.h,v 1.20 2007/03/26 04:04:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,11 +26,13 @@
  ** system parameters             **
  ***********************************/
 struct stokes {
-  int np;       /* number of all particles */
-  int nm;       /* number of mobile particles */
-  double * pos; /* position of particles */
+  int np;      /* number of all particles  */
+  int nm;      /* number of mobile particles  */
+  double *pos; /* position of particles  */
+  double *a;   /* radius of particles
+		* Note : NULL (default) is for monodisperse system  */
 
-  int version; /* 0 = F, 1 = FT, 2 = FTS */
+  int version; /* 0 = F, 1 = FT, 2 = FTS  */
 
   /* imposed flow */
   double Ui[3];
@@ -81,6 +83,7 @@ struct stokes {
 
   /* for lubrication */
   double lubcut;
+  double lubmax2; // square of the max distance (0 means no limit)
 
   /* for zeta program */
   double cpu1, cpu2, cpu3;
@@ -153,6 +156,16 @@ stokes_set_iter (struct stokes * sys,
 void
 stokes_set_pos (struct stokes * sys,
 		const double * pos);
+
+/* set radius (sys->a[]).
+ * Note that the default setting (sys->a == NULL) is for monodisperse system
+ * where a=1 for all particles
+ * INPUT
+ *  a[np] :
+ */
+void
+stokes_set_radius (struct stokes *sys,
+		   const double *a);
 
 
 /************************************
@@ -271,6 +284,16 @@ void
 stokes_nc_print_actives (struct stokes_nc * nc,
 			 FILE * out);
 
+
+/* initialize NetCDF file for libstokes for just x
+ * INPUT
+ *  np : number of MOBILE particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  the only activated entry is x.
+ */
+struct stokes_nc *
+stokes_nc_x_init (const char * filename, int np);
 
 /* initialize NetCDF file for libstokes for mob_F problem
  * INPUT
