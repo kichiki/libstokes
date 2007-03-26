@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.10 2007/02/15 03:23:40 kichiki Exp $
+ * $Id: stokes.c,v 2.11 2007/03/26 03:57:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <math.h> /* log() */
 #include <libiter.h>
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "stokes.h"
 
@@ -288,13 +289,15 @@ stokes_ewald_table_make (struct stokes * sys, double ewald_eps)
 struct stokes *
 stokes_init (void)
 {
-  struct stokes * sys = NULL;
+  struct stokes *sys = NULL;
 
-  sys = (struct stokes *) malloc (sizeof (struct stokes));
+  sys = (struct stokes *)malloc (sizeof (struct stokes));
+  CHECK_MALLOC (sys, "stokes_init");
 
   sys->np = 0;
   sys->nm = 0;
   sys->pos = NULL;
+  sys->a   = NULL;
 
   sys->version = 0;
   sys->periodic = 0;
@@ -373,7 +376,8 @@ stokes_init (void)
   sys->ym = NULL;
 
   /* for lubrication */
-  sys->lubcut = 0.0;
+  sys->lubcut  = 0.0;
+  sys->lubmax2 = 0.0;
 
   /* for xi program */
   sys->cpu1 = 0.0;
@@ -392,6 +396,7 @@ stokes_free (struct stokes * sys)
   if (sys != NULL)
     {
       if (sys->pos != NULL) free (sys->pos);
+      if (sys->a   != NULL) free (sys->a);
 
       if (sys->rlx != NULL) free (sys->rlx);
       if (sys->rly != NULL) free (sys->rly);
@@ -427,6 +432,7 @@ stokes_set_np (struct stokes * sys,
 
   if (sys->pos != NULL) free (sys->pos);
   sys->pos = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (sys->pos, "stokes_set_np");
 }
 
 void
@@ -662,5 +668,26 @@ stokes_set_pos (struct stokes * sys,
   for (i = 0; i < sys->np * 3; i ++)
     {
       sys->pos[i] = pos[i];
+    }
+}
+
+/* set radius (sys->a[]).
+ * Note that the default setting (sys->a == NULL) is for monodisperse system
+ * where a=1 for all particles
+ * INPUT
+ *  a[np] :
+ */
+void
+stokes_set_radius (struct stokes *sys,
+		   const double *a)
+{
+  if (sys->a != NULL) free (sys->a);
+  sys->a = (double *)malloc (sizeof (double) * sys->np);
+  CHECK_MALLOC (sys->a, "stokes_set_radius");
+
+  int i;
+  for (i = 0; i < sys->np; i ++)
+    {
+      sys->a[i] = a[i];
     }
 }

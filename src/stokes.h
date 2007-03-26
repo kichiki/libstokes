@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.10 2007/02/15 03:24:14 kichiki Exp $
+ * $Id: stokes.h,v 1.11 2007/03/26 03:58:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,11 +21,13 @@
 #define	_STOKES_H_
 
 struct stokes {
-  int np; /* number of all particles */
-  int nm; /* number of mobile particles */
-  double * pos; /* position of particles */
+  int np;      /* number of all particles  */
+  int nm;      /* number of mobile particles  */
+  double *pos; /* position of particles  */
+  double *a;   /* radius of particles
+		* Note : NULL (default) is for monodisperse system  */
 
-  int version; /* 0 = F, 1 = FT, 2 = FTS */
+  int version; /* 0 = F, 1 = FT, 2 = FTS  */
 
   /* imposed flow */
   double Ui[3];
@@ -76,6 +78,7 @@ struct stokes {
 
   /* for lubrication */
   double lubcut;
+  double lubmax2; // square of the max distance (0 means no limit)
 
   /* for zeta program */
   double cpu1, cpu2, cpu3;
@@ -148,5 +151,16 @@ stokes_set_iter (struct stokes * sys,
 void
 stokes_set_pos (struct stokes * sys,
 		const double * pos);
+
+/* set radius (sys->a[]).
+ * Note that the default setting (sys->a == NULL) is for monodisperse system
+ * where a=1 for all particles
+ * INPUT
+ *  a[np] :
+ */
+void
+stokes_set_radius (struct stokes *sys,
+		   const double *a);
+
 
 #endif /* !_STOKES_H_ */
