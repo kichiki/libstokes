@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.4 2006/10/22 22:35:42 kichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc.c,v 5.5 2007/03/26 04:03:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -612,6 +612,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
 		      "lattice vector",
 		      &nc->l_id);
 
+
   /* data of imposed flow */
   /* Ui0 */
   if (flag_ui0 != 0)
@@ -881,6 +882,11 @@ stokes_nc_init (const char * filename, int nm, int nf,
     }
 
 
+  // set (0, 0, 0) initially. this means non-periodic system
+  double lattice [3] = {0.0, 0.0, 0.0};
+  stokes_nc_set_l (nc, lattice);
+
+
   /* set dim data */
   int i;
   for (i = 0; i < nc->np; i ++)
@@ -929,6 +935,53 @@ stokes_nc_init (const char * filename, int nm, int nf,
     }
 
   return (nc);
+}
+
+/* initialize NetCDF file for libstokes for just x
+ * INPUT
+ *  np : number of MOBILE particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  the only activated entry is x.
+ */
+struct stokes_nc *
+stokes_nc_x_init (const char * filename, int np)
+{
+  return stokes_nc_init (filename, np, 0,
+			 0, // ui0
+			 0, // oi0
+			 0, // ei0
+			 0, // ui
+			 0, // oi
+			 0, // ei
+			 0, // x0
+			 0, // u0
+			 0, // o0
+			 0, // e0
+			 0, // f0
+			 0, // t0
+			 0, // s0
+			 0, // xf0
+			 0, // uf0
+			 0, // of0
+			 0, // ef0
+			 0, // ff0
+			 0, // tf0
+			 0, // sf0
+			 1, // x
+			 0, // u
+			 0, // o
+			 0, // e
+			 0, // f
+			 0, // t
+			 0, // s
+			 0, // xf
+			 0, // uf
+			 0, // of
+			 0, // ef
+			 0, // ff
+			 0, // tf
+			 0);// sf
 }
 
 /* initialize NetCDF file for libstokes for mob_F problem

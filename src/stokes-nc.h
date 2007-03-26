@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.4 2006/10/22 22:31:01 kichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc.h,v 5.5 2007/03/26 04:03:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -134,6 +134,16 @@ void
 stokes_nc_print_actives (struct stokes_nc * nc,
 			 FILE * out);
 
+
+/* initialize NetCDF file for libstokes for just x
+ * INPUT
+ *  np : number of MOBILE particles
+ * OUTPUT
+ *  (returned value) : ncid
+ *  the only activated entry is x.
+ */
+struct stokes_nc *
+stokes_nc_x_init (const char * filename, int np);
 
 /* initialize NetCDF file for libstokes for mob_F problem
  * INPUT
