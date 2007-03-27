@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.20 2007/03/26 04:04:05 kichiki Exp $
+ * $Id: libstokes.h,v 1.21 2007/03/27 00:55:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -697,6 +697,90 @@ guile_get_string (const char * var);
  */
 FILE *
 guile_open_file (const char * var, const char * mode);
+
+
+/************************************
+ ** bond-interaction routines      **
+ ************************************/
+/* from bonds.h */
+struct bond_pairs {
+  int n;   // number of pairs
+  int *ia; // particle a for the pair
+  int *ib; // particle b for the pair
+};
+
+struct bonds {
+  int ntypes;                // number of bond-types
+  double *k;                 // spring constant for the bond-type
+  double *r0;                // equilibrium distance for the bond-type
+  struct bond_pairs **pairs; // pairs for the bond-type
+};
+
+
+struct bond_pairs *
+bond_pairs_init (void);
+
+void
+bond_pairs_free (struct bond_pairs *pairs);
+
+void
+bond_pairs_add (struct bond_pairs *pairs,
+		int ia, int ib);
+
+
+struct bonds *
+bonds_init (void);
+
+void
+bonds_free (struct bonds *bonds);
+
+void
+bonds_add_type (struct bonds *bonds,
+		double k, double r0);
+
+/*
+ * INPUT
+ *  b          : struct bond
+ *  sys        : struct stokes
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+bonds_calc_force (struct bonds *bonds,
+		  struct stokes *sys,
+		  double *f,
+		  int flag_add);
+
+void
+fprint_bonds (FILE *out, struct bonds *bonds);
+
+
+/* from bonds-guile.h */
+/* get bonds from SCM
+ * in SCM, bonds are something like
+ *  (define bonds '(
+ *    (; bond 1
+ *     1.0 ; spring const
+ *     2.1 ; natural distance
+ *     ((0 1) ; list of pairs
+ *      (1 2)
+ *      (2 3)))
+ *    (; bond 2
+ *     1.0 ; spring const
+ *     2.5 ; natural distance
+ *     ((4 5) ; list of pairs
+ *      (5 6)
+ *      (6 7)))
+ *   ))
+ * OUTPUT
+ *  returned value : struct bonds
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct bonds *
+guile_get_bonds (const char * var);
+
 
 
 /************************************
