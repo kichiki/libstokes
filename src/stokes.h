@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.11 2007/03/26 03:58:35 kichiki Exp $
+ * $Id: stokes.h,v 1.12 2007/03/27 01:07:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,9 @@
  */
 #ifndef	_STOKES_H_
 #define	_STOKES_H_
+
+#include <stdio.h> // FILE
+
 
 struct stokes {
   int np;      /* number of all particles  */
@@ -124,6 +127,7 @@ stokes_set_xi (struct stokes * sys,
 double
 xi_by_tratio (struct stokes * sys,
 	      double tratio);
+
 
 /* set iter param
  * INPUT
