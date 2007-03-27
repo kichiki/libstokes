@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.6 2007/03/07 20:34:19 kichiki Exp $
+ * $Id: ft.c,v 2.7 2007/03/27 06:56:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,9 +60,20 @@ matrix_ft_ij (int i, int j,
   matrix_ij_B (n6, & mat [i4 * n6 + j1],
 	       ex, ey, ez,
 	       yb);
-  matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
-		ex, ey, ez,
-		yb);
+  if (i == j)
+    {
+      // for self part
+      matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
+		    ex, ey, ez,
+		    -yb);
+    }
+  else
+    {
+      // for non-self part
+      matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
+		    ex, ey, ez,
+		    yb);
+    }
   matrix_ij_C (n6, & mat [i4 * n6 + j4],
 	       ex, ey, ez,
 	       xc, yc);
