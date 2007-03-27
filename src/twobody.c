@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.1 2007/03/25 03:41:56 kichiki Exp $
+ * $Id: twobody.c,v 1.2 2007/03/27 07:02:29 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -510,7 +510,7 @@ void twobody_ZM_far (int n, double l, double s,
   free (f);
 }
 
-/* calc ZM11 and ZM12
+/* calc scalar functions of resistance problem by 1/s expansion
  * INPUT
  *  n : max order
  *  l := a2 / a1
@@ -984,3 +984,42 @@ void twobody_YC_lub (int n, double l, double s,
   free (f);
 }
 
+
+
+
+/* calc scalar functions of resistance problem by lub form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12) not implemented
+ *     12,13 : (YG11, YG12) not implemented
+ *     14,15 : (YH11, YH12) not implemented
+ *     16,17 : (XM11, XM12) not implemented
+ *     18,19 : (YM11, YM12) not implemented
+ *     20,21 : (ZM11, ZM12) not implemented
+ */
+void twobody_lub (int n, double l, double s,
+		  double *far)
+{
+  twobody_XA_lub (n, l, s, far +  0, far +  1);
+  twobody_YA_lub (n, l, s, far +  2, far +  3);
+  twobody_YB_lub (n, l, s, far +  4, far +  5);
+  twobody_XC_lub (n, l, s, far +  6, far +  7);
+  twobody_YC_lub (n, l, s, far +  8, far +  9);
+  /*
+  twobody_XG_lub (n, l, s, far + 10, far + 11);
+  twobody_YG_lub (n, l, s, far + 12, far + 13);
+  twobody_YH_lub (n, l, s, far + 14, far + 15);
+  twobody_XM_lub (n, l, s, far + 16, far + 17);
+  twobody_YM_lub (n, l, s, far + 18, far + 19);
+  twobody_ZM_lub (n, l, s, far + 20, far + 21);
+  */
+}
