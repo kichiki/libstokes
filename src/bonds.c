@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.1 2007/03/27 00:53:08 kichiki Exp $
+ * $Id: bonds.c,v 1.2 2007/03/27 01:07:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,7 +18,8 @@
  */
 #include <stdlib.h>
 #include <math.h> // sqrt
-#include <libstokes.h> // struct stokes
+
+#include "stokes.h" // struct stokes
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include "bonds.h" // struct bonds
