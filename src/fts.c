@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.6 2007/03/27 06:56:46 kichiki Exp $
+ * $Id: fts.c,v 2.7 2007/03/29 02:22:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1382,7 +1382,7 @@ calc_lub_fts_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= sys->lubcut)
+  if (rr < sys->lubcut)
     {
       rr = sys->lubcut;
     }
@@ -1502,7 +1502,7 @@ matrix_lub_fts_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= sys->lubcut)
+  if (rr < sys->lubcut)
     {
       rr = sys->lubcut;
     }
