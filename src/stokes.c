@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.11 2007/03/26 03:57:49 kichiki Exp $
+ * $Id: stokes.c,v 2.12 2007/03/29 02:25:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -655,19 +655,58 @@ stokes_set_iter (struct stokes * sys,
 		       debug, out);
 }
 
-/* set pos safely by another array
+/* set pos for all particles safely by another array
  * INPUT
  *  pos[np*3] :
+ * OUTPUT
+ *  sys->pos[i] for (i = 0; i < np*3)
  */
 void
-stokes_set_pos (struct stokes * sys,
-		const double * pos)
+stokes_set_pos (struct stokes *sys,
+		const double *pos)
 {
   int i;
 
   for (i = 0; i < sys->np * 3; i ++)
     {
       sys->pos[i] = pos[i];
+    }
+}
+
+/* set pos for mobile particles safely by another array
+ * INPUT
+ *  pos[nm*3] :
+ * OUTPUT
+ *  sys->pos[i] for (i = 0; i < nm*3)
+ */
+void
+stokes_set_pos_mobile (struct stokes *sys,
+		       const double *pos)
+{
+  int i;
+
+  for (i = 0; i < sys->nm * 3; i ++)
+    {
+      sys->pos[i] = pos[i];
+    }
+}
+
+/* set pos for fixed particles safely by another array
+ * INPUT
+ *  pos[nf*3] : only fixed particles are set, where nf = np - nm
+ * OUTPUT
+ *  sys->pos[i] for (i = nm*3; i < np*3)
+ */
+void
+stokes_set_pos_fixed (struct stokes *sys,
+		      const double *pos)
+{
+  int i;
+  int nm3 = sys->nm * 3;
+
+  for (i = nm3; i < sys->np * 3; i ++)
+    {
+      sys->pos[i] = pos[i - nm3];
     }
 }
 
