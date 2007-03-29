@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.21 2007/03/27 00:55:01 kichiki Exp $
+ * $Id: libstokes.h,v 1.22 2007/03/29 02:33:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -149,13 +149,35 @@ stokes_set_iter (struct stokes * sys,
 		 int debug,
 		 FILE * out);
 
-/* set pos safely by another array
+/* set pos for all particles safely by another array
  * INPUT
  *  pos[np*3] :
+ * OUTPUT
+ *  sys->pos[i] for (i = 0; i < np*3)
  */
 void
-stokes_set_pos (struct stokes * sys,
-		const double * pos);
+stokes_set_pos (struct stokes *sys,
+		const double *pos);
+
+/* set pos for mobile particles safely by another array
+ * INPUT
+ *  pos[nm*3] :
+ * OUTPUT
+ *  sys->pos[i] for (i = 0; i < nm*3)
+ */
+void
+stokes_set_pos_mobile (struct stokes *sys,
+		       const double *pos);
+
+/* set pos for fixed particles safely by another array
+ * INPUT
+ *  pos[nf*3] : only fixed particles are set, where nf = np - nm
+ * OUTPUT
+ *  sys->pos[i] for (i = nm*3; i < np*3)
+ */
+void
+stokes_set_pos_fixed (struct stokes *sys,
+		      const double *pos);
 
 /* set radius (sys->a[]).
  * Note that the default setting (sys->a == NULL) is for monodisperse system
