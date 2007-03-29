@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.7 2007/03/27 06:56:15 kichiki Exp $
+ * $Id: ft.c,v 2.8 2007/03/29 02:19:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -459,7 +459,7 @@ calc_lub_ft_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= sys->lubcut)
+  if (rr < sys->lubcut)
     {
       rr = sys->lubcut;
     }
@@ -552,7 +552,7 @@ matrix_lub_ft_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr <= sys->lubcut)
+  if (rr < sys->lubcut)
     {
       rr = sys->lubcut;
     }
