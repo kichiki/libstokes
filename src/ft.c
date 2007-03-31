@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.8 2007/03/29 02:19:43 kichiki Exp $
+ * $Id: ft.c,v 2.9 2007/03/31 04:10:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,19 +60,22 @@ matrix_ft_ij (int i, int j,
   matrix_ij_B (n6, & mat [i4 * n6 + j1],
 	       ex, ey, ez,
 	       yb);
+  // note that B-transpose is simply -B
   if (i == j)
     {
       // for self part
-      matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
-		    ex, ey, ez,
-		    -yb);
+      // B-tilde(ii) = B-transpose(ii) = -B(ii)
+      matrix_ij_B (n6, & mat [i1 * n6 + j4],
+		   ex, ey, ez,
+		   -yb);
     }
   else
     {
       // for non-self part
-      matrix_ij_Bt (n6, & mat [i1 * n6 + j4],
-		    ex, ey, ez,
-		    yb);
+      // B-tilde(ij) = B-transpose(ji) = -(-B(ij)) = B(ij)
+      matrix_ij_B (n6, & mat [i1 * n6 + j4],
+		   ex, ey, ez,
+		   yb);
     }
   matrix_ij_C (n6, & mat [i4 * n6 + j4],
 	       ex, ey, ez,
@@ -112,40 +115,6 @@ matrix_ij_B (int n, double *mat,
   mat [1 * n + 2] += + b1x ; /* y,z */
   mat [2 * n + 0] += + b1y ; /* z,x */
   mat [2 * n + 1] += - b1x ; /* z,y */
-}
-
-/* store matrix in B-tilde part with scalar functions
- * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
- * only m [alpha(i), beta(j)] is stored.
- * INPUT
- *   ex, ey, ez := (pos[j] - pos[i]) / r,
- *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
- *   yb : scalar functions
- *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
- * OUTPUT
- *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
- */
-void
-matrix_ij_Bt (int n, double *mat,
-	      double ex, double ey, double ez,
-	      double yb)
-{
-  double b1;
-  double b1x, b1y, b1z;
-
-  b1 = yb;
-
-  b1x = b1 * ex;
-  b1y = b1 * ey;
-  b1z = b1 * ez;
-
-  /* BT part */
-  mat [1 * n + 0] -= + b1z ; /* y,x */
-  mat [2 * n + 0] -= - b1y ; /* z,x */
-  mat [0 * n + 1] -= - b1z ; /* x,y */
-  mat [2 * n + 1] -= + b1x ; /* z,y */
-  mat [0 * n + 2] -= + b1y ; /* x,z */
-  mat [1 * n + 2] -= - b1x ; /* y,z */
 }
 
 /* store matrix in C part with scalar functions
@@ -267,6 +236,97 @@ matrix_ft_atimes (const double *x,
   y [ 2] -= x [ 4] * (+ b1x ); /* z,y */
   y [ 0] -= x [ 5] * (+ b1y ); /* x,z */
   y [ 1] -= x [ 5] * (- b1x ); /* y,z */
+
+  /* C part */
+  y [ 3] += x [ 3] * (c1 + c2 * exx);
+  y [ 4] += x [ 4] * (c1 + c2 * eyy);
+  y [ 5] += x [ 5] * (c1 + c2 * ezz);
+
+  y [ 3] += x [ 4] * (c2 * exy);
+  y [ 4] += x [ 3] * (c2 * exy);
+  y [ 4] += x [ 5] * (c2 * eyz);
+  y [ 5] += x [ 4] * (c2 * eyz);
+  y [ 5] += x [ 3] * (c2 * exz);
+  y [ 3] += x [ 5] * (c2 * exz);
+}
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [6] : FTS of particle 'i'
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [6] : UOE of particle 'j'
+ */
+void
+matrix_ft_self_atimes (const double *x,
+		       double *y,
+		       double ex, double ey, double ez,
+		       double xa, double ya,
+		       double yb,
+		       double xc, double yc)
+{
+  double a1, a2;
+  double b1;
+  double c1, c2;
+
+  double b1x, b1y, b1z;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+
+
+  a1 = ya;
+  a2 = xa - ya;
+
+  b1 = yb;
+
+  c1 = yc;
+  c2 = xc - yc;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+
+  b1x = b1 * ex;
+  b1y = b1 * ey;
+  b1z = b1 * ez;
+
+  /* A part */
+  y [ 0] += x [ 0] * (a1 + a2 * exx);
+  y [ 1] += x [ 1] * (a1 + a2 * eyy);
+  y [ 2] += x [ 2] * (a1 + a2 * ezz);
+  
+  y [ 0] += x [ 1] * (a2 * exy);
+  y [ 1] += x [ 0] * (a2 * exy);
+  y [ 1] += x [ 2] * (a2 * eyz);
+  y [ 2] += x [ 1] * (a2 * eyz);
+  y [ 2] += x [ 0] * (a2 * exz);
+  y [ 0] += x [ 2] * (a2 * exz);
+
+  /* B part */
+  /* eps_ijk e_k */
+  y [ 3] += x [ 1] * (+ b1z ); /* x,y */
+  y [ 3] += x [ 2] * (- b1y ); /* x,z */
+  y [ 4] += x [ 0] * (- b1z ); /* y,x */
+  y [ 4] += x [ 2] * (+ b1x ); /* y,z */
+  y [ 5] += x [ 0] * (+ b1y ); /* z,x */
+  y [ 5] += x [ 1] * (- b1x ); /* z,y */
+
+  /* BT part */
+  // B-tilde(ii) = B-transpose(ii)
+  y [ 1] += x [ 3] * (+ b1z ); /* y,x */
+  y [ 2] += x [ 3] * (- b1y ); /* z,x */
+  y [ 0] += x [ 4] * (- b1z ); /* x,y */
+  y [ 2] += x [ 4] * (+ b1x ); /* z,y */
+  y [ 0] += x [ 5] * (+ b1y ); /* x,z */
+  y [ 1] += x [ 5] * (- b1x ); /* y,z */
 
   /* C part */
   y [ 3] += x [ 3] * (c1 + c2 * exx);
@@ -483,22 +543,36 @@ calc_lub_ft_2b (struct stokes * sys,
   yc11 = res2b [ 8] - resinf [ 8];
   yc12 = res2b [ 9] - resinf [ 9];
 
+  /*
   matrix_ft_atimes (uo1, ft1,
 		    ex, ey, ez,
 		    xa11, ya11,
 		    yb11,
 		    xc11, yc11);
+  */
+  matrix_ft_self_atimes (uo1, ft1,
+			 ex, ey, ez,
+			 xa11, ya11,
+			 yb11,
+			 xc11, yc11);
   matrix_ft_atimes (uo2, ft1,
 		    ex, ey, ez,
 		    xa12, ya12,
 		    yb12,
 		    xc12, yc12);
 
+  /*
   matrix_ft_atimes (uo2, ft2,
 		    - ex, - ey, - ez,
 		    xa11, ya11,
 		    yb11,
 		    xc11, yc11);
+  */
+  matrix_ft_self_atimes (uo2, ft2,
+			 - ex, - ey, - ez,
+			 xa11, ya11,
+			 yb11,
+			 xc11, yc11);
   matrix_ft_atimes (uo1, ft2,
 		    - ex, - ey, - ez,
 		    xa12, ya12,

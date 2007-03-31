@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.5 2007/03/07 20:34:46 kichiki Exp $
+ * $Id: ft.h,v 2.6 2007/03/31 04:11:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,22 +56,6 @@ matrix_ij_B (int n, double *mat,
 	     double ex, double ey, double ez,
 	     double yb);
 
-/* store matrix in B-tilde part with scalar functions
- * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
- * only m [alpha(i), beta(j)] is stored.
- * INPUT
- *   ex, ey, ez := (pos[j] - pos[i]) / r,
- *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
- *   yb : scalar functions
- *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
- * OUTPUT
- *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
- */
-void
-matrix_ij_Bt (int n, double *mat,
-	      double ex, double ey, double ez,
-	      double yb);
-
 /* store matrix in C part with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
@@ -107,6 +91,26 @@ matrix_ft_atimes (const double *x,
 		  double xa, double ya,
 		  double yb,
 		  double xc, double yc);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [6] : FTS of particle 'i'
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [6] : UOE of particle 'j'
+ */
+void
+matrix_ft_self_atimes (const double *x,
+		       double *y,
+		       double ex, double ey, double ez,
+		       double xa, double ya,
+		       double yb,
+		       double xc, double yc);
 
 /* convert ft[] to f[], t[] (this is applicable for UO)
  * INPUT
