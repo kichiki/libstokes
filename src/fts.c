@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.7 2007/03/29 02:22:34 kichiki Exp $
+ * $Id: fts.c,v 2.8 2007/03/31 04:11:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 #include "two-body-res.h" /* scalar_two_body_res () */
 #include "stokes.h" /* struct stokeks */
 #include "f.h" // matrix_ij_A ()
-#include "ft.h" // matrix_ij_B (), matrix_ij_Bt (), matrix_ij_C (), 
+#include "ft.h" // matrix_ij_B (), matrix_ij_C ()
 
 #include "fts.h"
 
@@ -67,19 +67,22 @@ matrix_fts_ij (int i, int j,
   matrix_ij_B (n11, & mat [i4 * n11 + j1],
 	       ex, ey, ez,
 	       yb);
+  // note that B-transpose is simply -B
   if (i == j)
     {
       // for self part
-      matrix_ij_Bt (n11, & mat [i1 * n11 + j4],
-		    ex, ey, ez,
-		    -yb);
+      // B-tilde(ii) = B-transpose(ii) = -B(ii)
+      matrix_ij_B (n11, & mat [i1 * n11 + j4],
+		   ex, ey, ez,
+		   -yb);
     }
   else
     {
       // for non-self part
-      matrix_ij_Bt (n11, & mat [i1 * n11 + j4],
-		    ex, ey, ez,
-		    yb);
+      // B-tilde(ij) = B-transpose(ji) = -(-B(ij)) = B(ij)
+      matrix_ij_B (n11, & mat [i1 * n11 + j4],
+		   ex, ey, ez,
+		   yb);
     }
   matrix_ij_C (n11, & mat [i4 * n11 + j4],
 	       ex, ey, ez,
@@ -87,13 +90,28 @@ matrix_fts_ij (int i, int j,
   matrix_ij_G (n11, & mat [i7 * n11 + j1],
 	       ex, ey, ez,
 	       xg, yg);
-  matrix_ij_Gt (n11, & mat [i1 * n11 + j7],
-		ex, ey, ez,
-		xg, yg);
+  if (i == j)
+    {
+      // for self part
+      // G-tilde(ii) = G-transpose(ii)
+      matrix_ij_GT (n11, & mat [i1 * n11 + j7],
+		    ex, ey, ez,
+		    xg, yg);
+    }
+  else
+    {
+      // for non-self part
+      // G-tilde(ij) = G-transpose(ji) = -G-transpose(ij)
+      matrix_ij_GT (n11, & mat [i1 * n11 + j7],
+		    ex, ey, ez,
+		    -xg, -yg);
+    }
   matrix_ij_H (n11, & mat [i7 * n11 + j4],
 	       ex, ey, ez,
 	       yh);
-  matrix_ij_Ht (n11, & mat [i4 * n11 + j7],
+  // H-tilde(ii) = H-transpose(ii)
+  // H-tilde(ij) = H-transpose(ji) = H-transpose(ij)
+  matrix_ij_HT (n11, & mat [i4 * n11 + j7],
 		ex, ey, ez,
 		yh);
   matrix_ij_M (n11, & mat [i7 * n11 + j7],
@@ -202,7 +220,7 @@ matrix_ij_G (int n, double *mat,
   mat [4 * n + 2] += g3yyz; /* yy,z */
 }
 
-/* store matrix in G-tilde part with scalar functions
+/* store matrix in G-transpose part with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
@@ -214,7 +232,7 @@ matrix_ij_G (int n, double *mat,
  *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
  */
 void
-matrix_ij_Gt (int n, double *mat,
+matrix_ij_GT (int n, double *mat,
 	      double ex, double ey, double ez,
 	      double xg, double yg)
 {
@@ -265,42 +283,41 @@ matrix_ij_Gt (int n, double *mat,
   g3yyz = g3 * eyyz;
   g3yzz = g3 * eyzz;
   g3zzz = g3 * ezzz;
-	      
-  /* G21  =  (GT12)t  =  (-GT21)t */
+
   /* g1: d_ij e_k part */
-  mat [0 * n + 0] -= g1x; /* x,xx */
-  mat [1 * n + 0] -= g1y; /* y,xx */
-  mat [2 * n + 0] -= g1z; /* z,xx */
-  mat [0 * n + 4] -= g1x; /* x,yy */
-  mat [1 * n + 4] -= g1y; /* y,yy */
-  mat [2 * n + 4] -= g1z; /* z,yy */
+  mat [0 * n + 0] += g1x; /* x,xx */
+  mat [1 * n + 0] += g1y; /* y,xx */
+  mat [2 * n + 0] += g1z; /* z,xx */
+  mat [0 * n + 4] += g1x; /* x,yy */
+  mat [1 * n + 4] += g1y; /* y,yy */
+  mat [2 * n + 4] += g1z; /* z,yy */
 
   /* g2: (e_i d_jk + e_j d_ik) part */
-  mat [0 * n + 0] -= 2.0 * g2x; /* x,xx */
-  mat [0 * n + 1] -= g2y;       /* x,xy */
-  mat [1 * n + 1] -= g2x;       /* y,xy */
-  mat [0 * n + 2] -= g2z;       /* x,xz */
-  mat [2 * n + 2] -= g2x;       /* z,xz */
-  mat [1 * n + 3] -= g2z;       /* y,yz */
-  mat [2 * n + 3] -= g2y;       /* z,yz */
-  mat [1 * n + 4] -= 2.0 * g2y; /* y,yy */
+  mat [0 * n + 0] += 2.0 * g2x; /* x,xx */
+  mat [0 * n + 1] += g2y;       /* x,xy */
+  mat [1 * n + 1] += g2x;       /* y,xy */
+  mat [0 * n + 2] += g2z;       /* x,xz */
+  mat [2 * n + 2] += g2x;       /* z,xz */
+  mat [1 * n + 3] += g2z;       /* y,yz */
+  mat [2 * n + 3] += g2y;       /* z,yz */
+  mat [1 * n + 4] += 2.0 * g2y; /* y,yy */
 
   /* g3: e_ijk part */
-  mat [0 * n + 0] -= g3xxx; /* x,xx */
-  mat [1 * n + 0] -= g3xxy; /* y,xx */
-  mat [2 * n + 0] -= g3xxz; /* z,xx */
-  mat [0 * n + 1] -= g3xxy; /* x,xy */
-  mat [1 * n + 1] -= g3xyy; /* y,xy */
-  mat [2 * n + 1] -= g3xyz; /* z,xy */
-  mat [0 * n + 2] -= g3xxz; /* x,xz */
-  mat [1 * n + 2] -= g3xyz; /* y,xz */
-  mat [2 * n + 2] -= g3xzz; /* z,xz */
-  mat [0 * n + 3] -= g3xyz; /* x,yz */
-  mat [1 * n + 3] -= g3yyz; /* y,yz */
-  mat [2 * n + 3] -= g3yzz; /* z,yz */
-  mat [0 * n + 4] -= g3xyy; /* x,yy */
-  mat [1 * n + 4] -= g3yyy; /* y,yy */
-  mat [2 * n + 4] -= g3yyz; /* z,yy */
+  mat [0 * n + 0] += g3xxx; /* x,xx */
+  mat [1 * n + 0] += g3xxy; /* y,xx */
+  mat [2 * n + 0] += g3xxz; /* z,xx */
+  mat [0 * n + 1] += g3xxy; /* x,xy */
+  mat [1 * n + 1] += g3xyy; /* y,xy */
+  mat [2 * n + 1] += g3xyz; /* z,xy */
+  mat [0 * n + 2] += g3xxz; /* x,xz */
+  mat [1 * n + 2] += g3xyz; /* y,xz */
+  mat [2 * n + 2] += g3xzz; /* z,xz */
+  mat [0 * n + 3] += g3xyz; /* x,yz */
+  mat [1 * n + 3] += g3yyz; /* y,yz */
+  mat [2 * n + 3] += g3yzz; /* z,yz */
+  mat [0 * n + 4] += g3xyy; /* x,yy */
+  mat [1 * n + 4] += g3yyy; /* y,yy */
+  mat [2 * n + 4] += g3yyz; /* z,yy */
 }
 
 /* store matrix in H part with scalar functions
@@ -357,7 +374,7 @@ matrix_ij_H (int n, double *mat,
   mat [4 * n + 2] += + 2.0 * h1xy;  /* yy,z */
 }
 
-/* store matrix in H-tilde part with scalar functions
+/* store matrix in H-transpose part with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
@@ -369,7 +386,7 @@ matrix_ij_H (int n, double *mat,
  *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
  */
 void
-matrix_ij_Ht (int n, double *mat,
+matrix_ij_HT (int n, double *mat,
 	      double ex, double ey, double ez,
 	      double yh)
 {
@@ -395,7 +412,6 @@ matrix_ij_Ht (int n, double *mat,
   h1zz = h1 * ezz;
 	      
   /* HT part */
-  /* H12  =  (HT21)t  =  (HT12)t */
   mat [1 * n + 0] += + 2.0 * h1xz;  /* y,xx */
   mat [2 * n + 0] += - 2.0 * h1xy;  /* z,xx */
   mat [0 * n + 1] += - h1xz;        /* x,xy */
@@ -1001,6 +1017,417 @@ matrix_fts_atimes (const double *x,
   free (z);
 }
 
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [11] : FTS of particle 'i' (extracted form)
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [11] : UOE of particle 'j' (extracted form)
+ */
+void
+matrix_fts_self_atimes (const double *x,
+			double *y,
+			double ex, double ey, double ez,
+			double xa, double ya,
+			double yb,
+			double xc, double yc,
+			double xg, double yg,
+			double yh,
+			double xm, double ym, double zm)
+{
+  double a1, a2;
+  double b1;
+  double c1, c2;
+  double g1, g2, g3;
+  double h1;
+  double mm1, mm2, mm3, mm4, mm5;
+
+  double b1x, b1y, b1z;
+  double g1x, g1y, g1z;
+  double g2x, g2y, g2z;
+  double g3xxx, g3xxy, g3xxz, g3xyy, g3xyz, g3yyy, g3yyz, g3yzz, g3xzz, g3zzz;
+  double h1xx, h1xy, h1xz, h1yy, h1yz, h1zz;
+  double m1xxxx, m1xxxy, m1xxxz, m1xxyy, m1xxyz, m1xxzz;
+  double m1xyyy, m1xyyz, m1xyzz, m1xzzz;
+  double m1yyyy, m1yyyz, m1yyzz, m1yzzz, m1zzzz;
+  double m2xx, m2xy, m2xz, m2yy, m2yz, m2zz;
+  double m4xx, m4xy, m4xz, m4yy, m4yz, m4zz;
+
+  double exx, eyy, ezz, exy, eyz, exz;
+  double exxx, exxy, exxz, exyy, exyz, exzz, eyyy, eyyz, eyzz, ezzz;
+  double exxxx, exxxy, exxxz, exxyy, exxyz, exxzz;
+  double exyyy, exyyz, exyzz, exzzz;
+  double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
+
+  int i;
+  double *z; // modefied for extracted matrix elements
+
+
+  z = (double *) malloc (sizeof (double) * 11);
+  if (z == NULL)
+    {
+      fprintf (stderr, "allocation error in matrix_fts_atimes ().\n");
+      exit (1);
+    }
+
+  for (i = 0; i < 6; i ++)
+    {
+      z [i] = x [i];
+    }
+  z [6] = 2.0 * x [6] + x [10];
+  z [7] = 2.0 * x [7];
+  z [8] = 2.0 * x [8];
+  z [9] = 2.0 * x [9];
+  z [10] = 2.0 * x [10] + x [6];
+
+
+  a1 = ya;
+  a2 = xa - ya;
+
+  b1 = yb;
+
+  c1 = yc;
+  c2 = xc - yc;
+
+  g1 = - 1.0 / 3.0 * xg;
+  g2 = yg;
+  g3 = xg - 2.0 * yg;
+
+  h1 = yh;
+
+  mm1 =   1.5     * xm - 2.0 * ym + 0.5 * zm;
+  mm2 = - 0.5     * xm            + 0.5 * zm;
+  mm3 = 1.0 / 6.0 * xm            - 0.5 * zm;
+  mm4 =                  0.5 * ym - 0.5 * zm;
+  mm5 =                             0.5 * zm;
+
+  exx = ex * ex;
+  eyy = ey * ey;
+  ezz = ez * ez;
+  exy = ex * ey;
+  eyz = ey * ez;
+  exz = ez * ex;
+  exxx = exx * ex;
+  exxy = exx * ey;
+  exxz = exx * ez;
+  exyy = exy * ey;
+  exyz = exy * ez;
+  exzz = exz * ez;
+  eyyy = eyy * ey;
+  eyyz = eyy * ez;
+  eyzz = eyz * ez;
+  ezzz = ezz * ez;
+  exxxx = exx * exx;
+  exxxy = exx * exy;
+  exxxz = exx * exz;
+  exxyy = exx * eyy;
+  exxyz = exx * eyz;
+  exxzz = exx * ezz;
+  exyyy = exy * eyy;
+  exyyz = exy * eyz;
+  exyzz = exy * ezz;
+  exzzz = exz * ezz;
+  eyyyy = eyy * eyy;
+  eyyyz = eyy * eyz;
+  eyyzz = eyy * ezz;
+  eyzzz = eyz * ezz;
+  ezzzz = ezz * ezz;
+
+  b1x = b1 * ex;
+  b1y = b1 * ey;
+  b1z = b1 * ez;
+
+  g1x = g1 * ex;
+  g1y = g1 * ey;
+  g1z = g1 * ez;
+
+  g2x = g2 * ex;
+  g2y = g2 * ey;
+  g2z = g2 * ez;
+
+  g3xxx = g3 * exxx;
+  g3xxy = g3 * exxy;
+  g3xxz = g3 * exxz;
+  g3xyy = g3 * exyy;
+  g3xyz = g3 * exyz;
+  g3xzz = g3 * exzz;
+  g3yyy = g3 * eyyy;
+  g3yyz = g3 * eyyz;
+  g3yzz = g3 * eyzz;
+  g3zzz = g3 * ezzz;
+	      
+  h1xx = h1 * exx;
+  h1xy = h1 * exy;
+  h1xz = h1 * exz;
+  h1yy = h1 * eyy;
+  h1yz = h1 * eyz;
+  h1zz = h1 * ezz;
+	      
+  m1xxxx = mm1 * exxxx;
+  m1xxxy = mm1 * exxxy;
+  m1xxxz = mm1 * exxxz;
+  m1xxyy = mm1 * exxyy;
+  m1xxyz = mm1 * exxyz;
+  m1xxzz = mm1 * exxzz;
+  m1xyyy = mm1 * exyyy;
+  m1xyyz = mm1 * exyyz;
+  m1xyzz = mm1 * exyzz;
+  m1xzzz = mm1 * exzzz;
+  m1yyyy = mm1 * eyyyy;
+  m1yyyz = mm1 * eyyyz;
+  m1yyzz = mm1 * eyyzz;
+  m1yzzz = mm1 * eyzzz;
+  m1zzzz = mm1 * ezzzz;
+
+  m2xx = mm2 * exx;
+  m2xy = mm2 * exy;
+  m2xz = mm2 * exz;
+  m2yy = mm2 * eyy;
+  m2yz = mm2 * eyz;
+  m2zz = mm2 * ezz;
+
+  m4xx = mm4 * exx;
+  m4xy = mm4 * exy;
+  m4xz = mm4 * exz;
+  m4yy = mm4 * eyy;
+  m4yz = mm4 * eyz;
+  m4zz = mm4 * ezz;
+
+  /* A part */
+  y [ 0] += z [ 0] * (a1 + a2 * exx);
+  y [ 1] += z [ 1] * (a1 + a2 * eyy);
+  y [ 2] += z [ 2] * (a1 + a2 * ezz);
+  
+  y [ 0] += z [ 1] * (a2 * exy);
+  y [ 1] += z [ 0] * (a2 * exy);
+  y [ 1] += z [ 2] * (a2 * eyz);
+  y [ 2] += z [ 1] * (a2 * eyz);
+  y [ 2] += z [ 0] * (a2 * exz);
+  y [ 0] += z [ 2] * (a2 * exz);
+
+  /* B part */
+  /* eps_ijk e_k */
+  y [ 3] += z [ 1] * (+ b1z ); /* x,y */
+  y [ 3] += z [ 2] * (- b1y ); /* x,z */
+  y [ 4] += z [ 0] * (- b1z ); /* y,x */
+  y [ 4] += z [ 2] * (+ b1x ); /* y,z */
+  y [ 5] += z [ 0] * (+ b1y ); /* z,x */
+  y [ 5] += z [ 1] * (- b1x ); /* z,y */
+
+  /* BT part */
+  // B-tilde(ii) = B-transpose(ii)
+  y [ 1] += x [ 3] * (+ b1z ); /* y,x */
+  y [ 2] += x [ 3] * (- b1y ); /* z,x */
+  y [ 0] += x [ 4] * (- b1z ); /* x,y */
+  y [ 2] += x [ 4] * (+ b1x ); /* z,y */
+  y [ 0] += x [ 5] * (+ b1y ); /* x,z */
+  y [ 1] += x [ 5] * (- b1x ); /* y,z */
+
+  /* C part */
+  y [ 3] += z [ 3] * (c1 + c2 * exx);
+  y [ 4] += z [ 4] * (c1 + c2 * eyy);
+  y [ 5] += z [ 5] * (c1 + c2 * ezz);
+
+  y [ 3] += z [ 4] * (c2 * exy);
+  y [ 4] += z [ 3] * (c2 * exy);
+  y [ 4] += z [ 5] * (c2 * eyz);
+  y [ 5] += z [ 4] * (c2 * eyz);
+  y [ 5] += z [ 3] * (c2 * exz);
+  y [ 3] += z [ 5] * (c2 * exz);
+  
+  /* G part */
+  /* g1: d_ij e_k part */
+  y [ 6] += z [ 0] * (g1x); /* xx,x */
+  y [ 6] += z [ 1] * (g1y); /* xx,y */
+  y [ 6] += z [ 2] * (g1z); /* xx,z */
+  y [10] += z [ 0] * (g1x); /* yy,x */
+  y [10] += z [ 1] * (g1y); /* yy,y */
+  y [10] += z [ 2] * (g1z); /* yy,z */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  y [ 6] += z [ 0] * (2.0 * g2x); /* xx,x */
+  y [ 7] += z [ 0] * (g2y);       /* xy,x */
+  y [ 7] += z [ 1] * (g2x);       /* xy,y */
+  y [ 8] += z [ 0] * (g2z);       /* xz,x */
+  y [ 8] += z [ 2] * (g2x);       /* xz,z */
+  y [ 9] += z [ 1] * (g2z);       /* yz,y */
+  y [ 9] += z [ 2] * (g2y);       /* yz,z */
+  y [10] += z [ 1] * (2.0 * g2y); /* yy,y */
+
+  /* g3: e_ijk part */
+  y [ 6] += z [ 0] * (g3xxx); /* xx,x */
+  y [ 6] += z [ 1] * (g3xxy); /* xx,y */
+  y [ 6] += z [ 2] * (g3xxz); /* xx,z */
+  y [ 7] += z [ 0] * (g3xxy); /* xy,x */
+  y [ 7] += z [ 1] * (g3xyy); /* xy,y */
+  y [ 7] += z [ 2] * (g3xyz); /* xy,z */
+  y [ 8] += z [ 0] * (g3xxz); /* xz,x */
+  y [ 8] += z [ 1] * (g3xyz); /* xz,y */
+  y [ 8] += z [ 2] * (g3xzz); /* xz,z */
+  y [ 9] += z [ 0] * (g3xyz); /* yz,x */
+  y [ 9] += z [ 1] * (g3yyz); /* yz,y */
+  y [ 9] += z [ 2] * (g3yzz); /* yz,z */
+  y [10] += z [ 0] * (g3xyy); /* yy,x */
+  y [10] += z [ 1] * (g3yyy); /* yy,y */
+  y [10] += z [ 2] * (g3yyz); /* yy,z */
+
+  // G-tilde(ii) = G-transpose(ii)
+  /* g1: d_ij e_k part */
+  y [ 0] += z [ 6] * g1x; /* x,xx */
+  y [ 1] += z [ 6] * g1y; /* y,xx */
+  y [ 2] += z [ 6] * g1z; /* z,xx */
+  y [ 0] += z [10] * g1x; /* x,yy */
+  y [ 1] += z [10] * g1y; /* y,yy */
+  y [ 2] += z [10] * g1z; /* z,yy */
+
+  /* g2: (e_i d_jk + e_j d_ik) part */
+  y [ 0] += z [ 6] * (2.0 * g2x); /* x,xx */
+  y [ 0] += z [ 7] * (g2y);       /* x,xy */
+  y [ 1] += z [ 7] * (g2x);       /* y,xy */
+  y [ 0] += z [ 8] * (g2z);       /* x,xz */
+  y [ 2] += z [ 8] * (g2x);       /* z,xz */
+  y [ 1] += z [ 9] * (g2z);       /* y,yz */
+  y [ 2] += z [ 9] * (g2y);       /* z,yz */
+  y [ 1] += z [10] * (2.0 * g2y); /* y,yy */
+
+  /* g3: e_ijk part */
+  y [ 0] += z [ 6] * g3xxx; /* x,xx */
+  y [ 1] += z [ 6] * g3xxy; /* y,xx */
+  y [ 2] += z [ 6] * g3xxz; /* z,xx */
+  y [ 0] += z [ 7] * g3xxy; /* x,xy */
+  y [ 1] += z [ 7] * g3xyy; /* y,xy */
+  y [ 2] += z [ 7] * g3xyz; /* z,xy */
+  y [ 0] += z [ 8] * g3xxz; /* x,xz */
+  y [ 1] += z [ 8] * g3xyz; /* y,xz */
+  y [ 2] += z [ 8] * g3xzz; /* z,xz */
+  y [ 0] += z [ 9] * g3xyz; /* x,yz */
+  y [ 1] += z [ 9] * g3yyz; /* y,yz */
+  y [ 2] += z [ 9] * g3yzz; /* z,yz */
+  y [ 0] += z [10] * g3xyy; /* x,yy */
+  y [ 1] += z [10] * g3yyy; /* y,yy */
+  y [ 2] += z [10] * g3yyz; /* z,yy */
+
+  /* H part */
+  /* e_i eps_jkl e_l + e_j eps_ikl e_l */
+  y [ 6] += z [ 4] * (+ 2.0 * h1xz);  /* xx,y */
+  y [ 6] += z [ 5] * (- 2.0 * h1xy);  /* xx,z */
+  y [ 7] += z [ 3] * (- h1xz);        /* xy,x */
+  y [ 7] += z [ 4] * (+ h1yz);        /* xy,y */
+  y [ 7] += z [ 5] * (+ h1xx - h1yy); /* xy,z */
+  y [ 8] += z [ 3] * (+ h1xy);        /* xz,x */
+  y [ 8] += z [ 4] * (- h1xx + h1zz); /* xz,y */
+  y [ 8] += z [ 5] * (- h1yz);        /* xz,z */
+  y [ 9] += z [ 3] * (+ h1yy - h1zz); /* yz,x */
+  y [ 9] += z [ 4] * (- h1xy);        /* yz,y */
+  y [ 9] += z [ 5] * (+ h1xz);        /* yz,z */
+  y [10] += z [ 3] * (- 2.0 * h1yz);  /* yy,x */
+  y [10] += z [ 5] * (+ 2.0 * h1xy);  /* yy,z */
+  
+  /* HT part */
+  // H-tilde(ii) = H-transpose(ii)
+  y [ 4] += z [ 6] * (+ 2.0 * h1xz);  /* y,xx */
+  y [ 5] += z [ 6] * (- 2.0 * h1xy);  /* z,xx */
+  y [ 3] += z [ 7] * (- h1xz);        /* x,xy */
+  y [ 4] += z [ 7] * (+ h1yz);        /* y,xy */
+  y [ 5] += z [ 7] * (+ h1xx - h1yy); /* z,xy */
+  y [ 3] += z [ 8] * (+ h1xy);        /* x,xz */
+  y [ 4] += z [ 8] * (- h1xx + h1zz); /* y,xz */
+  y [ 5] += z [ 8] * (- h1yz);        /* z,xz */
+  y [ 3] += z [ 9] * (+ h1yy - h1zz); /* x,yz */
+  y [ 4] += z [ 9] * (- h1xy);        /* y,yz */
+  y [ 5] += z [ 9] * (+ h1xz);        /* z,yz */
+  y [ 3] += z [10] * (- 2.0 * h1yz);  /* x,yy */
+  y [ 5] += z [10] * (+ 2.0 * h1xy);  /* z,yy */
+  
+  /* M part */
+  /* e_ijkl part */
+  y [ 6] += z [ 6] * (m1xxxx); /* xx,xx */
+  y [ 6] += z [ 7] * (m1xxxy); /* xx,xy */
+  y [ 6] += z [ 8] * (m1xxxz); /* xx,xz */
+  y [ 6] += z [ 9] * (m1xxyz); /* xx,yz */
+  y [ 6] += z [10] * (m1xxyy); /* xx,yy */
+  y [ 7] += z [ 6] * (m1xxxy); /* xy,xx */
+  y [ 7] += z [ 7] * (m1xxyy); /* xy,xy */
+  y [ 7] += z [ 8] * (m1xxyz); /* xy,xz */
+  y [ 7] += z [ 9] * (m1xyyz); /* xy,yz */
+  y [ 7] += z [10] * (m1xyyy); /* xy,yy */
+  y [ 8] += z [ 6] * (m1xxxz); /* xz,xx */
+  y [ 8] += z [ 7] * (m1xxyz); /* xz,xy */
+  y [ 8] += z [ 8] * (m1xxzz); /* xz,xz */
+  y [ 8] += z [ 9] * (m1xyzz); /* xz,yz */
+  y [ 8] += z [10] * (m1xyyz); /* xz,yy */
+  y [ 9] += z [ 6] * (m1xxyz); /* yz,xx */
+  y [ 9] += z [ 7] * (m1xyyz); /* yz,xy */
+  y [ 9] += z [ 8] * (m1xyzz); /* yz,xz */
+  y [ 9] += z [ 9] * (m1yyzz); /* yz,yz */
+  y [ 9] += z [10] * (m1yyyz); /* yz,yy */
+  y [10] += z [ 6] * (m1xxyy); /* yy,xx */
+  y [10] += z [ 7] * (m1xyyy); /* yy,xy */
+  y [10] += z [ 8] * (m1xyyz); /* yy,xz */
+  y [10] += z [ 9] * (m1yyyz); /* yy,yz */
+  y [10] += z [10] * (m1yyyy); /* yy,yy */
+
+  /* (d_ij e_kl + e_ij d_kl)part */
+  y [ 6] += z [ 6] * (2.0 * m2xx);  /* xx,xx */
+  y [ 6] += z [ 7] * (m2xy);        /* xx,xy */
+  y [ 6] += z [ 8] * (m2xz);        /* xx,xz */
+  y [ 6] += z [ 9] * (m2yz);        /* xx,yz */
+  y [ 6] += z [10] * (m2yy + m2xx); /* xx,yy */
+  y [ 7] += z [ 6] * (m2xy);        /* xy,xx */
+  y [ 7] += z [10] * (m2xy);        /* xy,yy */
+  y [ 8] += z [ 6] * (m2xz);        /* xz,xx */
+  y [ 8] += z [10] * (m2xz);        /* xz,yy */
+  y [ 9] += z [ 6] * (m2yz);        /* yz,xx */
+  y [ 9] += z [10] * (m2yz);        /* yz,yy */
+  y [10] += z [ 6] * (m2xx + m2yy); /* yy,xx */
+  y [10] += z [ 7] * (m2xy);        /* yy,xy */
+  y [10] += z [ 8] * (m2xz);        /* yy,xz */
+  y [10] += z [ 9] * (m2yz);        /* yy,yz */
+  y [10] += z [10] * (2.0 * m2yy);  /* yy,yy */
+
+  /* d_ij d_kl part */
+  y [ 6] += z [ 6] * (mm3); /* xx,xx */
+  y [ 6] += z [10] * (mm3); /* xx,yy */
+  y [10] += z [ 6] * (mm3); /* yy,xx */
+  y [10] += z [10] * (mm3); /* yy,yy */
+
+  /* e_i d_jk e_l + e_i d_jl e_k + */
+  /* e_j d_ik e_l + e_j d_il e_k part */
+  y [ 6] += z [ 6] * (4.0 * m4xx);  /* xx,xx */
+  y [ 6] += z [ 7] * (2.0 * m4xy);  /* xx,xy */
+  y [ 6] += z [ 8] * (2.0 * m4xz);  /* xx,xz */
+  y [ 7] += z [ 6] * (2.0 * m4xy);  /* xy,xx */
+  y [ 7] += z [ 7] * (m4xx + m4yy); /* xy,xy */
+  y [ 7] += z [ 8] * (m4yz);        /* xy,xz */
+  y [ 7] += z [ 9] * (m4xz);        /* xy,yz */
+  y [ 7] += z [10] * (2.0 * m4xy);  /* xy,yy */
+  y [ 8] += z [ 6] * (2.0 * m4xz);  /* xz,xx */
+  y [ 8] += z [ 7] * (m4yz);        /* xz,xy */
+  y [ 8] += z [ 8] * (m4xx + m4zz); /* xz,xz */
+  y [ 8] += z [ 9] * (m4xy);        /* xz,yz */
+  y [ 9] += z [ 7] * (m4xz);        /* yz,xy */
+  y [ 9] += z [ 8] * (m4xy);        /* yz,xz */
+  y [ 9] += z [ 9] * (m4yy + m4zz); /* yz,yz */
+  y [ 9] += z [10] * (2.0 * m4yz);  /* yz,yy */
+  y [10] += z [ 7] * (2.0 * m4xy);  /* yy,xy */
+  y [10] += z [ 9] * (2.0 * m4yz);  /* yy,yz */
+  y [10] += z [10] * (4.0 * m4yy);  /* yy,yy */
+
+  /* (d_ik d_jl + d_jk d_il) part */
+  y [ 6] += z [ 6] * (2.0 * mm5); /* xx,xx */
+  y [ 7] += z [ 7] * (mm5);       /* xy,xy */
+  y [ 8] += z [ 8] * (mm5);       /* xz,xz */
+  y [ 9] += z [ 9] * (mm5);       /* yz,yz */
+  y [10] += z [10] * (2.0 * mm5); /* yy,yy */
+
+  free (z);
+}
+
 /* convert fts[] to f[], t[], s[] (this is applicable for UOE)
  * INPUT
  *  n : # particles
@@ -1418,6 +1845,7 @@ calc_lub_fts_2b (struct stokes * sys,
   zm11 = res2b [20] - resinf [20];
   zm12 = res2b [21] - resinf [21];
 
+  /*
   matrix_fts_atimes (uoe1, fts1,
 		     ex, ey, ez,
 		     xa11, ya11,
@@ -1426,6 +1854,15 @@ calc_lub_fts_2b (struct stokes * sys,
 		     xg11, yg11,
 		     yh11,
 		     xm11, ym11, zm11);
+  */
+  matrix_fts_self_atimes (uoe1, fts1,
+			  ex, ey, ez,
+			  xa11, ya11,
+			  yb11,
+			  xc11, yc11,
+			  xg11, yg11,
+			  yh11,
+			  xm11, ym11, zm11);
   matrix_fts_atimes (uoe2, fts1,
 		     ex, ey, ez,
 		     xa12, ya12,
@@ -1435,6 +1872,7 @@ calc_lub_fts_2b (struct stokes * sys,
 		     yh12,
 		     xm12, ym12, zm12);
 
+  /*
   matrix_fts_atimes (uoe2, fts2,
 		     - ex, - ey, - ez,
 		     xa11, ya11,
@@ -1443,6 +1881,15 @@ calc_lub_fts_2b (struct stokes * sys,
 		     xg11, yg11,
 		     yh11,
 		     xm11, ym11, zm11);
+  */
+  matrix_fts_self_atimes (uoe2, fts2,
+			  - ex, - ey, - ez,
+			  xa11, ya11,
+			  yb11,
+			  xc11, yc11,
+			  xg11, yg11,
+			  yh11,
+			  xm11, ym11, zm11);
   matrix_fts_atimes (uoe1, fts2,
 		     - ex, - ey, - ez,
 		     xa12, ya12,

@@ -1,7 +1,7 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 2.4 2007/03/07 20:35:45 kichiki Exp $
+ * $Id: fts.h,v 2.5 2007/03/31 04:12:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ matrix_ij_G (int n, double *mat,
 	     double ex, double ey, double ez,
 	     double xg, double yg);
 
-/* store matrix in G-tilde part with scalar functions
+/* store matrix in G-transpose part with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
@@ -72,7 +72,7 @@ matrix_ij_G (int n, double *mat,
  *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
  */
 void
-matrix_ij_Gt (int n, double *mat,
+matrix_ij_GT (int n, double *mat,
 	      double ex, double ey, double ez,
 	      double xg, double yg);
 
@@ -92,7 +92,7 @@ matrix_ij_H (int n, double *mat,
 	     double ex, double ey, double ez,
 	     double yh);
 
-/* store matrix in H-tilde part with scalar functions
+/* store matrix in H-transpose part with scalar functions
  * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
  * only m [alpha(i), beta(j)] is stored.
  * INPUT
@@ -104,7 +104,7 @@ matrix_ij_H (int n, double *mat,
  *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
  */
 void
-matrix_ij_Ht (int n, double *mat,
+matrix_ij_HT (int n, double *mat,
 	      double ex, double ey, double ez,
 	      double yh);
 
@@ -146,6 +146,29 @@ matrix_fts_atimes (const double *x,
 		   double xg, double yg,
 		   double yh,
 		   double xm, double ym, double zm);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [11] : FTS of particle 'i' (extracted form)
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [11] : UOE of particle 'j' (extracted form)
+ */
+void
+matrix_fts_self_atimes (const double *x,
+			double *y,
+			double ex, double ey, double ez,
+			double xa, double ya,
+			double yb,
+			double xc, double yc,
+			double xg, double yg,
+			double yh,
+			double xm, double ym, double zm);
 
 /* convert fts[] to f[], t[], s[] (this is applicable for UOE)
  * INPUT
