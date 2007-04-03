@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.2 2007/03/27 07:02:29 kichiki Exp $
+ * $Id: twobody.c,v 1.3 2007/04/03 02:34:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1007,19 +1007,114 @@ void twobody_YC_lub (int n, double l, double s,
  *     20,21 : (ZM11, ZM12) not implemented
  */
 void twobody_lub (int n, double l, double s,
-		  double *far)
+		  double *lub)
 {
-  twobody_XA_lub (n, l, s, far +  0, far +  1);
-  twobody_YA_lub (n, l, s, far +  2, far +  3);
-  twobody_YB_lub (n, l, s, far +  4, far +  5);
-  twobody_XC_lub (n, l, s, far +  6, far +  7);
-  twobody_YC_lub (n, l, s, far +  8, far +  9);
+  twobody_XA_lub (n, l, s, lub +  0, lub +  1);
+  twobody_YA_lub (n, l, s, lub +  2, lub +  3);
+  twobody_YB_lub (n, l, s, lub +  4, lub +  5);
+  twobody_XC_lub (n, l, s, lub +  6, lub +  7);
+  twobody_YC_lub (n, l, s, lub +  8, lub +  9);
   /*
-  twobody_XG_lub (n, l, s, far + 10, far + 11);
-  twobody_YG_lub (n, l, s, far + 12, far + 13);
-  twobody_YH_lub (n, l, s, far + 14, far + 15);
-  twobody_XM_lub (n, l, s, far + 16, far + 17);
-  twobody_YM_lub (n, l, s, far + 18, far + 19);
-  twobody_ZM_lub (n, l, s, far + 20, far + 21);
+  twobody_XG_lub (n, l, s, lub + 10, lub + 11);
+  twobody_YG_lub (n, l, s, lub + 12, lub + 13);
+  twobody_YH_lub (n, l, s, lub + 14, lub + 15);
+  twobody_XM_lub (n, l, s, lub + 16, lub + 17);
+  twobody_YM_lub (n, l, s, lub + 18, lub + 19);
+  twobody_ZM_lub (n, l, s, lub + 20, lub + 21);
   */
+  twobody_XG_far (n, l, s, lub + 10, lub + 11);
+  twobody_YG_far (n, l, s, lub + 12, lub + 13);
+  twobody_YH_far (n, l, s, lub + 14, lub + 15);
+  twobody_XM_far (n, l, s, lub + 16, lub + 17);
+  twobody_YM_far (n, l, s, lub + 18, lub + 19);
+  twobody_ZM_far (n, l, s, lub + 20, lub + 21);
+}
+
+
+/* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
+ * INPUT
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in SD form
+ */
+void
+twobody_scale (double *two, double l)
+{
+  double l1 = 1.0 + l;
+  double l2 = l1 * l1;
+  double l3 = l2 * l1;
+
+  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
+  l2 /= 6.0; // l2 = (1 + lambda)^2 / 6 (= 2/3 for lambda == 1)
+  l3 /= 6.0; // l3 = (1 + lambda)^3 / 6 (= 4/3 for lambda == 1)
+  double lm;
+  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
+
+  // A part
+  two [1] *= l1;// XA12
+  two [3] *= l1;// YA12
+
+  // B part
+  two [4] *= 2.0 / 3.0; // YB11
+  two [5] *= l2;        // YB12
+
+  // C part
+  two [6] *= 4.0 / 3.0; // XC11
+  two [7] *= l3;        // XC12
+  two [8] *= 4.0 / 3.0; // YC11
+  two [9] *= l3;        // YC12
+
+  // G part
+  two [10] *= 2.0 / 3.0; // XG11
+  two [11] *= l2;        // XG12
+  two [12] *= 2.0 / 3.0; // YG11
+  two [13] *= l2;        // YG12
+
+  // H part
+  two [14] *= 4.0 / 3.0; // YH11
+  two [15] *= l3;        // YH12
+
+  // M part
+  two [16] *= 10.0 / 9.0; // XM11
+  two [17] *= lm;         // XM12
+  two [18] *= 10.0 / 9.0; // YM11
+  two [19] *= lm;         // YM12
+  two [20] *= 10.0 / 9.0; // ZM11
+  two [21] *= lm;         // ZM12
+}
+
+
+/* calc scalar functions of two-body exact solution in resistance problem
+ * INPUT
+ *  r        : distance between the two := x_b - x_a
+ *  aa, ab   : radii for particles a(alpha) and b(beta)
+ *  n        : max order for the coefficients
+ *  flag_lub : 0 to use twobody_far()
+ *             1 to use twobody_lub()
+ *  res [22] :
+ * OUTPUT
+ *  res [22] : scalar functions are scaled by Stokesian dynamics form.
+ */
+void
+twobody_scalars_res (double r,
+		     double aa, double ab,
+		     int n, int flag_lub,
+		     double *res)
+{
+  double l = ab / aa;
+  double s = 2.0 * r / (aa + ab);
+
+  if (flag_lub == 0)
+    {
+      twobody_far (n, l, s, res);
+    }
+  else
+    {
+      twobody_lub (n, l, s, res);
+    }
+
+  twobody_scale (res, l);
 }

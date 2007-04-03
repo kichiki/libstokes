@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.2 2007/03/27 07:05:11 kichiki Exp $
+ * $Id: twobody.h,v 1.3 2007/04/03 02:35:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -284,6 +284,36 @@ void twobody_YC_lub (int n, double l, double s,
  */
 void twobody_lub (int n, double l, double s,
 		  double *far);
+
+
+/* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
+ * INPUT
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in SD form
+ */
+void
+twobody_scale (double *two, double l);
+
+/* calc scalar functions of two-body exact solution in resistance problem
+ * INPUT
+ *  r        : distance between the two := x_b - x_a
+ *  aa, ab   : radii for particles a(alpha) and b(beta)
+ *  n        : max order for the coefficients
+ *  flag_lub : 0 to use twobody_far()
+ *             1 to use twobody_lub()
+ *  res [22] :
+ * OUTPUT
+ *  res [22] : scalar functions are scaled by Stokesian dynamics form.
+ */
+void
+twobody_scalars_res (double r,
+		     double aa, double ab,
+		     int n, int flag_lub,
+		     double *res);
 
 
 #endif /* !_TWOBODY_H_ */
