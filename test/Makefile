@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1 2007/03/19 04:10:37 kichiki Exp $
+# $Id: Makefile,v 1.2 2007/04/03 02:40:42 kichiki Exp $
 
 CC           = cc
 LD           = libtool --mode=link $(CC)
@@ -30,7 +30,8 @@ LIBS         = ../src/libstokes.la\
 		-lnetcdf\
 		$(GUILE_LIB)
 
-all:	test-all
+all:	test-all \
+	test-twobody
 
 
 # test-all
@@ -38,7 +39,8 @@ test-all-OBJ =\
 	test-all.o \
 	check-mul-matrices.o \
 	check-lapack-inv.o \
-	check-solve-gen-linear.o
+	check-solve-gen-linear.o \
+	check-poly.o
 
 test-all:	$(test-all-OBJ)
 	$(LD) $(LDFLAGS) -o test-all	\
