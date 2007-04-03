@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.3 2007/03/18 22:28:48 kichiki Exp $
+ * $Id: non-ewald.c,v 1.4 2007/04/03 02:10:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,71 +36,123 @@
  *            1 = FT version
  *            2 = FTS version
  * OUTPUT
- *  xa, ya : for F version
- *  yb,
- *  xc, yc : for FT version
- *  xg, yg,
- *  yh,
- *  xm, ym, zm : for FTS version
+ *  scalar [11]:
+ *   0, 1,    : (xa12, ya12) for F version
+ *   2,       : (yb12)
+ *   3, 4,    : (xc12, yc12) for FT version
+ *   5, 6,    : (xg12, yg12)
+ *   7,       : (yh12)
+ *   8, 9, 10 : (xm12, ym12, zm12) for FTS version
  */
 void
 scalars_nonewald (int version,
 		  double r,
-		  double *xa, double *ya,
-		  double *yb,
-		  double *xc, double *yc,
-		  double *xg, double *yg,
-		  double *yh,
-		  double *xm, double *ym, double *zm)
+		  double *scalar)
 {
-  double a2;
-  double c2;
-
-  double s, s2;
-
   // zero clear for FT and higher
-  *yb = 0.0;
-  *xc = 0.0;
-  *yc = 0.0;
-  *xg = 0.0;
-  *yg = 0.0;
-  *yh = 0.0;
-  *xm = 0.0;
-  *ym = 0.0;
-  *zm = 0.0;
+  int i;
+  for (i = 0; i < 11; i ++) scalar [i] = 0.0;
 
-  s  = r;
-  s2 = r * r;
+  double r2;
+  r2 = r * r;
 
-  *ya = (0.75 + 0.5 / s2) / s;
-  a2 = (0.75 - 1.5 / s2) / s;
-  *xa = a2 + *ya;
+  // xa12, ya12
+  scalar [0] = (1.5  - 1.0 / r2) / r;
+  scalar [1] = (0.75 + 0.5 / r2) / r;
 
   // check point for F version
   if (version == 0) return;
 
 
-  *yb = - 0.75 / s2;
+  // yb12
+  scalar [2] = - 0.75 / r2;
 
-  *yc = - 3.0 / 8.0 / s2 / s;
-  c2 = 9.0 / 8.0 / s2 / s;
-  *xc = c2 + *yc;
+  // xc, yc
+  scalar [3] = + 0.75  / r2 / r;
+  scalar [4] = - 0.375 / r2 / r;
 
   // check point for FT version
   if (version == 1) return;
 
-  *xg = (2.25 - 3.6 / s2) / s2;
-  *yg = 1.2 / s2 / s2;
+  // xg, yg
+  scalar [5] = (2.25 - 3.6 / r2) / r2;
+  scalar [6] = 1.2 / r2 / r2;
 
-  *yh = - 9.0 / 8.0 / s2 / s;
+  // yh
+  scalar [7] = - 1.125 / r2 / r;
 
-  *xm = (- 4.5 + 10.8 / s2) / s / s2;
-  *ym = (+ 2.25 - 7.2 / s2) / s / s2;
-  *zm = + 1.8 / s2 / s / s2;
+  // xm, ym, zm
+  scalar [8] = (- 4.5 + 10.8 / r2) / r2 / r;
+  scalar [9] = (+ 2.25 - 7.2 / r2) / r2 / r;
+  scalar[10] = + 1.8 / r2 / r2 / r;
 }
 
+/* calculate scalar functions under no periodic boundary condition
+ * radii for two particles are taken into account
+ * INPUT
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  scalar [11]:
+ *   0, 1,    : (xa12, ya12) for F version
+ *   2,       : (yb12)
+ *   3, 4,    : (xc12, yc12) for FT version
+ *   5, 6,    : (xg12, yg12)
+ *   7,       : (yh12)
+ *   8, 9, 10 : (xm12, ym12, zm12) for FTS version
+ */
+void
+scalars_nonewald_poly (int version,
+		       double r,
+		       double aa, double ab,
+		       double *scalar)
+{
+  // zero clear for FT and higher
+  int i;
+  for (i = 0; i < 11; i ++) scalar [i] = 0.0;
+
+  double r2 = r * r;
+
+  double aa2 = aa * aa;
+  double ab2 = ab * ab;
+
+  double aa3 = aa2 * aa;
+
+  // xa12, ya12
+  scalar [0] = aa * (1.5 - (aa2 + ab2) * 0.5 / r2) / r;
+  scalar [1] = aa * (0.75 + (aa2 + ab2) * 0.25 / r2) / r;
+
+  // check point for F version
+  if (version == 0) return;
+
+  // yb12
+  scalar [2] = aa2 * (- 0.75 / r2);
+
+  // xc12, yc12
+  scalar [3] = aa3 * (0.75 / r2 / r);
+  scalar [4] = aa3 * (- 3.0 / 8.0 / r2 / r);
+
+  // check point for FT version
+  if (version == 1) return;
+
+  // xg12, yg12
+  scalar [5] = aa2 * (2.25 - 13.5 * (aa2 / 10.0 + ab2 / 6.0) / r2) / r2;
+  scalar [6] = aa2 * 4.5 * (aa2 / 10.0 + ab2 / 6.0) / r2 / r2;
+
+  // yh12
+  scalar [7] = aa3 * (- 9.0 / 8.0 / r2 / r);
+
+  // xm12, ym12, zm12
+  scalar [8] = aa3 * (- 4.5 + 5.4 * (aa2 + ab2) / r2) / r2 / r;
+  scalar [9] = aa3 * (2.25 - 3.6 * (aa2 + ab2) / r2) / r2 / r;
+  scalar[10] = aa3 * 0.9 * (aa2 + ab2) / r2 / r2 / r;
+}
 
 /* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
+ * for both monodisplerse and polydisperse systems (given by sys->a)
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -109,16 +161,11 @@ scalars_nonewald (int version,
  *  y [n] : U, UO, or UOE
  */
 void
-atimes_nonewald_3all (int n, const double *x, double *y, void * user_data)
+atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 {
   struct stokes * sys;
 
-  double xa, ya; 
-  double yb;
-  double xc, yc;
-  double xg, yg;
-  double yh;
-  double xm, ym, zm;
+  double mob [22];
 
   double ex, ey, ez;
 
@@ -193,46 +240,51 @@ atimes_nonewald_3all (int n, const double *x, double *y, void * user_data)
 	  ey = yy / r;
 	  ez = zz / r;
 
-	  scalars_nonewald (sys->version,
-			    r,
-			    &xa, &ya,
-			    &yb,
-			    &xc, &yc,
-			    &xg, &yg,
-			    &yh,
-			    &xm, &ym, &zm);
+	  if (sys->a == NULL)
+	    {
+	      // monodisperse
+	      scalars_nonewald (sys->version, r, mob);
+	    }
+	  else
+	    {
+	      // polydisperse
+	      scalars_nonewald_poly (sys->version, r,
+				     sys->a[i], sys->a[j],
+				     mob);
+	    }
 
 	  // note that interaction (i,j) should be for (U[i], F[j])
 	  if (sys->version == 0) // F version
 	    {
 	      matrix_f_atimes (x + j*3, y + i*3,
 			       ex, ey, ez,
-			       xa, ya);
+			       mob[0], mob[1]); // xa, ya
 	    }
 	  else if (sys->version == 1) // FT version
 	    {
 	      matrix_ft_atimes (x + j*6, y + i*6,
 				ex, ey, ez,
-				xa, ya,
-				yb,
-				xc, yc);
+				mob[0], mob[1],  // xa, ya
+				mob[2],          // yb
+				mob[3], mob[4]); // xc, yc
 	    }
 	  else // FTS version
 	    {
 	      matrix_fts_atimes (x + j*11, y + i*11,
 				 ex, ey, ez,
-				 xa, ya,
-				 yb,
-				 xc, yc,
-				 xg, yg,
-				 yh,
-				 xm, ym, zm);
+				 mob[0], mob[1], // xa, ya
+				 mob[2],         // yb
+				 mob[3], mob[4], // xc, yc
+				 mob[5], mob[6], // xg, yg
+				 mob[7],         // yh
+				 mob[8], mob[9], mob[10]); // xm, ym, zm
 	    }
 	}
     }
 }
 
 /* make plain mobility matrix for F/FT/FTS versions for non-periodic case
+ * for both monodisplerse and polydisperse systems (given by sys->a)
  * INPUT
  * sys : system parameters
  * OUTPUT
@@ -241,14 +293,9 @@ atimes_nonewald_3all (int n, const double *x, double *y, void * user_data)
  *  mat [np * 11 * np * 11] : for FTS version
  */
 void
-make_matrix_mob_nonewald_3all (struct stokes * sys, double * mat)
+make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 {
-  double xa, ya; 
-  double yb;
-  double xc, yc;
-  double xg, yg;
-  double yh;
-  double xm, ym, zm;
+  double mob [22];
 
   double ex, ey, ez;
 
@@ -338,41 +385,45 @@ make_matrix_mob_nonewald_3all (struct stokes * sys, double * mat)
 	  ey = yy / r;
 	  ez = zz / r;
 
-	  scalars_nonewald (sys->version,
-			    r,
-			    &xa, &ya,
-			    &yb,
-			    &xc, &yc,
-			    &xg, &yg,
-			    &yh,
-			    &xm, &ym, &zm);
+	  if (sys->a == NULL)
+	    {
+	      // monodisperse
+	      scalars_nonewald (sys->version, r, mob);
+	    }
+	  else
+	    {
+	      // polydisperse
+	      scalars_nonewald_poly (sys->version, r,
+				     sys->a[i], sys->a[j],
+				     mob);
+	    }
 
 	  if (sys->version == 0) // F version
 	    {
 	      matrix_f_ij (i, j,
 			   ex, ey, ez,
-			   xa, ya,
+			   mob[0], mob[1], // xa, ya
 			   n, mat);
 	    }
 	  else if (sys->version == 1) // FT version
 	    {
 	      matrix_ft_ij (i, j,
 			    ex, ey, ez,
-			    xa, ya,
-			    yb,
-			    xc, yc,
+			    mob[0], mob[1], // xa, ya
+			    mob[2],         // yb
+			    mob[3], mob[4], // xc, yc
 			    n, mat);
 	    }
 	  else // FTS version
 	    {
 	      matrix_fts_ij (i, j,
 			     ex, ey, ez,
-			     xa, ya,
-			     yb,
-			     xc, yc,
-			     xg, yg,
-			     yh,
-			     xm, ym, zm,
+			     mob[0], mob[1], // xa, ya
+			     mob[2],         // yb
+			     mob[3], mob[4], // xc, yc
+			     mob[5], mob[6], // xg, yg
+			     mob[7],         // yh
+			     mob[8], mob[9], mob[10], // xm, ym, zm
 			     n, mat);
 	    }
 	}
@@ -380,7 +431,8 @@ make_matrix_mob_nonewald_3all (struct stokes * sys, double * mat)
 }
 
 /* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
- * through matrix with the ewald table
+ * for both monodisplerse and polydisperse systems (given by sys->a)
+ * through matrix procedure
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -390,7 +442,7 @@ make_matrix_mob_nonewald_3all (struct stokes * sys, double * mat)
  */
 void
 atimes_nonewald_3all_matrix (int n, const double *x,
-			     double *y, void * user_data)
+			     double *y, void *user_data)
 {
   struct stokes * sys;
   int np;
