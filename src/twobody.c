@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.3 2007/04/03 02:34:12 kichiki Exp $
+ * $Id: twobody.c,v 1.4 2007/04/06 20:26:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -636,7 +636,7 @@ void twobody_XA_lub (int n, double l, double s,
       s2m  *= s21;
     }
 
-  *XA12 *= -2.0 / (1.0 + l);
+  *XA12 *= -2.0 / l1;
 
   free (f);
 }
@@ -726,7 +726,7 @@ void twobody_YA_lub (int n, double l, double s,
       s2m  *= s21;
     }
 
-  *YA12 *= -2.0 / (1.0 + l);
+  *YA12 *= -2.0 / l1;
 
   free (f);
 }
@@ -814,7 +814,7 @@ void twobody_YB_lub (int n, double l, double s,
       s2m  *= s21;
     }
 
-  *YB12 *= -4.0 / (1.0 + l) / (1.0 + l);
+  *YB12 *= -4.0 / l12;
 
   free (f);
 }
@@ -887,7 +887,7 @@ void twobody_XC_lub (int n, double l, double s,
       s2m  *= s21;
     }
 
-  *XC12 *= -8.0 / (1.0 + l) / (1.0 + l) / (1.0 + l);
+  *XC12 *= -8.0 / l1 / l1 / l1;
 
   free (f);
 }
@@ -979,7 +979,500 @@ void twobody_YC_lub (int n, double l, double s,
       s2m  *= s21;
     }
 
-  *YC12 *= 8.0 / (1.0 + l) / (1.0 + l) / (1.0 + l);
+  *YC12 *= 8.0 / l1 / l1 / l1;
+
+  free (f);
+}
+
+/* calc XG11 and XG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XG_lub (int n, double l, double s,
+		     double *XG11, double *XG12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_XG_lub");
+
+  twobody_XG (n, l, f);
+
+  *XG11 = 0.0;
+  *XG12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l13 = l1 * l1 * l1;
+  double g1, g2, g3;
+  g1 = 3.0 * l * l / l13;
+  g2 = 0.3 * l * (1.0 + l * (12.0 - 4.0 * l)) / l13;
+  g3 = (5.0 + l*(181.0 + l*(-453.0 + l*(566.0 - 65.0 *l)))) / 140.0 / l13;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *XG11 = g1*s1 + (g2 + g3*s3)*ls2 - g3*s;
+  // next is m = 1
+
+  *XG12 = -g1*s4 - (g2 + g3*s3)*ls5 + g3;
+  // next is m = 2
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a = - g1
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *XG12 -= f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a = - g1
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *XG11 += f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *XG12 *= 4.0 / l1 / l1;
+
+  free (f);
+}
+
+/* calc YG11 and YG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YG_lub (int n, double l, double s,
+		     double *YG11, double *YG12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_YG_lub");
+
+  twobody_YG (n, l, f);
+
+  *YG11 = 0.0;
+  *YG12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l13 = l1 * l1 * l1;
+  double g2, g3;
+  g2 = 0.1 * l * (4.0 + l * (-1.0 + 7.0 * l)) / l13;
+  g3 = (32.0 + l*(-179.0 + l*(532.0 + l*(-356.0 + 221.0 *l)))) / 500.0 / l13;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *YG11 = (g2 + g3*s3)*ls2 - g3*s;
+  // next is m = 1
+
+  *YG12 = - (g2 + g3*s3)*ls5 + g3;
+  // next is m = 2
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a =
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *YG12 -= f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a =
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *YG11 += f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *YG12 *= 4.0 / l1 / l1;
+
+  free (f);
+}
+
+/* calc YH11 and YH12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YH_lub (int n, double l, double s,
+		     double *YH11, double *YH12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_YH_lub");
+
+  twobody_YH (n, l, f);
+
+  *YH11 = 0.0;
+  *YH12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l12 = l1 * l1;
+  double g2, g3, g5, g6;
+  g2 = 0.1 * l * (2.0 - l) / l12;
+  g3 = (16.0 + l*(-61.0 + l*(180.0 + 2.0 *l))) / 500.0 / l12;
+  g5 = 0.05 * l * l * (1.0 + 7.0 * l) / l12;
+  g6 = l * (43.0 + l*(147.0 + l*(-185.0 + 221.0 *l))) / 1000.0 / l12;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *YH11 = (g2 + g3*s3)*ls5 - g3;
+  // next is m = 2
+
+  *YH12 = (g5 + g6*s3)*ls2 - g6*s;
+  // next is m = 1
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a =
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *YH11 += f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a =
+	    - 2.0 * g5 / (double)m
+	    + 4.0 * g6 / (double)(m*(m+2));
+	  *YH12 += f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *YH12 *= 8.0 / l12 / l1;
+
+  free (f);
+}
+
+/* calc XM11 and XM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XM_lub (int n, double l, double s,
+		     double *XM11, double *XM12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_XM_lub");
+
+  twobody_XM (n, l, f);
+
+  *XM11 = 0.0;
+  *XM12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l13 = l1 * l1 * l1;
+  double g1, g2, g3, g4, g5, g6;
+  g1 = 1.2 * l * l / l13;
+  g2 = 0.12 * l * (1.0 + l*(17.0 -9.0 * l)) / l13;
+  g3 = (5.0 + l*(272.0 + l*(-831.0 + l*(1322.0 - 415.0 *l)))) / 350.0 / l13;
+  g4 = g1 * l;
+  g5 = 0.12 * l * l * (-4.0 + l*(17.0 -4.0 * l)) / l13;
+  g6 = l*(-65.0 + l*(832.0 + l*(-1041.0 + l*(832.0 - 65.0 *l)))) / 350.0 / l13;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *XM11 = g1*s4 + (g2 + g3*s3)*ls5 - g3 + 1.0;
+  // next is m = 2
+
+  *XM12 = g4*s1 + (g5 + g6*s3)*ls2 - g6*s;
+  // next is m = 1
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a = - g1
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *XM11 += f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a = - g4
+	    - 2.0 * g5 / (double)m
+	    + 4.0 * g6 / (double)(m*(m+2));
+	  *XM12 += f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *XM12 *= 8.0 / l13;
+
+  free (f);
+}
+
+/* calc YM11 and YM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YM_lub (int n, double l, double s,
+		     double *YM11, double *YM12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_YM_lub");
+
+  twobody_YM (n, l, f);
+
+  *YM11 = 0.0;
+  *YM12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l13 = l1 * l1 * l1;
+  double g2, g3, g5, g6;
+  g2 = 0.24 * l * (1.0 + l*(-1.0 +4.0 * l)) / l13;
+  g3 = (24.0 + l*(-201.0 + l*(882.0 + l*(-1182 + 591.0 *l)))) / 625.0 / l13;
+  g5 = 0.06 * l * l * (7.0 + l*(-10.0 +7.0 * l)) / l13;
+  g6 = 3.0*l*(221.0 + l*(-728.0 + l*(1902.0 + l*(-728 + 221.0 *l))))
+    / 2500.0 / l13;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *YM11 = (g2 + g3*s3)*ls5 - g3 + 1.0;
+  // next is m = 2
+
+  *YM12 = (g5 + g6*s3)*ls2 - g6*s;
+  // next is m = 1
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a =
+	    - 2.0 * g2 / (double)m
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *YM11 += f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a =
+	    - 2.0 * g5 / (double)m
+	    + 4.0 * g6 / (double)(m*(m+2));
+	  *YM12 += f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *YM12 *= 8.0 / l13;
+
+  free (f);
+}
+
+/* calc ZM11 and ZM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_ZM_lub (int n, double l, double s,
+		     double *ZM11, double *ZM12)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  f = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (f, "twobody_ZM_lub");
+
+  twobody_ZM (n, l, f);
+
+  *ZM11 = 0.0;
+  *ZM12 = 0.0;
+
+  double l1 = 1.0 + l;
+  double l13 = l1 * l1 * l1;
+  double g3;
+  g3 = -0.3*l*l*(1.0 + l*l) / l13;
+
+  double s1, s2, s3, s4, s5;
+  double ls2, ls5;
+  s1 = 2.0 * s / (s * s - 4.0);
+  s2 = (s + 2.0) / (s - 2.0);
+  s3 = (s * s - 4.0) / 4.0;
+  s4 = 4.0 / (s * s - 4.0);
+  s5 = s * s / (s * s - 4.0);
+  ls2 = log (s2);
+  ls5 = log (s5);
+  
+  *ZM11 = g3*s3*ls5 - g3 + 1.0;
+  // next is m = 2
+
+  *ZM12 = - g3*s3*ls2 + g3*s;
+  // next is m = 1
+
+  double s1l = s * (1.0 + l);
+  double s1lm = s1l;
+
+  double s21  = 2.0 / s;
+  double s2m  = s21;
+
+  double a;
+  int m;
+  for (m = 1; m < n; m ++)
+    {
+      if (m%2 == 0)
+	{
+	  a =
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *ZM11 += f[m] / s1lm
+	    + a * s2m;
+	}
+      else
+	{
+	  a =
+	    + 4.0 * g3 / (double)(m*(m+2));
+	  *ZM12 -= f[m] / s1lm
+	    + a * s2m;
+	}
+
+      s1lm *= s1l;
+      s2m  *= s21;
+    }
+
+  *ZM12 *= 8.0 / l13;
 
   free (f);
 }
@@ -999,12 +1492,12 @@ void twobody_YC_lub (int n, double l, double s,
  *      4, 5 : (YB11, YB12)
  *      6, 7 : (XC11, XC12)
  *      8  9 : (YC11, YC12)
- *     10,11 : (XG11, XG12) not implemented
- *     12,13 : (YG11, YG12) not implemented
- *     14,15 : (YH11, YH12) not implemented
- *     16,17 : (XM11, XM12) not implemented
- *     18,19 : (YM11, YM12) not implemented
- *     20,21 : (ZM11, ZM12) not implemented
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
  */
 void twobody_lub (int n, double l, double s,
 		  double *lub)
@@ -1014,20 +1507,12 @@ void twobody_lub (int n, double l, double s,
   twobody_YB_lub (n, l, s, lub +  4, lub +  5);
   twobody_XC_lub (n, l, s, lub +  6, lub +  7);
   twobody_YC_lub (n, l, s, lub +  8, lub +  9);
-  /*
   twobody_XG_lub (n, l, s, lub + 10, lub + 11);
   twobody_YG_lub (n, l, s, lub + 12, lub + 13);
   twobody_YH_lub (n, l, s, lub + 14, lub + 15);
   twobody_XM_lub (n, l, s, lub + 16, lub + 17);
   twobody_YM_lub (n, l, s, lub + 18, lub + 19);
   twobody_ZM_lub (n, l, s, lub + 20, lub + 21);
-  */
-  twobody_XG_far (n, l, s, lub + 10, lub + 11);
-  twobody_YG_far (n, l, s, lub + 12, lub + 13);
-  twobody_YH_far (n, l, s, lub + 14, lub + 15);
-  twobody_XM_far (n, l, s, lub + 16, lub + 17);
-  twobody_YM_far (n, l, s, lub + 18, lub + 19);
-  twobody_ZM_far (n, l, s, lub + 20, lub + 21);
 }
 
 

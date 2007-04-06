@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.3 2007/04/03 02:35:01 kichiki Exp $
+ * $Id: twobody.h,v 1.4 2007/04/06 20:26:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -263,6 +263,79 @@ void twobody_XC_lub (int n, double l, double s,
 void twobody_YC_lub (int n, double l, double s,
 		     double *YC11, double *YC12);
 
+/* calc XG11 and XG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XG_lub (int n, double l, double s,
+		     double *XG11, double *XG12);
+
+/* calc YG11 and YG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YG_lub (int n, double l, double s,
+		     double *YG11, double *YG12);
+
+/* calc YH11 and YH12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YH_lub (int n, double l, double s,
+		     double *YH11, double *YH12);
+
+/* calc XM11 and XM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XM_lub (int n, double l, double s,
+		     double *XM11, double *XM12);
+
+/* calc YM11 and YM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YM_lub (int n, double l, double s,
+		     double *YM11, double *YM12);
+
+/* calc ZM11 and ZM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_ZM_lub (int n, double l, double s,
+		     double *ZM11, double *ZM12);
+
+
 /* calc scalar functions of resistance problem by lub form
  * INPUT
  *  n : max order
@@ -275,15 +348,15 @@ void twobody_YC_lub (int n, double l, double s,
  *      4, 5 : (YB11, YB12)
  *      6, 7 : (XC11, XC12)
  *      8  9 : (YC11, YC12)
- *     10,11 : (XG11, XG12) not implemented
- *     12,13 : (YG11, YG12) not implemented
- *     14,15 : (YH11, YH12) not implemented
- *     16,17 : (XM11, XM12) not implemented
- *     18,19 : (YM11, YM12) not implemented
- *     20,21 : (ZM11, ZM12) not implemented
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
  */
 void twobody_lub (int n, double l, double s,
-		  double *far);
+		  double *lub);
 
 
 /* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
