@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.10 2007/04/09 06:13:29 kichiki Exp $
+ * $Id: fts.c,v 2.11 2007/04/11 01:16:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1656,7 +1656,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 	 (- 100.0)))))) / gx;
   yg11 =
     - 100.0 * s7 *
-    (128.0 + s2 *
+    (-128.0 + s2 *
      (320.0 + s2 *
       (- 48.0 + s2 *
        (377.0 + s2 *
