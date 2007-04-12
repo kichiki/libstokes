@@ -1,7 +1,7 @@
 /* header file for check-poly.c --
  * test code for polydisperse handling for non-periodic systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-poly.h,v 1.1 2007/04/03 02:37:15 kichiki Exp $
+ * $Id: check-poly.h,v 1.2 2007/04/12 05:26:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,8 +21,11 @@
 #define	_CHECK_POLY_H_
 
 
-/* 
+/* compare scalar functions for two routines
+ *  scalars_nonewald() and scalars_nonewald_poly()
+ * for equal-sphere case
  * INPUT
+ *  r       := x_2 - x_1
  *  verbose : if non-zero, print results
  *  tiny    : small number for check
  * OUTPUT
@@ -30,8 +33,23 @@
  *                     otherwise => failed
  */
 int
-check_scalars_nonewald_poly (int verbose,
-			     double tiny);
+check_scalars_nonewald_poly (double r,
+			     int verbose, double tiny);
+
+
+/* check the symmetry between (ab) and (ba) for M^inf
+ * INPUT
+ *  r       := x_2 - x_1
+ *  a1, a2  : radius of particle 1 and 2
+ *  verbose : if non-zero, print results
+ *  tiny    : small number for check
+ * OUTPUT
+ *  (returned value) : 0 => passed
+ *                     otherwise => failed
+ */
+int
+check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
+				      int verbose, double tiny);
 
 
 #endif /* !_CHECK_POLY_H_ */
