@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.5 2007/04/12 03:39:12 kichiki Exp $
+ * $Id: non-ewald.c,v 1.6 2007/04/12 05:37:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -252,7 +252,7 @@ scalars_nonewald_poly_full (int version,
   // ya part
   scalar [4] = 1.0 / aa;
   scalar [5] = (0.75 + (aa2 + ab2) * 0.25 / r2) / r;
-  scalar [6] = scalar [1];
+  scalar [6] = scalar [5];
   scalar [7] = 1.0 / ab;
 
   // check point for F version
