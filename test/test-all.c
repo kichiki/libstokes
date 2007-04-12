@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.2 2007/04/03 02:38:04 kichiki Exp $
+ * $Id: test-all.c,v 1.3 2007/04/12 05:33:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,8 @@
 #include "check-mul-matrices.h" // check_mul_matrices()
 #include "check-solve-gen-linear.h" // check_solve_gen_linear()
 #include "check-poly.h" // check_scalars_nonewald_poly()
+#include "check-minv.h" // check_matrix_mob_nonewald_fts(), check_minv_fts()
+#include "check-minv-poly.h" // check_scalars_minv_[f,ft,fts]_poly_...()
 
 #include "memory-check.h"
 
@@ -36,7 +38,25 @@ main (int argc, char** argv)
 
   check_solve_gen_linear (200, 200, 1);
 
-  check_scalars_nonewald_poly (1, 1.0e-10);
+
+  double r = 2.5;
+
+  double a1 = 10.0;
+  double a2 = 0.1;
+
+  check_scalars_nonewald_poly (r, 1, 1.0e-17);
+  check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
+
+  check_matrix_mob_nonewald_fts (r, 1, 1.0e-14);
+  check_minv_fts (2.5, 1, 1.0e-14);
+
+  check_scalars_minv_f_poly_with_equal   (r, 1, 1.0e-15);
+  check_scalars_minv_ft_poly_with_equal  (r, 1, 1.0e-15);
+  check_scalars_minv_fts_poly_with_equal (r, 1, 1.0e-14);
+
+  check_scalars_minv_f_poly_ana   (r, a1, a2, 1, 1.0e-15);
+  check_scalars_minv_ft_poly_ana  (r, a1, a2, 1, 1.0e-15);
+  check_scalars_minv_fts_poly_ana (r, a1, a2, 1, 1.0e-15);
 
   return 0;
 }
