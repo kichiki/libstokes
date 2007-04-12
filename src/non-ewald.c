@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.4 2007/04/03 02:10:00 kichiki Exp $
+ * $Id: non-ewald.c,v 1.5 2007/04/12 03:39:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -87,8 +87,9 @@ scalars_nonewald (int version,
   scalar[10] = + 1.8 / r2 / r2 / r;
 }
 
-/* calculate scalar functions under no periodic boundary condition
- * radii for two particles are taken into account
+/* calculate scalar functions for unequal spheres
+ * under no periodic boundary condition in dimensional form
+ * to convert them in the SD form, use scalars_mob_poly_scale_SD ().
  * INPUT
  *  version : 0 = F version
  *            1 = FT version
@@ -119,36 +120,200 @@ scalars_nonewald_poly (int version,
   double aa2 = aa * aa;
   double ab2 = ab * ab;
 
-  double aa3 = aa2 * aa;
-
   // xa12, ya12
-  scalar [0] = aa * (1.5 - (aa2 + ab2) * 0.5 / r2) / r;
-  scalar [1] = aa * (0.75 + (aa2 + ab2) * 0.25 / r2) / r;
+  scalar [0] = (1.5 - (aa2 + ab2) * 0.5 / r2) / r;
+  scalar [1] = (0.75 + (aa2 + ab2) * 0.25 / r2) / r;
 
   // check point for F version
   if (version == 0) return;
 
   // yb12
-  scalar [2] = aa2 * (- 0.75 / r2);
+  scalar [2] = - 0.75 / r2;
 
   // xc12, yc12
-  scalar [3] = aa3 * (0.75 / r2 / r);
-  scalar [4] = aa3 * (- 3.0 / 8.0 / r2 / r);
+  scalar [3] = 0.75 / r2 / r;
+  scalar [4] = - 3.0 / 8.0 / r2 / r;
 
   // check point for FT version
   if (version == 1) return;
 
   // xg12, yg12
-  scalar [5] = aa2 * (2.25 - 13.5 * (aa2 / 10.0 + ab2 / 6.0) / r2) / r2;
-  scalar [6] = aa2 * 4.5 * (aa2 / 10.0 + ab2 / 6.0) / r2 / r2;
+  scalar [5] = (2.25 - 13.5 * (aa2 / 10.0 + ab2 / 6.0) / r2) / r2;
+  scalar [6] = 4.5 * (aa2 / 10.0 + ab2 / 6.0) / r2 / r2;
 
   // yh12
-  scalar [7] = aa3 * (- 9.0 / 8.0 / r2 / r);
+  scalar [7] = - 9.0 / 8.0 / r2 / r;
 
   // xm12, ym12, zm12
-  scalar [8] = aa3 * (- 4.5 + 5.4 * (aa2 + ab2) / r2) / r2 / r;
-  scalar [9] = aa3 * (2.25 - 3.6 * (aa2 + ab2) / r2) / r2 / r;
-  scalar[10] = aa3 * 0.9 * (aa2 + ab2) / r2 / r2 / r;
+  scalar [8] = (- 4.5 + 5.4 * (aa2 + ab2) / r2) / r2 / r;
+  scalar [9] = (2.25 - 3.6 * (aa2 + ab2) / r2) / r2 / r;
+  scalar[10] = 0.9 * (aa2 + ab2) / r2 / r2 / r;
+}
+
+/* convert scalar functions for mobility from dimensional to SD form
+ * INPUT
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  a1      : radius for the particle 1
+ *            Note that the scalar functions are for (12)-interaction.
+ *  scalar [11]:
+ *    0, 1,    : (xa12, ya12) for F version
+ *    2,       : (yb12)
+ *    3, 4,    : (xc12, yc12) for FT version
+ *    5, 6,    : (xg12, yg12)
+ *    7,       : (yh12)
+ *    8, 9, 10 : (xm12, ym12, zm12) for FTS version
+ * OUTPUT
+ *  scalar [11]: scaled
+ */
+void
+scalars_mob_poly_scale_SD (int version,
+			   double a1,
+			   double *scalar)
+{
+  // xa12, ya12
+  scalar [0] *= a1;
+  scalar [1] *= a1;
+  // check point for F version
+  if (version == 0) return;
+
+  double a12 = a1*a1;
+  double a13 = a12*a1;
+  // yb12
+  scalar [2] *= a12;
+
+  // xc12, yc12
+  scalar [3] *= a13;
+  scalar [4] *= a13;
+  // check point for FT version
+  if (version == 1) return;
+
+  // xg12, yg12
+  scalar [5] *= a12;
+  scalar [6] *= a12;
+
+  // yh12
+  scalar [7] *= a13;
+
+  // xm12, ym12, zm12
+  scalar [8] *= a13;
+  scalar [9] *= a13;
+  scalar[10] *= a13;
+}
+
+/* calculate scalar functions for unequal spheres
+ * under no periodic boundary condition in dimensional form
+ * to convert them in the SD form, use scalars_mob_poly_scale_SD ().
+ * INPUT
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  scalar [44] : scalar functions in dimensional form!
+ *   0, 1, 2, 3 : (xa11, xa12, xa21, xa22)
+ *   4, 5, 6, 7 : (ya11, ya12, ya21, ya22)
+ *   8, 9,10,11 : (yb11, yb12, yb21, yb22)
+ *  12,13,14,15 : (xc11, xc12, xc21, xc22)
+ *  16,17,18,19 : (yc11, yc12, yc21, yc22)
+ *  20,21,22,23 : (xg11, xg12, xg21, xg22)
+ *  24,25,26,27 : (yg11, yg12, yg21, yg22)
+ *  28,29,30,31 : (yh11, yh12, yh21, yh22)
+ *  32,33,34,35 : (xm11, xm12, xm21, xm22)
+ *  36,37,38,39 : (ym11, ym12, ym21, ym22)
+ *  40,41,42,43 : (zm11, zm12, zm21, zm22)
+ */
+void
+scalars_nonewald_poly_full (int version,
+			    double r,
+			    double aa, double ab,
+			    double *scalar)
+{
+  // zero clear for FT and higher
+  int i;
+  for (i = 0; i < 44; i ++) scalar [i] = 0.0;
+
+  double r2 = r * r;
+
+  double aa2 = aa * aa;
+  double ab2 = ab * ab;
+
+  double aa3 = aa2 * aa;
+  double ab3 = ab2 * ab;
+
+  // xa part
+  scalar [0] = 1.0 / aa;
+  scalar [1] = (1.5 - (aa2 + ab2) * 0.5 / r2) / r;
+  scalar [2] = scalar [1];
+  scalar [3] = 1.0 / ab;
+
+  // ya part
+  scalar [4] = 1.0 / aa;
+  scalar [5] = (0.75 + (aa2 + ab2) * 0.25 / r2) / r;
+  scalar [6] = scalar [1];
+  scalar [7] = 1.0 / ab;
+
+  // check point for F version
+  if (version == 0) return;
+
+  // yb part
+  //scalar [8] = 0.0;
+  scalar [9] = - 0.75 / r2;
+  scalar[10] = scalar [9];
+  //scalar[11] = 0.0;
+
+  // xc part
+  scalar[12] = 0.75 / aa3;
+  scalar[13] = 0.75 / r2 / r;
+  scalar[14] = scalar[13];
+  scalar[15] = 0.75 / ab3;
+
+  // yc part
+  scalar[16] = 0.75 / aa3;
+  scalar[17] = - 3.0 / 8.0 / r2 / r;
+  scalar[18] = scalar[17];
+  scalar[19] = 0.75 / ab3;
+
+  // check point for FT version
+  if (version == 1) return;
+
+  // xg part
+  //scalar[20] = 0.0;
+  scalar[21] = (2.25 - 13.5 * (aa2 / 10.0 + ab2 / 6.0) / r2) / r2;
+  scalar[22] = (2.25 - 13.5 * (ab2 / 10.0 + aa2 / 6.0) / r2) / r2;
+  //scalar[23] = 0.0;
+
+  // yg part
+  //scalar[24] = 0.0;
+  scalar[25] = 4.5 * (aa2 / 10.0 + ab2 / 6.0) / r2 / r2;
+  scalar[26] = 4.5 * (ab2 / 10.0 + aa2 / 6.0) / r2 / r2;
+  //scalar[27] = 0.0;
+
+  // yh part
+  //scalar[28] = 0.0;
+  scalar[29] = - 9.0 / 8.0 / r2 / r;
+  scalar[30] = scalar[29];
+  //scalar[31] = 0.0;
+
+  // xm part
+  scalar[32] = 0.9 / aa3;
+  scalar[33] = (- 4.5 + 5.4 * (aa2 + ab2) / r2) / r2 / r;
+  scalar[34] = scalar[33];
+  scalar[35] = 0.9 / ab3;
+
+  // ym part
+  scalar[36] = 0.9 / aa3;
+  scalar[37] = (2.25 - 3.6 * (aa2 + ab2) / r2) / r2 / r;
+  scalar[38] = scalar[37];
+  scalar[39] = 0.9 / ab3;
+
+  // zm part
+  scalar[40] = 0.9 / aa3;
+  scalar[41] = 0.9 * (aa2 + ab2) / r2 / r2 / r;
+  scalar[42] = scalar[41];
+  scalar[43] = 0.9 / ab3;
 }
 
 /* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
@@ -251,6 +416,10 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 	      scalars_nonewald_poly (sys->version, r,
 				     sys->a[i], sys->a[j],
 				     mob);
+	      scalars_mob_poly_scale_SD (sys->version,
+					 sys->a[i],
+					 mob);
+	      // now mob is in the SD form
 	    }
 
 	  // note that interaction (i,j) should be for (U[i], F[j])
@@ -396,6 +565,10 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 	      scalars_nonewald_poly (sys->version, r,
 				     sys->a[i], sys->a[j],
 				     mob);
+	      scalars_mob_poly_scale_SD (sys->version,
+					 sys->a[i],
+					 mob);
+	      // now mob is in the SD form
 	    }
 
 	  if (sys->version == 0) // F version
