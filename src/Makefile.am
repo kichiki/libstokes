@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.11 2007/03/27 00:54:41 kichiki Exp $
+# $Id: Makefile.am,v 1.12 2007/04/12 05:19:43 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -30,6 +30,7 @@ libstokes_la_SOURCES = \
 	XQ.c			\
 	twobody.c		\
 	lub.c			\
+	minv-poly.c		\
 	ewald.c			\
 	non-ewald.c		\
 	ewald-3f-matrix.c	\
