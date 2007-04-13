@@ -1,6 +1,6 @@
 /* calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.c,v 1.1 2007/04/12 05:15:42 kichiki Exp $
+ * $Id: minv-poly.c,v 1.2 2007/04/13 02:06:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -667,4 +667,211 @@ scalars_res_poly_scale_SD (int version,
   scalar[41] /= a13;
   scalar[42] /= a13;
   scalar[43] /= a13;
+}
+
+
+/** lubrication functions for polydisperse systems **/
+
+/* calc scalar functions of lubrication correction for unequal spheres
+ * INPUT
+ *  r      := x_2 - x_1
+ *  a1, a2 : radius of particle a and b
+ *  n : max order
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ * OUTPUT
+ *  lub [22] : scalar functions in dimensional form!
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void
+scalars_lub_poly (int version,
+		  double r, double a1, double a2,
+		  int n, int flag_lub,
+		  double *lub)
+{
+  // zero clear
+  int i;
+  for (i = 0; i < 22; i ++)
+    {
+      lub[i] = 0.0;
+    }
+
+  double res  [22];
+  twobody_scalars_res (r, a1, a2,
+		       n, flag_lub, 1, // dimensional
+		       res);
+
+  double minv [44];
+  if (version == 0)
+    {
+      // F version
+      scalars_minv_f_poly (r, a1, a2, minv);
+    }
+  else if (version == 1)
+    {
+      // FT version
+      scalars_minv_ft_poly (r, a1, a2, minv);
+    }
+  else
+    {
+      // FTS version
+      scalars_minv_fts_poly (r, a1, a2, minv);
+    }
+
+  lub [ 0] = res [ 0] - minv [0]; // XA11
+  lub [ 1] = res [ 1] - minv [1]; // XA12
+  lub [ 2] = res [ 2] - minv [4]; // YA11
+  lub [ 3] = res [ 3] - minv [5]; // YA12
+  if (version == 0) return;
+
+  lub [ 4] = res [ 4] - minv [8]; // YB11
+  lub [ 5] = res [ 5] - minv [9]; // YB12
+  lub [ 6] = res [ 6] - minv[12]; // XC11
+  lub [ 7] = res [ 7] - minv[13]; // XC12
+  lub [ 8] = res [ 8] - minv[16]; // YC11
+  lub [ 9] = res [ 9] - minv[17]; // YC12
+  if (version == 1) return;
+
+  lub [10] = res [10] - minv[20]; // XG11
+  lub [11] = res [11] - minv[21]; // XG12
+  lub [12] = res [12] - minv[24]; // YG11
+  lub [13] = res [13] - minv[25]; // YG12
+  lub [14] = res [14] - minv[28]; // YH11
+  lub [15] = res [15] - minv[29]; // YH12
+  lub [16] = res [16] - minv[32]; // XM11
+  lub [17] = res [17] - minv[33]; // XM12
+  lub [18] = res [18] - minv[36]; // YM11
+  lub [19] = res [19] - minv[37]; // YM12
+  lub [20] = res [20] - minv[40]; // ZM11
+  lub [21] = res [21] - minv[41]; // ZM12
+
+}
+
+/* calc scalar functions of lubrication correction for unequal spheres
+ * INPUT
+ *  r      := x_2 - x_1
+ *  a1, a2 : radius of particle a and b
+ *  n : max order
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ * OUTPUT
+ *  lub [44] : scalar functions in dimensional form!
+ *    0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *    4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *    8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *   12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *   16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *   20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *   24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *   28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *   32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *   36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *   40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
+ */
+void
+scalars_lub_poly_full (int version,
+		       double r, double a1, double a2,
+		       int n, int flag_lub,
+		       double *lub)
+{
+  // zero clear
+  int i;
+  for (i = 0; i < 44; i ++)
+    {
+      lub[i] = 0.0;
+    }
+
+  double res12 [22];
+  twobody_scalars_res (r, a1, a2,
+		       n, flag_lub, 1, // dimensional
+		       res12);
+
+  double res21 [22];
+  twobody_scalars_res (r, a2, a1,
+		       n, flag_lub, 1, // dimensional
+		       res21);
+
+  double minv [44];
+  if (version == 0)
+    {
+      // F version
+      scalars_minv_f_poly (r, a1, a2, minv);
+    }
+  else if (version == 1)
+    {
+      // FT version
+      scalars_minv_ft_poly (r, a1, a2, minv);
+    }
+  else
+    {
+      // FTS version
+      scalars_minv_fts_poly (r, a1, a2, minv);
+    }
+
+  lub [ 0] = res12 [ 0] - minv [0]; // XA11
+  lub [ 1] = res12 [ 1] - minv [1]; // XA12
+  lub [ 2] = res21 [ 1] - minv [2]; // XA21
+  lub [ 3] = res21 [ 0] - minv [3]; // XA22
+
+  lub [ 4] = res12 [ 2] - minv [4]; // YA11
+  lub [ 5] = res12 [ 3] - minv [5]; // YA12
+  lub [ 6] = res21 [ 3] - minv [6]; // YA21
+  lub [ 7] = res21 [ 2] - minv [7]; // YA22
+  if (version == 0) return;
+
+  lub  [8] = res12 [ 4] - minv [8]; // YB11
+  lub  [9] = res12 [ 5] - minv [9]; // YB12
+  lub [10] = res21 [ 5] - minv[10]; // YB21
+  lub [11] = res21 [ 4] - minv[11]; // YB22
+
+  lub [12] = res12 [ 6] - minv[12]; // XC11
+  lub [13] = res12 [ 7] - minv[13]; // XC12
+  lub [14] = res21 [ 7] - minv[14]; // XC21
+  lub [15] = res21 [ 6] - minv[15]; // XC22
+
+  lub [16] = res12 [ 8] - minv[16]; // YC11
+  lub [17] = res12 [ 9] - minv[17]; // YC12
+  lub [18] = res21 [ 9] - minv[18]; // YC21
+  lub [19] = res21 [ 8] - minv[19]; // YC22
+  if (version == 1) return;
+
+  lub [20] = res12 [10] - minv[20]; // XG11
+  lub [21] = res12 [11] - minv[21]; // XG12
+  lub [22] = res21 [11] - minv[22]; // XG21
+  lub [23] = res21 [10] - minv[23]; // XG22
+
+  lub [24] = res12 [12] - minv[24]; // YG11
+  lub [25] = res12 [13] - minv[25]; // YG12
+  lub [26] = res21 [13] - minv[26]; // YG21
+  lub [27] = res21 [12] - minv[27]; // YG22
+
+  lub [28] = res12 [14] - minv[28]; // YH11
+  lub [29] = res12 [15] - minv[29]; // YH12
+  lub [30] = res21 [15] - minv[30]; // YH21
+  lub [31] = res21 [14] - minv[31]; // YH22
+
+  lub [32] = res12 [16] - minv[32]; // XM11
+  lub [33] = res12 [17] - minv[33]; // XM12
+  lub [34] = res21 [17] - minv[34]; // XM21
+  lub [35] = res21 [16] - minv[35]; // XM22
+
+  lub [36] = res12 [18] - minv[36]; // YM11
+  lub [37] = res12 [19] - minv[37]; // YM12
+  lub [38] = res21 [19] - minv[38]; // YM21
+  lub [39] = res21 [18] - minv[39]; // YM22
+
+  lub [40] = res12 [20] - minv[40]; // ZM11
+  lub [41] = res12 [21] - minv[41]; // ZM12
+  lub [42] = res21 [21] - minv[42]; // ZM21
+  lub [43] = res21 [20] - minv[43]; // ZM22
 }
