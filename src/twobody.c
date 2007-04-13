@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.4 2007/04/06 20:26:12 kichiki Exp $
+ * $Id: twobody.c,v 1.5 2007/04/13 01:53:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1526,7 +1526,7 @@ void twobody_lub (int n, double l, double s,
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale (double *two, double l)
+twobody_scale_SD (double *two, double l)
 {
   double l1 = 1.0 + l;
   double l2 = l1 * l1;
@@ -1571,22 +1571,85 @@ twobody_scale (double *two, double l)
   two [21] *= lm;         // ZM12
 }
 
+/* scale the scalar functions from Jeffrey-Onishi to the dimensional form
+ * INPUT
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in SD form
+ */
+void
+twobody_scale (double *two, double a1, double l)
+{
+  double a12 = a1  * a1;
+  double a13 = a12 * a1;
+
+  double l1 = 1.0 + l;
+  double l2 = l1 * l1;
+  double l3 = l2 * l1;
+
+  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
+  l2 /= 6.0; // l2 = (1 + lambda)^2 / 6 (= 2/3 for lambda == 1)
+  l3 /= 6.0; // l3 = (1 + lambda)^3 / 6 (= 4/3 for lambda == 1)
+  double lm;
+  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
+
+  // A part
+  two [0] *= a1;     // XA11
+  two [1] *= a1 * l1;// XA12
+  two [2] *= a1;     // YA11
+  two [3] *= a1 * l1;// YA12
+
+  // B part
+  two [4] *= a12 * 2.0 / 3.0; // YB11
+  two [5] *= a12 * l2;        // YB12
+
+  // C part
+  two [6] *= a13 * 4.0 / 3.0; // XC11
+  two [7] *= a13 * l3;        // XC12
+  two [8] *= a13 * 4.0 / 3.0; // YC11
+  two [9] *= a13 * l3;        // YC12
+
+  // G part
+  two [10] *= a12 * 2.0 / 3.0; // XG11
+  two [11] *= a12 * l2;        // XG12
+  two [12] *= a12 * 2.0 / 3.0; // YG11
+  two [13] *= a12 * l2;        // YG12
+
+  // H part
+  two [14] *= a13 * 4.0 / 3.0; // YH11
+  two [15] *= a13 * l3;        // YH12
+
+  // M part
+  two [16] *= a13 * 10.0 / 9.0; // XM11
+  two [17] *= a13 * lm;         // XM12
+  two [18] *= a13 * 10.0 / 9.0; // YM11
+  two [19] *= a13 * lm;         // YM12
+  two [20] *= a13 * 10.0 / 9.0; // ZM11
+  two [21] *= a13 * lm;         // ZM12
+}
+
 
 /* calc scalar functions of two-body exact solution in resistance problem
  * INPUT
- *  r        : distance between the two := x_b - x_a
- *  aa, ab   : radii for particles a(alpha) and b(beta)
- *  n        : max order for the coefficients
- *  flag_lub : 0 to use twobody_far()
- *             1 to use twobody_lub()
- *  res [22] :
+ *  r          : distance between the two := x_b - x_a
+ *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  n          : max order for the coefficients
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ *  flag_scale : 0 no scaling, that is, in Jeffrey form
+ *               1 for the dimensional form
+ *               2 for the Stokesian dynamics form
+ *  res [22]   :
  * OUTPUT
- *  res [22] : scalar functions are scaled by Stokesian dynamics form.
+ *  res [22]   : scalar functions. the scaling is given by flag_scale.
  */
 void
 twobody_scalars_res (double r,
 		     double aa, double ab,
-		     int n, int flag_lub,
+		     int n, int flag_lub, int flag_scale,
 		     double *res)
 {
   double l = ab / aa;
@@ -1601,5 +1664,12 @@ twobody_scalars_res (double r,
       twobody_lub (n, l, s, res);
     }
 
-  twobody_scale (res, l);
+  if (flag_scale == 1)
+    {
+      twobody_scale (res, aa, l);
+    }
+  else if (flag_scale == 2)
+    {
+      twobody_scale_SD (res, l);      
+    }
 }

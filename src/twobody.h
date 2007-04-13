@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.4 2007/04/06 20:26:39 kichiki Exp $
+ * $Id: twobody.h,v 1.5 2007/04/13 01:54:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -369,23 +369,38 @@ void twobody_lub (int n, double l, double s,
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale (double *two, double l);
+twobody_scale_SD (double *two, double l);
+
+/* scale the scalar functions from Jeffrey-Onishi to the dimensional form
+ * INPUT
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in SD form
+ */
+void
+twobody_scale (double *two, double a1, double l);
 
 /* calc scalar functions of two-body exact solution in resistance problem
  * INPUT
- *  r        : distance between the two := x_b - x_a
- *  aa, ab   : radii for particles a(alpha) and b(beta)
- *  n        : max order for the coefficients
- *  flag_lub : 0 to use twobody_far()
- *             1 to use twobody_lub()
- *  res [22] :
+ *  r          : distance between the two := x_b - x_a
+ *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  n          : max order for the coefficients
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ *  flag_scale : 0 no scaling, that is, in Jeffrey form
+ *               1 for the dimensional form
+ *               2 for the Stokesian dynamics form
+ *  res [22]   :
  * OUTPUT
- *  res [22] : scalar functions are scaled by Stokesian dynamics form.
+ *  res [22]   : scalar functions. the scaling is given by flag_scale.
  */
 void
 twobody_scalars_res (double r,
 		     double aa, double ab,
-		     int n, int flag_lub,
+		     int n, int flag_lub, int flag_scale,
 		     double *res);
 
 
