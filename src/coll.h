@@ -1,7 +1,7 @@
 /* header file for coll.c --
  * collision handling routines
- * Copyright (C) 1995-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: coll.h,v 1.1 2006/10/22 04:05:33 kichiki Exp $
+ * Copyright (C) 1995-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: coll.h,v 1.2 2007/04/14 22:01:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,8 +31,8 @@
  *  v [nm * 3] : velocity of particles after collisions
  */
 void
-collide_particles (struct stokes * sys,
-		   double * x, double * v, double en);
+collide_particles (struct stokes *sys,
+		   const double *x, double *v, double en);
 
 /*
  * INPUT
@@ -46,16 +46,16 @@ collide_particles (struct stokes * sys,
  *  v [nm * 3] : velocity of particles after collisions
  */
 void
-collide_wall_x (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_x (struct stokes *sys,
+		const double *x, double *v, double en,
 		double x_wall, double v_wall);
 void
-collide_wall_y (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_y (struct stokes *sys,
+		const double *x, double *v, double en,
 		double y_wall, double v_wall);
 void
-collide_wall_z (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_z (struct stokes *sys,
+		const double *x, double *v, double en,
 		double z_wall, double v_wall);
 
 /*
@@ -68,8 +68,8 @@ collide_wall_z (struct stokes * sys,
  *  v [nm * 2] : velocity of particles after collisions
  */
 void
-collide_particles_2d (struct stokes * sys,
-		      double * x, double * v, double en);
+collide_particles_2d (struct stokes *sys,
+		      const double *x, double *v, double en);
 
 
 #endif /* !_COLL_H_ */
