@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.22 2007/03/29 02:33:28 kichiki Exp $
+ * $Id: libstokes.h,v 1.23 2007/04/14 00:28:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,6 +33,10 @@ struct stokes {
 		* Note : NULL (default) is for monodisperse system  */
 
   int version; /* 0 = F, 1 = FT, 2 = FTS  */
+
+  // parameters for the polydisperse system
+  int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
+  int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
 
   /* imposed flow */
   double Ui[3];

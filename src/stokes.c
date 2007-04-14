@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.12 2007/03/29 02:25:38 kichiki Exp $
+ * $Id: stokes.c,v 2.13 2007/04/14 00:27:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -301,6 +301,10 @@ stokes_init (void)
 
   sys->version = 0;
   sys->periodic = 0;
+
+  // parameters for the polydisperse system
+  sys->twobody_nmax = 100;
+  sys->twobody_lub  = 1; // use lub form for twobody_scalars_res()
 
   sys->Ui[0] = 0.0;
   sys->Ui[1] = 0.0;
