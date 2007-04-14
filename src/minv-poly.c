@@ -1,6 +1,6 @@
 /* calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.c,v 1.2 2007/04/13 02:06:10 kichiki Exp $
+ * $Id: minv-poly.c,v 1.3 2007/04/14 00:32:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@
  */
 void
 scalars_minv_f_poly (double r, double aa, double ab,
-		    double *scalar_f)
+		     double *scalar_f)
 {
   double scalar[11];
 
@@ -243,45 +243,6 @@ scalars_minv_ft_poly (double r, double aa, double ab,
   scalar_ft[17] = YC12;
   scalar_ft[18] = YC21;
   scalar_ft[19] = YC22;
-}
-
-
-/* compare x and y
- */
-static int
-compare_ (double x, double y, char *label,
-	  int verbose, double tiny)
-{
-  int check = 0;
-
-  double d;
-  if (fabs (x) > tiny)
-    {
-      // see the relative error
-      d = fabs ((x - y) / x);
-    }
-  else if (fabs (y) > tiny)
-    {
-      // see the relative error
-      d = fabs ((x - y) / y);
-    }
-  else
-    {
-      // see the absolute error
-      d = fabs (x - y);
-    }
-
-  if (d > tiny)
-    {
-      if (verbose != 0)
-	{
-	  fprintf (stdout, "%s %f %f %e\n",
-		   label, x, y, d);
-	}
-      check ++;
-    }
-
-  return (check);
 }
 
 /* calc scalar functions of (M^inf)^-1 in FTS for unequal spheres
@@ -584,8 +545,7 @@ scalars_minv_fts_poly (double r, double aa, double ab,
  *  version : 0 = F version
  *            1 = FT version
  *            2 = FTS version
- *  a1      : radius for the particle 1
- *            Note that the scalar functions are for (12)-interaction.
+ *  a1, a2  : radii for the particles 1 and 2
  *  scalar [44] : scalar functions in dimensional form!
  *   0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
  *   4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
@@ -599,74 +559,83 @@ scalars_minv_fts_poly (double r, double aa, double ab,
  *  36,37,38,39 : (YM11, YM12, YM21, YM22)
  *  40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
  * OUTPUT
- *  scalar [22] : scaled
+ *  scalar [44] : scaled in the SD form.
  */
 void
 scalars_res_poly_scale_SD (int version,
-			   double a1,
+			   double a1, double a2,
 			   double *scalar)
 {
   // A part
   scalar [0] /= a1;
   scalar [1] /= a1;
-  scalar [2] /= a1;
-  scalar [3] /= a1;
+  scalar [2] /= a2;
+  scalar [3] /= a2;
+
   scalar [4] /= a1;
   scalar [5] /= a1;
-  scalar [6] /= a1;
-  scalar [7] /= a1;
+  scalar [6] /= a2;
+  scalar [7] /= a2;
   // check point for F version
   if (version == 0) return;
 
   double a12 = a1*a1;
   double a13 = a12*a1;
+
+  double a22 = a2*a2;
+  double a23 = a22*a2;
   // B part
   scalar [8] /= a12;
   scalar [9] /= a12;
-  scalar[10] /= a12;
-  scalar[11] /= a12;
+  scalar[10] /= a22;
+  scalar[11] /= a22;
 
   // C part
   scalar[12] /= a13;
   scalar[13] /= a13;
-  scalar[14] /= a13;
-  scalar[15] /= a13;
+  scalar[14] /= a23;
+  scalar[15] /= a23;
+
   scalar[16] /= a13;
   scalar[17] /= a13;
-  scalar[18] /= a13;
-  scalar[19] /= a13;
+  scalar[18] /= a23;
+  scalar[19] /= a23;
   // check point for FT version
   if (version == 1) return;
 
   // G part
   scalar[20] /= a12;
   scalar[21] /= a12;
-  scalar[22] /= a12;
-  scalar[23] /= a12;
+  scalar[22] /= a22;
+  scalar[23] /= a22;
+
   scalar[24] /= a12;
   scalar[25] /= a12;
-  scalar[26] /= a12;
-  scalar[27] /= a12;
+  scalar[26] /= a22;
+  scalar[27] /= a22;
 
   // H part
   scalar[28] /= a13;
   scalar[29] /= a13;
-  scalar[30] /= a13;
-  scalar[31] /= a13;
+
+  scalar[30] /= a23;
+  scalar[31] /= a23;
 
   // M part
   scalar[32] /= a13;
   scalar[33] /= a13;
-  scalar[34] /= a13;
-  scalar[35] /= a13;
+  scalar[34] /= a23;
+  scalar[35] /= a23;
+
   scalar[36] /= a13;
   scalar[37] /= a13;
-  scalar[38] /= a13;
-  scalar[39] /= a13;
+  scalar[38] /= a23;
+  scalar[39] /= a23;
+
   scalar[40] /= a13;
   scalar[41] /= a13;
-  scalar[42] /= a13;
-  scalar[43] /= a13;
+  scalar[42] /= a23;
+  scalar[43] /= a23;
 }
 
 

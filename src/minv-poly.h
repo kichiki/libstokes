@@ -1,7 +1,7 @@
 /* header file for minv-poly.c --
  * calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.h,v 1.2 2007/04/13 02:06:34 kichiki Exp $
+ * $Id: minv-poly.h,v 1.3 2007/04/14 00:33:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,83 +26,77 @@
  *  r      := x_b - x_a
  *  aa, ab : radius of particle a and b
  * OUTPUT
- *  scalar_f [4] : scalar functions
- *          0, 1 : (XA11, XA12)
- *          2, 3 : (YA11, YA12)
+ *  scalar_f [8] : scalar functions in dimensional form!
+ *    0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *    4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
  */
 void
 scalars_minv_f_poly (double r, double aa, double ab,
-		    double *scalar_f);
+		     double *scalar_f);
 
 /* calc scalar functions of (M^inf)^-1 in FT for unequal spheres
  * INPUT
  *  r      := x_b - x_a
  *  aa, ab : radius of particle a and b
  * OUTPUT
- *  scalar_f [10] : scalar functions
- *           0, 1 : (XA11, XA12)
- *           2, 3 : (YA11, YA12)
- *           4, 5 : (YB11, YB12)
- *           6, 7 : (XC11, XC12)
- *           8  9 : (YC11, YC12)
+ *  scalar_ft [20] : scalar functions in dimensional form!
+ *      0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *      4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *      8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *     12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *     16,17,18,19 : (YC11, YC12, YC21, YC22)
  */
 void
 scalars_minv_ft_poly (double r, double aa, double ab,
-		     double *scalar_ft);
+		      double *scalar_ft);
 
 /* calc scalar functions of (M^inf)^-1 in FTS for unequal spheres
  * INPUT
  *  r      := x_b - x_a
  *  aa, ab : radius of particle a and b
  * OUTPUT
- *  scalar_f [22] : scalar functions
- *           0, 1 : (XA11, XA12)
- *           2, 3 : (YA11, YA12)
- *           4, 5 : (YB11, YB12)
- *           6, 7 : (XC11, XC12)
- *           8  9 : (YC11, YC12)
- *          10,11 : (XG11, XG12)
- *          12,13 : (YG11, YG12)
- *          14,15 : (YH11, YH12)
- *          16,17 : (XM11, XM12)
- *          18,19 : (YM11, YM12)
- *          20,21 : (ZM11, ZM12)
+ *  scalar_fts [44] : scalar functions in dimensional form!
+ *       0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *       4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *       8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *      12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *      16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *      20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *      24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *      28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *      32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *      36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *      40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
  */
 void
 scalars_minv_fts_poly (double r, double aa, double ab,
-		      double *scalar_fts);
+		       double *scalar_fts);
 
-
-/** analytic version **/
-
-/* calc scalar functions of (M^inf)^-1 in F for unequal spheres
+/* convert scalar functions for resistance from dimensional to SD form
  * INPUT
- *  r      := x_2 - x_1
- *  a1, a2 : radius of particle 1 and 2
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  a1, a2  : radii for the particles 1 and 2
+ *  scalar [44] : scalar functions in dimensional form!
+ *   0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *   4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *   8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *  12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *  16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *  20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *  24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *  28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *  32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *  36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *  40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
  * OUTPUT
- *  scalar_f [4] : scalar functions
- *          0, 1 : (XA11, XA12)
- *          2, 3 : (YA11, YA12)
+ *  scalar [44] : scaled in the SD form.
  */
 void
-scalars_minv_f_poly_ana (double r, double a1, double a2,
-			 double *scalar_f);
-
-/* calc scalar functions of (M^inf)^-1 in FT for unequal spheres
- * INPUT
- *  r      := x_2 - x_1
- *  a1, a2 : radius of particle 1 and 2
- * OUTPUT
- *  scalar_f [10] : scalar functions
- *           0, 1 : (XA11, XA12)
- *           2, 3 : (YA11, YA12)
- *           4, 5 : (YB11, YB12)
- *           6, 7 : (XC11, XC12)
- *           8  9 : (YC11, YC12)
- */
-void
-scalars_minv_ft_poly_ana (double r, double aa, double ab,
-			  double *scalar_ft);
+scalars_res_poly_scale_SD (int version,
+			   double a1, double a2,
+			   double *scalar);
 
 
 /** lubrication functions for polydisperse systems **/
