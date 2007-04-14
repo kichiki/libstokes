@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.6 2007/03/29 02:17:26 kichiki Exp $
+ * $Id: f.c,v 2.7 2007/04/14 00:29:20 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include <math.h> // sqrt ()
 #include "two-body-res.h" /* scalar_two_body_res () */
 #include "stokes.h" /* struct stokeks */
+#include "minv-poly.h" // scalars_lub_poly_full()
 
 #include "f.h"
 
@@ -213,6 +214,9 @@ scalar_minv_f (double s, double * scalar_f)
 }
 
 /* calculate f by u for pair of particles 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
  * INPUT
  *   sys : system parameters
  *         sys->lubcut is used.
@@ -221,8 +225,8 @@ scalar_minv_f (double s, double * scalar_f)
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
  * OUTPUT
- *   f1 [3] : force
- *   f2 [3] :
+ *   f1 [3] : force of particle 1
+ *   f2 [3] : force of particle 2
  */
 void
 calc_lub_f_2b (struct stokes * sys,
@@ -298,7 +302,7 @@ calc_lub_f_2b (struct stokes * sys,
  *   x2 [3] : position of particle 2
  *   n : dimension of matrix 'mat' (must be np*3)
  * OUTPUT
- *   mat [n * n] : add for (i,j)-pair
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
  */
 void
 matrix_lub_f_2b (struct stokes * sys,
@@ -366,6 +370,168 @@ matrix_lub_f_2b (struct stokes * sys,
 	       n, mat);
 
   free (res2b);
+}
+
+/* calculate f by u for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubcut       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   u1 [3] : velocity of particle 1
+ *   u2 [3] : velocity of particle 2
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ * OUTPUT
+ *   f1 [3] : force of particle 1
+ *   f2 [3] : force of particle 2
+ */
+void
+calc_lub_f_2b_poly (struct stokes *sys,
+		    const double *u1, const double *u2,
+		    const double *x1, const double *x2,
+		    double a1, double a2,
+		    double *f1, double *f2)
+{
+  double lub [44];
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  double xx, yy, zz, rr;
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr < sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  double ex, ey, ez;
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalars_lub_poly_full (0, // F version
+			 rr, a1, a2,
+			 sys->twobody_nmax,
+			 sys->twobody_lub,
+			 lub);
+  scalars_res_poly_scale_SD (0, // F version
+			     a1, a2, lub);
+
+  double xa11, xa12, xa21, xa22;
+  double ya11, ya12, ya21, ya22;
+  xa11 = lub [0];
+  xa12 = lub [1];
+  xa21 = lub [2];
+  xa22 = lub [3];
+  ya11 = lub [4];
+  ya12 = lub [5];
+  ya21 = lub [6];
+  ya22 = lub [7];
+
+  matrix_f_atimes (u1, f1,
+		   ex, ey, ez,
+		   xa11, ya11);
+  matrix_f_atimes (u2, f1,
+		   ex, ey, ez,
+		   xa12, ya12);
+
+  matrix_f_atimes (u2, f2,
+		   -ex, -ey, -ez,
+		   xa22, ya22);
+  matrix_f_atimes (u1, f2,
+		   -ex, -ey, -ez,
+		   xa21, ya21);
+}
+
+/* calculate lub-matrix in F version for pair of unequal spheres 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubcut       : min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ *   n      : dimension of matrix 'mat' (must be np*3)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_f_2b_poly (struct stokes *sys,
+		      int i, int j,
+		      const double *x1, const double *x2,
+		      double a1, double a2,
+		      int n, double *mat)
+{
+  double lub [44];
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  double xx, yy, zz, rr;
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr < sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  double ex, ey, ez;
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalars_lub_poly_full (0, // F version
+			 rr, a1, a2,
+			 sys->twobody_nmax,
+			 sys->twobody_lub,
+			 lub);
+  scalars_res_poly_scale_SD (0, // F version
+			     a1, a2, lub);
+
+  double xa11, xa12, xa21, xa22;
+  double ya11, ya12, ya21, ya22;
+  xa11 = lub [0];
+  xa12 = lub [1];
+  xa21 = lub [2];
+  xa22 = lub [3];
+  ya11 = lub [4];
+  ya12 = lub [5];
+  ya21 = lub [6];
+  ya22 = lub [7];
+
+  matrix_f_ij (i, i,
+	       ex, ey, ez,
+	       xa11, ya11,
+	       n, mat);
+  matrix_f_ij (i, j,
+	       ex, ey, ez,
+	       xa12, ya12,
+	       n, mat);
+
+  matrix_f_ij (j, j,
+	       -ex, -ey, -ez,
+	       xa22, ya22,
+	       n, mat);
+  matrix_f_ij (j, i,
+	       -ex, -ey, -ez,
+	       xa21, ya21,
+	       n, mat);
 }
 
 /* pre-process for imposed flow shifting, that is, converting U
