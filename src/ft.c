@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.c,v 2.9 2007/03/31 04:10:49 kichiki Exp $
+ * $Id: ft.c,v 2.10 2007/04/14 00:30:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include <math.h> // sqrt ()
 #include "two-body-res.h" /* scalar_two_body_res () */
 #include "stokes.h" /* struct stokeks */
+#include "minv-poly.h" // scalars_lub_poly_full()
 #include "f.h" // matrix_ij_A ()
 
 #include "ft.h"
@@ -479,12 +480,12 @@ scalar_minv_ft (double s, double * scalar_ft)
  * INPUT
  *   sys : system parameters
  *         sys->lubcut is used.
- *   uo1 [6] : velocity, angular velocity, strain
+ *   uo1 [6] : velocity, angular velocity
  *   uo2 [6] :
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
  * OUTPUT
- *   ft1 [6] : force, torque, stresslet
+ *   ft1 [6] : force, torque
  *   ft2 [6] :
  */
 void
@@ -543,13 +544,6 @@ calc_lub_ft_2b (struct stokes * sys,
   yc11 = res2b [ 8] - resinf [ 8];
   yc12 = res2b [ 9] - resinf [ 9];
 
-  /*
-  matrix_ft_atimes (uo1, ft1,
-		    ex, ey, ez,
-		    xa11, ya11,
-		    yb11,
-		    xc11, yc11);
-  */
   matrix_ft_self_atimes (uo1, ft1,
 			 ex, ey, ez,
 			 xa11, ya11,
@@ -561,20 +555,13 @@ calc_lub_ft_2b (struct stokes * sys,
 		    yb12,
 		    xc12, yc12);
 
-  /*
-  matrix_ft_atimes (uo2, ft2,
-		    - ex, - ey, - ez,
-		    xa11, ya11,
-		    yb11,
-		    xc11, yc11);
-  */
   matrix_ft_self_atimes (uo2, ft2,
-			 - ex, - ey, - ez,
+			 -ex, -ey, -ez,
 			 xa11, ya11,
 			 yb11,
 			 xc11, yc11);
   matrix_ft_atimes (uo1, ft2,
-		    - ex, - ey, - ez,
+		    -ex, -ey, -ez,
 		    xa12, ya12,
 		    yb12,
 		    xc12, yc12);
@@ -592,7 +579,7 @@ calc_lub_ft_2b (struct stokes * sys,
  *   x2 [3] : position of particle 2
  *   n : dimension of matrix 'mat' (must be np*6)
  * OUTPUT
- *   mat [n * n] : add for (i,j)-pair
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
  */
 void
 matrix_lub_ft_2b (struct stokes * sys,
@@ -677,6 +664,214 @@ matrix_lub_ft_2b (struct stokes * sys,
 		n, mat);
 
   free (res2b);
+}
+
+/* calculate ft by uo for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubcut       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uo1 [6] : velocity, angular velocity
+ *   uo2 [6] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ * OUTPUT
+ *   ft1 [6] : force, torque
+ *   ft2 [6] :
+ */
+void
+calc_lub_ft_2b_poly (struct stokes *sys,
+		     const double *uo1, const double *uo2,
+		     const double *x1, const double *x2,
+		     double a1, double a2,
+		     double *ft1, double *ft2)
+{
+  double lub [44];
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  double xx, yy, zz, rr;
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr < sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  double ex, ey, ez;
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalars_lub_poly_full (1, // FT version
+			 rr, a1, a2,
+			 sys->twobody_nmax,
+			 sys->twobody_lub,
+			 lub);
+  scalars_res_poly_scale_SD (1, // FT version
+			     a1, a2, lub);
+
+  double xa11, xa12, xa21, xa22;
+  double ya11, ya12, ya21, ya22;
+  double yb11, yb12, yb21, yb22;
+  double xc11, xc12, xc21, xc22;
+  double yc11, yc12, yc21, yc22;
+  xa11 = lub [0];
+  xa12 = lub [1];
+  xa21 = lub [2];
+  xa22 = lub [3];
+  ya11 = lub [4];
+  ya12 = lub [5];
+  ya21 = lub [6];
+  ya22 = lub [7];
+  yb11 = lub [8];
+  yb12 = lub [9];
+  yb21 = lub[10];
+  yb22 = lub[11];
+  xc11 = lub[12];
+  xc12 = lub[13];
+  xc21 = lub[14];
+  xc22 = lub[15];
+  yc11 = lub[16];
+  yc12 = lub[17];
+  yc21 = lub[18];
+  yc22 = lub[19];
+
+  matrix_ft_self_atimes (uo1, ft1,
+			 ex, ey, ez,
+			 xa11, ya11,
+			 yb11,
+			 xc11, yc11);
+  matrix_ft_atimes (uo2, ft1,
+		    ex, ey, ez,
+		    xa12, ya12,
+		    yb12,
+		    xc12, yc12);
+
+  matrix_ft_self_atimes (uo2, ft2,
+			 -ex, -ey, -ez,
+			 xa22, ya22,
+			 yb22,
+			 xc22, yc22);
+  matrix_ft_atimes (uo1, ft2,
+		    -ex, -ey, -ez,
+		    xa21, ya21,
+		    yb21,
+		    xc21, yc21);
+}
+
+/* calculate lub-matrix in FT version for pair of unequal spheres 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubcut       : min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ *   n      : dimension of matrix 'mat' (must be np*6)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_ft_2b_poly (struct stokes *sys,
+		       int i, int j,
+		       const double *x1, const double *x2,
+		       double a1, double a2,
+		       int n, double *mat)
+{
+  double lub [44];
+
+  /* r := x[j] - x[i] for (j -> i) interaction */
+  double xx, yy, zz, rr;
+  xx = x2 [0] - x1 [0];
+  yy = x2 [1] - x1 [1];
+  zz = x2 [2] - x1 [2];
+  rr = sqrt (xx * xx + yy * yy + zz * zz);
+
+  if (rr < sys->lubcut)
+    {
+      rr = sys->lubcut;
+    }
+
+  double ex, ey, ez;
+  ex = xx / rr;
+  ey = yy / rr;
+  ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
+  scalars_lub_poly_full (1, // FT version
+			 rr, a1, a2,
+			 sys->twobody_nmax,
+			 sys->twobody_lub,
+			 lub);
+  scalars_res_poly_scale_SD (1, // FT version
+			     a1, a2, lub);
+
+  double xa11, xa12, xa21, xa22;
+  double ya11, ya12, ya21, ya22;
+  double yb11, yb12, yb21, yb22;
+  double xc11, xc12, xc21, xc22;
+  double yc11, yc12, yc21, yc22;
+  xa11 = lub [0];
+  xa12 = lub [1];
+  xa21 = lub [2];
+  xa22 = lub [3];
+  ya11 = lub [4];
+  ya12 = lub [5];
+  ya21 = lub [6];
+  ya22 = lub [7];
+  yb11 = lub [8];
+  yb12 = lub [9];
+  yb21 = lub[10];
+  yb22 = lub[11];
+  xc11 = lub[12];
+  xc12 = lub[13];
+  xc21 = lub[14];
+  xc22 = lub[15];
+  yc11 = lub[16];
+  yc12 = lub[17];
+  yc21 = lub[18];
+  yc22 = lub[19];
+
+  matrix_ft_ij (i, i,
+		ex, ey, ez,
+		xa11, ya11,
+		yb11,
+		xc11, yc11,
+		n, mat);
+  matrix_ft_ij (i, j,
+		ex, ey, ez,
+		xa12, ya12,
+		yb12,
+		xc12, yc12,
+		n, mat);
+
+  matrix_ft_ij (j, j,
+		-ex, -ey, -ez,
+		xa22, ya22,
+		yb22,
+		xc22, yc22,
+		n, mat);
+  matrix_ft_ij (j, i,
+		-ex, -ey, -ez,
+		xa21, ya21,
+		yb21,
+		xc21, yc21,
+		n, mat);
 }
 
 /* pre-process for imposed flow shifting, that is, converting U,O

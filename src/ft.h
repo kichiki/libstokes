@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.6 2007/03/31 04:11:17 kichiki Exp $
+ * $Id: ft.h,v 2.7 2007/04/14 00:30:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -151,12 +151,12 @@ scalar_minv_ft (double s, double * scalar_ft);
  * INPUT
  *   sys : system parameters
  *         sys->lubcut is used.
- *   uo1 [6] : velocity, angular velocity, strain
+ *   uo1 [6] : velocity, angular velocity
  *   uo2 [6] :
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
  * OUTPUT
- *   ft1 [6] : force, torque, stresslet
+ *   ft1 [6] : force, torque
  *   ft2 [6] :
  */
 void
@@ -175,13 +175,63 @@ calc_lub_ft_2b (struct stokes * sys,
  *   x2 [3] : position of particle 2
  *   n : dimension of matrix 'mat' (must be np*6)
  * OUTPUT
- *   mat [n * n] : add for (i,j)-pair
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
  */
 void
 matrix_lub_ft_2b (struct stokes * sys,
 		  int i, int j,
 		  const double *x1, const double *x2,
 		  int n, double * mat);
+
+/* calculate ft by uo for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubcut       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uo1 [6] : velocity, angular velocity
+ *   uo2 [6] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ * OUTPUT
+ *   ft1 [6] : force, torque
+ *   ft2 [6] :
+ */
+void
+calc_lub_ft_2b_poly (struct stokes *sys,
+		     const double *uo1, const double *uo2,
+		     const double *x1, const double *x2,
+		     double a1, double a2,
+		     double *ft1, double *ft2);
+
+/* calculate lub-matrix in FT version for pair of unequal spheres 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubcut       : min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ *   n      : dimension of matrix 'mat' (must be np*6)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_ft_2b_poly (struct stokes *sys,
+		       int i, int j,
+		       const double *x1, const double *x2,
+		       double a1, double a2,
+		       int n, double *mat);
 
 /* pre-process for imposed flow shifting, that is, converting U,O
  * from the labo frame
