@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2007/04/12 05:35:27 kichiki Exp $
+# $Id: Makefile,v 1.4 2007/04/14 00:39:11 kichiki Exp $
 
 CC           = cc
 LD           = libtool --mode=link $(CC)
@@ -32,6 +32,7 @@ LIBS         = ../src/libstokes.la\
 
 all:	test-all
 
+
 # test-all
 test-all-OBJ =\
 	test-all.o \
@@ -41,7 +42,8 @@ test-all-OBJ =\
 	check-solve-gen-linear.o \
 	check-poly.o	\
 	check-minv.o	\
-	check-minv-poly.o
+	check-minv-poly.o	\
+	check-lub-poly.o
 
 test-all:	$(test-all-OBJ)
 	$(LD) $(LDFLAGS) -o test-all	\
