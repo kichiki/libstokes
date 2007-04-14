@@ -1,7 +1,7 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 2.5 2007/03/31 04:12:26 kichiki Exp $
+ * $Id: fts.h,v 2.6 2007/04/14 00:31:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -242,6 +242,55 @@ matrix_lub_fts_2b (struct stokes * sys,
 		   int i, int j,
 		   const double *x1, const double *x2,
 		   int n, double * mat);
+
+/* calculate fts by uoe for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubcut       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uoe1 [11] : velocity, angular velocity, strain
+ *   uoe2 [11] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ * OUTPUT
+ *   fts1 [11] : force, torque, stresslet
+ *   fts2 [11] :
+ */
+void
+calc_lub_fts_2b_poly (struct stokes *sys,
+		      const double *uoe1, const double *uoe2,
+		      const double *x1, const double *x2,
+		      double a1, double a2,
+		      double *fts1, double *fts2);
+
+/* calculate lub-matrix in FTS version for pair of unequal spheres 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubcut       : min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   a1, a2 : radii for particles 1 and 2
+ *   n      : dimension of matrix 'mat' (must be np*11)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_fts_2b_poly (struct stokes *sys,
+			int i, int j,
+			const double *x1, const double *x2,
+			double a1, double a2,
+			int n, double *mat);
 
 /* pre-process for imposed flow shifting, that is, converting E
  * from the labo frame
