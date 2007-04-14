@@ -1,7 +1,7 @@
 /* header file for lub-matrix.c --
  * lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.h,v 1.3 2007/03/07 21:34:15 kichiki Exp $
+ * $Id: lub-matrix.h,v 1.4 2007/04/14 00:34:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 
 /* make lubrication matrix for F version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -31,11 +32,12 @@
  *  mat [np * 3 * np * 3] :
  */
 void
-make_matrix_lub_3f (struct stokes * sys,
-		    double * mat);
+make_matrix_lub_3f (struct stokes *sys,
+		    double *mat);
 
 /* make lubrication matrix for FT version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -44,11 +46,12 @@ make_matrix_lub_3f (struct stokes * sys,
  *  mat [np * 6 * np * 6] :
  */
 void
-make_matrix_lub_3ft (struct stokes * sys,
-		     double * mat);
+make_matrix_lub_3ft (struct stokes *sys,
+		     double *mat);
 
 /* make lubrication matrix for FTS version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -57,8 +60,8 @@ make_matrix_lub_3ft (struct stokes * sys,
  *  mat [np * 11 * np * 11] :
  */
 void
-make_matrix_lub_3fts (struct stokes * sys,
-		      double * mat);
+make_matrix_lub_3fts (struct stokes *sys,
+		      double *mat);
 
 
 #endif /* !_LUB_MATRIX_H_ */

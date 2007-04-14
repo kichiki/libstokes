@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.7 2007/03/26 03:56:06 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.8 2007/04/14 00:34:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,6 +76,7 @@ cond_lub (const double * x1, const double * x2, double lubmax2)
 
 /* make lubrication matrix for F version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -84,10 +85,9 @@ cond_lub (const double * x1, const double * x2, double lubmax2)
  *  mat [np * 3 * np * 3] :
  */
 void
-make_matrix_lub_3f (struct stokes * sys,
-		    double * mat)
+make_matrix_lub_3f (struct stokes *sys,
+		    double *mat)
 {
-  int np;
   int i, j, k;
   int i3;
   int j3;
@@ -95,10 +95,8 @@ make_matrix_lub_3f (struct stokes * sys,
 
   double tmp_pos [3];
 
-
-  np = sys->np;
+  int np = sys->np;
   n = np * 3;
-
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -118,10 +116,23 @@ make_matrix_lub_3f (struct stokes * sys,
 	      if (cond_lub (sys->pos + i3, sys->pos + j3,
 			    sys->lubmax2) == 0)
 		{
-		  matrix_lub_f_2b (sys,
-				   i, j,
-				   sys->pos + i3, sys->pos + j3,
-				   n, mat);
+		  if (sys->a == NULL)
+		    {
+		      // monodisperse
+		      matrix_lub_f_2b (sys,
+				       i, j,
+				       sys->pos + i3, sys->pos + j3,
+				       n, mat);
+		    }
+		  else
+		    {
+		      // polydisperse
+		      matrix_lub_f_2b_poly (sys,
+					    i, j,
+					    sys->pos + i3, sys->pos + j3,
+					    sys->a[i], sys->a[j],
+					    n, mat);
+		    }
 		}
 	    }
 	  else
@@ -135,10 +146,23 @@ make_matrix_lub_3f (struct stokes * sys,
 		  if (cond_lub (sys->pos + i3, tmp_pos,
 				sys->lubmax2) == 0)
 		    {
-		      matrix_lub_f_2b (sys,
-				       i, j,
-				       sys->pos + i3, tmp_pos,
-				       n, mat);
+		      if (sys->a == NULL)
+			{
+			  // monodisperse
+			  matrix_lub_f_2b (sys,
+					   i, j,
+					   sys->pos + i3, tmp_pos,
+					   n, mat);
+			}
+		      else
+			{
+			  // polydisperse
+			  matrix_lub_f_2b_poly (sys,
+						i, j,
+						sys->pos + i3, tmp_pos,
+						sys->a[i], sys->a[j],
+						n, mat);
+			}
 		    }
 		}
 	    }
@@ -148,6 +172,7 @@ make_matrix_lub_3f (struct stokes * sys,
 
 /* make lubrication matrix for FT version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -156,20 +181,17 @@ make_matrix_lub_3f (struct stokes * sys,
  *  mat [np * 6 * np * 6] :
  */
 void
-make_matrix_lub_3ft (struct stokes * sys,
-		     double * mat)
+make_matrix_lub_3ft (struct stokes *sys,
+		     double *mat)
 {
-  int np;
   int i, j, k;
   int i3, j3;
   int n;
 
   double tmp_pos [3];
 
-
-  np = sys->np;
+  int np = sys->np;
   n = np * 6;
-
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -189,10 +211,23 @@ make_matrix_lub_3ft (struct stokes * sys,
 	      if (cond_lub (sys->pos + i3, sys->pos + j3,
 			    sys->lubmax2) == 0)
 		{
-		  matrix_lub_ft_2b (sys,
-				    i, j,
-				    sys->pos + i3, sys->pos + j3,
-				    n, mat);
+		  if (sys->a == NULL)
+		    {
+		      // monodisperse
+		      matrix_lub_ft_2b (sys,
+					i, j,
+					sys->pos + i3, sys->pos + j3,
+					n, mat);
+		    }
+		  else
+		    {
+		      // polydisperse
+		      matrix_lub_ft_2b_poly (sys,
+					     i, j,
+					     sys->pos + i3, sys->pos + j3,
+					     sys->a[i], sys->a[j],
+					     n, mat);
+		    }
 		}
 	    }
 	  else
@@ -206,10 +241,23 @@ make_matrix_lub_3ft (struct stokes * sys,
 		  if (cond_lub (sys->pos + i3, tmp_pos,
 				sys->lubmax2) == 0)
 		    {
-		      matrix_lub_ft_2b (sys,
-					i, j,
-					sys->pos + i3, tmp_pos,
-					n, mat);
+		      if (sys->a == NULL)
+			{
+			  // monodisperse
+			  matrix_lub_ft_2b (sys,
+					    i, j,
+					    sys->pos + i3, tmp_pos,
+					    n, mat);
+			}
+		      else
+			{
+			  // polydisperse
+			  matrix_lub_ft_2b_poly (sys,
+						 i, j,
+						 sys->pos + i3, tmp_pos,
+						 sys->a[i], sys->a[j],
+						 n, mat);
+			}
 		    }
 		}
 	    }
@@ -219,6 +267,7 @@ make_matrix_lub_3ft (struct stokes * sys,
 
 /* make lubrication matrix for FTS version for all particles
  * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -227,20 +276,17 @@ make_matrix_lub_3ft (struct stokes * sys,
  *  mat [np * 11 * np * 11] :
  */
 void
-make_matrix_lub_3fts (struct stokes * sys,
-		      double * mat)
+make_matrix_lub_3fts (struct stokes *sys,
+		      double *mat)
 {
-  int np;
   int i, j, k;
   int i3, j3;
   int n;
 
   double tmp_pos [3];
 
-
-  np = sys->np;
+  int np = sys->np;
   n = np * 11;
-
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -260,10 +306,23 @@ make_matrix_lub_3fts (struct stokes * sys,
 	      if (cond_lub (sys->pos + i3, sys->pos + j3,
 			    sys->lubmax2) == 0)
 		{
-		  matrix_lub_fts_2b (sys,
-				     i, j,
-				     sys->pos + i3, sys->pos + j3,
-				     n, mat);
+		  if (sys->a == NULL)
+		    {
+		      // monodisperse
+		      matrix_lub_fts_2b (sys,
+					 i, j,
+					 sys->pos + i3, sys->pos + j3,
+					 n, mat);
+		    }
+		  else
+		    {
+		      // polydisperse
+		      matrix_lub_fts_2b_poly (sys,
+					      i, j,
+					      sys->pos + i3, sys->pos + j3,
+					      sys->a[i], sys->a[j],
+					      n, mat);
+		    }
 		}
 	    }
 	  else
@@ -277,14 +336,26 @@ make_matrix_lub_3fts (struct stokes * sys,
 		  if (cond_lub (sys->pos + i3, tmp_pos,
 				sys->lubmax2) == 0)
 		    {
-		      matrix_lub_fts_2b (sys,
-					 i, j,
-					 sys->pos + i3, tmp_pos,
-					 n, mat);
+		      if (sys->a == NULL)
+			{
+			  // monodisperse
+			  matrix_lub_fts_2b (sys,
+					     i, j,
+					     sys->pos + i3, tmp_pos,
+					     n, mat);
+			}
+		      else
+			{
+			  // polydisperse
+			  matrix_lub_fts_2b_poly (sys,
+						  i, j,
+						  sys->pos + i3, tmp_pos,
+						  sys->a[i], sys->a[j],
+						  n, mat);
+			}
 		    }
 		}
 	    }
 	}
     }
 }
-
