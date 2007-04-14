@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.23 2007/04/14 00:28:59 kichiki Exp $
+ * $Id: libstokes.h,v 1.24 2007/04/14 22:01:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -823,8 +823,8 @@ guile_get_bonds (const char * var);
  *  v [nm * 3] : velocity of particles after collisions
  */
 void
-collide_particles (struct stokes * sys,
-		   double * x, double * v, double en);
+collide_particles (struct stokes *sys,
+		   const double *x, double *v, double en);
 
 /*
  * INPUT
@@ -838,16 +838,16 @@ collide_particles (struct stokes * sys,
  *  v [nm * 3] : velocity of particles after collisions
  */
 void
-collide_wall_x (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_x (struct stokes *sys,
+		const double *x, double *v, double en,
 		double x_wall, double v_wall);
 void
-collide_wall_y (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_y (struct stokes *sys,
+		const double *x, double *v, double en,
 		double y_wall, double v_wall);
 void
-collide_wall_z (struct stokes * sys,
-		double * x, double * v, double en,
+collide_wall_z (struct stokes *sys,
+		const double *x, double *v, double en,
 		double z_wall, double v_wall);
 
 /*
@@ -860,8 +860,8 @@ collide_wall_z (struct stokes * sys,
  *  v [nm * 2] : velocity of particles after collisions
  */
 void
-collide_particles_2d (struct stokes * sys,
-		      double * x, double * v, double en);
+collide_particles_2d (struct stokes *sys,
+		      const double *x, double *v, double en);
 
 /* from periodicity.h */
 /*
