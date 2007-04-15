@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.25 2007/04/15 19:07:22 kichiki Exp $
+ * $Id: libstokes.h,v 1.26 2007/04/15 20:00:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -807,6 +807,137 @@ fprint_bonds (FILE *out, struct bonds *bonds);
 struct bonds *
 guile_get_bonds (const char * var);
 
+
+
+/************************************
+ ** routines for ODE integrator    **
+ ************************************/
+/* from ode.h */
+struct ode_params
+{
+  struct stokes *sys;
+  double *pos_fixed;
+  double *F;
+  double *T;
+  double *E;
+  double *uf;
+  double *of;
+  double *ef;
+  int flag_mat;
+  int flag_lub;
+  double st;
+  struct bonds *bonds;
+  double gamma;
+};
+
+
+/* set the parameters to struct ode_params
+ * INPUT
+ *  (struct stokes *)sys
+ *  (double *)pos_fix (the position of fixed particles)
+ *  F [np*3]
+ *  T [np*3]
+ *  E [np*5]
+ *  uf [np*3]
+ *  of [np*3]
+ *  ef [np*5]
+ *  (int) flag_mat
+ *  (int) flag_lub
+ *  (double) stokes
+ *  (struct bonds *)bonds
+ *  (double) gamma (for the bond relaxation scheme)
+ * OUTPUT :
+ *  (struct ode_params) params
+ */
+struct ode_params *
+ode_params_init (struct stokes *sys,
+		 double *pos_fixed,
+		 double *F,
+		 double *T,
+		 double *E,
+		 double *uf,
+		 double *of,
+		 double *ef,
+		 int flag_lub,
+		 int flag_mat,
+		 double st,
+		 struct bonds *bonds,
+		 double gamma);
+
+
+/* calc dydt for gsl_odeiv ONLY with bond interactions for relaxation
+ * this is equivalent to dydt_relax_bond with a constant friction, where
+ *  dx/dt = U = f_bond / gamma
+ * INPUT
+ *  t   : current time
+ *  y[] : position of particles at time t
+ *  params : (struct ode_params*)ode.
+ *           the following parameters are used here;
+ *           ode->sys       : (struct stokes *)
+ *           ode->pos_fixed : 
+ *           ode->bonds     : (struct bonds *)
+ *           ode->gamma     : the friction coef
+ * OUTPUT
+ *  f[] := (d/dt) y (t), that is, the velocity of particles at time t
+ */
+int
+dydt_relax_bond (double t, const double *y, double *f,
+		 void *params);
+
+/* calc dydt for gsl_odeiv with hydrodynamics
+ * with inertia (scaled Stokes number)
+ * INPUT
+ *  t   : current time
+ *  y[] : position and (real) velocity of particles at time t
+ *  params : (struct ode_params*)ode.
+ *           the following parameters are used here;
+ *           ode->sys       : (struct stokes *)
+ *           ode->pos_fixed : 
+ *           ode->F [np*3]
+ *           ode->T [np*3]
+ *           ode->E [np*5]
+ *           ode->uf [np*3]
+ *           ode->of [np*3]
+ *           ode->ef [np*5]
+ *           ode->flag_mat
+ *           ode->flag_lub
+ *           ode->stokes
+ *           ode->bonds     : (struct bonds *)
+ * OUTPUT
+ *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
+ *         (d/dt) x(t) = U(t)
+ *         (d/dt) U(t) = (1/stokes)(-U(t) + V(t)),
+ *         where V(t) := R^-1 . F, the terminal velocity
+ */
+int
+dydt_hydro_st (double t, const double *y, double *dydt,
+	       void *params);
+
+/* calc dydt for gsl_odeiv with hydrodynamics
+ * without inertia (zero Stokes number)
+ * INPUT
+ *  t   : current time
+ *  y[] : position of particles at time t
+ *  params : (struct ode_params*)ode.
+ *           the following parameters are used here;
+ *           ode->sys       : (struct stokes *)
+ *           ode->pos_fixed : 
+ *           ode->F [np*3]
+ *           ode->T [np*3]
+ *           ode->E [np*5]
+ *           ode->uf [np*3]
+ *           ode->of [np*3]
+ *           ode->ef [np*5]
+ *           ode->flag_mat
+ *           ode->flag_lub
+ *           ode->bonds     : (struct bonds *)
+ * OUTPUT
+ *  dydt[] := (d/dt) x(t) = U(t)
+ *         where U(t) := R^-1 . F, the terminal velocity
+ */
+int
+dydt_hydro (double t, const double *y, double *dydt,
+	    void *params);
 
 
 /************************************
