@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.24 2007/04/14 22:01:52 kichiki Exp $
+ * $Id: libstokes.h,v 1.25 2007/04/15 19:07:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -816,8 +816,10 @@ guile_get_bonds (const char * var);
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 3] : position of particles
+ *  x [np * 3] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 3] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  * OUTPUT
  *  v [nm * 3] : velocity of particles after collisions
@@ -829,8 +831,10 @@ collide_particles (struct stokes *sys,
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 3] : position of particles
+ *  x [np * 3] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 3] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  *  x_wall : position of the wall
  *  v_wall : 
@@ -853,8 +857,10 @@ collide_wall_z (struct stokes *sys,
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 2] : position of particles
+ *  x [np * 2] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 2] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  * OUTPUT
  *  v [nm * 2] : velocity of particles after collisions

@@ -1,6 +1,6 @@
 /* collision handling routines
  * Copyright (C) 1995-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: coll.c,v 1.2 2007/04/14 22:00:47 kichiki Exp $
+ * $Id: coll.c,v 1.3 2007/04/15 19:06:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,8 +22,10 @@
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 3] : position of particles
+ *  x [np * 3] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 3] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  * OUTPUT
  *  v [nm * 3] : velocity of particles after collisions
@@ -57,7 +59,8 @@ collide_particles (struct stokes *sys,
       iy = ix + 1;
       iz = ix + 2;
 
-      for(j = 0; j < np; ++j)
+      // loop for mobile particles
+      for(j = 0; j < nm; ++j)
 	{
 	  jx = j * 3;
 	  jy = jx + 1;
@@ -80,21 +83,43 @@ collide_particles (struct stokes *sys,
 		  && r < R)
 		{
 		  B = e * B / r;
-		  if (j < nm)
-		    {
-		      v [ix] += - xx * B;
-		      v [iy] += - yy * B;
-		      v [iz] += - zz * B;
-		      v [jx] -= - xx * B;
-		      v [jy] -= - yy * B;
-		      v [jz] -= - zz * B;
-		    }
-		  else
-		    {
-		      v [ix] += - 2.0 * xx * B;
-		      v [iy] += - 2.0 * yy * B;
-		      v [iz] += - 2.0 * zz * B;
-		    }
+		  v [ix] += - xx * B;
+		  v [iy] += - yy * B;
+		  v [iz] += - zz * B;
+		  v [jx] -= - xx * B;
+		  v [jy] -= - yy * B;
+		  v [jz] -= - zz * B;
+		}
+	    }
+	}
+
+      // loop for fixed particles
+      for(j = nm; j < np; ++j)
+	{
+	  jx = j * 3;
+	  jy = jx + 1;
+	  jz = jx + 2;
+
+	  for (k = 0; k < 27; ++k)
+	    {
+	      xx = x [ix] - x [jx] - sys->llx [k];
+	      yy = x [iy] - x [jy] - sys->lly [k];
+	      zz = x [iz] - x [jz] - sys->llz [k];
+
+	      vx = v [ix];
+	      vy = v [iy];
+	      vz = v [iz];
+
+	      B = xx * vx + yy * vy + zz * vz;
+	      r = xx * xx + yy * yy + zz * zz;
+
+	      if (B < 0.0
+		  && r < R)
+		{
+		  B = e * B / r;
+		  v [ix] += - 2.0 * xx * B;
+		  v [iy] += - 2.0 * yy * B;
+		  v [iz] += - 2.0 * zz * B;
 		}
 	    }
 	}
@@ -130,8 +155,10 @@ collide_1 (double xx, double vx, double *v, double e)
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 3] : position of particles
+ *  x [np * 3] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 3] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  *  x_wall : position of the wall
  *  v_wall : 
@@ -246,8 +273,10 @@ collide_wall_z (struct stokes *sys,
 /*
  * INPUT
  *  sys : system parameters
- *  x [np * 2] : position of particles
+ *  x [np * 2] : position of particles for BOTH mobile and fixed particles
  *  v [nm * 2] : velocity of particles before collisions
+ *               only mobile particles required.
+ *               assumed that the velocity for fixed particles are zero.
  *  en : elastic constant
  * OUTPUT
  *  v [nm * 2] : velocity of particles after collisions
@@ -280,7 +309,8 @@ collide_particles_2d (struct stokes *sys,
       ix = i * 2;
       iy = ix + 1;
 
-      for(j = 0; j < np; ++j)
+      // loop for mobile particles
+      for(j = 0; j < nm; ++j)
 	{
 	  jx = j * 2;
 	  jy = jx + 1;
@@ -300,18 +330,37 @@ collide_particles_2d (struct stokes *sys,
 		  && r < R)
 		{
 		  B = e * B / r;
-		  if (j < nm)
-		    {
-		      v [ix] += - xx * B;
-		      v [iy] += - yy * B;
-		      v [jx] -= - xx * B;
-		      v [jy] -= - yy * B;
-		    }
-		  else
-		    {
-		      v [ix] += - 2.0 * xx * B;
-		      v [iy] += - 2.0 * yy * B;
-		    }
+		  v [ix] += - xx * B;
+		  v [iy] += - yy * B;
+		  v [jx] -= - xx * B;
+		  v [jy] -= - yy * B;
+		}
+	    }
+	}
+
+      // loop for fixed particles
+      for(j = nm; j < np; ++j)
+	{
+	  jx = j * 2;
+	  jy = jx + 1;
+
+	  for (k = 0; k < 9; ++k)
+	    {
+	      xx = x [ix] - x [jx] - sys->llx [k];
+	      yy = x [iy] - x [jy] - sys->lly [k];
+
+	      vx = v [ix];
+	      vy = v [iy];
+
+	      B = xx * vx + yy * vy;
+	      r = xx * xx + yy * yy;
+
+	      if (B < 0.0
+		  && r < R)
+		{
+		  B = e * B / r;
+		  v [ix] += - 2.0 * xx * B;
+		  v [iy] += - 2.0 * yy * B;
 		}
 	    }
 	}
