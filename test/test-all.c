@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.4 2007/04/14 00:37:37 kichiki Exp $
+ * $Id: test-all.c,v 1.5 2007/04/18 01:29:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,8 +45,10 @@ main (int argc, char** argv)
   double a1 = 1.9;
   double a2 = 0.1;
 
+  // check-poly.c
   check_scalars_nonewald_poly (r, 1, 1.0e-17);
   check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
+  check_scalars_ewald_real_poly (2.5, 1.0, 1, 1.0e-15);
 
   check_matrix_mob_nonewald_fts (r, 1, 1.0e-14);
   check_minv_fts (2.5, 1, 1.0e-14);

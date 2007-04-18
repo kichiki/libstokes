@@ -1,6 +1,6 @@
 /* test code for polydisperse handling for non-periodic systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-poly.c,v 1.2 2007/04/12 05:26:22 kichiki Exp $
+ * $Id: check-poly.c,v 1.3 2007/04/18 01:29:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 
 #include <stokes.h> // struct stokes
 #include <non-ewald.h> // scalars_nonewald_poly(), scalars_nonewald()
+#include <ewald.h> // scalars_ewald_real_poly(), scalars_ewald_real()
 
 #include "check.h" // compare()
 
@@ -42,6 +43,11 @@ int
 check_scalars_nonewald_poly (double r,
 			     int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_nonewald_poly : start\n");
+    }
+
   int check = 0;
 
   double poly[11];
@@ -73,9 +79,12 @@ check_scalars_nonewald_poly (double r,
   check += compare (poly[10], mono[10], "check_scalars_nonewald_poly : zm",
 		    verbose, tiny);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_nonewald_poly : PASSED\n");
+      if (check == 0)
+	fprintf (stdout, "check_scalars_nonewald_poly : PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_nonewald_poly : FAILED\n\n");
     }
 
   return (check);
@@ -96,6 +105,11 @@ int
 check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
 				      int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_nonewald_poly_symmetry : start\n");
+    }
+
   int check = 0;
 
   // for (12)-interaction
@@ -167,9 +181,101 @@ check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
   check += compare (yb12, yb21, "check_scalars_nonewald_poly_symmetry: yb12", verbose, tiny);
   check += compare (yh12, yh21, "check_scalars_nonewald_poly_symmetry: yh12", verbose, tiny);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_nonewald_poly_symmetry : PASSED\n");
+      if (check == 0)
+	fprintf (stdout, "check_scalars_nonewald_poly_symmetry : PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_nonewald_poly_symmetry : FAILED\n\n");
+    }
+
+  return (check);
+}
+
+
+
+/* compare scalar functions for two routines
+ *  scalars_ewald_real() and scalars_ewald_real_poly()
+ * for equal-sphere case
+ * INPUT
+ *  r       := x_2 - x_1
+ *  xi      : splitting parameter for ewald summation
+ *  verbose : if non-zero, print results
+ *  tiny    : small number for check
+ * OUTPUT
+ *  (returned value) : 0 => passed
+ *                     otherwise => failed
+ */
+int
+check_scalars_ewald_real_poly (double r, double xi,
+			       int verbose, double tiny)
+{
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_ewald_real_poly : start\n");
+    }
+
+  int check = 0;
+
+  double poly[11];
+  scalars_ewald_real_poly (2, // FTS
+			   xi, r, 1.0, 1.0,
+			   poly + 0,
+			   poly + 1,
+			   poly + 2,
+			   poly + 3,
+			   poly + 4,
+			   poly + 5,
+			   poly + 6,
+			   poly + 7,
+			   poly + 8,
+			   poly + 9,
+			   poly +10);
+
+  double mono[11];
+  scalars_ewald_real (2, // FTS
+		      xi, r,
+		      mono + 0,
+		      mono + 1,
+		      mono + 2,
+		      mono + 3,
+		      mono + 4,
+		      mono + 5,
+		      mono + 6,
+		      mono + 7,
+		      mono + 8,
+		      mono + 9,
+		      mono +10);
+
+  check += compare (poly [0], mono [0], "check_scalars_ewald_real_poly : xa",
+		    verbose, tiny);
+  check += compare (poly [1], mono [1], "check_scalars_ewald_real_poly : ya",
+		    verbose, tiny);
+  check += compare (poly [2], mono [2], "check_scalars_ewald_real_poly : yb",
+		    verbose, tiny);
+  check += compare (poly [3], mono [3], "check_scalars_ewald_real_poly : xc",
+		    verbose, tiny);
+  check += compare (poly [4], mono [4], "check_scalars_ewald_real_poly : yc",
+		    verbose, tiny);
+  check += compare (poly [5], mono [5], "check_scalars_ewald_real_poly : xg",
+		    verbose, tiny);
+  check += compare (poly [6], mono [6], "check_scalars_ewald_real_poly : yg",
+		    verbose, tiny);
+  check += compare (poly [7], mono [7], "check_scalars_ewald_real_poly : yh",
+		    verbose, tiny);
+  check += compare (poly [8], mono [8], "check_scalars_ewald_real_poly : xm",
+		    verbose, tiny);
+  check += compare (poly [9], mono [9], "check_scalars_ewald_real_poly : ym",
+		    verbose, tiny);
+  check += compare (poly[10], mono[10], "check_scalars_ewald_real_poly : zm",
+		    verbose, tiny);
+
+  if (verbose != 0)
+    {
+      if (check == 0)
+	fprintf (stdout, "check_scalars_ewald_real_poly : PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_ewald_real_poly : FAILED\n\n");
     }
 
   return (check);
