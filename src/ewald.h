@@ -1,7 +1,7 @@
 /* header file for ewald.c --
  * utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.h,v 1.5 2007/03/07 22:33:56 kichiki Exp $
+ * $Id: ewald.h,v 1.6 2007/04/18 01:28:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,9 +44,35 @@ scalars_ewald_real (int version,
 		    double *yh,
 		    double *xm, double *ym, double *zm);
 
+/* calculate scalar functions of (12)-interaction for unequal spheres
+ * INPUT
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  r      := x_2 - x_1
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  xa, ya : for F version
+ *  yb,
+ *  xc, yc : for FT version
+ *  xg, yg,
+ *  yh,
+ *  xm, ym, zm : for FTS version
+ */
+void
+scalars_ewald_real_poly (int version,
+			 double xi, double r,
+			 double aa, double ab,
+			 double *xa, double *ya,
+			 double *yb,
+			 double *xc, double *yc,
+			 double *xg, double *yg,
+			 double *yh,
+			 double *xm, double *ym, double *zm);
 
 /* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
  * this is a wrapper for non-periodic and periodic cases
+ * also polydisperse systems for non-periodic
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
  *  x [n] : F, FT, or FTS
@@ -57,8 +83,9 @@ scalars_ewald_real (int version,
 void
 atimes_3all (int n, const double *x, double *y, void * user_data);
 
-/* make ewald-summed mobility matrix for F/FT/FTS versions
+/* make mobility matrix for F/FT/FTS versions
  * this is a wrapper for non-periodic and periodic cases
+ * also polydisperse systems for non-periodic
  * INPUT
  * sys : system parameters
  * OUTPUT
