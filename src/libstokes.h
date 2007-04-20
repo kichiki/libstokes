@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.26 2007/04/15 20:00:01 kichiki Exp $
+ * $Id: libstokes.h,v 1.27 2007/04/20 01:51:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -86,8 +86,12 @@ struct stokes {
   double * ym;
 
   /* for lubrication */
-  double lubcut;
-  double lubmax2; // square of the max distance (0 means no limit)
+  double lubmin; // min distance for lub (distance is replaced by this value)
+  double lubmax; /* max distance for lub;
+		  * for the pair beyond this is just ignored.
+		  * 0 means no limit for open systems and 
+		  * all particles within +/-1 cells in x,y,z for the periodic
+		  */
 
   /* for zeta program */
   double cpu1, cpu2, cpu3;

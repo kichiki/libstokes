@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.14 2007/04/14 00:28:14 kichiki Exp $
+ * $Id: stokes.h,v 1.15 2007/04/20 01:51:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -84,8 +84,12 @@ struct stokes {
   double * ym;
 
   /* for lubrication */
-  double lubcut;
-  double lubmax2; // square of the max distance (0 means no limit)
+  double lubmin; // min distance for lub (distance is replaced by this value)
+  double lubmax; /* max distance for lub;
+		  * for the pair beyond this is just ignored.
+		  * 0 means no limit for open systems and 
+		  * all particles within +/-1 cells in x,y,z for the periodic
+		  */
 
   /* for zeta program */
   double cpu1, cpu2, cpu3;
