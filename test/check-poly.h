@@ -1,7 +1,7 @@
 /* header file for check-poly.c --
  * test code for polydisperse handling for non-periodic systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-poly.h,v 1.2 2007/04/12 05:26:42 kichiki Exp $
+ * $Id: check-poly.h,v 1.3 2007/04/20 02:02:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,6 +50,22 @@ check_scalars_nonewald_poly (double r,
 int
 check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
 				      int verbose, double tiny);
+
+/* compare scalar functions for two routines
+ *  scalars_ewald_real() and scalars_ewald_real_poly()
+ * for equal-sphere case
+ * INPUT
+ *  r       := x_2 - x_1
+ *  xi      : splitting parameter for ewald summation
+ *  verbose : if non-zero, print results
+ *  tiny    : small number for check
+ * OUTPUT
+ *  (returned value) : 0 => passed
+ *                     otherwise => failed
+ */
+int
+check_scalars_ewald_real_poly (double r, double xi,
+			       int verbose, double tiny);
 
 
 #endif /* !_CHECK_POLY_H_ */
