@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.5 2007/04/18 01:29:34 kichiki Exp $
+ * $Id: test-all.c,v 1.6 2007/04/20 02:04:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,8 @@
 #include "check-minv.h" // check_matrix_mob_nonewald_fts(), check_minv_fts()
 #include "check-minv-poly.h" // check_scalars_minv_[f,ft,fts]_poly_...()
 #include "check-lub-poly.h" // check_lub_fts_2b_poly()
+#include "check-ewald.h" // check_atimes_ewald_3all_SC ()
+#include "check-ewald-poly.h" // check_atimes_ewald_3all_poly_SC_...()
 
 #include "memory-check.h"
 
@@ -67,6 +69,49 @@ main (int argc, char** argv)
   check_lub_fts_2b_poly (r, 1, 1.0e-4);
   check_matrix_lub_fts_2b_poly (r, 1, 1.0e-5);
   check_atimes_matrix_lub_fts_2b_poly (r, a1, a2, 1, 1.0e-15);
+
+  // check-ewald.c
+  int version = 2; // FTS
+  double phi = 0.2;
+  double ewald_tr = 1.0;
+  double ewald_eps = 1.0e-12;
+  check_ewald_3all_atimes_matrix_SC (version, phi, ewald_tr, ewald_eps,
+				     1, 5.0e-14);
+
+  // check-ewald-poly.c
+  check_atimes_ewald_3all_poly_SC_1 (version, phi,
+				     4.0, // ewald_tr
+				     ewald_eps, 1, 7.0e-15);
+  check_atimes_ewald_3all_poly_SC_1 (version, phi,
+				     1.0, // ewald_tr
+				     ewald_eps, 1, 4.0e-15);
+  check_atimes_ewald_3all_poly_SC_1 (version, phi,
+				     10.0, // ewald_tr
+				     ewald_eps, 1, 9.0e-15);
+
+  check_make_matrix_mob_ewald_3all_poly_SC_1 (version, phi, 4.0, // ewald_tr
+					      ewald_eps, 1, 2.0e-15);
+  check_make_matrix_mob_ewald_3all_poly_SC_1 (version, phi, 1.0, // ewald_tr
+					      ewald_eps, 1, 8.0e-15);
+  check_make_matrix_mob_ewald_3all_poly_SC_1 (version, phi, 10.0, // ewald_tr
+					      ewald_eps, 1, 6.0e-15);
+
+  check_atimes_ewald_3all_poly_SC_2 (version, 0, // x dir
+				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+  check_atimes_ewald_3all_poly_SC_2 (version, 1, // y dir
+				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+  check_atimes_ewald_3all_poly_SC_2 (version, 2, // z dir
+				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+
+  check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 0, // x dir
+					      phi, ewald_tr, ewald_eps,
+					      1, 3.0e-15);
+  check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 1, // y dir
+					      phi, ewald_tr, ewald_eps,
+					      1, 2.0e-14);
+  check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 2, // z dir
+					      phi, ewald_tr, ewald_eps,
+					      1, 2.0e-15);
 
   return 0;
 }
