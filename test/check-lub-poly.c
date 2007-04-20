@@ -1,6 +1,6 @@
 /* test code for lubrication for polydisperse systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lub-poly.c,v 1.1 2007/04/14 00:36:45 kichiki Exp $
+ * $Id: check-lub-poly.c,v 1.2 2007/04/20 02:03:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
   sys = stokes_init ();
   sys->version = 2; // FTS
 
-  sys->lubcut = 2.0 + 1.0e-15;
+  sys->lubmin = 2.0 + 1.0e-15;
   sys->twobody_nmax = 100;
   sys->twobody_lub = 1; // lub form
 
@@ -130,7 +130,7 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
   sys = stokes_init ();
   sys->version = 2; // FTS
 
-  sys->lubcut = 2.0 + 1.0e-15;
+  sys->lubmin = 2.0 + 1.0e-15;
   sys->twobody_nmax = 100;
   sys->twobody_lub = 1; // lub form
 
@@ -209,7 +209,7 @@ check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
   sys = stokes_init ();
   sys->version = 2; // FTS
 
-  sys->lubcut = 2.0 + 1.0e-15;
+  sys->lubmin = 2.0 + 1.0e-15;
   sys->twobody_nmax = 100;
   sys->twobody_lub = 1; // lub form
 
