@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.6 2007/04/19 02:49:48 kichiki Exp $
+ * $Id: lub.c,v 5.7 2007/04/20 01:55:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,19 +37,14 @@
  *  1 : otherwise
  */
 static int
-cond_lub (const double * x1, const double * x2, double lubmax2)
+cond_lub (const double *x1, const double *x2, double lubmax2)
 {
   double x, y, z;
-  double r2;
-
-
   x = x1 [0] - x2 [0];
   y = x1 [1] - x2 [1];
   z = x1 [2] - x2 [2];
 
-  r2 = x * x
-    + y * y
-    + z * z;
+  double r2 = x*x + y*y + z*z;
 
   if (r2 == 0.0)
     {
@@ -72,6 +67,86 @@ cond_lub (const double * x1, const double * x2, double lubmax2)
       return 1; // false
     }
 }
+
+/* condition for lubrication for polydisperse system
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ *  a1, a2         : radii for particles 1 and 2
+ *  lubmax2        : square of the max distance (0 means no limit)
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+static int
+cond_lub_poly (const double *x1, const double *x2,
+	       double a1, double a2,
+	       double lubmax2)
+{
+  double x, y, z;
+  x = x1 [0] - x2 [0];
+  y = x1 [1] - x2 [1];
+  z = x1 [2] - x2 [2];
+
+  double r2 = x*x + y*y + z*z;
+
+  if (r2 == 0.0)
+    {
+      // self part
+      return 1; // false
+    }
+  else if (lubmax2 <= 0.0)
+    {
+      // no limit
+      return 0; // true
+    }
+  else
+    {
+      // max2 should be compared with r2 = (2 r / (a1 + a2))^2
+      double fac = 2.0 / (a1 + a2);
+      double s2 = fac * fac * r2;
+      if (s2 < lubmax2)
+	{
+	  // within the limit
+	  return 0; // true
+	}
+      else
+	{
+	  // out of the limit
+	  return 1; // false
+	}
+    }
+}
+
+/*
+ * INPUT
+ *  sys : struct stokes *sys.
+ *        lx, ly, lz, and lubmax are used.
+ * OUTPUT
+ *  *imax[xyz] : range for the image-cell loop
+ */
+static void
+set_imax_lub_periodic (struct stokes *sys,
+		       int *imaxx, int *imaxy, int *imaxz)
+{
+  double lubmax;
+  if (sys->lubmax <= 0.0)
+    {
+      // if lubmax2 is not define, at least, take symmetric in x, y, z.
+      // set lubmax by max (lx, ly, lz)
+      lubmax = sys->lx;
+      if (sys->ly > lubmax) lubmax = sys->ly;
+      if (sys->lz > lubmax) lubmax = sys->lz;
+    }
+  else
+    {
+      lubmax = sys->lubmax;
+    }
+
+  *imaxx = (int)(lubmax / sys->lx) + 1;
+  *imaxy = (int)(lubmax / sys->ly) + 1;
+  *imaxz = (int)(lubmax / sys->lz) + 1;
+}
+
 
 /* calculate lubrication f by u for all particles
  * for both under the periodic and non-periodic boundary conditions.
@@ -102,30 +177,17 @@ calc_lub_3f (struct stokes *sys,
       f [i] = 0.0;
     }
 
+  // set lubmax2 for cond_lub()
+  double lubmax2 = sys->lubmax * sys->lubmax;
+
   // set imax[xyz] for periodic systems
-  // which covers enough images for sys->lubmax2
+  // which covers enough images for sys->lubmax
   int imaxx = 0;
   int imaxy = 0;
   int imaxz = 0;
   if (sys->periodic != 0)
     {
-      double lubmax;
-      if (sys->lubmax2 <= 0.0)
-	{
-	  // if lubmax2 is not define, at least, take symmetric in x, y, z.
-	  // set lubmax by max (lx, ly, lz)
-	  lubmax = sys->lx;
-	  if (sys->ly > lubmax) lubmax = sys->ly;
-	  if (sys->lz > lubmax) lubmax = sys->lz;
-	}
-      else
-	{
-	  lubmax = sqrt (sys->lubmax2);
-	}
-
-      imaxx = (int)(lubmax / sys->lx) + 1;
-      imaxy = (int)(lubmax / sys->ly) + 1;
-      imaxz = (int)(lubmax / sys->lz) + 1;
+      set_imax_lub_periodic (sys, &imaxx, &imaxy, &imaxz);
     }
 
 
@@ -139,20 +201,25 @@ calc_lub_3f (struct stokes *sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3,
-			    sys->lubmax2) == 0)
+	      if (sys->a == NULL)
 		{
-		  if (sys->a == NULL)
+		  // monodisperse
+		  if (cond_lub (sys->pos + i3, sys->pos + j3,
+				lubmax2) == 0)
 		    {
-		      // monodisperse
 		      calc_lub_f_2b (sys,
 				     u + i3, u + j3,
 				     sys->pos + i3, sys->pos + j3,
 				     f + i3, f + j3);
 		    }
-		  else
+		}
+	      else
+		{
+		  // polydisperse
+		  if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+				     sys->a[i], sys->a[j],
+				     lubmax2) == 0)
 		    {
-		      // polydisperse
 		      calc_lub_f_2b_poly (sys,
 					  u + i3, u + j3,
 					  sys->pos + i3, sys->pos + j3,
@@ -174,20 +241,25 @@ calc_lub_3f (struct stokes *sys,
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
 
-			  if (cond_lub (sys->pos + i3, tmp_pos,
-					sys->lubmax2) == 0)
+			  if (sys->a == NULL)
 			    {
-			      if (sys->a == NULL)
+			      // monodisperse
+			      if (cond_lub (sys->pos + i3, tmp_pos,
+					    lubmax2) == 0)
 				{
-				  // monodisperse
 				  calc_lub_f_2b (sys,
 						 u + i3, u + j3,
 						 sys->pos + i3, tmp_pos,
 						 f + i3, f + j3);
 				}
-			      else
+			    }
+			  else
+			    {
+			      // polydisperse
+			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+						 sys->a[i], sys->a[j],
+						 lubmax2) == 0)
 				{
-				  // polydisperse
 				  calc_lub_f_2b_poly (sys,
 						      u + i3, u + j3,
 						      sys->pos + i3, tmp_pos,
@@ -231,30 +303,17 @@ calc_lub_3ft (struct stokes * sys,
       ft [i] = 0.0;
     }
 
+  // set lubmax2 for cond_lub()
+  double lubmax2 = sys->lubmax * sys->lubmax;
+
   // set imax[xyz] for periodic systems
-  // which covers enough images for sys->lubmax2
+  // which covers enough images for sys->lubmax
   int imaxx = 0;
   int imaxy = 0;
   int imaxz = 0;
   if (sys->periodic != 0)
     {
-      double lubmax;
-      if (sys->lubmax2 <= 0.0)
-	{
-	  // if lubmax2 is not define, at least, take symmetric in x, y, z.
-	  // set lubmax by max (lx, ly, lz)
-	  lubmax = sys->lx;
-	  if (sys->ly > lubmax) lubmax = sys->ly;
-	  if (sys->lz > lubmax) lubmax = sys->lz;
-	}
-      else
-	{
-	  lubmax = sqrt (sys->lubmax2);
-	}
-
-      imaxx = (int)(lubmax / sys->lx) + 1;
-      imaxy = (int)(lubmax / sys->ly) + 1;
-      imaxz = (int)(lubmax / sys->lz) + 1;
+      set_imax_lub_periodic (sys, &imaxx, &imaxy, &imaxz);
     }
 
 
@@ -270,20 +329,25 @@ calc_lub_3ft (struct stokes * sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3,
-			    sys->lubmax2) == 0)
+	      if (sys->a == NULL)
 		{
-		  if (sys->a == NULL)
+		  // monodisperse
+		  if (cond_lub (sys->pos + i3, sys->pos + j3,
+				lubmax2) == 0)
 		    {
-		      // monodisperse
 		      calc_lub_ft_2b (sys,
 				      uo + i6, uo + j6,
 				      sys->pos + i3, sys->pos + j3,
 				      ft + i6, ft + j6);
 		    }
-		  else
+		}
+	      else
+		{
+		  // polydisperse
+		  if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+				     sys->a[i], sys->a[j],
+				     lubmax2) == 0)
 		    {
-		      // polydisperse
 		      calc_lub_ft_2b_poly (sys,
 					   uo + i6, uo + j6,
 					   sys->pos + i3, sys->pos + j3,
@@ -305,20 +369,25 @@ calc_lub_3ft (struct stokes * sys,
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
 
-			  if (cond_lub (sys->pos + i3, tmp_pos,
-					sys->lubmax2) == 0)
+			  if (sys->a == NULL)
 			    {
-			      if (sys->a == NULL)
+			      // monodisperse
+			      if (cond_lub (sys->pos + i3, tmp_pos,
+					    lubmax2) == 0)
 				{
-				  // monodisperse
 				  calc_lub_ft_2b (sys,
 						  uo + i6, uo + j6,
 						  sys->pos + i3, tmp_pos,
 						  ft + i6, ft + j6);
 				}
-			      else
+			    }
+			  else
+			    {
+			      // polydisperse
+			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+						 sys->a[i], sys->a[j],
+						 lubmax2) == 0)
 				{
-				  // polydisperse
 				  calc_lub_ft_2b_poly (sys,
 						       uo + i6, uo + j6,
 						       sys->pos + i3, tmp_pos,
@@ -362,30 +431,17 @@ calc_lub_3fts (struct stokes * sys,
       fts [i] = 0.0;
     }
 
+  // set lubmax2 for cond_lub()
+  double lubmax2 = sys->lubmax * sys->lubmax;
+
   // set imax[xyz] for periodic systems
-  // which covers enough images for sys->lubmax2
+  // which covers enough images for sys->lubmax
   int imaxx = 0;
   int imaxy = 0;
   int imaxz = 0;
   if (sys->periodic != 0)
     {
-      double lubmax;
-      if (sys->lubmax2 <= 0.0)
-	{
-	  // if lubmax2 is not define, at least, take symmetric in x, y, z.
-	  // set lubmax by max (lx, ly, lz)
-	  lubmax = sys->lx;
-	  if (sys->ly > lubmax) lubmax = sys->ly;
-	  if (sys->lz > lubmax) lubmax = sys->lz;
-	}
-      else
-	{
-	  lubmax = sqrt (sys->lubmax2);
-	}
-
-      imaxx = (int)(lubmax / sys->lx) + 1;
-      imaxy = (int)(lubmax / sys->ly) + 1;
-      imaxz = (int)(lubmax / sys->lz) + 1;
+      set_imax_lub_periodic (sys, &imaxx, &imaxy, &imaxz);
     }
 
 
@@ -401,20 +457,25 @@ calc_lub_3fts (struct stokes * sys,
 	  if (sys->periodic == 0)
 	    {
 	      // non-periodic
-	      if (cond_lub (sys->pos + i3, sys->pos + j3,
-			    sys->lubmax2) == 0)
+	      if (sys->a == NULL)
 		{
-		  if (sys->a == NULL)
+		  // monodisperse
+		  if (cond_lub (sys->pos + i3, sys->pos + j3,
+				lubmax2) == 0)
 		    {
-		      // monodisperse
 		      calc_lub_fts_2b (sys,
 				       uoe + i11, uoe + j11,
 				       sys->pos + i3, sys->pos + j3,
 				       fts + i11, fts + j11);
 		    }
-		  else
+		}
+	      else
+		{
+		  // polydisperse
+		  if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+				     sys->a[i], sys->a[j],
+				     lubmax2) == 0)
 		    {
-		      // polydisperse
 		      calc_lub_fts_2b_poly (sys,
 					    uoe + i11, uoe + j11,
 					    sys->pos + i3, sys->pos + j3,
@@ -436,20 +497,25 @@ calc_lub_3fts (struct stokes * sys,
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
 
-			  if (cond_lub (sys->pos + i3, tmp_pos,
-					sys->lubmax2) == 0)
+			  if (sys->a == NULL)
 			    {
-			      if (sys->a == NULL)
+			      // monodisperse
+			      if (cond_lub (sys->pos + i3, tmp_pos,
+					    lubmax2) == 0)
 				{
-				  // monodisperse
 				  calc_lub_fts_2b (sys,
 						   uoe + i11, uoe + j11,
 						   sys->pos + i3, tmp_pos,
 						   fts + i11, fts + j11);
 				}
-			      else
+			    }
+			  else
+			    {
+			      // polydisperse
+			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+						 sys->a[i], sys->a[j],
+						 lubmax2) == 0)
 				{
-				  // polydisperse
 				  calc_lub_fts_2b_poly (sys,
 							uoe + i11, uoe + j11,
 							sys->pos + i3, tmp_pos,
