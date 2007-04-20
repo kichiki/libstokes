@@ -1,7 +1,7 @@
 /* header file for ft.c --
  * subroutine for the procedure of FT version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ft.h,v 2.7 2007/04/14 00:30:48 kichiki Exp $
+ * $Id: ft.h,v 2.8 2007/04/20 01:53:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -150,7 +150,7 @@ scalar_minv_ft (double s, double * scalar_ft);
 /* calculate ft by uoe for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubcut is used.
+ *         sys->lubmin is used.
  *   uo1 [6] : velocity, angular velocity
  *   uo2 [6] :
  *   x1 [3] : position of particle 1
@@ -168,7 +168,7 @@ calc_lub_ft_2b (struct stokes * sys,
 /* calculate lub-matrix in FT version for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubcut is used.
+ *         sys->lubmin is used.
  *   i : particle index for '1'
  *   j : particle index for '2'
  *   x1 [3] : position of particle 1
@@ -189,7 +189,7 @@ matrix_lub_ft_2b (struct stokes * sys,
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
  * INPUT
  *   sys : system parameters. the followings are referred:
- *         sys->lubcut       : min distance for lub calculation.
+ *         sys->lubmin       : min distance for lub calculation.
  *         sys->twobody_nmax : max order in twobody.
  *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   uo1 [6] : velocity, angular velocity
@@ -214,7 +214,7 @@ calc_lub_ft_2b_poly (struct stokes *sys,
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
  * INPUT
  *   sys    : system parameters. the followings are referred:
- *            sys->lubcut       : min distance for lub calculation.
+ *            sys->lubmin       : min distance for lub calculation.
  *            sys->twobody_nmax : max order in twobody.
  *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   i      : particle index for '1'

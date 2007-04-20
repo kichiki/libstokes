@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.12 2007/04/14 00:31:21 kichiki Exp $
+ * $Id: fts.c,v 2.13 2007/04/20 01:54:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1766,7 +1766,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubcut is used.
+ *         sys->lubmin is used.
  *   uoe1 [11] : velocity, angular velocity, strain
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
@@ -1810,9 +1810,9 @@ calc_lub_fts_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr < sys->lubcut)
+  if (rr < sys->lubmin)
     {
-      rr = sys->lubcut;
+      rr = sys->lubmin;
     }
 
   ex = xx / rr;
@@ -1886,7 +1886,7 @@ calc_lub_fts_2b (struct stokes * sys,
 /* calculate lub-matrix in FTS version for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubcut is used.
+ *         sys->lubmin is used.
  *   i : particle index for '1'
  *   j : particle index for '2'
  *   x1 [3] : position of particle 1
@@ -1930,9 +1930,9 @@ matrix_lub_fts_2b (struct stokes * sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr < sys->lubcut)
+  if (rr < sys->lubmin)
     {
-      rr = sys->lubcut;
+      rr = sys->lubmin;
     }
 
   ex = xx / rr;
@@ -2012,7 +2012,7 @@ matrix_lub_fts_2b (struct stokes * sys,
  * so that this is called in the loop
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
  *   sys : system parameters. the followings are referred:
- *         sys->lubcut       : min distance for lub calculation.
+ *         sys->lubmin       : min distance for lub calculation.
  *         sys->twobody_nmax : max order in twobody.
  *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   uoe1 [11] : velocity, angular velocity, strain
@@ -2040,9 +2040,9 @@ calc_lub_fts_2b_poly (struct stokes *sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr < sys->lubcut)
+  if (rr < sys->lubmin)
     {
-      rr = sys->lubcut;
+      rr = sys->lubmin;
     }
 
   double ex, ey, ez;
@@ -2156,7 +2156,7 @@ calc_lub_fts_2b_poly (struct stokes *sys,
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
  * INPUT
  *   sys    : system parameters. the followings are referred:
- *            sys->lubcut       : min distance for lub calculation.
+ *            sys->lubmin       : min distance for lub calculation.
  *            sys->twobody_nmax : max order in twobody.
  *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   i      : particle index for '1'
@@ -2184,9 +2184,9 @@ matrix_lub_fts_2b_poly (struct stokes *sys,
   zz = x2 [2] - x1 [2];
   rr = sqrt (xx * xx + yy * yy + zz * zz);
 
-  if (rr < sys->lubcut)
+  if (rr < sys->lubmin)
     {
-      rr = sys->lubcut;
+      rr = sys->lubmin;
     }
 
   double ex, ey, ez;
