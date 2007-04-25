@@ -1,6 +1,6 @@
 /* test code for minv-poly.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-minv-poly.c,v 1.1 2007/04/12 05:31:36 kichiki Exp $
+ * $Id: check-minv-poly.c,v 1.2 2007/04/25 05:46:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@
 #include <ft.h>  // scalar_minv_ft()
 #include <fts.h> // scalar_minv_fts()
 #include <minv-poly.h>
+#include <bench.h> // ptime_ms_d()
 
 #include "check.h" // compare()
 
@@ -788,13 +789,26 @@ scalars_minv_fts_poly_ana (double r, double a1, double a2,
 int
 check_scalars_minv_f_poly_with_equal (double r, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_minv_f_poly_with_equal : start\n");
+    }
+
   int check = 0;
 
   double mono[4];
   double poly[8];
 
+  double t0, t;
+  t0 = ptime_ms_d ();
   scalar_minv_f (r, mono);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
+
+  t0 = ptime_ms_d ();
   scalars_minv_f_poly (r, 1.0, 1.0, poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
   check += compare (mono [0], poly [0], "check_scalars_minv_f_poly_with_equal: XA11", verbose, tiny);
@@ -802,9 +816,16 @@ check_scalars_minv_f_poly_with_equal (double r, int verbose, double tiny)
   check += compare (mono [2], poly [4], "check_scalars_minv_f_poly_with_equal: YA11", verbose, tiny);
   check += compare (mono [3], poly [5], "check_scalars_minv_f_poly_with_equal: YA12", verbose, tiny);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_f_poly_with_equal : PASSED\n");
+      fprintf (stdout, "check_scalars_minv_f_poly_with_equal :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_scalars_minv_f_poly_with_equal : PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_minv_f_poly_with_equal : FAILED\n\n");
     }
 
   return (check);
@@ -815,13 +836,26 @@ check_scalars_minv_f_poly_with_equal (double r, int verbose, double tiny)
 int
 check_scalars_minv_ft_poly_with_equal (double r, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : start\n");
+    }
+
   int check = 0;
 
   double mono[10];
   double poly[20];
 
+  double t0, t;
+  t0 = ptime_ms_d ();
   scalar_minv_ft (r, mono);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
+
+  t0 = ptime_ms_d ();
   scalars_minv_ft_poly (r, 1.0, 1.0, poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
   check += compare (mono [0], poly [0], "check_scalars_minv_ft_poly_with_equal: XA11", verbose, tiny);
@@ -835,9 +869,16 @@ check_scalars_minv_ft_poly_with_equal (double r, int verbose, double tiny)
   check += compare (mono [8], poly[16], "check_scalars_minv_ft_poly_with_equal: YC11", verbose, tiny);
   check += compare (mono [9], poly[17], "check_scalars_minv_ft_poly_with_equal: YC12", verbose, tiny);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : PASSED\n");
+      fprintf (stdout, "check_scalars_minv_ft_poly_with_equal :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : FAILED\n\n");
     }
 
   return (check);
@@ -848,13 +889,26 @@ check_scalars_minv_ft_poly_with_equal (double r, int verbose, double tiny)
 int
 check_scalars_minv_fts_poly_with_equal (double r, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_scalars_minv_fts_poly_with_equal : start\n");
+    }
+
   int check = 0;
 
   double mono[22];
   double poly[44];
 
+  double t0, t;
+  t0 = ptime_ms_d ();
   scalar_minv_fts (r, mono);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
+
+  t0 = ptime_ms_d ();
   scalars_minv_fts_poly (r, 1.0, 1.0, poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
   check += compare (mono [0], poly [0], "check_scalars_minv_fts_poly_with_equal: XA11", verbose, tiny);
@@ -880,9 +934,18 @@ check_scalars_minv_fts_poly_with_equal (double r, int verbose, double tiny)
   check += compare (mono[20], poly[40], "check_scalars_minv_fts_poly_with_equal: ZM11", verbose, tiny);
   check += compare (mono[21], poly[41], "check_scalars_minv_fts_poly_with_equal: ZM12", verbose, tiny);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_fts_poly_with_equal : PASSED\n");
+      fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
+		 " PASSED\n\n");
+      else
+	fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
+		 " FAILED\n\n");
     }
 
   return (check);
