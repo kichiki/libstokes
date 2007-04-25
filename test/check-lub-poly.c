@@ -1,6 +1,6 @@
 /* test code for lubrication for polydisperse systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lub-poly.c,v 1.2 2007/04/20 02:03:25 kichiki Exp $
+ * $Id: check-lub-poly.c,v 1.3 2007/04/25 05:49:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,9 +22,116 @@
 #include <stokes.h> // struct stokes
 #include <fts.h>
 #include <matrix.h> // multiply_extmat_with_extvec_3fts()
+#include <two-body-res.h> // scalar_two_body_res ()
+#include <minv-poly.h> // scalars_lub_poly_full() scalars_res_poly_scale_SD()
+#include <bench.h> // ptime_ms_d()
 
 
 #include "check.h" // compare()
+
+
+/* compare lub scalar functions
+ *  scalarwo-body_res() + scalar_minv_fts() for mono
+ *  and scalars_lub_poly_full() for poly
+ * for equal-sphere case
+ * INPUT
+ *  r       := x_2 - x_1
+ *  nmax    : for scalars_lub_poly_full() in twobody.c
+ *  verbose : if non-zero, print results
+ *  tiny    : small number for check
+ * OUTPUT
+ *  (returned value) : 0 => passed
+ *                     otherwise => failed
+ */
+int
+check_lub_scalars_poly (double r, int nmax,
+			int verbose, double tiny)
+{
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_lub_scalars_poly : start\n");
+    }
+
+  int check = 0;
+
+  double poly[44];
+  double t0, t;
+  t0 = ptime_ms_d ();
+  scalars_lub_poly_full (2, /* FTS */ r, 1.0, 1.0,
+			 nmax, 1, /* lub form */
+			 poly);
+  scalars_res_poly_scale_SD (2, // FTS version
+			     1.0, 1.0, poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
+
+  double res[22];
+  double minv[22];
+  t0 = ptime_ms_d ();
+  scalar_two_body_res (r, res);
+  scalar_minv_fts (r, minv);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
+
+  check += compare (poly [0], res [0]-minv [0], "check_lub_scalars_poly: xa11",
+		    verbose, tiny);	   ;   
+  check += compare (poly [1], res [1]-minv [1], "check_lub_scalars_poly: xa12",
+		    verbose, tiny);	   ;   
+  check += compare (poly [4], res [2]-minv [2], "check_lub_scalars_poly: ya11",
+		    verbose, tiny);	   ;   
+  check += compare (poly [5], res [3]-minv [3], "check_lub_scalars_poly: ya12",
+		    verbose, tiny);	   ;   
+  check += compare (poly [8], res [4]-minv [4], "check_lub_scalars_poly: yb11",
+		    verbose, tiny);	   ;   
+  check += compare (poly [9], res [5]-minv [5], "check_lub_scalars_poly: yb12",
+		    verbose, tiny);	   ;   
+  check += compare (poly[12], res [6]-minv [6], "check_lub_scalars_poly: xc11",
+		    verbose, tiny);	   ;   
+  check += compare (poly[13], res [7]-minv [7], "check_lub_scalars_poly: xc12",
+		    verbose, tiny);	   ;   
+  check += compare (poly[16], res [8]-minv [8], "check_lub_scalars_poly: yc11",
+		    verbose, tiny);	   ;   
+  check += compare (poly[17], res [9]-minv [9], "check_lub_scalars_poly: yc12",
+		    verbose, tiny);	   ;   
+  check += compare (poly[20], res[10]-minv[10], "check_lub_scalars_poly: xg11",
+		    verbose, tiny);
+  check += compare (poly[21], res[11]-minv[11], "check_lub_scalars_poly: xg12",
+		    verbose, tiny);
+  check += compare (poly[24], res[12]-minv[12], "check_lub_scalars_poly: yg11",
+		    verbose, tiny);
+  check += compare (poly[25], res[13]-minv[13], "check_lub_scalars_poly: yg12",
+		    verbose, tiny);
+  check += compare (poly[28], res[14]-minv[14], "check_lub_scalars_poly: yh11",
+		    verbose, tiny);
+  check += compare (poly[29], res[15]-minv[15], "check_lub_scalars_poly: yh12",
+		    verbose, tiny);
+  check += compare (poly[32], res[16]-minv[16], "check_lub_scalars_poly: xm11",
+		    verbose, tiny);
+  check += compare (poly[33], res[17]-minv[17], "check_lub_scalars_poly: xm12",
+		    verbose, tiny);
+  check += compare (poly[36], res[18]-minv[18], "check_lub_scalars_poly: ym11",
+		    verbose, tiny);
+  check += compare (poly[37], res[19]-minv[19], "check_lub_scalars_poly: ym12",
+		    verbose, tiny);
+  check += compare (poly[40], res[20]-minv[20], "check_lub_scalars_poly: zm11",
+		    verbose, tiny);
+  check += compare (poly[41], res[21]-minv[21], "check_lub_scalars_poly: zm12",
+		    verbose, tiny);
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, "check_lub_scalars_poly :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_lub_scalars_poly : PASSED\n\n");
+      else
+	fprintf (stdout, "check_lub_scalars_poly : FAILED\n\n");
+    }
+
+  return (check);
+}
 
 
 /* check calc_lub_fts_2b_poly() with a1=a2=a
@@ -69,16 +176,23 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
       fts_poly [i] = 0.0;
     }
 
+  double t0, t;
+  t0 = ptime_ms_d ();
   calc_lub_fts_2b (sys,
 		   &uoe[0], &uoe[11],
 		   &(sys->pos[0]), &(sys->pos[3]),
 		   &fts_mono[0], &fts_mono[11]);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
 
+  t0 = ptime_ms_d ();
   calc_lub_fts_2b_poly (sys,
 			&uoe[0], &uoe[11],
 			&(sys->pos[0]), &(sys->pos[3]),
 			1.0, 1.0,
 			&fts_poly[0], &fts_poly[11]);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
 
   int check = 0;
   check += compare (fts_mono [0], fts_poly [0],  "check_lub_fts_2b_poly: Fx1", verbose, tiny);
@@ -105,9 +219,16 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
   check += compare (fts_mono[21], fts_poly[21],  "check_lub_fts_2b_poly: Syy2", verbose, tiny);
 
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_lub_fts_2b_poly : PASSED\n\n");
+      fprintf (stdout, "check_lub_fts_2b_poly :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_lub_fts_2b_poly : PASSED\n\n");
+      else
+	fprintf (stdout, "check_lub_fts_2b_poly : FAILED\n\n");
     }
 
   stokes_free (sys);
@@ -160,16 +281,23 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
       mat_poly [i] = 0.0;
     }
 
+  double t0, t;
+  t0 = ptime_ms_d ();
   matrix_lub_fts_2b (sys,
 		     0, 1,
 		     &(sys->pos[0]), &(sys->pos[3]),
 		     22, mat_mono);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
 
+  t0 = ptime_ms_d ();
   matrix_lub_fts_2b_poly (sys,
 			  0, 1,
 			  &(sys->pos[0]), &(sys->pos[3]),
 			  1.0, 1.0,
 			  22, mat_poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
 
   int check = 0;
   char label [80];
@@ -184,9 +312,16 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
     }
 
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_matrix_lub_fts_2b_poly : PASSED\n\n");
+      fprintf (stdout, "check_matrix_lub_fts_2b_poly :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      if (check == 0)
+	fprintf (stdout, "check_matrix_lub_fts_2b_poly : PASSED\n\n");
+      else
+	fprintf (stdout, "check_matrix_lub_fts_2b_poly : FAILED\n\n");
     }
 
   stokes_free (sys);
