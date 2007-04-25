@@ -1,6 +1,6 @@
 /* test code for polydisperse handling for non-periodic systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-poly.c,v 1.3 2007/04/18 01:29:08 kichiki Exp $
+ * $Id: check-poly.c,v 1.4 2007/04/25 05:39:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@
 #include <stokes.h> // struct stokes
 #include <non-ewald.h> // scalars_nonewald_poly(), scalars_nonewald()
 #include <ewald.h> // scalars_ewald_real_poly(), scalars_ewald_real()
+#include <bench.h> // ptime_ms_d()
 
 #include "check.h" // compare()
 
@@ -51,10 +52,17 @@ check_scalars_nonewald_poly (double r,
   int check = 0;
 
   double poly[11];
+  double t0, t;
+  t0 = ptime_ms_d ();
   scalars_nonewald_poly (2, /* FTS */ r, 1.0, 1.0, poly);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
 
   double mono[11];
+  t0 = ptime_ms_d ();
   scalars_nonewald (2, /* FTS */ r, mono);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
 
   check += compare (poly [0], mono [0], "check_scalars_nonewald_poly : xa",
 		    verbose, tiny);
@@ -81,6 +89,10 @@ check_scalars_nonewald_poly (double r,
 
   if (verbose != 0)
     {
+      fprintf (stdout, "check_scalars_nonewald_poly :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
       if (check == 0)
 	fprintf (stdout, "check_scalars_nonewald_poly : PASSED\n\n");
       else
@@ -218,6 +230,8 @@ check_scalars_ewald_real_poly (double r, double xi,
   int check = 0;
 
   double poly[11];
+  double t0, t;
+  t0 = ptime_ms_d ();
   scalars_ewald_real_poly (2, // FTS
 			   xi, r, 1.0, 1.0,
 			   poly + 0,
@@ -231,8 +245,11 @@ check_scalars_ewald_real_poly (double r, double xi,
 			   poly + 8,
 			   poly + 9,
 			   poly +10);
+  t = ptime_ms_d ();
+  double ptime_poly = t - t0;
 
   double mono[11];
+  t0 = ptime_ms_d ();
   scalars_ewald_real (2, // FTS
 		      xi, r,
 		      mono + 0,
@@ -246,6 +263,8 @@ check_scalars_ewald_real_poly (double r, double xi,
 		      mono + 8,
 		      mono + 9,
 		      mono +10);
+  t = ptime_ms_d ();
+  double ptime_mono = t - t0;
 
   check += compare (poly [0], mono [0], "check_scalars_ewald_real_poly : xa",
 		    verbose, tiny);
@@ -272,6 +291,10 @@ check_scalars_ewald_real_poly (double r, double xi,
 
   if (verbose != 0)
     {
+      fprintf (stdout, "check_scalars_ewald_real_poly :"
+	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
       if (check == 0)
 	fprintf (stdout, "check_scalars_ewald_real_poly : PASSED\n\n");
       else
