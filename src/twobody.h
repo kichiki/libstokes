@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.5 2007/04/13 01:54:23 kichiki Exp $
+ * $Id: twobody.h,v 1.6 2007/04/25 05:35:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,30 @@
  */
 #ifndef	_TWOBODY_H_
 #define	_TWOBODY_H_
+
+
+struct twobody_f {
+  int nmax;
+  double lambda;
+
+  double *XA;
+  double *YA;
+  double *YB;
+  double *XC;
+  double *YC;
+  double *XG;
+  double *YG;
+  double *YH;
+  double *XM;
+  double *YM;
+  double *ZM;
+};
+
+struct twobody_f_list {
+  int n;
+  double *l; // lambda
+  struct twobody_f **f;
+};
 
 
 void twobody_XA (int n, double l, double * f);
@@ -40,6 +64,22 @@ void twobody_ZM (int n, double l, double * f);
 
 void twobody_XP (int n, double l, double * f);
 void twobody_XQ (int n, double l, double * f);
+
+
+/** utility routines for struct twobody_f and twobody_f_list **/
+
+struct twobody_f *
+twobody_f_init (int nmax, double lambda);
+void
+twobody_f_free (struct twobody_f *f);
+
+struct twobody_f_list *
+twobody_f_list_init (void);
+void
+twobody_f_list_append (struct twobody_f_list *list,
+		       int nmax, double lambda);
+void
+twobody_f_list_free (struct twobody_f_list *list);
 
 
 /** far form **/
@@ -358,6 +398,32 @@ void twobody_ZM_lub (int n, double l, double s,
 void twobody_lub (int n, double l, double s,
 		  double *lub);
 
+/* calc scalar functions of resistance problem by lub form
+ * all-in-one form (to reduce calculating the same parameters)
+ * INPUT
+ *  f2b     : struct twobody_f for the pair
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_lub_with_f (struct twobody_f *f2b,
+			 int version,
+			 int n, double l, double s,
+			 double *lub);
 
 /* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
  * INPUT
