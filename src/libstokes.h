@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.27 2007/04/20 01:51:48 kichiki Exp $
+ * $Id: libstokes.h,v 1.28 2007/04/25 05:37:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,6 +37,8 @@ struct stokes {
   // parameters for the polydisperse system
   int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
   int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
+  int *poly_table; // for (i,j), [i*np+j] gives the index of "twobody_f_list"
+  struct twobody_f_list *twobody_f_list;
 
   /* imposed flow */
   double Ui[3];

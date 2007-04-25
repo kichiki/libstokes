@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.14 2007/04/20 01:50:47 kichiki Exp $
+ * $Id: stokes.c,v 2.15 2007/04/25 05:36:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,8 @@
 #include <math.h> /* log() */
 #include <libiter.h>
 #include "memory-check.h" // macro CHECK_MALLOC
+
+#include "twobody.h" // twobody_f_free()
 
 #include "stokes.h"
 
@@ -305,6 +307,8 @@ stokes_init (void)
   // parameters for the polydisperse system
   sys->twobody_nmax = 100;
   sys->twobody_lub  = 1; // use lub form for twobody_scalars_res()
+  sys->poly_table = NULL;
+  sys->twobody_f_list = NULL;
 
   sys->Ui[0] = 0.0;
   sys->Ui[1] = 0.0;
@@ -401,6 +405,10 @@ stokes_free (struct stokes * sys)
     {
       if (sys->pos != NULL) free (sys->pos);
       if (sys->a   != NULL) free (sys->a);
+
+      if (sys->poly_table != NULL) free (sys->poly_table);
+      if (sys->twobody_f_list != NULL)
+	twobody_f_list_free (sys->twobody_f_list);
 
       if (sys->rlx != NULL) free (sys->rlx);
       if (sys->rly != NULL) free (sys->rly);
@@ -714,11 +722,36 @@ stokes_set_pos_fixed (struct stokes *sys,
     }
 }
 
+
+/*
+ * OUTPUT
+ * (returned value) : the index of list with lambda if lambda exists
+ *                    (-1) is returned if no entry in the list.
+ */
+static int
+twobody_f_list_get_index (struct twobody_f_list *list,
+			  double lambda)
+{
+  //if (list == NULL) return (-1);
+
+  int i;
+  for (i = 0; i < list->n; i ++)
+    {
+      if (lambda == list->l[i]) return i;
+    }
+  return (-1);
+}
+
 /* set radius (sys->a[]).
  * Note that the default setting (sys->a == NULL) is for monodisperse system
  * where a=1 for all particles
  * INPUT
  *  a[np] :
+ *  sys->twobody_nmax : define sys->twobody_nmax before calling.
+ * OUTPUT
+ *  sys->a[np]             :
+ *  sys->poly_table[np*np] :
+ *  sys->twobody_f_list[]  :
  */
 void
 stokes_set_radius (struct stokes *sys,
@@ -733,4 +766,52 @@ stokes_set_radius (struct stokes *sys,
     {
       sys->a[i] = a[i];
     }
+
+  //sys->poly_table = (int *)malloc (sizeof (int) * sys->np * sys->np);
+  sys->poly_table = (int *)realloc (sys->poly_table,
+				    sizeof (int) * sys->np * sys->np);
+  CHECK_MALLOC (sys->poly_table, "stokes_set_radius");
+  if (sys->twobody_f_list != NULL)
+    {
+      twobody_f_list_free (sys->twobody_f_list);
+    }
+  sys->twobody_f_list = twobody_f_list_init();
+
+  double lambda;
+  int il;
+  for (i = 0; i < sys->np; i ++)
+    {
+      sys->poly_table [i *sys->np+ i] = -1; // undefined for the self
+      int j;
+      for (j = i+1; j < sys->np; j ++)
+	{
+	  // for (i,j) pair
+	  lambda = a[j] / a[i];
+	  il = twobody_f_list_get_index (sys->twobody_f_list, lambda);
+	  if (il < 0)
+	    {
+	      // lambda does not exist in the "list"
+	      twobody_f_list_append (sys->twobody_f_list,
+				     sys->twobody_nmax, lambda);
+	      // the last entry is the one
+	      il = sys->twobody_f_list->n - 1;
+	    }
+	  sys->poly_table [i *sys->np+ j] = il;
+
+	  // for (j,i) pair
+	  lambda = a[i] / a[j];
+	  il = twobody_f_list_get_index (sys->twobody_f_list, lambda);
+	  if (il < 0)
+	    {
+	      // lambda does not exist in the "list"
+	      twobody_f_list_append (sys->twobody_f_list,
+				     sys->twobody_nmax, lambda);
+	      // the last entry is the one
+	      il = sys->twobody_f_list->n - 1;
+	    }
+	  sys->poly_table [j *sys->np+ i] = il;
+	}
+    }
+  // check
+  fprintf (stderr, "twobody_f_list->n = %d\n", sys->twobody_f_list->n);
 }
