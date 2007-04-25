@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.6 2007/04/20 02:04:16 kichiki Exp $
+ * $Id: test-all.c,v 1.7 2007/04/25 05:57:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include "check-lapack-inv.h" // check_lapack_inv_()
 #include "check-mul-matrices.h" // check_mul_matrices()
 #include "check-solve-gen-linear.h" // check_solve_gen_linear()
+#include "check-twobody.h" // check_twobody_scalars_res_with_equal()
 #include "check-poly.h" // check_scalars_nonewald_poly()
 #include "check-minv.h" // check_matrix_mob_nonewald_fts(), check_minv_fts()
 #include "check-minv-poly.h" // check_scalars_minv_[f,ft,fts]_poly_...()
@@ -47,6 +48,10 @@ main (int argc, char** argv)
   double a1 = 1.9;
   double a2 = 0.1;
 
+  // check-twobody.c
+  check_twobody_lub(2, /* FTS */ r, a1, a2, 100, 1, 2.0e-16);
+  check_twobody_scalars_res_with_equal(r, 50, 1, 8.0e-7);
+
   // check-poly.c
   check_scalars_nonewald_poly (r, 1, 1.0e-17);
   check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
@@ -66,6 +71,7 @@ main (int argc, char** argv)
 
   // check-lub-poly.c
   // the reason of such big tiny is because of the accuracy of two-body-res.c
+  check_lub_scalars_poly (r, 50, 1, 3.0e-6);
   check_lub_fts_2b_poly (r, 1, 1.0e-4);
   check_matrix_lub_fts_2b_poly (r, 1, 1.0e-5);
   check_atimes_matrix_lub_fts_2b_poly (r, a1, a2, 1, 1.0e-15);
@@ -97,21 +103,21 @@ main (int argc, char** argv)
 					      ewald_eps, 1, 6.0e-15);
 
   check_atimes_ewald_3all_poly_SC_2 (version, 0, // x dir
-				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+				     phi, ewald_tr, ewald_eps, 1, 4.0e-15);
   check_atimes_ewald_3all_poly_SC_2 (version, 1, // y dir
-				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+				     phi, ewald_tr, ewald_eps, 1, 5.0e-15);
   check_atimes_ewald_3all_poly_SC_2 (version, 2, // z dir
-				     phi, ewald_tr, ewald_eps, 1, 2.0e-15);
+				     phi, ewald_tr, ewald_eps, 1, 4.0e-15);
 
   check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 0, // x dir
 					      phi, ewald_tr, ewald_eps,
-					      1, 3.0e-15);
+					      1, 2.0e-14);
   check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 1, // y dir
 					      phi, ewald_tr, ewald_eps,
 					      1, 2.0e-14);
   check_make_matrix_mob_ewald_3all_poly_SC_2 (version, 2, // z dir
 					      phi, ewald_tr, ewald_eps,
-					      1, 2.0e-15);
+					      1, 1.0e-14);
 
   return 0;
 }
