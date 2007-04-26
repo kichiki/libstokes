@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.13 2007/04/20 01:54:07 kichiki Exp $
+ * $Id: fts.c,v 2.14 2007/04/26 05:13:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@
 #include "minv-poly.h" // scalars_lub_poly_full()
 #include "f.h" // matrix_ij_A ()
 #include "ft.h" // matrix_ij_B (), matrix_ij_C ()
+#include "twobody.h" // struct twobody_f
 
 #include "fts.h"
 
@@ -2019,7 +2020,8 @@ matrix_lub_fts_2b (struct stokes * sys,
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   a1, a2 : radii for particles 1 and 2
+ *   i1, i2 : particle index for particles 1 and 2
+ *  (a1, a2 : radii for particles 1 and 2)
  * OUTPUT
  *   fts1 [11] : force, torque, stresslet
  *   fts2 [11] :
@@ -2028,7 +2030,8 @@ void
 calc_lub_fts_2b_poly (struct stokes *sys,
 		      const double *uoe1, const double *uoe2,
 		      const double *x1, const double *x2,
-		      double a1, double a2,
+		      //double a1, double a2,
+		      int i1, int i2,
 		      double *fts1, double *fts2)
 {
   double lub [44];
@@ -2050,9 +2053,16 @@ calc_lub_fts_2b_poly (struct stokes *sys,
   ey = yy / rr;
   ez = zz / rr;
 
+  double a1 = sys->a[i1];
+  double a2 = sys->a[i2];
+  struct twobody_f *f12
+    = sys->twobody_f_list->f[sys->poly_table[i1*sys->np+i2]];
+  struct twobody_f *f21
+    = sys->twobody_f_list->f[sys->poly_table[i2*sys->np+i1]];
   /* calc scalar functions of lubrication */
   scalars_lub_poly_full (2, // FTS version
 			 rr, a1, a2,
+			 f12, f21,
 			 sys->twobody_nmax,
 			 sys->twobody_lub,
 			 lub);
@@ -2163,7 +2173,8 @@ calc_lub_fts_2b_poly (struct stokes *sys,
  *   j      : particle index for '2'
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   a1, a2 : radii for particles 1 and 2
+ *   i1, i2 : particle index for particles 1 and 2
+ *  (a1, a2 : radii for particles 1 and 2)
  *   n      : dimension of matrix 'mat' (must be np*11)
  * OUTPUT
  *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
@@ -2172,7 +2183,8 @@ void
 matrix_lub_fts_2b_poly (struct stokes *sys,
 			int i, int j,
 			const double *x1, const double *x2,
-			double a1, double a2,
+			//double a1, double a2,
+			int i1, int i2,
 			int n, double *mat)
 {
   double lub [44];
@@ -2194,9 +2206,16 @@ matrix_lub_fts_2b_poly (struct stokes *sys,
   ey = yy / rr;
   ez = zz / rr;
 
+  double a1 = sys->a[i1];
+  double a2 = sys->a[i2];
+  struct twobody_f *f12
+    = sys->twobody_f_list->f[sys->poly_table[i1*sys->np+i2]];
+  struct twobody_f *f21
+    = sys->twobody_f_list->f[sys->poly_table[i2*sys->np+i1]];
   /* calc scalar functions of lubrication */
   scalars_lub_poly_full (2, // FTS version
 			 rr, a1, a2,
+			 f12, f21,
 			 sys->twobody_nmax,
 			 sys->twobody_lub,
 			 lub);

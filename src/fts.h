@@ -1,7 +1,7 @@
 /* header file for fts.c --
  * subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.h,v 2.7 2007/04/20 01:54:33 kichiki Exp $
+ * $Id: fts.h,v 2.8 2007/04/26 05:13:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -255,7 +255,7 @@ matrix_lub_fts_2b (struct stokes * sys,
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   a1, a2 : radii for particles 1 and 2
+ *   i1, i2 : particle index for particles 1 and 2
  * OUTPUT
  *   fts1 [11] : force, torque, stresslet
  *   fts2 [11] :
@@ -264,7 +264,7 @@ void
 calc_lub_fts_2b_poly (struct stokes *sys,
 		      const double *uoe1, const double *uoe2,
 		      const double *x1, const double *x2,
-		      double a1, double a2,
+		      int i1, int i2,
 		      double *fts1, double *fts2);
 
 /* calculate lub-matrix in FTS version for pair of unequal spheres 1 and 2
@@ -280,7 +280,7 @@ calc_lub_fts_2b_poly (struct stokes *sys,
  *   j      : particle index for '2'
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
- *   a1, a2 : radii for particles 1 and 2
+ *   i1, i2 : particle index for particles 1 and 2
  *   n      : dimension of matrix 'mat' (must be np*11)
  * OUTPUT
  *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
@@ -289,7 +289,7 @@ void
 matrix_lub_fts_2b_poly (struct stokes *sys,
 			int i, int j,
 			const double *x1, const double *x2,
-			double a1, double a2,
+			int i1, int i2,
 			int n, double *mat);
 
 /* pre-process for imposed flow shifting, that is, converting E
