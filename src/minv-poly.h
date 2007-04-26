@@ -1,7 +1,7 @@
 /* header file for minv-poly.c --
  * calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.h,v 1.3 2007/04/14 00:33:00 kichiki Exp $
+ * $Id: minv-poly.h,v 1.4 2007/04/26 05:11:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -105,6 +105,9 @@ scalars_res_poly_scale_SD (int version,
  * INPUT
  *  r      := x_2 - x_1
  *  a1, a2 : radius of particle a and b
+ *  f12    : (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
  *  n : max order
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -125,6 +128,7 @@ scalars_res_poly_scale_SD (int version,
 void
 scalars_lub_poly (int version,
 		  double r, double a1, double a2,
+		  struct twobody_f *f12,
 		  int n, int flag_lub,
 		  double *lub);
 
@@ -132,6 +136,9 @@ scalars_lub_poly (int version,
  * INPUT
  *  r      := x_2 - x_1
  *  a1, a2 : radius of particle a and b
+ *  f12,f21: (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
  *  n : max order
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -152,6 +159,7 @@ scalars_lub_poly (int version,
 void
 scalars_lub_poly_full (int version,
 		       double r, double a1, double a2,
+		       struct twobody_f *f12, struct twobody_f *f21,
 		       int n, int flag_lub,
 		       double *lub);
 

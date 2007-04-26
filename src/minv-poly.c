@@ -1,6 +1,6 @@
 /* calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.c,v 1.3 2007/04/14 00:32:26 kichiki Exp $
+ * $Id: minv-poly.c,v 1.4 2007/04/26 05:11:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -645,6 +645,9 @@ scalars_res_poly_scale_SD (int version,
  * INPUT
  *  r      := x_2 - x_1
  *  a1, a2 : radius of particle a and b
+ *  f12    : (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
  *  n : max order
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -665,6 +668,7 @@ scalars_res_poly_scale_SD (int version,
 void
 scalars_lub_poly (int version,
 		  double r, double a1, double a2,
+		  struct twobody_f *f12,
 		  int n, int flag_lub,
 		  double *lub)
 {
@@ -676,7 +680,8 @@ scalars_lub_poly (int version,
     }
 
   double res  [22];
-  twobody_scalars_res (r, a1, a2,
+  twobody_scalars_res (version,
+		       r, a1, a2, f12,
 		       n, flag_lub, 1, // dimensional
 		       res);
 
@@ -730,6 +735,9 @@ scalars_lub_poly (int version,
  * INPUT
  *  r      := x_2 - x_1
  *  a1, a2 : radius of particle a and b
+ *  f12,f21: (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
  *  n : max order
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -750,6 +758,7 @@ scalars_lub_poly (int version,
 void
 scalars_lub_poly_full (int version,
 		       double r, double a1, double a2,
+		       struct twobody_f *f12, struct twobody_f *f21,
 		       int n, int flag_lub,
 		       double *lub)
 {
@@ -761,12 +770,14 @@ scalars_lub_poly_full (int version,
     }
 
   double res12 [22];
-  twobody_scalars_res (r, a1, a2,
+  twobody_scalars_res (version,
+		       r, a1, a2, f12,
 		       n, flag_lub, 1, // dimensional
 		       res12);
 
   double res21 [22];
-  twobody_scalars_res (r, a2, a1,
+  twobody_scalars_res (version,
+		       r, a2, a1, f21,
 		       n, flag_lub, 1, // dimensional
 		       res21);
 
