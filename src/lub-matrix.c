@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.10 2007/04/20 01:55:24 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.11 2007/04/26 05:14:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -224,7 +224,7 @@ make_matrix_lub_3f (struct stokes *sys,
 		      matrix_lub_f_2b_poly (sys,
 					    i, j,
 					    sys->pos + i3, sys->pos + j3,
-					    sys->a[i], sys->a[j],
+					    i, j,
 					    n, mat);
 		    }
 		}
@@ -266,7 +266,7 @@ make_matrix_lub_3f (struct stokes *sys,
 				    (sys,
 				     i, j,
 				     sys->pos + i3, tmp_pos,
-				     sys->a[i], sys->a[j],
+				     i, j,
 				     n, mat);
 				}
 			    }
@@ -353,7 +353,7 @@ make_matrix_lub_3ft (struct stokes *sys,
 		      matrix_lub_ft_2b_poly (sys,
 					     i, j,
 					     sys->pos + i3, sys->pos + j3,
-					     sys->a[i], sys->a[j],
+					     i, j,
 					     n, mat);
 		    }
 		}
@@ -395,7 +395,7 @@ make_matrix_lub_3ft (struct stokes *sys,
 				    (sys,
 				     i, j,
 				     sys->pos + i3, tmp_pos,
-				     sys->a[i], sys->a[j],
+				     i, j,
 				     n, mat);
 				}
 			    }
@@ -482,7 +482,7 @@ make_matrix_lub_3fts (struct stokes *sys,
 		      matrix_lub_fts_2b_poly (sys,
 					      i, j,
 					      sys->pos + i3, sys->pos + j3,
-					      sys->a[i], sys->a[j],
+					      i, j,
 					      n, mat);
 		    }
 		}
@@ -524,7 +524,7 @@ make_matrix_lub_3fts (struct stokes *sys,
 				    (sys,
 				     i, j,
 				     sys->pos + i3, tmp_pos,
-				     sys->a[i], sys->a[j],
+				     i, j,
 				     n, mat);
 				}
 			    }
