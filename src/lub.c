@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.7 2007/04/20 01:55:00 kichiki Exp $
+ * $Id: lub.c,v 5.8 2007/04/26 05:13:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -223,7 +223,7 @@ calc_lub_3f (struct stokes *sys,
 		      calc_lub_f_2b_poly (sys,
 					  u + i3, u + j3,
 					  sys->pos + i3, sys->pos + j3,
-					  sys->a[i], sys->a[j],
+					  i, j,
 					  f + i3, f + j3);
 		    }
 		}
@@ -263,7 +263,7 @@ calc_lub_3f (struct stokes *sys,
 				  calc_lub_f_2b_poly (sys,
 						      u + i3, u + j3,
 						      sys->pos + i3, tmp_pos,
-						      sys->a[i], sys->a[j],
+						      i, j,
 						      f + i3, f + j3);
 				}
 			    }
@@ -351,7 +351,7 @@ calc_lub_3ft (struct stokes * sys,
 		      calc_lub_ft_2b_poly (sys,
 					   uo + i6, uo + j6,
 					   sys->pos + i3, sys->pos + j3,
-					   sys->a[i], sys->a[j],
+					   i, j,
 					   ft + i6, ft + j6);
 		    }
 		}
@@ -391,7 +391,7 @@ calc_lub_3ft (struct stokes * sys,
 				  calc_lub_ft_2b_poly (sys,
 						       uo + i6, uo + j6,
 						       sys->pos + i3, tmp_pos,
-						       sys->a[i], sys->a[j],
+						       i, j,
 						       ft + i6, ft + j6);
 				}
 			    }
@@ -479,7 +479,7 @@ calc_lub_3fts (struct stokes * sys,
 		      calc_lub_fts_2b_poly (sys,
 					    uoe + i11, uoe + j11,
 					    sys->pos + i3, sys->pos + j3,
-					    sys->a[i], sys->a[j],
+					    i, j,
 					    fts + i11, fts + j11);
 		    }
 		}
@@ -519,7 +519,7 @@ calc_lub_3fts (struct stokes * sys,
 				  calc_lub_fts_2b_poly (sys,
 							uoe + i11, uoe + j11,
 							sys->pos + i3, tmp_pos,
-							sys->a[i], sys->a[j],
+							i, j,
 							fts + i11, fts + j11);
 				}
 			    }
