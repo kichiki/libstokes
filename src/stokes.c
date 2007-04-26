@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.15 2007/04/25 05:36:19 kichiki Exp $
+ * $Id: stokes.c,v 2.16 2007/04/26 05:14:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -404,11 +404,14 @@ stokes_free (struct stokes * sys)
   if (sys != NULL)
     {
       if (sys->pos != NULL) free (sys->pos);
-      if (sys->a   != NULL) free (sys->a);
 
+      stokes_unset_radius (sys);
+      /*
+      if (sys->a != NULL) free (sys->a);
       if (sys->poly_table != NULL) free (sys->poly_table);
       if (sys->twobody_f_list != NULL)
 	twobody_f_list_free (sys->twobody_f_list);
+      */
 
       if (sys->rlx != NULL) free (sys->rlx);
       if (sys->rly != NULL) free (sys->rly);
@@ -742,7 +745,7 @@ twobody_f_list_get_index (struct twobody_f_list *list,
   return (-1);
 }
 
-/* set radius (sys->a[]).
+/* set radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
  * Note that the default setting (sys->a == NULL) is for monodisperse system
  * where a=1 for all particles
  * INPUT
@@ -757,7 +760,10 @@ void
 stokes_set_radius (struct stokes *sys,
 		   const double *a)
 {
-  if (sys->a != NULL) free (sys->a);
+  // make sure the entries are free
+  stokes_unset_radius (sys);
+
+  // set sys->a[]
   sys->a = (double *)malloc (sizeof (double) * sys->np);
   CHECK_MALLOC (sys->a, "stokes_set_radius");
 
@@ -767,14 +773,10 @@ stokes_set_radius (struct stokes *sys,
       sys->a[i] = a[i];
     }
 
-  //sys->poly_table = (int *)malloc (sizeof (int) * sys->np * sys->np);
-  sys->poly_table = (int *)realloc (sys->poly_table,
-				    sizeof (int) * sys->np * sys->np);
+  // make sys->poly_table[] and sys->twobody_f_list[]
+  sys->poly_table = (int *)malloc (sizeof (int) * sys->np * sys->np);
   CHECK_MALLOC (sys->poly_table, "stokes_set_radius");
-  if (sys->twobody_f_list != NULL)
-    {
-      twobody_f_list_free (sys->twobody_f_list);
-    }
+
   sys->twobody_f_list = twobody_f_list_init();
 
   double lambda;
@@ -812,6 +814,30 @@ stokes_set_radius (struct stokes *sys,
 	  sys->poly_table [j *sys->np+ i] = il;
 	}
     }
-  // check
-  fprintf (stderr, "twobody_f_list->n = %d\n", sys->twobody_f_list->n);
+}
+
+/* unset radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
+ * that is, the system is treated for monodisperse system
+ * where a=1 for all particles as in the default setting.
+ * INPUT
+ *  sys                    : struct stokes
+ * OUTPUT
+ *  sys->a[np]             : freed and set NULL
+ *  sys->poly_table[np*np] : freed and set NULL
+ *  sys->twobody_f_list[]  : freed and set NULL
+ */
+void
+stokes_unset_radius (struct stokes *sys)
+{
+  if (sys->a != NULL) free (sys->a);
+  sys->a = NULL;
+
+  if (sys->poly_table != NULL) free (sys->poly_table);
+  sys->poly_table = NULL;
+
+  if (sys->twobody_f_list != NULL)
+    {
+      twobody_f_list_free (sys->twobody_f_list);
+    }
+  sys->twobody_f_list = NULL;
 }

@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.28 2007/04/25 05:37:14 kichiki Exp $
+ * $Id: libstokes.h,v 1.29 2007/04/26 05:15:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -189,15 +189,32 @@ void
 stokes_set_pos_fixed (struct stokes *sys,
 		      const double *pos);
 
-/* set radius (sys->a[]).
+/* set radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
  * Note that the default setting (sys->a == NULL) is for monodisperse system
  * where a=1 for all particles
  * INPUT
  *  a[np] :
+ *  sys->twobody_nmax : define sys->twobody_nmax before calling.
+ * OUTPUT
+ *  sys->a[np]             :
+ *  sys->poly_table[np*np] :
+ *  sys->twobody_f_list[]  :
  */
 void
 stokes_set_radius (struct stokes *sys,
 		   const double *a);
+/* unset radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
+ * that is, the system is treated for monodisperse system
+ * where a=1 for all particles as in the default setting.
+ * INPUT
+ *  sys                    : struct stokes
+ * OUTPUT
+ *  sys->a[np]             : freed and set NULL
+ *  sys->poly_table[np*np] : freed and set NULL
+ *  sys->twobody_f_list[]  : freed and set NULL
+ */
+void
+stokes_unset_radius (struct stokes *sys);
 
 
 /************************************
