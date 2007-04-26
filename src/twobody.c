@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.6 2007/04/25 05:34:59 kichiki Exp $
+ * $Id: twobody.c,v 1.7 2007/04/26 05:10:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -623,6 +623,7 @@ void twobody_ZM_far (int n, double l, double s,
 
 /* calc scalar functions of resistance problem by 1/s expansion
  * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
  *  n : max order
  *  l := a2 / a1
  *  s := 2 * r / (a1 + a2)
@@ -640,14 +641,18 @@ void twobody_ZM_far (int n, double l, double s,
  *     18,19 : (YM11, YM12)
  *     20,21 : (ZM11, ZM12)
  */
-void twobody_far (int n, double l, double s,
+void twobody_far (int version, int n, double l, double s,
 		  double *far)
 {
   twobody_XA_far (n, l, s, far +  0, far +  1);
   twobody_YA_far (n, l, s, far +  2, far +  3);
+  if (version == 0) return; // F version
+
   twobody_YB_far (n, l, s, far +  4, far +  5);
   twobody_XC_far (n, l, s, far +  6, far +  7);
   twobody_YC_far (n, l, s, far +  8, far +  9);
+  if (version == 1) return; // FT version
+
   twobody_XG_far (n, l, s, far + 10, far + 11);
   twobody_YG_far (n, l, s, far + 12, far + 13);
   twobody_YH_far (n, l, s, far + 14, far + 15);
@@ -1582,43 +1587,6 @@ void twobody_ZM_lub (int n, double l, double s,
 
 /* calc scalar functions of resistance problem by lub form
  * INPUT
- *  n : max order
- *  l := a2 / a1
- *  s := 2 * r / (a1 + a2)
- * OUTPUT
- *  far [22] : scalar functions
- *      0, 1 : (XA11, XA12)
- *      2, 3 : (YA11, YA12)
- *      4, 5 : (YB11, YB12)
- *      6, 7 : (XC11, XC12)
- *      8  9 : (YC11, YC12)
- *     10,11 : (XG11, XG12)
- *     12,13 : (YG11, YG12)
- *     14,15 : (YH11, YH12)
- *     16,17 : (XM11, XM12)
- *     18,19 : (YM11, YM12)
- *     20,21 : (ZM11, ZM12)
- */
-void twobody_lub (int n, double l, double s,
-		  double *lub)
-{
-  twobody_XA_lub (n, l, s, lub +  0, lub +  1);
-  twobody_YA_lub (n, l, s, lub +  2, lub +  3);
-  twobody_YB_lub (n, l, s, lub +  4, lub +  5);
-  twobody_XC_lub (n, l, s, lub +  6, lub +  7);
-  twobody_YC_lub (n, l, s, lub +  8, lub +  9);
-  twobody_XG_lub (n, l, s, lub + 10, lub + 11);
-  twobody_YG_lub (n, l, s, lub + 12, lub + 13);
-  twobody_YH_lub (n, l, s, lub + 14, lub + 15);
-  twobody_XM_lub (n, l, s, lub + 16, lub + 17);
-  twobody_YM_lub (n, l, s, lub + 18, lub + 19);
-  twobody_ZM_lub (n, l, s, lub + 20, lub + 21);
-}
-
-/* calc scalar functions of resistance problem by lub form
- * all-in-one form (to reduce calculating the same parameters)
- * INPUT
- *  f2b     : struct twobody_f for the pair
  *  version : 0=F, 1=FT, 2=FTS.
  *  n : max order
  *  l := a2 / a1
@@ -1637,18 +1605,63 @@ void twobody_lub (int n, double l, double s,
  *     18,19 : (YM11, YM12)
  *     20,21 : (ZM11, ZM12)
  */
-void twobody_lub_with_f (struct twobody_f *f2b,
-			 int version,
+void twobody_lub (int version, int n, double l, double s,
+		  double *lub)
+{
+  twobody_XA_lub (n, l, s, lub +  0, lub +  1);
+  twobody_YA_lub (n, l, s, lub +  2, lub +  3);
+  if (version == 0) return; // F version
+
+  twobody_YB_lub (n, l, s, lub +  4, lub +  5);
+  twobody_XC_lub (n, l, s, lub +  6, lub +  7);
+  twobody_YC_lub (n, l, s, lub +  8, lub +  9);
+  if (version == 1) return; // FT version
+
+  twobody_XG_lub (n, l, s, lub + 10, lub + 11);
+  twobody_YG_lub (n, l, s, lub + 12, lub + 13);
+  twobody_YH_lub (n, l, s, lub + 14, lub + 15);
+  twobody_XM_lub (n, l, s, lub + 16, lub + 17);
+  twobody_YM_lub (n, l, s, lub + 18, lub + 19);
+  twobody_ZM_lub (n, l, s, lub + 20, lub + 21);
+}
+
+/* calc scalar functions of resistance problem by lub form
+ * all-in-one form (to reduce calculating the same parameters)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_lub_with_f (int version,
+			 struct twobody_f *f12,
 			 int n, double l, double s,
 			 double *lub)
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
   double *f = NULL;
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
+      fprintf (stderr, "# f12 is NULL\n");
       f = (double *)malloc (sizeof (double) * n);
-      CHECK_MALLOC (f, "twobody_XA_lub");
+      CHECK_MALLOC (f, "twobody_lub_with_f");
     }
 
   double l1 = 1.0 + l;
@@ -1678,13 +1691,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   int m;
 
   // XA
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_XA (n, l, f);
     }
   else
     {
-      f = f2b->XA;
+      f = f12->XA;
     }
 
   lub [0] = 0.0;
@@ -1743,13 +1756,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
 
 
   // YA
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YA (n, l, f);
     }
   else
     {
-      f = f2b->YA;
+      f = f12->YA;
     }
 
   lub [2] = 0.0;
@@ -1808,13 +1821,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
 
 
   // YB
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YB (n, l, f);
     }
   else
     {
-      f = f2b->YB;
+      f = f12->YB;
     }
 
   lub [4] = 0.0;
@@ -1867,13 +1880,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   lub [5] *= -4.0 / l12;
 
   // XC
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_XC (n, l, f);
     }
   else
     {
-      f = f2b->XC;
+      f = f12->XC;
     }
 
   lub [6] = 0.0;
@@ -1909,17 +1922,16 @@ void twobody_lub_with_f (struct twobody_f *f2b,
       s2m  *= s21;
     }
 
-  //lub [7] *= -8.0 / l1 / l1 / l1;
   lub [7] *= -8.0 / l13;
 
   // YC
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YC (n, l, f);
     }
   else
     {
-      f = f2b->YC;
+      f = f12->YC;
     }
 
   lub [8] = 0.0;
@@ -1973,7 +1985,6 @@ void twobody_lub_with_f (struct twobody_f *f2b,
       s2m  *= s21;
     }
 
-  //lub [9] *= 8.0 / l1 / l1 / l1;
   lub [9] *= 8.0 / l13;
 
   // FT version
@@ -1991,13 +2002,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   
 
   // XG
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_XG (n, l, f);
     }
   else
     {
-      f = f2b->XG;
+      f = f12->XG;
     }
 
   lub[10] = 0.0;
@@ -2040,17 +2051,16 @@ void twobody_lub_with_f (struct twobody_f *f2b,
       s2m  *= s21;
     }
 
-  //lub[11] *= 4.0 / l1 / l1;
   lub[11] *= 4.0 / l12;
 
   // YG
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YG (n, l, f);
     }
   else
     {
-      f = f2b->YG;
+      f = f12->YG;
     }
 
   lub[12] = 0.0;
@@ -2092,17 +2102,16 @@ void twobody_lub_with_f (struct twobody_f *f2b,
       s2m  *= s21;
     }
 
-  //lub[13] *= 4.0 / l1 / l1;
   lub[13] *= 4.0 / l12;
 
   // YH
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YH (n, l, f);
     }
   else
     {
-      f = f2b->YH;
+      f = f12->YH;
     }
 
   lub[14] = 0.0;
@@ -2146,17 +2155,16 @@ void twobody_lub_with_f (struct twobody_f *f2b,
       s2m  *= s21;
     }
 
-  //lub[15] *= 8.0 / l12 / l1;
   lub[15] *= 8.0 / l13;
 
   // XM
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_XM (n, l, f);
     }
   else
     {
-      f = f2b->XM;
+      f = f12->XM;
     }
 
   lub[16] = 0.0;
@@ -2205,13 +2213,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   lub[17] *= 8.0 / l13;
 
   // YM
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_YM (n, l, f);
     }
   else
     {
-      f = f2b->YM;
+      f = f12->YM;
     }
 
   lub[18] = 0.0;
@@ -2259,13 +2267,13 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   lub[19] *= 8.0 / l13;
 
   // ZM
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       twobody_ZM (n, l, f);
     }
   else
     {
-      f = f2b->ZM;
+      f = f12->ZM;
     }
 
   lub[20] = 0.0;
@@ -2307,7 +2315,7 @@ void twobody_lub_with_f (struct twobody_f *f2b,
   lub[21] *= 8.0 / l13;
 
 
-  if (f2b == NULL)
+  if (f12 == NULL)
     {
       free (f);
     }
@@ -2316,6 +2324,7 @@ void twobody_lub_with_f (struct twobody_f *f2b,
 
 /* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
  * INPUT
+ *  version  : 0=F, 1=FT, 2=FTS.
  *  two [22] : scalar functions in Jeffrey form
  *  l        : lambda = ab / aa,
  *             where aa and ab are radii for particles a(alpha) and b(beta)
@@ -2324,21 +2333,22 @@ void twobody_lub_with_f (struct twobody_f *f2b,
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale_SD (double *two, double l)
+twobody_scale_SD (int version, double *two, double l)
 {
   double l1 = 1.0 + l;
   double l2 = l1 * l1;
   double l3 = l2 * l1;
 
-  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
   l2 /= 6.0; // l2 = (1 + lambda)^2 / 6 (= 2/3 for lambda == 1)
   l3 /= 6.0; // l3 = (1 + lambda)^3 / 6 (= 4/3 for lambda == 1)
-  double lm;
-  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
+  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
 
   // A part
   two [1] *= l1;// XA12
   two [3] *= l1;// YA12
+
+  if (version == 0) return; // F version
+
 
   // B part
   two [4] *= 2.0 / 3.0; // YB11
@@ -2350,6 +2360,9 @@ twobody_scale_SD (double *two, double l)
   two [8] *= 4.0 / 3.0; // YC11
   two [9] *= l3;        // YC12
 
+  if (version == 1) return; // FT version
+
+
   // G part
   two [10] *= 2.0 / 3.0; // XG11
   two [11] *= l2;        // XG12
@@ -2359,6 +2372,9 @@ twobody_scale_SD (double *two, double l)
   // H part
   two [14] *= 4.0 / 3.0; // YH11
   two [15] *= l3;        // YH12
+
+  double lm;
+  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
 
   // M part
   two [16] *= 10.0 / 9.0; // XM11
@@ -2371,6 +2387,7 @@ twobody_scale_SD (double *two, double l)
 
 /* scale the scalar functions from Jeffrey-Onishi to the dimensional form
  * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
  *  two [22] : scalar functions in Jeffrey form
  *  l        : lambda = ab / aa,
  *             where aa and ab are radii for particles a(alpha) and b(beta)
@@ -2379,26 +2396,27 @@ twobody_scale_SD (double *two, double l)
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale (double *two, double a1, double l)
+twobody_scale (int version, double *two, double a1, double l)
 {
-  double a12 = a1  * a1;
-  double a13 = a12 * a1;
-
   double l1 = 1.0 + l;
   double l2 = l1 * l1;
   double l3 = l2 * l1;
-
-  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
   l2 /= 6.0; // l2 = (1 + lambda)^2 / 6 (= 2/3 for lambda == 1)
   l3 /= 6.0; // l3 = (1 + lambda)^3 / 6 (= 4/3 for lambda == 1)
-  double lm;
-  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
+  l1 /= 2.0; // l1 = (1 + lambda)   / 2 (= 1   for lambda == 1)
 
   // A part
   two [0] *= a1;     // XA11
   two [1] *= a1 * l1;// XA12
   two [2] *= a1;     // YA11
   two [3] *= a1 * l1;// YA12
+
+  if (version == 0) return; // F version
+
+
+  double a12 = a1  * a1;
+  double a13 = a12 * a1;
+
 
   // B part
   two [4] *= a12 * 2.0 / 3.0; // YB11
@@ -2410,6 +2428,9 @@ twobody_scale (double *two, double a1, double l)
   two [8] *= a13 * 4.0 / 3.0; // YC11
   two [9] *= a13 * l3;        // YC12
 
+  if (version == 1) return; // FT version
+
+
   // G part
   two [10] *= a12 * 2.0 / 3.0; // XG11
   two [11] *= a12 * l2;        // XG12
@@ -2419,6 +2440,9 @@ twobody_scale (double *two, double a1, double l)
   // H part
   two [14] *= a13 * 4.0 / 3.0; // YH11
   two [15] *= a13 * l3;        // YH12
+
+  double lm;
+  lm = 5.0 / 6.0 * l3; // l3 = (5/36)(1+lambda)^3 (= 10/9 for lambda == 1)
 
   // M part
   two [16] *= a13 * 10.0 / 9.0; // XM11
@@ -2432,8 +2456,13 @@ twobody_scale (double *two, double a1, double l)
 
 /* calc scalar functions of two-body exact solution in resistance problem
  * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
  *  r          : distance between the two := x_b - x_a
  *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  f12        : (struct twobody_f *).
+ *               you can give NULL for them.
+ *               then, the coefs are calculated on-the-fly (terribly slow).
+ *               only functional for the lub form, for now.
  *  n          : max order for the coefficients
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -2445,8 +2474,10 @@ twobody_scale (double *two, double a1, double l)
  *  res [22]   : scalar functions. the scaling is given by flag_scale.
  */
 void
-twobody_scalars_res (double r,
+twobody_scalars_res (int version,
+		     double r,
 		     double aa, double ab,
+		     struct twobody_f *f12,
 		     int n, int flag_lub, int flag_scale,
 		     double *res)
 {
@@ -2455,19 +2486,20 @@ twobody_scalars_res (double r,
 
   if (flag_lub == 0)
     {
-      twobody_far (n, l, s, res);
+      twobody_far (version, n, l, s, res);
     }
   else
     {
-      twobody_lub (n, l, s, res);
+      //twobody_lub (version, n, l, s, res);
+      twobody_lub_with_f (version, f12, n, l, s, res);
     }
 
   if (flag_scale == 1)
     {
-      twobody_scale (res, aa, l);
+      twobody_scale (version, res, aa, l);
     }
   else if (flag_scale == 2)
     {
-      twobody_scale_SD (res, l);      
+      twobody_scale_SD (version, res, l);      
     }
 }

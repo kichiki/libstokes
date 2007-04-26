@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.6 2007/04/25 05:35:25 kichiki Exp $
+ * $Id: twobody.h,v 1.7 2007/04/26 05:10:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -216,10 +216,9 @@ void twobody_YM_far (int n, double l, double s,
 void twobody_ZM_far (int n, double l, double s,
 		     double *ZM11, double *ZM12);
 
-
-
 /* calc scalar functions of resistance problem by 1/s expansion
  * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
  *  n : max order
  *  l := a2 / a1
  *  s := 2 * r / (a1 + a2)
@@ -237,7 +236,7 @@ void twobody_ZM_far (int n, double l, double s,
  *     18,19 : (YM11, YM12)
  *     20,21 : (ZM11, ZM12)
  */
-void twobody_far (int n, double l, double s,
+void twobody_far (int version, int n, double l, double s,
 		  double *far);
 
 
@@ -378,30 +377,6 @@ void twobody_ZM_lub (int n, double l, double s,
 
 /* calc scalar functions of resistance problem by lub form
  * INPUT
- *  n : max order
- *  l := a2 / a1
- *  s := 2 * r / (a1 + a2)
- * OUTPUT
- *  far [22] : scalar functions
- *      0, 1 : (XA11, XA12)
- *      2, 3 : (YA11, YA12)
- *      4, 5 : (YB11, YB12)
- *      6, 7 : (XC11, XC12)
- *      8  9 : (YC11, YC12)
- *     10,11 : (XG11, XG12)
- *     12,13 : (YG11, YG12)
- *     14,15 : (YH11, YH12)
- *     16,17 : (XM11, XM12)
- *     18,19 : (YM11, YM12)
- *     20,21 : (ZM11, ZM12)
- */
-void twobody_lub (int n, double l, double s,
-		  double *lub);
-
-/* calc scalar functions of resistance problem by lub form
- * all-in-one form (to reduce calculating the same parameters)
- * INPUT
- *  f2b     : struct twobody_f for the pair
  *  version : 0=F, 1=FT, 2=FTS.
  *  n : max order
  *  l := a2 / a1
@@ -420,13 +395,41 @@ void twobody_lub (int n, double l, double s,
  *     18,19 : (YM11, YM12)
  *     20,21 : (ZM11, ZM12)
  */
-void twobody_lub_with_f (struct twobody_f *f2b,
-			 int version,
+void twobody_lub (int version, int n, double l, double s,
+		  double *lub);
+
+/* calc scalar functions of resistance problem by lub form
+ * all-in-one form (to reduce calculating the same parameters)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f2b     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_lub_with_f (int version,
+			 struct twobody_f *f2b,
 			 int n, double l, double s,
 			 double *lub);
 
 /* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
  * INPUT
+ *  version  : 0=F, 1=FT, 2=FTS.
  *  two [22] : scalar functions in Jeffrey form
  *  l        : lambda = ab / aa,
  *             where aa and ab are radii for particles a(alpha) and b(beta)
@@ -435,10 +438,11 @@ void twobody_lub_with_f (struct twobody_f *f2b,
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale_SD (double *two, double l);
+twobody_scale_SD (int version, double *two, double l);
 
 /* scale the scalar functions from Jeffrey-Onishi to the dimensional form
  * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
  *  two [22] : scalar functions in Jeffrey form
  *  l        : lambda = ab / aa,
  *             where aa and ab are radii for particles a(alpha) and b(beta)
@@ -447,12 +451,18 @@ twobody_scale_SD (double *two, double l);
  *  two [22] : scalar functions in SD form
  */
 void
-twobody_scale (double *two, double a1, double l);
+twobody_scale (int version, double *two, double a1, double l);
+
 
 /* calc scalar functions of two-body exact solution in resistance problem
  * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
  *  r          : distance between the two := x_b - x_a
  *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  f12        : (struct twobody_f *).
+ *               you can give NULL for them.
+ *               then, the coefs are calculated on-the-fly (terribly slow).
+ *               only functional for the lub form, for now.
  *  n          : max order for the coefficients
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
@@ -464,8 +474,10 @@ twobody_scale (double *two, double a1, double l);
  *  res [22]   : scalar functions. the scaling is given by flag_scale.
  */
 void
-twobody_scalars_res (double r,
+twobody_scalars_res (int version,
+		     double r,
 		     double aa, double ab,
+		     struct twobody_f *f12,
 		     int n, int flag_lub, int flag_scale,
 		     double *res);
 
