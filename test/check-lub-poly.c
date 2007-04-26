@@ -1,6 +1,6 @@
 /* test code for lubrication for polydisperse systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lub-poly.c,v 1.3 2007/04/25 05:49:11 kichiki Exp $
+ * $Id: check-lub-poly.c,v 1.4 2007/04/26 05:20:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,7 +57,8 @@ check_lub_scalars_poly (double r, int nmax,
   double poly[44];
   double t0, t;
   t0 = ptime_ms_d ();
-  scalars_lub_poly_full (2, /* FTS */ r, 1.0, 1.0,
+  scalars_lub_poly_full (2, // FTS
+			 r, 1.0, 1.0, NULL, NULL,
 			 nmax, 1, /* lub form */
 			 poly);
   scalars_res_poly_scale_SD (2, // FTS version
@@ -142,7 +143,9 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_lub_fts_2b_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_lub_fts_2b_poly : start\n");
     }
 
   struct stokes *sys = NULL;
@@ -185,11 +188,17 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
+
+  // set sys->a to test poly version
+  double a [2] = {1.0, 1.0};
+  stokes_set_radius (sys, a);
+
   t0 = ptime_ms_d ();
   calc_lub_fts_2b_poly (sys,
 			&uoe[0], &uoe[11],
 			&(sys->pos[0]), &(sys->pos[3]),
-			1.0, 1.0,
+			//1.0, 1.0,
+			0, 1,
 			&fts_poly[0], &fts_poly[11]);
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
@@ -244,7 +253,9 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_matrix_lub_fts_2b_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_matrix_lub_fts_2b_poly : start\n");
     }
 
   struct stokes *sys = NULL;
@@ -290,11 +301,17 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
+
+  // set sys->a to test poly version
+  double a [2] = {1.0, 1.0};
+  stokes_set_radius (sys, a);
+
   t0 = ptime_ms_d ();
   matrix_lub_fts_2b_poly (sys,
 			  0, 1,
 			  &(sys->pos[0]), &(sys->pos[3]),
-			  1.0, 1.0,
+			  //1.0, 1.0,
+			  0, 1,
 			  22, mat_poly);
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
@@ -337,7 +354,9 @@ check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_atimes_matrix_lub_fts_2b_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_atimes_matrix_lub_fts_2b_poly : start\n");
     }
 
   struct stokes *sys = NULL;
@@ -375,6 +394,10 @@ check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
     {
       mat [i] = 0.0;
     }
+
+  // set sys->a to test poly version
+  double a [2] = {1.0, 1.0};
+  stokes_set_radius (sys, a);
 
   // atimes version
   calc_lub_fts_2b_poly (sys,
