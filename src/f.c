@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.9 2007/04/26 05:11:54 kichiki Exp $
+ * $Id: f.c,v 2.10 2007/04/27 00:59:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h> // fprintf ()
 #include <stdlib.h> // malloc ()
 #include <math.h> // sqrt ()
+
 #include "two-body-res.h" /* scalar_two_body_res () */
 #include "stokes.h" /* struct stokeks */
 #include "minv-poly.h" // scalars_lub_poly_full()
@@ -235,24 +236,11 @@ calc_lub_f_2b (struct stokes * sys,
 	       const double * x1, const double * x2,
 	       double * f1, double * f2)
 {
-  double * res2b, * resinf;
+  double res2b [22];
+  double resinf[22];
 
+  // r := x[j] - x[i] for (j -> i) interaction
   double xx, yy, zz, rr;
-  double ex, ey, ez;
-
-  double xa11, ya11;
-  double xa12, ya12;
-
-
-  res2b = (double *) malloc (sizeof (double) * 44);
-  if (res2b == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_lub_f_2b ().\n");
-      exit (1);
-    }
-  resinf = res2b + 22;
-
-  /* r := x[j] - x[i] for (j -> i) interaction */
   xx = x2 [0] - x1 [0];
   yy = x2 [1] - x1 [1];
   zz = x2 [2] - x1 [2];
@@ -263,14 +251,24 @@ calc_lub_f_2b (struct stokes * sys,
       rr = sys->lubmin;
     }
 
+  double ex, ey, ez;
   ex = xx / rr;
   ey = yy / rr;
   ez = zz / rr;
 
-  /* calc scalar functions of lubrication */
+  // calc scalar functions of lubrication
   scalar_two_body_res (rr, res2b);
+  /*
+  // checking
+  twobody_scalars_res (0, // F
+		       rr, 1.0, 1.0, NULL, 100,
+		       1, 1, res2b);
+  // for a=1 in dimensional form is equivalent to SD form in mono
+  */
   scalar_minv_f (rr, resinf);
 
+  double xa11, ya11;
+  double xa12, ya12;
   xa11 = res2b [0] - resinf [0];
   xa12 = res2b [1] - resinf [1];
   ya11 = res2b [2] - resinf [2];
@@ -284,13 +282,11 @@ calc_lub_f_2b (struct stokes * sys,
 		   xa12, ya12);
 
   matrix_f_atimes (u2, f2,
-		   - ex, - ey, - ez,
+		   -ex, -ey, -ez,
 		   xa11, ya11);
   matrix_f_atimes (u1, f2,
-		   - ex, - ey, - ez,
+		   -ex, -ey, -ez,
 		   xa12, ya12);
-
-  free (res2b);
 }
 
 /* calculate lub-matrix in F version for pair of particles 1 and 2
@@ -311,24 +307,11 @@ matrix_lub_f_2b (struct stokes * sys,
 		 const double *x1, const double *x2,
 		 int n, double * mat)
 {
-  double *res2b, *resinf;
+  double res2b [22];
+  double resinf[22];
 
+  // r := x[j] - x[i] for (j -> i) interaction
   double xx, yy, zz, rr;
-  double ex, ey, ez;
-
-  double xa11, ya11;
-  double xa12, ya12;
-
-
-  res2b = (double *) malloc (sizeof (double) * 44);
-  if (res2b == NULL)
-    {
-      fprintf (stderr, "allocation error in calc_lub_2b ().\n");
-      exit (1);
-    }
-  resinf = res2b + 22;
-
-  /* r := x[j] - x[i] for (j -> i) interaction */
   xx = x2 [0] - x1 [0];
   yy = x2 [1] - x1 [1];
   zz = x2 [2] - x1 [2];
@@ -339,14 +322,24 @@ matrix_lub_f_2b (struct stokes * sys,
       rr = sys->lubmin;
     }
 
+  double ex, ey, ez;
   ex = xx / rr;
   ey = yy / rr;
   ez = zz / rr;
 
-  /* calc scalar functions of lubrication */
+  // calc scalar functions of lubrication
   scalar_two_body_res (rr, res2b);
+  /*
+  // checking
+  twobody_scalars_res (0, // F
+		       rr, 1.0, 1.0, NULL, 100,
+		       1, 1, res2b);
+  // for a=1 in dimensional form is equivalent to SD form in mono
+  */
   scalar_minv_f (rr, resinf);
 
+  double xa11, ya11;
+  double xa12, ya12;
   xa11 = res2b [ 0] - resinf [ 0];
   xa12 = res2b [ 1] - resinf [ 1];
   ya11 = res2b [ 2] - resinf [ 2];
@@ -362,15 +355,13 @@ matrix_lub_f_2b (struct stokes * sys,
 	       n, mat);
 
   matrix_f_ij (j, j,
-	       - ex, - ey, - ez,
+	       -ex, -ey, -ez,
 	       xa11, ya11,
 	       n, mat);
   matrix_f_ij (j, i,
-	       - ex, - ey, - ez,
+	       -ex, -ey, -ez,
 	       xa12, ya12,
 	       n, mat);
-
-  free (res2b);
 }
 
 /* calculate f by u for pair of particles 1 and 2 for unequal spheres
