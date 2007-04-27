@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.7 2007/04/26 05:10:13 kichiki Exp $
+ * $Id: twobody.c,v 1.8 2007/04/27 00:58:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1659,7 +1659,6 @@ void twobody_lub_with_f (int version,
   double *f = NULL;
   if (f12 == NULL)
     {
-      fprintf (stderr, "# f12 is NULL\n");
       f = (double *)malloc (sizeof (double) * n);
       CHECK_MALLOC (f, "twobody_lub_with_f");
     }
