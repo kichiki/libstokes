@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.1 2007/04/15 19:59:07 kichiki Exp $
+ * $Id: ode.c,v 1.2 2007/05/04 01:10:23 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,16 +22,16 @@
 
 #include <gsl/gsl_errno.h> // GSL_SUCCESS
 
-//#include <libstokes.h> // struct stokes
-#include <stokes.h> // struct stokes
-#include <ewald-3f.h>
-#include <ewald-3ft.h>
-#include <ewald-3fts.h>
-#include <ewald-3f-matrix.h>
-#include <ewald-3ft-matrix.h>
-#include <ewald-3fts-matrix.h>
-
-#include <bonds.h> // struct bonds
+#include "stokes.h" // struct stokes
+#include "ewald-3f.h"
+#include "ewald-3ft.h"
+#include "ewald-3fts.h"
+#include "ewald-3f-matrix.h"
+#include "ewald-3ft-matrix.h"
+#include "ewald-3fts-matrix.h"
+#include "bonds.h" // struct bonds
+#include "coll.h"
+#include "periodicity.h" // check_periodic()
 
 
 #include "ode.h"
@@ -241,6 +241,7 @@ dydt_relax_bond (double t, const double *y, double *f,
 
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
+
   bonds_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
 
   // scale by the friction coefficient
@@ -291,12 +292,9 @@ dydt_hydro_st (double t, const double *y, double *dydt,
   int nm = ode->sys->nm;
   int nm3 = nm * 3;
   int nm5 = nm * 5;
-  double *V = NULL;
-  double *O = NULL;
-  double *S = NULL;
-  V = (double *)malloc (sizeof (double) * nm3);
-  O = (double *)malloc (sizeof (double) * nm3);
-  S = (double *)malloc (sizeof (double) * nm5);
+  double *V = (double *)malloc (sizeof (double) * nm3);
+  double *O = (double *)malloc (sizeof (double) * nm3);
+  double *S = (double *)malloc (sizeof (double) * nm5);
   CHECK_MALLOC (V, "dydt_hydro_st");
   CHECK_MALLOC (O, "dydt_hydro_st");
   CHECK_MALLOC (S, "dydt_hydro_st");
@@ -318,8 +316,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
       CHECK_MALLOC (sf, "dydt_hydro_st");
     }
 
-  double *fm = NULL;
-  fm = (double *)malloc (sizeof (double) * nm3);
+  double *fm = (double *)malloc (sizeof (double) * nm3);
   CHECK_MALLOC (fm, "dydt_hydro_st");
 
   int i;
@@ -328,16 +325,16 @@ dydt_hydro_st (double t, const double *y, double *dydt,
       fm[i] = ode->F[i];
     }
 
+  // set the current configuration into struct stokes "sys"
+  stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
+
   if (ode->bonds->ntypes > 0)
     {
       // calc force on the mobile particles
       bonds_calc_force (ode->bonds, ode->sys,
 			fm, 1/* add */);
     }
-
-  // set the current configuration into struct stokes "sys"
-  stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
   // calculate the terminal velocity V[]
   solve_mix_3all (ode->sys,
@@ -400,10 +397,8 @@ dydt_hydro (double t, const double *y, double *dydt,
   int nm = ode->sys->nm;
   int nm3 = nm * 3;
   int nm5 = nm * 5;
-  double *O = NULL;
-  double *S = NULL;
-  O = (double *)malloc (sizeof (double) * nm3);
-  S = (double *)malloc (sizeof (double) * nm5);
+  double *O = (double *)malloc (sizeof (double) * nm3);
+  double *S = (double *)malloc (sizeof (double) * nm5);
   CHECK_MALLOC (O, "dydt_hydro");
   CHECK_MALLOC (S, "dydt_hydro");
 
@@ -425,8 +420,7 @@ dydt_hydro (double t, const double *y, double *dydt,
     }
 
 
-  double *fm = NULL;
-  fm = (double *)malloc (sizeof (double) * nm3);
+  double *fm = (double *)malloc (sizeof (double) * nm3);
   CHECK_MALLOC (fm, "dydt_hydro_st");
 
   int i;
@@ -435,6 +429,11 @@ dydt_hydro (double t, const double *y, double *dydt,
       fm[i] = ode->F[i];
     }
 
+
+  // set the current configuration into struct stokes "sys"
+  stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
+
   if (ode->bonds->ntypes > 0)
     {
       // calc force on the mobile particles
@@ -442,17 +441,11 @@ dydt_hydro (double t, const double *y, double *dydt,
 			fm, 1/* add */);
     }
 
-  // set the current configuration into struct stokes "sys"
-  stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
-
-
   // set dydt = U = R^-1 . F
   solve_mix_3all (ode->sys,
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  dydt, O, S, ff, tf, sf);
-
 
   // house-keeping
   free (fm);
@@ -485,13 +478,11 @@ ODE_st_euler (double t, int n, double *y,
   int ndt = 10;
   double dt = (t_out - t) / (double)ndt;
 
-  double *dydt = NULL;
-  dydt = (double *)malloc (sizeof (double) * n);
+  double *dydt = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (dydt, "ODE_st_euler");
 
   int np3 = ode->sys->np * 3;
-  double *pos = NULL;
-  pos = (double *)malloc (sizeof (double) * np3);
+  double *pos = (double *)malloc (sizeof (double) * np3);
   CHECK_MALLOC (pos, "ODE_st_euler");
 
   // set pos for fixed particles
@@ -577,8 +568,7 @@ ODE_plain_euler (double t, int n, double *y,
   int ndt = 10;
   double dt = (t_out - t) / (double)ndt;
 
-  double *V = NULL;
-  V = (double *)malloc (sizeof (double) * nm3);
+  double *V = (double *)malloc (sizeof (double) * nm3);
   CHECK_MALLOC (V, "ODE_plain_euler");
 
   // set the current configuration into struct stokes "sys"
