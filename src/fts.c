@@ -1,6 +1,6 @@
 /* subroutine for the procedure of FTS version
  * Copyright (C) 2000-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: fts.c,v 2.15 2007/04/27 01:00:43 kichiki Exp $
+ * $Id: fts.c,v 2.16 2007/05/04 01:12:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -657,17 +657,8 @@ matrix_fts_atimes (const double *x,
   double exyyy, exyyz, exyzz, exzzz;
   double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
 
+  double z[11];
   int i;
-  double *z; // modefied for extracted matrix elements
-
-
-  z = (double *) malloc (sizeof (double) * 11);
-  if (z == NULL)
-    {
-      fprintf (stderr, "allocation error in matrix_fts_atimes ().\n");
-      exit (1);
-    }
-
   for (i = 0; i < 6; i ++)
     {
       z [i] = x [i];
@@ -1016,8 +1007,6 @@ matrix_fts_atimes (const double *x,
   y [ 8] += z [ 8] * (mm5);       /* xz,xz */
   y [ 9] += z [ 9] * (mm5);       /* yz,yz */
   y [10] += z [10] * (2.0 * mm5); /* yy,yy */
-
-  free (z);
 }
 
 /* ATIMES version (for O(N^2) scheme) of
@@ -1067,17 +1056,8 @@ matrix_fts_self_atimes (const double *x,
   double exyyy, exyyz, exyzz, exzzz;
   double eyyyy, eyyyz, eyyzz, eyzzz, ezzzz;
 
+  double z[11];
   int i;
-  double *z; // modefied for extracted matrix elements
-
-
-  z = (double *) malloc (sizeof (double) * 11);
-  if (z == NULL)
-    {
-      fprintf (stderr, "allocation error in matrix_fts_atimes ().\n");
-      exit (1);
-    }
-
   for (i = 0; i < 6; i ++)
     {
       z [i] = x [i];
@@ -1427,8 +1407,6 @@ matrix_fts_self_atimes (const double *x,
   y [ 8] += z [ 8] * (mm5);       /* xz,xz */
   y [ 9] += z [ 9] * (mm5);       /* yz,yz */
   y [10] += z [10] * (2.0 * mm5); /* yy,yy */
-
-  free (z);
 }
 
 /* convert fts[] to f[], t[], s[] (this is applicable for UOE)
@@ -1768,7 +1746,7 @@ scalar_minv_fts (double s,  double * scalar_fts)
 /* calculate fts by uoe for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubmin is used.
+ *         sys->lubmin2 is used.
  *   uoe1 [11] : velocity, angular velocity, strain
  *   uoe2 [11] :
  *   x1 [3] : position of particle 1
@@ -1783,27 +1761,24 @@ calc_lub_fts_2b (struct stokes * sys,
 		 const double *x1, const double *x2,
 		 double *fts1, double *fts2)
 {
-  double res2b [22];
-  double resinf[22];
-
-  /* r := x[j] - x[i] for (j -> i) interaction */
-  double xx, yy, zz, rr;
-  xx = x2 [0] - x1 [0];
-  yy = x2 [1] - x1 [1];
-  zz = x2 [2] - x1 [2];
-  rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-  if (rr < sys->lubmin)
+  // r := x[j] - x[i] for (j -> i) interaction
+  double xx = x2 [0] - x1 [0];
+  double yy = x2 [1] - x1 [1];
+  double zz = x2 [2] - x1 [2];
+  double r2 = xx * xx + yy * yy + zz * zz;
+  if (r2 < sys->lubmin2)
     {
-      rr = sys->lubmin;
+      r2 = sys->lubmin2;
     }
 
-  double ex, ey, ez;
-  ex = xx / rr;
-  ey = yy / rr;
-  ez = zz / rr;
+  double rr = sqrt (r2);
+  double ex = xx / rr;
+  double ey = yy / rr;
+  double ez = zz / rr;
 
   /* calc scalar functions of lubrication */
+  double res2b [22];
+  double resinf[22];
   scalar_two_body_res (rr, res2b);
   /*
   // checking
@@ -1883,7 +1858,7 @@ calc_lub_fts_2b (struct stokes * sys,
 /* calculate lub-matrix in FTS version for pair of particles 1 and 2
  * INPUT
  *   sys : system parameters
- *         sys->lubmin is used.
+ *         sys->lubmin2 is used.
  *   i : particle index for '1'
  *   j : particle index for '2'
  *   x1 [3] : position of particle 1
@@ -1898,27 +1873,24 @@ matrix_lub_fts_2b (struct stokes * sys,
 		   const double *x1, const double *x2,
 		   int n, double * mat)
 {
-  double res2b [22];
-  double resinf[22];
-
-  /* r := x[j] - x[i] for (j -> i) interaction */
-  double xx, yy, zz, rr;
-  xx = x2 [0] - x1 [0];
-  yy = x2 [1] - x1 [1];
-  zz = x2 [2] - x1 [2];
-  rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-  if (rr < sys->lubmin)
+  // r := x[j] - x[i] for (j -> i) interaction
+  double xx = x2 [0] - x1 [0];
+  double yy = x2 [1] - x1 [1];
+  double zz = x2 [2] - x1 [2];
+  double r2 = xx * xx + yy * yy + zz * zz;
+  if (r2 < sys->lubmin2)
     {
-      rr = sys->lubmin;
+      r2 = sys->lubmin2;
     }
 
-  double ex, ey, ez;
-  ex = xx / rr;
-  ey = yy / rr;
-  ez = zz / rr;
+  double rr = sqrt (r2);
+  double ex = xx / rr;
+  double ey = yy / rr;
+  double ez = zz / rr;
 
   /* calc scalar functions of lubrication */
+  double res2b [22];
+  double resinf[22];
   scalar_two_body_res (rr, res2b);
   /*
   // checking
@@ -2004,7 +1976,7 @@ matrix_lub_fts_2b (struct stokes * sys,
  * so that this is called in the loop
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
  *   sys : system parameters. the followings are referred:
- *         sys->lubmin       : min distance for lub calculation.
+ *         sys->lubmin2      : square of min distance for lub calculation.
  *         sys->twobody_nmax : max order in twobody.
  *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   uoe1 [11] : velocity, angular velocity, strain
@@ -2023,32 +1995,37 @@ calc_lub_fts_2b_poly (struct stokes *sys,
 		      int i1, int i2,
 		      double *fts1, double *fts2)
 {
-  double lub [44];
-
   /* r := x[j] - x[i] for (j -> i) interaction */
-  double xx, yy, zz, rr;
-  xx = x2 [0] - x1 [0];
-  yy = x2 [1] - x1 [1];
-  zz = x2 [2] - x1 [2];
-  rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-  if (rr < sys->lubmin)
-    {
-      rr = sys->lubmin;
-    }
-
-  double ex, ey, ez;
-  ex = xx / rr;
-  ey = yy / rr;
-  ez = zz / rr;
+  double xx = x2 [0] - x1 [0];
+  double yy = x2 [1] - x1 [1];
+  double zz = x2 [2] - x1 [2];
+  double r2 = xx * xx + yy * yy + zz * zz;
 
   double a1 = sys->a[i1];
   double a2 = sys->a[i2];
+  double rs;
+  rs = a1 + a2;
+  rs *= rs; // = (a1 + a2)^2
+  rs *= 0.25; // = (a1 + a2)^2 / 4
+  double s2 = r2 / rs;
+  if (s2 < sys->lubmin2)
+    {
+      s2 = sys->lubmin2;
+      r2 = rs * s2;
+    }
+
+  double rr = sqrt (r2);
+  double ex = xx / rr;
+  double ey = yy / rr;
+  double ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
   struct twobody_f *f12
     = sys->twobody_f_list->f[sys->poly_table[i1*sys->np+i2]];
   struct twobody_f *f21
     = sys->twobody_f_list->f[sys->poly_table[i2*sys->np+i1]];
-  /* calc scalar functions of lubrication */
+
+  double lub [44];
   scalars_lub_poly_full (2, // FTS version
 			 rr, a1, a2,
 			 f12, f21,
@@ -2155,7 +2132,7 @@ calc_lub_fts_2b_poly (struct stokes *sys,
  *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
  * INPUT
  *   sys    : system parameters. the followings are referred:
- *            sys->lubmin       : min distance for lub calculation.
+ *            sys->lubmin2      : square of min distance for lub calculation.
  *            sys->twobody_nmax : max order in twobody.
  *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   i      : particle index for '1'
@@ -2174,32 +2151,37 @@ matrix_lub_fts_2b_poly (struct stokes *sys,
 			int i1, int i2,
 			int n, double *mat)
 {
-  double lub [44];
-
   /* r := x[j] - x[i] for (j -> i) interaction */
-  double xx, yy, zz, rr;
-  xx = x2 [0] - x1 [0];
-  yy = x2 [1] - x1 [1];
-  zz = x2 [2] - x1 [2];
-  rr = sqrt (xx * xx + yy * yy + zz * zz);
-
-  if (rr < sys->lubmin)
-    {
-      rr = sys->lubmin;
-    }
-
-  double ex, ey, ez;
-  ex = xx / rr;
-  ey = yy / rr;
-  ez = zz / rr;
+  double xx = x2 [0] - x1 [0];
+  double yy = x2 [1] - x1 [1];
+  double zz = x2 [2] - x1 [2];
+  double r2 = xx * xx + yy * yy + zz * zz;
 
   double a1 = sys->a[i1];
   double a2 = sys->a[i2];
+  double rs;
+  rs = a1 + a2;
+  rs *= rs; // = (a1 + a2)^2
+  rs *= 0.25; // = (a1 + a2)^2 / 4
+  double s2 = r2 / rs;
+  if (s2 < sys->lubmin2)
+    {
+      s2 = sys->lubmin2;
+      r2 = rs * s2;
+    }
+
+  double rr = sqrt (r2);
+  double ex = xx / rr;
+  double ey = yy / rr;
+  double ez = zz / rr;
+
+  /* calc scalar functions of lubrication */
   struct twobody_f *f12
     = sys->twobody_f_list->f[sys->poly_table[i1*sys->np+i2]];
   struct twobody_f *f21
     = sys->twobody_f_list->f[sys->poly_table[i2*sys->np+i1]];
-  /* calc scalar functions of lubrication */
+
+  double lub [44];
   scalars_lub_poly_full (2, // FTS version
 			 rr, a1, a2,
 			 f12, f21,
