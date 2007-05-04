@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.8 2007/04/26 05:13:57 kichiki Exp $
+ * $Id: lub.c,v 5.9 2007/05/04 01:15:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,10 +39,9 @@
 static int
 cond_lub (const double *x1, const double *x2, double lubmax2)
 {
-  double x, y, z;
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
+  double x = x1 [0] - x2 [0];
+  double y = x1 [1] - x2 [1];
+  double z = x1 [2] - x2 [2];
 
   double r2 = x*x + y*y + z*z;
 
@@ -82,10 +81,9 @@ cond_lub_poly (const double *x1, const double *x2,
 	       double a1, double a2,
 	       double lubmax2)
 {
-  double x, y, z;
-  x = x1 [0] - x2 [0];
-  y = x1 [1] - x2 [1];
-  z = x1 [2] - x2 [2];
+  double x = x1 [0] - x2 [0];
+  double y = x1 [1] - x2 [1];
+  double z = x1 [2] - x2 [2];
 
   double r2 = x*x + y*y + z*z;
 
@@ -102,8 +100,9 @@ cond_lub_poly (const double *x1, const double *x2,
   else
     {
       // max2 should be compared with r2 = (2 r / (a1 + a2))^2
-      double fac = 2.0 / (a1 + a2);
-      double s2 = fac * fac * r2;
+      //double fac = 2.0 / (a1 + a2);
+      //double s2 = fac * fac * r2;
+      double s2 = r2 * 4.0 / (a1 + a2) / (a1 + a2);
       if (s2 < lubmax2)
 	{
 	  // within the limit
