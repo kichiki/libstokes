@@ -1,6 +1,6 @@
 /* test code for solve_gen_linear() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-solve-gen-linear.c,v 1.1 2007/03/19 02:57:58 kichiki Exp $
+ * $Id: check-solve-gen-linear.c,v 1.2 2007/05/04 02:27:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -103,38 +103,28 @@ check_split_merge (int n1, int n2,
 
   int n = n1 + n2;
 
-  double *a = NULL;
-  a = (double *)malloc (sizeof (double) * n * n);
+  double *a = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (a, "check_split_merge");
 
-  double *b = NULL;
-  b = (double *)malloc (sizeof (double) * n * n);
+  double *b = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (b, "check_split_merge");
 
-  double *a_ll = NULL;
-  a_ll = (double *)malloc (sizeof (double) * n1 * n1);
+  double *a_ll = (double *)malloc (sizeof (double) * n1 * n1);
+  double *a_lh = (double *)malloc (sizeof (double) * n1 * n2);
+  double *a_hl = (double *)malloc (sizeof (double) * n2 * n1);
+  double *a_hh = (double *)malloc (sizeof (double) * n2 * n2);
   CHECK_MALLOC (a_ll, "check_split_merge");
-  double *a_lh = NULL;
-  a_lh = (double *)malloc (sizeof (double) * n1 * n2);
   CHECK_MALLOC (a_lh, "check_split_merge");
-  double *a_hl = NULL;
-  a_hl = (double *)malloc (sizeof (double) * n2 * n1);
   CHECK_MALLOC (a_hl, "check_split_merge");
-  double *a_hh = NULL;
-  a_hh = (double *)malloc (sizeof (double) * n2 * n2);
   CHECK_MALLOC (a_hh, "check_split_merge");
 
-  double *b_ll = NULL;
-  b_ll = (double *)malloc (sizeof (double) * n1 * n1);
+  double *b_ll = (double *)malloc (sizeof (double) * n1 * n1);
+  double *b_lh = (double *)malloc (sizeof (double) * n1 * n2);
+  double *b_hl = (double *)malloc (sizeof (double) * n2 * n1);
+  double *b_hh = (double *)malloc (sizeof (double) * n2 * n2);
   CHECK_MALLOC (b_ll, "check_split_merge");
-  double *b_lh = NULL;
-  b_lh = (double *)malloc (sizeof (double) * n1 * n2);
   CHECK_MALLOC (b_lh, "check_split_merge");
-  double *b_hl = NULL;
-  b_hl = (double *)malloc (sizeof (double) * n2 * n1);
   CHECK_MALLOC (b_hl, "check_split_merge");
-  double *b_hh = NULL;
-  b_hh = (double *)malloc (sizeof (double) * n2 * n2);
   CHECK_MALLOC (b_hh, "check_split_merge");
 
 
@@ -268,13 +258,11 @@ solve_gen_linear_ (int n1, int n2,
 {
   int n = n1 + n2;
 
-  double *a = NULL;
-  a = (double *)malloc (sizeof (double) * n * n);
+  double *a = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (a, "solve_gen_linear_");
   merge_matrix (n1, n2, 1.0, A, -1.0, F, 1.0, C, -1.0, H, n, a);
 
-  double *b = NULL;
-  b = (double *)malloc (sizeof (double) * n * n);
+  double *b = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (b, "solve_gen_linear_");
   merge_matrix (n1, n2, 1.0, E, -1.0, B, 1.0, G, -1.0, D, n, b);
 
@@ -282,8 +270,7 @@ solve_gen_linear_ (int n1, int n2,
   lapack_inv_ (n, a);
 
   // c = a^-1 . b
-  double *c = NULL;
-  c = (double *)malloc (sizeof (double) * n * n);
+  double *c = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (c, "solve_gen_linear_");
   mul_matrices (a, n, n,
 		b, n, n,
