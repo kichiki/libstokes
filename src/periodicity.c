@@ -1,6 +1,6 @@
 /* periodicity handling routines
- * Copyright (C) 1995-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: periodicity.c,v 1.1 2006/10/22 04:05:33 kichiki Exp $
+ * Copyright (C) 1995-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: periodicity.c,v 1.2 2007/05/04 01:19:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <math.h> /* M_PI */
-#include <libstokes.h> /* struct stokes */
+#include "stokes.h" // struct stokes
 #include "periodicity.h"
 
 /*
