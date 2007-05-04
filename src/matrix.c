@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.7 2007/03/18 22:57:09 kichiki Exp $
+ * $Id: matrix.c,v 1.8 2007/05/04 01:16:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,8 +110,7 @@ mul_left_sq (double * A, int na1, int na2,
   int i;
   int nb = na1;
 
-  double *tmp = NULL;
-  tmp = (double *) malloc (sizeof (double) * na1 * na2);
+  double *tmp = (double *) malloc (sizeof (double) * na1 * na2);
   CHECK_MALLOC (tmp, "mul_left_sq");
 
   mul_matrices (B, nb, nb,
@@ -208,14 +207,11 @@ solve_gen_linear (int n1, int n2,
   mul_left_sq (D, n2, n2, H);
 
 
-  double *a = NULL;
-  a = (double *)malloc (sizeof (double) * n1 * n1);
+  double *a = (double *)malloc (sizeof (double) * n1 * n1);
+  double *e = (double *)malloc (sizeof (double) * n1 * n1);
+  double *b = (double *)malloc (sizeof (double) * n1 * n2);
   CHECK_MALLOC (a, "solve_gen_linear");
-  double *e = NULL;
-  e = (double *)malloc (sizeof (double) * n1 * n1);
   CHECK_MALLOC (e, "solve_gen_linear");
-  double *b = NULL;
-  b = (double *)malloc (sizeof (double) * n1 * n2);
   CHECK_MALLOC (b, "solve_gen_linear");
 
   /* a [n1, n1] := A - F.(H^-1).C */
@@ -276,8 +272,7 @@ solve_linear (int n1, int n2,
   lapack_inv_ (n1, A);
 
   /* B := (A^-1).B */
-  double *tmp = NULL;
-  tmp = (double *) malloc (sizeof (double) * n1 * n2);
+  double *tmp = (double *) malloc (sizeof (double) * n1 * n2);
   CHECK_MALLOC (tmp, "solve_linear");
 
   mul_matrices (A, n1, n1,

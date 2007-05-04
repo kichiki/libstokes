@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.2 2007/03/27 01:07:52 kichiki Exp $
+ * $Id: bonds.c,v 1.3 2007/05/04 01:20:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -147,38 +147,29 @@ bonds_calc_force (struct bonds *bonds,
 
   for (i = 0; i < bonds->ntypes; i ++)
     {
-      double k, r0;
-      k  = bonds->k  [i];
-      r0 = bonds->r0 [i];
-
-      struct bond_pairs *pairs;
-      pairs = bonds->pairs [i];
+      double k  = bonds->k  [i];
+      double r0 = bonds->r0 [i];
+      struct bond_pairs *pairs = bonds->pairs [i];
 
       int j;
       for (j = 0; j < pairs->n; j ++)
 	{
-	  int ia, ib;
-	  ia = pairs->ia [j];
-	  ib = pairs->ib [j];
+	  int ia = pairs->ia [j];
+	  int ib = pairs->ib [j];
 	  // skip if both particles are fixed
 	  if (ia >= sys->nm && ib >= sys->nm) continue;
 
-	  int ia3, ib3;
-	  ia3 = ia * 3;
-	  ib3 = ib * 3;
-	  double x, y, z;
-	  double r;
-	  double ex, ey, ez;
-	  x = sys->pos [ia3+0] - sys->pos [ib3+0];
-	  y = sys->pos [ia3+1] - sys->pos [ib3+1];
-	  z = sys->pos [ia3+2] - sys->pos [ib3+2];
-	  r = sqrt (x*x + y*y + z*z);
-	  ex = x / r;
-	  ey = y / r;
-	  ez = z / r;
+	  int ia3 = ia * 3;
+	  int ib3 = ib * 3;
+	  double x = sys->pos [ia3+0] - sys->pos [ib3+0];
+	  double y = sys->pos [ia3+1] - sys->pos [ib3+1];
+	  double z = sys->pos [ia3+2] - sys->pos [ib3+2];
+	  double r = sqrt (x*x + y*y + z*z);
+	  double ex = x / r;
+	  double ey = y / r;
+	  double ez = z / r;
 
-	  double fac;
-	  fac = k * (r - r0);
+	  double fac = k * (r - r0);
 
 	  // F_a = - k (r-r0) (R_a - R_b)/|R_a - R_b|
 	  if (ia < sys->nm)
