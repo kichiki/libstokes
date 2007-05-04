@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.13 2007/03/07 22:06:34 kichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.14 2007/05/04 02:18:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
+#include "memory-check.h" // CHECK_MALLOC
 
 #include "dgetri_c.h" /* lapack_inv_() */
 
@@ -46,23 +47,13 @@ solve_res_3f_matrix (struct stokes * sys,
 		     const double *u,
 		     double *f)
 {
-  int n3;
-  double * mat = NULL;
-
-
   sys->version = 0; // F version
-  n3 = sys->np * 3;
+  int n3 = sys->np * 3;
 
-  double *u0;
-  u0  = (double *) malloc (sizeof (double) * n3);
-  mat = (double *) malloc (sizeof (double) * n3 * n3);
-  if (u0 == NULL ||
-      mat == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_3f_matrix()\n");
-      exit (1);
-    }
+  double *u0 = (double *) malloc (sizeof (double) * n3);
+  double *mat = (double *) malloc (sizeof (double) * n3 * n3);
+  CHECK_MALLOC (u0, "solve_res_3f_matrix");
+  CHECK_MALLOC (mat, "solve_res_3f_matrix");
 
   shift_labo_to_rest_U (sys, sys->np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -96,30 +87,16 @@ solve_res_lub_3f_matrix (struct stokes * sys,
 			 const double *u,
 			 double *f)
 {
-  int np;
-  int i;
-  int n3;
-
-  double * mob;
-  double * lub;
-
-
   sys->version = 0; // F version
-  np = sys->np;
-  n3 = np * 3;
+  int np = sys->np;
+  int n3 = np * 3;
 
-  double *u0;
-  u0  = (double *) malloc (sizeof (double) * n3);
-  mob = (double *) malloc (sizeof (double) * n3 * n3);
-  lub = (double *) malloc (sizeof (double) * n3 * n3);
-  if (u0 == NULL ||
-      mob == NULL ||
-      lub == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_res_lub_3f_matrix()\n");
-      exit (1);
-    }
+  double *u0 = (double *) malloc (sizeof (double) * n3);
+  double *mob = (double *) malloc (sizeof (double) * n3 * n3);
+  double *lub = (double *) malloc (sizeof (double) * n3 * n3);
+  CHECK_MALLOC (u0, "solve_res_lub_3f_matrix");
+  CHECK_MALLOC (mob, "solve_res_lub_3f_matrix");
+  CHECK_MALLOC (lub, "solve_res_lub_3f_matrix");
 
   shift_labo_to_rest_U (sys, sys->np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -134,6 +111,7 @@ solve_res_lub_3f_matrix (struct stokes * sys,
   make_matrix_lub_3f (sys, lub);
 
   // M^-1 + L
+  int i;
   for (i = 0; i < n3 * n3; i ++)
     {
       lub [i] += mob [i];
@@ -190,33 +168,19 @@ solve_mob_lub_3f_matrix (struct stokes * sys,
 			 const double *f,
 			 double *u)
 {
-  int np;
-  int i;
-  int n3;
-
-  double * mat = NULL;
-  double * lub = NULL;
-  double * iml = NULL;
-  double * x   = NULL;
-
-
   sys->version = 0; // F version
-  np = sys->np;
+  int np = sys->np;
 
-  n3 = np * 3;
-  mat = (double *) malloc (sizeof (double) * n3 * n3);
-  lub = (double *) malloc (sizeof (double) * n3 * n3);
-  iml = (double *) malloc (sizeof (double) * n3 * n3);
-  x   = (double *) malloc (sizeof (double) * n3);
-  if (mat == NULL ||
-      lub == NULL ||
-      iml == NULL ||
-      x   == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mob_lub_3f_matrix()\n");
-      exit (1);
-    }
+  int n3 = np * 3;
+
+  double *mat = (double *) malloc (sizeof (double) * n3 * n3);
+  double *lub = (double *) malloc (sizeof (double) * n3 * n3);
+  double *iml = (double *) malloc (sizeof (double) * n3 * n3);
+  double *x   = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (mat, "solve_mob_lub_3f_matrix");
+  CHECK_MALLOC (lub, "solve_mob_lub_3f_matrix");
+  CHECK_MALLOC (iml, "solve_mob_lub_3f_matrix");
+  CHECK_MALLOC (x, "solve_mob_lub_3f_matrix");
 
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
@@ -232,6 +196,7 @@ solve_mob_lub_3f_matrix (struct stokes * sys,
   free (lub);
 
   // IML = I + M.L
+  int i;
   for (i = 0; i < n3; ++i)
     {
       iml [i * n3 + i] += 1.0;
@@ -476,21 +441,9 @@ solve_mix_3f_matrix (struct stokes * sys,
 		     const double *f, const double *uf,
 		     double *u, double *ff)
 {
-  int np, nm;
-  int n3;
-  int nf, nm3;
-  int nl, nh;
-
-  double * mat;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * b;
-  double * x;
-
-
   sys->version = 0; // F version
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
   if (np == nm)
     {
@@ -498,42 +451,36 @@ solve_mix_3f_matrix (struct stokes * sys,
       return;
     }
 
-  n3 = np * 3;
-  nf = np - nm;
-  nm3 = nm * 3;
-  nl = nm * 3;
-  nh = n3 - nl;
+  int n3 = np * 3;
+  int nf = np - nm;
+  int nm3 = nm * 3;
+  int nl = nm * 3;
+  int nh = n3 - nl;
 
-  double *uf0;
-  uf0 = (double *) malloc (sizeof (double) * nf * 3);
-  mat    = (double *) malloc (sizeof (double) * n3 * n3);
-  mat_ll = (double *) malloc (sizeof (double) * nl * nl);
-  mat_lh = (double *) malloc (sizeof (double) * nl * nh);
-  mat_hl = (double *) malloc (sizeof (double) * nh * nl);
-  mat_hh = (double *) malloc (sizeof (double) * nh * nh);
-  mob_ll = (double *) malloc (sizeof (double) * nl * nl);
-  mob_lh = (double *) malloc (sizeof (double) * nl * nh);
-  mob_hl = (double *) malloc (sizeof (double) * nh * nl);
-  mob_hh = (double *) malloc (sizeof (double) * nh * nh);
-  b = (double *) malloc (sizeof (double) * n3);
-  x = (double *) malloc (sizeof (double) * n3);
-  if (uf0 == NULL ||
-      mat == NULL ||
-      mat_ll == NULL ||
-      mat_lh == NULL ||
-      mat_hl == NULL ||
-      mat_hh == NULL ||
-      mob_ll == NULL ||
-      mob_lh == NULL ||
-      mob_hl == NULL ||
-      mob_hh == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_3f_matrix()\n");
-      exit (1);
-    }
+  double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *mat    = (double *) malloc (sizeof (double) * n3 * n3);
+  double *mat_ll = (double *) malloc (sizeof (double) * nl * nl);
+  double *mat_lh = (double *) malloc (sizeof (double) * nl * nh);
+  double *mat_hl = (double *) malloc (sizeof (double) * nh * nl);
+  double *mat_hh = (double *) malloc (sizeof (double) * nh * nh);
+  double *mob_ll = (double *) malloc (sizeof (double) * nl * nl);
+  double *mob_lh = (double *) malloc (sizeof (double) * nl * nh);
+  double *mob_hl = (double *) malloc (sizeof (double) * nh * nl);
+  double *mob_hh = (double *) malloc (sizeof (double) * nh * nh);
+  double *b = (double *) malloc (sizeof (double) * n3);
+  double *x = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (uf0, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mat, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mat_ll, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mat_lh, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mat_hl, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mat_hh, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mob_ll, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mob_lh, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mob_hl, "solve_mix_3f_matrix");
+  CHECK_MALLOC (mob_hh, "solve_mix_3f_matrix");
+  CHECK_MALLOC (b, "solve_mix_3f_matrix");
+  CHECK_MALLOC (x, "solve_mix_3f_matrix");
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -594,26 +541,9 @@ solve_mix_lub_3f_matrix (struct stokes * sys,
 			 const double *f, const double *uf,
 			 double *u, double *ff)
 {
-  int np, nm;
-
-  int i;
-  int n3;
-  int nf, nm3;
-  int nl, nh;
-
-  double * mat;
-  double * lub;
-  double * tmp;
-  double * mat_ll, * mat_lh, * mat_hl, * mat_hh;
-  double * mob_ll, * mob_lh, * mob_hl, * mob_hh;
-  double * I_ll, * I_lh, * I_hl, * I_hh; /* used at lub [] */
-  double * b;
-  double * x;
-
-
   sys->version = 0; // F version
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
   if (np == nm)
     {
@@ -621,46 +551,40 @@ solve_mix_lub_3f_matrix (struct stokes * sys,
       return;
     }
 
-  n3 = np * 3;
-  nf = np - nm;
-  nm3 = nm * 3;
-  nl = nm * 3;
-  nh = n3 - nl;
+  int n3 = np * 3;
+  int nf = np - nm;
+  int nm3 = nm * 3;
+  int nl = nm * 3;
+  int nh = n3 - nl;
 
-  double *uf0;
-  uf0 = (double *) malloc (sizeof (double) * nf * 3);
-  mat = (double *) malloc (sizeof (double) * n3 * n3);
-  lub = (double *) malloc (sizeof (double) * n3 * n3);
-  tmp = (double *) malloc (sizeof (double) * n3 * n3);
-  mat_ll = (double *) malloc (sizeof (double) * nl * nl);
-  mat_lh = (double *) malloc (sizeof (double) * nl * nh);
-  mat_hl = (double *) malloc (sizeof (double) * nh * nl);
-  mat_hh = (double *) malloc (sizeof (double) * nh * nh);
-  mob_ll = (double *) malloc (sizeof (double) * nl * nl);
-  mob_lh = (double *) malloc (sizeof (double) * nl * nh);
-  mob_hl = (double *) malloc (sizeof (double) * nh * nl);
-  mob_hh = (double *) malloc (sizeof (double) * nh * nh);
-  b = (double *) malloc (sizeof (double) * n3);
-  x = (double *) malloc (sizeof (double) * n3);
-  if (uf0 == NULL ||
-      mat == NULL ||
-      lub == NULL ||
-      tmp == NULL ||
-      mat_ll == NULL ||
-      mat_lh == NULL ||
-      mat_hl == NULL ||
-      mat_hh == NULL ||
-      mob_ll == NULL ||
-      mob_lh == NULL ||
-      mob_hl == NULL ||
-      mob_hh == NULL ||
-      b == NULL ||
-      x == NULL)
-    {
-      fprintf (stderr, "libstokes: allocation error"
-	       " at solve_mix_lub_3f_matrix()\n");
-      exit (1);
-    }
+  double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *mat = (double *) malloc (sizeof (double) * n3 * n3);
+  double *lub = (double *) malloc (sizeof (double) * n3 * n3);
+  double *tmp = (double *) malloc (sizeof (double) * n3 * n3);
+  double *mat_ll = (double *) malloc (sizeof (double) * nl * nl);
+  double *mat_lh = (double *) malloc (sizeof (double) * nl * nh);
+  double *mat_hl = (double *) malloc (sizeof (double) * nh * nl);
+  double *mat_hh = (double *) malloc (sizeof (double) * nh * nh);
+  double *mob_ll = (double *) malloc (sizeof (double) * nl * nl);
+  double *mob_lh = (double *) malloc (sizeof (double) * nl * nh);
+  double *mob_hl = (double *) malloc (sizeof (double) * nh * nl);
+  double *mob_hh = (double *) malloc (sizeof (double) * nh * nh);
+  double *b = (double *) malloc (sizeof (double) * n3);
+  double *x = (double *) malloc (sizeof (double) * n3);
+  CHECK_MALLOC (uf0, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mat, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (lub, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (tmp, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mat_ll, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mat_lh, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mat_hl, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mat_hh, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mob_ll, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mob_lh, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mob_hl, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (mob_hh, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (b, "solve_mix_lub_3f_matrix");
+  CHECK_MALLOC (x, "solve_mix_lub_3f_matrix");
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -682,12 +606,13 @@ solve_mix_lub_3f_matrix (struct stokes * sys,
   mul_matrices (mat, n3, n3, lub, n3, n3, tmp);
   /* note: at this point, lub[] is free to use.
    * so that I_?? use lub [] */
-  I_ll = lub;
-  I_lh = I_ll + nl * nl;
-  I_hl = I_lh + nl * nh;
-  I_hh = I_hl + nh * nl;
+  double *I_ll = lub;
+  double *I_lh = I_ll + nl * nl;
+  double *I_hl = I_lh + nl * nh;
+  double *I_hh = I_hl + nh * nl;
 
   /* tmp := I + (M.T).(L.T) */
+  int i;
   for (i = 0; i < n3; ++i)
     {
       tmp [i * n3 + i] += 1.0;
