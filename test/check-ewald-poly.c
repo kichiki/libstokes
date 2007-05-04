@@ -1,6 +1,6 @@
 /* test code for polydisperse code in ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald-poly.c,v 1.2 2007/04/25 05:44:31 kichiki Exp $
+ * $Id: check-ewald-poly.c,v 1.3 2007/05/04 02:26:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,7 +67,8 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   sys->pos [2] = 0.0;
 
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
   // periodic
@@ -185,7 +186,8 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
   int np = 2;
   stokes_set_np (sys, np, np);
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
   // periodic
@@ -345,7 +347,8 @@ check_make_matrix_mob_ewald_3all_poly_SC_1
   sys->pos [2] = 0.0;
 
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
   // periodic
@@ -460,7 +463,8 @@ check_make_matrix_mob_ewald_3all_poly_SC_2
   int np = 2;
   stokes_set_np (sys, np, np);
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
   // periodic

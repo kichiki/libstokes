@@ -1,6 +1,6 @@
 /* test code for ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald.c,v 1.1 2007/04/20 01:59:39 kichiki Exp $
+ * $Id: check-ewald.c,v 1.2 2007/05/04 02:25:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -125,7 +125,8 @@ check_ewald_3all_atimes_matrix_SC (int version,
   double xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
 
-  sys->lubmin = 2.0000000001;
+  //sys->lubmin = 2.0000000001;
+  sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
 
