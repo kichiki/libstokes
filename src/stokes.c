@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.16 2007/04/26 05:14:37 kichiki Exp $
+ * $Id: stokes.c,v 2.17 2007/05/04 01:17:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -384,7 +384,7 @@ stokes_init (void)
   sys->ym = NULL;
 
   /* for lubrication */
-  sys->lubmin  = 0.0;
+  sys->lubmin2 = 0.0;
   sys->lubmax  = 0.0;
 
   /* for xi program */

@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.17 2007/04/26 05:14:54 kichiki Exp $
+ * $Id: stokes.h,v 1.18 2007/05/04 01:18:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -87,7 +87,9 @@ struct stokes {
   double * ym;
 
   /* for lubrication */
-  double lubmin; // min distance for lub (distance is replaced by this value)
+  double lubmin2;/* square of min distance for lub
+		  * (distance is replaced by its root-square)
+		  */
   double lubmax; /* max distance for lub;
 		  * for the pair beyond this is just ignored.
 		  * 0 means no limit for open systems and 
