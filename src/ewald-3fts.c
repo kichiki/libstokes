@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.13 2007/03/18 23:48:37 kichiki Exp $
+ * $Id: ewald-3fts.c,v 5.14 2007/05/04 01:55:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 #include <libiter.h> /* solve_iter() */
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
@@ -28,8 +29,6 @@
 #include "f.h"
 #include "ewald.h" // atimes_3all()
 #include "lub.h" // calc_lub_3fts()
-
-#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "ewald-3fts.h"
 
@@ -52,31 +51,20 @@ solve_res_3fts (struct stokes * sys,
 		const double *u, const double *o, const double *e,
 		double *f, double *t, double *s)
 {
-  int np;
-  int i;
-  int n11;
-
-
   sys->version = 2; // FTS version
-  np = sys->np;
-  n11 = np * 11;
+  int np = sys->np;
+  int n11 = np * 11;
 
-  double *u0 = NULL;
-  u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *o0 = (double *) malloc (sizeof (double) * np * 3);
+  double *e0 = (double *) malloc (sizeof (double) * np * 5);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (u0, "solve_res_3fts");
-  double *o0 = NULL;
-  o0 = (double *) malloc (sizeof (double) * np * 3);
   CHECK_MALLOC (o0, "solve_res_3fts");
-  double *e0 = NULL;
-  e0 = (double *) malloc (sizeof (double) * np * 5);
   CHECK_MALLOC (e0, "solve_res_3fts");
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_res_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_res_3fts");
-
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -90,6 +78,7 @@ solve_res_3fts (struct stokes * sys,
   free (e0);
 
   /* first guess */
+  int i;
   for (i = 0; i < n11; ++i)
     {
       x [i] = 0.0;
@@ -127,31 +116,22 @@ calc_b_mob_3fts (struct stokes * sys,
 		 const double *f, const double *t, const double *e,
 		 double *b)
 {
-  int np;
-  int i;
-  int i5, i11;
-  int j;
-  int n3, n5, n11;
-
-
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
+  int np = sys->np;
 
-  n3 = np * 3;
-  n5 = np * 5;
-  n11 = np * 11;
+  int n5 = np * 5;
+  int n11 = np * 11;
 
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (x, "calc_b_mob_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "calc_b_mob_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -162,8 +142,9 @@ calc_b_mob_3fts (struct stokes * sys,
 
   for (i = 0; i < np; ++i)
     {
-      i5 = i * 5;
-      i11 = i * 11;
+      int i5 = i * 5;
+      int i11 = i * 11;
+      int j;
       for (j = 0; j < 5; j ++)
 	{
 	  b [i11 + 6 + j] -= e [i5 + j];
@@ -186,40 +167,29 @@ calc_b_mob_3fts (struct stokes * sys,
 static void
 atimes_mob_3fts (int n, const double *x, double *y, void * user_data)
 {
-  struct stokes * sys;
-
-  int i;
-  int np;
-  int n3, n5;
-
-
-  sys = (struct stokes *) user_data;
+  struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
+  int np = sys->np;
 
-  n3 = np * 3;
-  n5 = np * 5;
+  int n3 = np * 3;
+  int n5 = np * 5;
 
-  double *z = NULL;
-  z = (double *) malloc (sizeof (double) * n);
+  double *z = (double *) malloc (sizeof (double) * n);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
+  double *u = (double *) malloc (sizeof (double) * n3);
+  double *o = (double *) malloc (sizeof (double) * n3);
+  double *s = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (z, "atimes_mob_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "atimes_mob_3fts");
-  double *u = NULL;
-  u = (double *) malloc (sizeof (double) * n3);
   CHECK_MALLOC (u, "atimes_mob_3fts");
-  double *o = NULL;
-  o = (double *) malloc (sizeof (double) * n3);
   CHECK_MALLOC (o, "atimes_mob_3fts");
-  double *s = NULL;
-  s = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (s, "atimes_mob_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -260,33 +230,26 @@ solve_mob_3fts (struct stokes * sys,
 		const double *f, const double *t, const double *e,
 		double *u, double *o, double *s)
 {
-  int np;
-  int i;
-  int n11;
-
-
   sys->version = 2; // FTS version
-  np = sys->np;
-  n11 = np * 11;
+  int np = sys->np;
+  int n11 = np * 11;
 
-  double *e0 = NULL;
-  e0 = (double *) malloc (sizeof (double) * np * 5);
+  double *e0 = (double *) malloc (sizeof (double) * np * 5);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (e0, "solve_mob_3fts");
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_mob_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_mob_3fts");
-
 
   shift_labo_to_rest_E (sys, np, e, e0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
   calc_b_mob_3fts (sys, f, t, e0, b);
+  free (e0);
 
   /* first guess */
+  int i;
   for (i = 0; i < n11; ++i)
     {
       x [i] = 0.0;
@@ -329,36 +292,25 @@ calc_b_mix_3fts (struct stokes * sys,
 		 const double *ef,
 		 double *b)
 {
-  int np, nm;
-  int i;
-  int i3, i5, i11;
-  int j;
-  int nf;
-  int n3, n5, n11;
-  int nm11;
-
-
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
-  nf = np - nm;
-  n3 = np * 3;
-  n5 = np * 5;
-  n11 = np * 11;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n5 = np * 5;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
 
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (x, "calc_b_mix_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "calc_b_mix_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -370,6 +322,8 @@ calc_b_mix_3fts (struct stokes * sys,
   atimes_3all (n11, x, b, (void *) sys); // sys->version is 2 (FTS)
 
   /* set b := M.x - [(0,0,E)_m,(U,O,E)_f] */
+  int i3, i5, i11;
+  int j;
   for (i = 0; i < nm; ++i)
     {
       i5 = i * 5;
@@ -411,58 +365,41 @@ calc_b_mix_3fts (struct stokes * sys,
 static void
 atimes_mix_3fts (int n, const double *x, double *y, void * user_data)
 {
-  struct stokes * sys;
-
-  int i;
-  int np;
-  int n5;
-  int nm, nf;
-  int nf3, nf5;
-  int nm3, nm5, nm11;
-
-
-  sys = (struct stokes *) user_data;
+  struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
-  nf = np - nm;
-  n5 = np * 5;
-  nf3 = nf * 3;
-  nf5 = nf * 5;
-  nm3 = nm * 3;
-  nm5 = nm * 5;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n5 = np * 5;
+  int nf3 = nf * 3;
+  int nf5 = nf * 5;
+  int nm3 = nm * 3;
+  int nm5 = nm * 5;
+  int nm11 = nm * 11;
 
-  double *z = NULL;
-  z = (double *) malloc (sizeof (double) * n);
+  double *z = (double *) malloc (sizeof (double) * n);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
+  double *u = (double *) malloc (sizeof (double) * nm3);
+  double *o = (double *) malloc (sizeof (double) * nm3);
+  double *s = (double *) malloc (sizeof (double) * nm5);
+  double *ff = (double *) malloc (sizeof (double) * nf3);
+  double *tf = (double *) malloc (sizeof (double) * nf3);
+  double *sf = (double *) malloc (sizeof (double) * nf5);
   CHECK_MALLOC (z, "atimes_mix_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "atimes_mix_3fts");
-  double *u = NULL;
-  u = (double *) malloc (sizeof (double) * nm3);
   CHECK_MALLOC (u, "atimes_mix_3fts");
-  double *o = NULL;
-  o = (double *) malloc (sizeof (double) * nm3);
   CHECK_MALLOC (o, "atimes_mix_3fts");
-  double *s = NULL;
-  s = (double *) malloc (sizeof (double) * nm5);
   CHECK_MALLOC (s, "atimes_mix_3fts");
-  double *ff = NULL;
-  ff = (double *) malloc (sizeof (double) * nf3);
   CHECK_MALLOC (ff, "atimes_mix_3fts");
-  double *tf = NULL;
-  tf = (double *) malloc (sizeof (double) * nf3);
   CHECK_MALLOC (tf, "atimes_mix_3fts");
-  double *sf = NULL;
-  sf = (double *) malloc (sizeof (double) * nf5);
   CHECK_MALLOC (sf, "atimes_mix_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -521,16 +458,9 @@ solve_mix_3fts (struct stokes * sys,
 		double *u, double *o, double *s,
 		double *ff, double *tf, double *sf)
 {
-  int np, nm;
-  int i;
-  int n11;
-  int nf;
-  int nm11;
-
-
   sys->version = 2; // FTS version
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
   if (np == nm)
     {
       solve_mob_3fts (sys,
@@ -539,29 +469,22 @@ solve_mix_3fts (struct stokes * sys,
       return;
     }
 
-  nf = np - nm;
-  n11 = np * 11;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
 
-  double *uf0 = NULL;
-  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *of0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *ef0 = (double *) malloc (sizeof (double) * nf * 5);
+  double *e0 = (double *) malloc (sizeof (double) * nm * 5);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (uf0, "solve_mix_3fts");
-  double *of0 = NULL;
-  of0 = (double *) malloc (sizeof (double) * nf * 3);
   CHECK_MALLOC (of0, "solve_mix_3fts");
-  double *ef0 = NULL;
-  ef0 = (double *) malloc (sizeof (double) * nf * 5);
   CHECK_MALLOC (ef0, "solve_mix_3fts");
-  double *e0 = NULL;
-  e0  = (double *) malloc (sizeof (double) * nm * 5);
   CHECK_MALLOC (e0, "solve_mix_3fts");
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_mix_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_mix_3fts");
-
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
@@ -577,6 +500,7 @@ solve_mix_3fts (struct stokes * sys,
   free (e0);
 
   /* first guess */
+  int i;
   for (i = 0; i < n11; ++i)
     {
       x [i] = 0.0;
@@ -616,34 +540,22 @@ solve_res_lub_3fts (struct stokes * sys,
 		    const double *u, const double *o, const double *e,
 		    double *f, double *t, double *s)
 {
-  int np;
-  int i;
-  int n11;
-
-
   sys->version = 2; // FTS version
-  np = sys->np;
-  n11 = np * 11;
+  int np = sys->np;
+  int n11 = np * 11;
 
-  double *u0 = NULL;
-  u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *o0 = (double *) malloc (sizeof (double) * np * 3);
+  double *e0 = (double *) malloc (sizeof (double) * np * 5);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  double *lub = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (u0, "solve_res_lub_3fts");
-  double *o0 = NULL;
-  o0 = (double *) malloc (sizeof (double) * np * 3);
   CHECK_MALLOC (o0, "solve_res_lub_3fts");
-  double *e0 = NULL;
-  e0 = (double *) malloc (sizeof (double) * np * 5);
   CHECK_MALLOC (e0, "solve_res_lub_3fts");
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_res_lub_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_res_lub_3fts");
-  double *lub = NULL;
-  lub = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (lub, "solve_res_lub_3fts");
-
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -660,6 +572,7 @@ solve_res_lub_3fts (struct stokes * sys,
   atimes_3all (n11, lub, x, (void *) sys);
   // sys->version is 2 (FTS)
   // x[] is used temporarily
+  int i;
   for (i = 0; i < n11; ++i)
     {
       b [i] += x [i];
@@ -705,8 +618,7 @@ calc_b_mob_lub_3fts (struct stokes * sys,
   int n5  = sys->np * 5;
   int n11 = sys->np * 11;
 
-  double *v5_0 = NULL;
-  v5_0 = (double *)malloc (sizeof (double) * n5);
+  double *v5_0 = (double *)malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "calc_b_mob_lub_3ft");
   int i;
   for (i = 0; i < n5; i ++)
@@ -714,11 +626,9 @@ calc_b_mob_lub_3fts (struct stokes * sys,
       v5_0 [i] = 0.0;
     }
 
-  double *ft = NULL;
-  ft = (double *)malloc (sizeof (double) * n11);
+  double *ft = (double *)malloc (sizeof (double) * n11);
+  double *tmp = (double *)malloc (sizeof (double) * n11);
   CHECK_MALLOC (ft, "atimes_mob_lub_3ft");
-  double *tmp = NULL;
-  tmp = (double *)malloc (sizeof (double) * n11);
   CHECK_MALLOC (tmp, "atimes_mob_lub_3ft");
 
   // set ft = (f,t,0)
@@ -756,8 +666,7 @@ calc_b_mob_lub_3fts (struct stokes * sys,
 static void
 atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
 {
-  struct stokes *sys;
-  sys = (struct stokes *) user_data;
+  struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
@@ -773,8 +682,7 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
       exit (1);
     }
 
-  double *v5_0 = NULL;
-  v5_0 = (double *)malloc (sizeof (double) * n5);
+  double *v5_0 = (double *)malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "atimes_mob_lub_3ft");
   int i;
   for (i = 0; i < n5; i ++)
@@ -782,21 +690,15 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
       v5_0 [i] = 0.0;
     }
 
-  double *uo = NULL;
-  uo = (double *)malloc (sizeof (double) * n11);
+  double *uo = (double *)malloc (sizeof (double) * n11);
+  double *z = (double *)malloc (sizeof (double) * n11);
+  double *tmp = (double *)malloc (sizeof (double) * n11);
   CHECK_MALLOC (uo, "atimes_mob_lub_3ft");
-  double *z = NULL;
-  z = (double *)malloc (sizeof (double) * n11);
   CHECK_MALLOC (z, "atimes_mob_lub_3ft");
-  double *tmp = NULL;
-  tmp = (double *)malloc (sizeof (double) * n11);
   CHECK_MALLOC (tmp, "atimes_mob_lub_3ft");
-  double *u;
-  double *o;
-  double *s;
-  u = tmp;
-  o = tmp + n3;
-  s = tmp + n3 + n3;
+  double *u = tmp;
+  double *o = tmp + n3;
+  double *s = tmp + n3 + n3;
 
   // set (u,o,s) by x
   set_FTS_by_fts (sys->np, u, o, s, x);
@@ -857,22 +759,16 @@ solve_mob_lub_3fts (struct stokes * sys,
 {
   sys->version = 2; // FTS version
 
-  int np;
-  np = sys->np;
-  int n11;
-  n11 = np * 11;
-  int n5;
-  n5 = np * 5;
+  int np = sys->np;
+  int n11 = np * 11;
+  int n5 = np * 5;
 
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_mob_lub_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_mob_lub_3fts");
 
-  double *e0 = NULL;
-  e0 = (double *) malloc (sizeof (double) * n5);
+  double *e0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (e0, "solve_mob_lub_3fts");
   shift_labo_to_rest_E (sys, np, e, e0);
   /* the main calculation is done in the the fluid-rest frame;
@@ -927,37 +823,27 @@ calc_b_mix_lub_3fts (struct stokes * sys,
 		     const double *ef,
 		     double *b)
 {
-  int np, nm;
-  int i;
-  int nf;
-  int n3, n5, n11;
-  int nm11;
-
-
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
-  nf = np - nm;
-  n3 = np * 3;
-  n5 = np * 5;
-  n11 = np * 11;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n5 = np * 5;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
 
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  double *y = (double *) malloc (sizeof (double) * n11);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (x, "calc_b_mix_lub_3fts");
-  double *y = NULL;
-  y = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (y, "calc_b_mix_lub_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "calc_b_mix_lub_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -1006,61 +892,43 @@ static void
 atimes_mix_lub_3fts (int n, const double *x,
 		     double *y, void * user_data)
 {
-  struct stokes * sys;
-
-  int i;
-  int np;
-  int n5;
-  int nm, nf;
-  int nf3, nf5;
-  int nm3, nm5, nm11;
-
-
-  sys = (struct stokes *) user_data;
+  struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 2)
     {
       fprintf (stderr, "libstokes: version is wrong. reset to FTS.\n");
       sys->version = 2;
     }
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
 
-  nf = np - nm;
-  n5 = np * 5;
-  nf3 = nf * 3;
-  nf5 = nf * 5;
-  nm3 = nm * 3;
-  nm5 = nm * 5;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n5 = np * 5;
+  int nf3 = nf * 3;
+  int nf5 = nf * 5;
+  int nm3 = nm * 3;
+  int nm5 = nm * 5;
+  int nm11 = nm * 11;
 
-  double *w = NULL;
-  w = (double *) malloc (sizeof (double) * n);
+  double *w = (double *) malloc (sizeof (double) * n);
+  double *z = (double *) malloc (sizeof (double) * n);
+  double *v5_0 = (double *) malloc (sizeof (double) * n5);
+  double *u = (double *) malloc (sizeof (double) * nm3);
+  double *o = (double *) malloc (sizeof (double) * nm3);
+  double *s = (double *) malloc (sizeof (double) * nm5);
+  double *ff = (double *) malloc (sizeof (double) * nf3);
+  double *tf = (double *) malloc (sizeof (double) * nf3);
+  double *sf = (double *) malloc (sizeof (double) * nf5);
   CHECK_MALLOC (w, "atimes_mix_lub_3fts");
-  double *z = NULL;
-  z = (double *) malloc (sizeof (double) * n);
   CHECK_MALLOC (z, "atimes_mix_lub_3fts");
-  double *v5_0 = NULL;
-  v5_0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (v5_0, "atimes_mix_lub_3fts");
-  double *u = NULL;
-  u = (double *) malloc (sizeof (double) * nm3);
   CHECK_MALLOC (u, "atimes_mix_lub_3fts");
-  double *o = NULL;
-  o = (double *) malloc (sizeof (double) * nm3);
   CHECK_MALLOC (o, "atimes_mix_lub_3fts");
-  double *s = NULL;
-  s = (double *) malloc (sizeof (double) * nm5);
   CHECK_MALLOC (s, "atimes_mix_lub_3fts");
-  double *ff = NULL;
-  ff = (double *) malloc (sizeof (double) * nf3);
   CHECK_MALLOC (ff, "atimes_mix_lub_3fts");
-  double *tf = NULL;
-  tf = (double *) malloc (sizeof (double) * nf3);
   CHECK_MALLOC (tf, "atimes_mix_lub_3fts");
-  double *sf = NULL;
-  sf = (double *) malloc (sizeof (double) * nf5);
   CHECK_MALLOC (sf, "atimes_mix_lub_3fts");
 
+  int i;
   for (i = 0; i < n5; ++i)
     {
       v5_0 [i] = 0.0;
@@ -1131,46 +999,31 @@ solve_mix_lub_3fts (struct stokes * sys,
 		    double *u, double *o, double *s,
 		    double *ff, double *tf, double *sf)
 {
-  int np, nm;
-
-  int i;
-  int n11;
-  int nf;
-  int nm11;
-
-
   sys->version = 2; // FTS version
-  np = sys->np;
-  nm = sys->nm;
+  int np = sys->np;
+  int nm = sys->nm;
   if (np == nm)
     {
       solve_mob_lub_3fts (sys, f, t, e, u, o, s);
       return;
     }
 
-  nf = np - nm;
-  n11 = np * 11;
-  nm11 = nm * 11;
+  int nf = np - nm;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
 
-  double *uf0 = NULL;
-  uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *of0 = (double *) malloc (sizeof (double) * nf * 3);
+  double *ef0 = (double *) malloc (sizeof (double) * nf * 5);
+  double *e0 = (double *) malloc (sizeof (double) * nm * 5);
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (uf0, "solve_mix_lub_3fts");
-  double *of0 = NULL;
-  of0 = (double *) malloc (sizeof (double) * nf * 3);
   CHECK_MALLOC (of0, "solve_mix_lub_3fts");
-  double *ef0 = NULL;
-  ef0 = (double *) malloc (sizeof (double) * nf * 5);
   CHECK_MALLOC (ef0, "solve_mix_lub_3fts");
-  double *e0 = NULL;
-  e0  = (double *) malloc (sizeof (double) * nm * 5);
   CHECK_MALLOC (e0, "solve_mix_lub_3fts");
-  double *b = NULL;
-  b = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (b, "solve_mix_lub_3fts");
-  double *x = NULL;
-  x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (x, "solve_mix_lub_3fts");
-
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
@@ -1186,6 +1039,7 @@ solve_mix_lub_3fts (struct stokes * sys,
   free (e0);
 
   /* first guess */
+  int i;
   for (i = 0; i < n11; ++i)
     {
       x [i] = 0.0;
