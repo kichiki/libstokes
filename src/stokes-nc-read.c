@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.3 2006/10/26 01:49:11 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.4 2007/05/11 02:01:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -239,6 +239,9 @@ stokes_nc_open (const char * filename)
   nc->flag_tf = 0;
   nc->flag_sf = 0;
 
+  nc->flag_a = 0;
+  nc->flag_af = 0;
+
   nc_type xtype;
   int nd;
   int d_ids[NC_MAX_VAR_DIMS];
@@ -421,6 +424,13 @@ stokes_nc_open (const char * filename)
 			     &(nc->x_id),
 			     &(nc->flag_x));
 	}
+      else if (strcmp ("a", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->p_dim,
+			     &(nc->a_id),
+			     &(nc->flag_a));
+	}
       else if (strcmp ("U", name) == 0)
 	{
 	  stokes_nc_check_3 (i, xtype, nd, d_ids,
@@ -470,6 +480,13 @@ stokes_nc_open (const char * filename)
 			     nc->pf_dim, nc->vec_dim,
 			     &(nc->xf0_id),
 			     &(nc->flag_xf0));
+	}
+      else if (strcmp ("af", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->pf_dim,
+			     &(nc->af_id),
+			     &(nc->flag_af));
 	}
       else if (strcmp ("Uf0", name) == 0)
 	{
