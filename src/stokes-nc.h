@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.6 2007/05/04 01:11:26 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.7 2007/05/11 01:59:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -84,6 +84,9 @@ struct stokes_nc {
   int tf_id;
   int sf_id;
 
+  int a_id;
+  int af_id;
+
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
   int flag_ui0;
@@ -124,6 +127,9 @@ struct stokes_nc {
   int flag_ff;
   int flag_tf;
   int flag_sf;
+
+  int flag_a;
+  int flag_af;
 };
 
 
@@ -145,105 +151,41 @@ stokes_nc_print_actives (struct stokes_nc * nc,
 struct stokes_nc *
 stokes_nc_x_init (const char * filename, int np);
 
-/* initialize NetCDF file for libstokes for mob_F problem
+/* initialize NetCDF file for libstokes
  * INPUT
  *  np : number of MOBILE particles
+ *  nf : number of FIXED particles for "mix" (set 0 for "mob" problem)
+ *  version   : 0 = F, 1 = FT, 2 = FTS
+ *  flag_poly : 0 = monodisperse
+ *              1 = polydisperse (set particle radius)
+ *  flag_it   : 0 = constant imposed flow
+ *              1 = time-changing imposed flow
+ *              this is only effective for nf != 0 (mixed problem)
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, f0, x, u.
+ *  activated entries are
+ *   [F mob]      : f0, x, u.
+ *   [FT mob]     : f0, t0, x, u, o.
+ *   [FTS mob]    : f0, t0, e0, x, u, o, s.
+ *   [F mix]      : ui0,
+ *                  xf0, f0, uf0, x, u, ff.
+ *   [FT mix]     : ui0, oi0,
+ *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *   [FTS mix]    : ui0, oi0, ei0,
+ *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
+ *   [F mix it]   : ui,
+ *                  xf0, f0, uf0, x, u, ff.
+ *   [FT mix it]  : ui, oi,
+ *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *   [FTS mix it] : ui, oi, ei,
+ *                  xf0, f0, t0, e0, uf0, of0, ef0,
+ *                  x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
-stokes_nc_mob_f_init (const char * filename, int np);
-/* initialize NetCDF file for libstokes for mob_FT problem
- * INPUT
- *  np : number of MOBILE particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, f0, t0, x, u, o.
- */
-struct stokes_nc *
-stokes_nc_mob_ft_init (const char * filename, int np);
-/* initialize NetCDF file for libstokes for mob_FTS problem
- * INPUT
- *  np : number of MOBILE particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, f0, t0, e0, x, u, o, s.
- */
-struct stokes_nc *
-stokes_nc_mob_fts_init (const char * filename, int np);
-
-/* initialize NetCDF file for libstokes for mix_F problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, xf0, f0, uf0, x, u, ff.
- */
-struct stokes_nc *
-stokes_nc_mix_f_i0_init (const char * filename, int nm, int nf);
-/* initialize NetCDF file for libstokes for mix_FT problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, oi0, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- */
-struct stokes_nc *
-stokes_nc_mix_ft_i0_init (const char * filename, int nm, int nf);
-/* initialize NetCDF file for libstokes for mix_FTS problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, oi0, ei0,
- *                         xf0, f0, t0, e0, uf0, of0, ef0,
- *                         x, u, o, s, ff, tf, sf.
- */
-struct stokes_nc *
-stokes_nc_mix_fts_i0_init (const char * filename, int nm, int nf);
-/* initialize NetCDF file for libstokes for mix_F problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, xf0, f0, uf0, x, u, ff.
- */
-struct stokes_nc *
-stokes_nc_mix_f_it_init (const char * filename, int nm, int nf);
-/* initialize NetCDF file for libstokes for mix_FT problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, oi, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- */
-struct stokes_nc *
-stokes_nc_mix_ft_it_init (const char * filename, int nm, int nf);
-/* initialize NetCDF file for libstokes for mix_FTS problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, oi, ei,
- *                         xf0, f0, t0, e0, uf0, of0, ef0,
- *                         x, u, o, s, ff, tf, sf.
- */
-struct stokes_nc *
-stokes_nc_mix_fts_it_init (const char * filename, int nm, int nf);
-
+stokes_nc_init (const char *filename, int np, int nf,
+		int version,
+		int flag_poly,
+		int flag_it);
 
 /* close (and write if necessary) NetCDF file for libstokes
  */
@@ -342,6 +284,16 @@ stokes_nc_set_tf0 (struct stokes_nc * nc,
 void
 stokes_nc_set_sf0 (struct stokes_nc * nc,
 		   const double * sf0);
+/* set a
+ */
+void
+stokes_nc_set_a (struct stokes_nc * nc,
+		 const double * a);
+/* set af
+ */
+void
+stokes_nc_set_af (struct stokes_nc * nc,
+		  const double * af);
 
 /* set time (step)
  */

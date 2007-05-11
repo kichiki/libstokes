@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.6 2007/05/04 01:11:02 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.7 2007/05/11 01:59:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <netcdf.h>
+#include "memory-check.h"
 
 #include "stokes-nc.h"
 
@@ -89,9 +90,16 @@ stokes_nc_print_actives (struct stokes_nc * nc,
 	   nc->flag_ff,
 	   nc->flag_tf,
 	   nc->flag_sf);
+  fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "a   | %d |\n",
+	   nc->flag_a);
+  fprintf (out, "af  | %d |\n",
+	   nc->flag_af);
 }
 
 
+/* init a variable x[time][p][vec]
+ */
 static void
 stokes_nc_init_t_p_vec (struct stokes_nc * nc,
 			const char * name,
@@ -120,6 +128,9 @@ stokes_nc_init_t_p_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_t_p_vec", name);
     }
 }
+/* init a variable x[time][p][stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_t_p_stt (struct stokes_nc * nc,
 			const char * name,
@@ -149,6 +160,8 @@ stokes_nc_init_t_p_stt (struct stokes_nc * nc,
     }
 }
 
+/* init a variable x[time][pf][vec]
+ */
 static void
 stokes_nc_init_t_pf_vec (struct stokes_nc * nc,
 			 const char * name,
@@ -177,6 +190,9 @@ stokes_nc_init_t_pf_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_t_pf_vec", name);
     }
 }
+/* init a variable x[time][pf][stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_t_pf_stt (struct stokes_nc * nc,
 			 const char * name,
@@ -206,6 +222,8 @@ stokes_nc_init_t_pf_stt (struct stokes_nc * nc,
     }
 }
 
+/* init a variable x[p][vec]
+ */
 static void
 stokes_nc_init_p_vec (struct stokes_nc * nc,
 		      const char * name,
@@ -233,6 +251,9 @@ stokes_nc_init_p_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_p_vec", name);
     }
 }
+/* init a variable x[p][stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_p_stt (struct stokes_nc * nc,
 		      const char * name,
@@ -261,6 +282,8 @@ stokes_nc_init_p_stt (struct stokes_nc * nc,
     }
 }
 
+/* init a variable x[pf][vec]
+ */
 static void
 stokes_nc_init_pf_vec (struct stokes_nc * nc,
 		       const char * name,
@@ -288,6 +311,9 @@ stokes_nc_init_pf_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_pf_vec", name);
     }
 }
+/* init a variable x[pf][stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_pf_stt (struct stokes_nc * nc,
 		       const char * name,
@@ -316,6 +342,8 @@ stokes_nc_init_pf_stt (struct stokes_nc * nc,
     }
 }
 
+/* init a variable x[vec]
+ */
 static void
 stokes_nc_init_vec (struct stokes_nc * nc,
 		    const char * name,
@@ -340,6 +368,9 @@ stokes_nc_init_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_vec", name);
     }
 }
+/* init a variable x[stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_stt (struct stokes_nc * nc,
 		    const char * name,
@@ -364,7 +395,61 @@ stokes_nc_init_stt (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_stt", name);
     }
 }
+/* init a variable x[p]
+ */
+static void
+stokes_nc_init_p (struct stokes_nc * nc,
+		  const char * name,
+		  const char * longname,
+		  int * var_id)
+{
+  int status;
 
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 1, &nc->p_dim, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_p", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_p", name);
+    }
+}
+/* init a variable x[pf]
+ */
+static void
+stokes_nc_init_pf (struct stokes_nc * nc,
+		   const char * name,
+		   const char * longname,
+		   int * var_id)
+{
+  int status;
+
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 1, &nc->pf_dim, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_pf", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_pf", name);
+    }
+}
+
+/* init a variable x[time][vec]
+ */
 static void
 stokes_nc_init_t_vec (struct stokes_nc * nc,
 		      const char * name,
@@ -392,6 +477,9 @@ stokes_nc_init_t_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_t_vec", name);
     }
 }
+/* init a variable x[time][stt]
+ * (stt = symmetric traceless tensor)
+ */
 static void
 stokes_nc_init_t_stt (struct stokes_nc * nc,
 		      const char * name,
@@ -420,7 +508,7 @@ stokes_nc_init_t_stt (struct stokes_nc * nc,
     }
 }
 
-/* initialize NetCDF file for libstokes
+/* initialize NetCDF file for libstokes (internal use only)
  * INPUT
  *  nm : number of MOBILE particles
  *       (note that np in NetCDF is only MOBILE particles)
@@ -430,52 +518,47 @@ stokes_nc_init_t_stt (struct stokes_nc * nc,
  *  (returned value) : ncid
  */
 static struct stokes_nc *
-stokes_nc_init (const char * filename, int nm, int nf,
-		int flag_ui0,
-		int flag_oi0,
-		int flag_ei0,
-		int flag_ui,
-		int flag_oi,
-		int flag_ei,
-		int flag_x0,
-		int flag_u0,
-		int flag_o0,
-		int flag_e0,
-		int flag_f0,
-		int flag_t0,
-		int flag_s0,
-		int flag_xf0,
-		int flag_uf0,
-		int flag_of0,
-		int flag_ef0,
-		int flag_ff0,
-		int flag_tf0,
-		int flag_sf0,
-		int flag_x,
-		int flag_u,
-		int flag_o,
-		int flag_e,
-		int flag_f,
-		int flag_t,
-		int flag_s,
-		int flag_xf,
-		int flag_uf,
-		int flag_of,
-		int flag_ef,
-		int flag_ff,
-		int flag_tf,
-		int flag_sf)
+stokes_nc_init_ (const char * filename, int nm, int nf,
+		 int flag_ui0,
+		 int flag_oi0,
+		 int flag_ei0,
+		 int flag_ui,
+		 int flag_oi,
+		 int flag_ei,
+		 int flag_x0,
+		 int flag_u0,
+		 int flag_o0,
+		 int flag_e0,
+		 int flag_f0,
+		 int flag_t0,
+		 int flag_s0,
+		 int flag_xf0,
+		 int flag_uf0,
+		 int flag_of0,
+		 int flag_ef0,
+		 int flag_ff0,
+		 int flag_tf0,
+		 int flag_sf0,
+		 int flag_x,
+		 int flag_u,
+		 int flag_o,
+		 int flag_e,
+		 int flag_f,
+		 int flag_t,
+		 int flag_s,
+		 int flag_xf,
+		 int flag_uf,
+		 int flag_of,
+		 int flag_ef,
+		 int flag_ff,
+		 int flag_tf,
+		 int flag_sf,
+		 int flag_a,
+		 int flag_af)
 {
-  struct stokes_nc * nc = NULL;
-  int status;
-  int dimids[3];
-
-  nc = (struct stokes_nc *) malloc (sizeof (struct stokes_nc));
-  if (nc == NULL)
-    {
-      fprintf (stderr, "stokes_nc_init: allocation error on nc\n");
-      exit (0);
-    }
+  struct stokes_nc *nc
+    = (struct stokes_nc *)malloc (sizeof (struct stokes_nc));
+  CHECK_MALLOC (nc, "stokes_nc_init");
 
   nc->flag_ui0 = flag_ui0;
   nc->flag_oi0 = flag_oi0;
@@ -511,8 +594,11 @@ stokes_nc_init (const char * filename, int nm, int nf,
   nc->flag_ff = flag_ff;
   nc->flag_tf = flag_tf;
   nc->flag_sf = flag_sf;
+  nc->flag_a = flag_a;
+  nc->flag_af = flag_af;
 
   /* create netCDF dataset: enter define mode */
+  int status;
   status = nc_create (filename,
 		      NC_NOCLOBBER|NC_64BIT_OFFSET,
 		      &(nc->id));
@@ -536,6 +622,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       stokes_nc_error (status,
 		       "at nc_def_dim() for p in stokes_nc_init", NULL);
     }
+  int dimids[3];
   dimids[0] = nc->p_dim;
   status = nc_def_var (nc->id, "p", NC_INT, 1, dimids, &(nc->p_id));
   if (status != NC_NOERR)
@@ -551,7 +638,7 @@ stokes_nc_init (const char * filename, int nm, int nf,
       if (status != NC_NOERR)
 	{
 	  stokes_nc_error (status,
-			   "at nc_def_dim() for pf in stokes_nc_init", NULL);
+ 			   "at nc_def_dim() for pf in stokes_nc_init", NULL);
 	}
       dimids[0] = nc->pf_dim;
       status = nc_def_var (nc->id, "pf", NC_INT, 1, dimids, &(nc->pf_id));
@@ -716,6 +803,13 @@ stokes_nc_init (const char * filename, int nm, int nf,
 			  "positions of particle center",
 			  &nc->x_id);
     }
+  /* a */
+  if (flag_a != 0)
+    {
+      stokes_nc_init_p (nc, "a",
+			"radii of particle",
+			&nc->a_id);
+    }
   /* U */
   if (flag_u != 0)
     {
@@ -770,6 +864,13 @@ stokes_nc_init (const char * filename, int nm, int nf,
 	    (nc, "xf0",
 	     "positions of fixed particle center at t0",
 	     &nc->xf0_id);
+	}
+      /* af */
+      if (flag_af != 0)
+	{
+	  stokes_nc_init_pf (nc, "af",
+			     "radii of particle",
+			     &nc->af_id);
 	}
       /* Uf0 */
       if (flag_uf0 != 0)
@@ -947,472 +1048,243 @@ stokes_nc_init (const char * filename, int nm, int nf,
 struct stokes_nc *
 stokes_nc_x_init (const char * filename, int np)
 {
-  return stokes_nc_init (filename, np, 0,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 0, // f0
-			 0, // t0
-			 0, // s0
-			 0, // xf0
-			 0, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 0, // u
-			 0, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 0, // ff
-			 0, // tf
-			 0);// sf
+  return stokes_nc_init_ (filename, np, 0,
+			  0, // ui0
+			  0, // oi0
+			  0, // ei0
+			  0, // ui
+			  0, // oi
+			  0, // ei
+			  0, // x0
+			  0, // u0
+			  0, // o0
+			  0, // e0
+			  0, // f0
+			  0, // t0
+			  0, // s0
+			  0, // xf0
+			  0, // uf0
+			  0, // of0
+			  0, // ef0
+			  0, // ff0
+			  0, // tf0
+			  0, // sf0
+			  1, // x
+			  0, // u
+			  0, // o
+			  0, // e
+			  0, // f
+			  0, // t
+			  0, // s
+			  0, // xf
+			  0, // uf
+			  0, // of
+			  0, // ef
+			  0, // ff
+			  0, // tf
+			  0, // sf
+			  0, // a
+			  0);// af
 }
 
-/* initialize NetCDF file for libstokes for mob_F problem
+/* initialize NetCDF file for libstokes
  * INPUT
  *  np : number of MOBILE particles
+ *  nf : number of FIXED particles for "mix" (set 0 for "mob" problem)
+ *  version   : 0 = F, 1 = FT, 2 = FTS
+ *  flag_poly : 0 = monodisperse
+ *              1 = polydisperse (set particle radius)
+ *  flag_it   : 0 = constant imposed flow
+ *              1 = time-changing imposed flow
+ *              this is only effective for nf != 0 (mixed problem)
  * OUTPUT
  *  (returned value) : ncid
- *  activated entries are, f0, x, u.
+ *  activated entries are
+ *   [F mob]      : f0, x, u.
+ *   [FT mob]     : f0, t0, x, u, o.
+ *   [FTS mob]    : f0, t0, e0, x, u, o, s.
+ *   [F mix]      : ui0,
+ *                  xf0, f0, uf0, x, u, ff.
+ *   [FT mix]     : ui0, oi0,
+ *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *   [FTS mix]    : ui0, oi0, ei0,
+ *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
+ *   [F mix it]   : ui,
+ *                  xf0, f0, uf0, x, u, ff.
+ *   [FT mix it]  : ui, oi,
+ *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
+ *   [FTS mix it] : ui, oi, ei,
+ *                  xf0, f0, t0, e0, uf0, of0, ef0,
+ *                  x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
-stokes_nc_mob_f_init (const char * filename, int np)
+stokes_nc_init (const char *filename, int np, int nf,
+		int version,
+		int flag_poly,
+		int flag_it)
 {
-  return stokes_nc_init (filename, np, 0,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 0, // t0
-			 0, // s0
-			 0, // xf0
-			 0, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 0, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 0, // ff
-			 0, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mob_FT problem
- * INPUT
- *  np : number of MOBILE particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, f0, t0, x, u, o.
- */
-struct stokes_nc *
-stokes_nc_mob_ft_init (const char * filename, int np)
-{
-  return stokes_nc_init (filename, np, 0,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 0, // xf0
-			 0, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 0, // ff
-			 0, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mob_FTS problem
- * INPUT
- *  np : number of MOBILE particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, f0, t0, e0, x, u, o, s.
- */
-struct stokes_nc *
-stokes_nc_mob_fts_init (const char * filename, int np)
-{
-  return stokes_nc_init (filename, np, 0,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 1, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 0, // xf0
-			 0, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 1, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 0, // ff
-			 0, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mix_F problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, xf0, f0, uf0, x, u, ff.
- */
-struct stokes_nc *
-stokes_nc_mix_f_i0_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 1, // ui0
-			 0, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 0, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 0, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 0, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mix_FT problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, oi0, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- */
-struct stokes_nc *
-stokes_nc_mix_ft_i0_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 1, // ui0
-			 1, // oi0
-			 0, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 1, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 1, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mix_FTS problem
- * with a constant imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui0, oi0, ei0,
- *                         xf0, f0, t0, e0, uf0, of0, ef0,
- *                         x, u, o, s, ff, tf, sf.
- */
-struct stokes_nc *
-stokes_nc_mix_fts_i0_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 1, // ui0
-			 1, // oi0
-			 1, // ei0
-			 0, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 1, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 1, // of0
-			 1, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 1, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 1, // tf
-			 1);// sf
-}
-/* initialize NetCDF file for libstokes for mix_F problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, xf0, f0, uf0, x, u, ff.
- */
-struct stokes_nc *
-stokes_nc_mix_f_it_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 1, // ui
-			 0, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 0, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 0, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 0, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 0, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mix_FT problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, oi, xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- */
-struct stokes_nc *
-stokes_nc_mix_ft_it_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 1, // ui
-			 1, // oi
-			 0, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 0, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 1, // of0
-			 0, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 0, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 1, // tf
-			 0);// sf
-}
-/* initialize NetCDF file for libstokes for mix_FTS problem
- * with a time-changing imposed flow
- * INPUT
- *  nm : number of MOBILE particles
- *  nf : number of fixed particles
- * OUTPUT
- *  (returned value) : ncid
- *  activated entries are, ui, oi, ei,
- *                         xf0, f0, t0, e0, uf0, of0, ef0,
- *                         x, u, o, s, ff, tf, sf.
- */
-struct stokes_nc *
-stokes_nc_mix_fts_it_init (const char * filename, int nm, int nf)
-{
-  return stokes_nc_init (filename, nm, nf,
-			 0, // ui0
-			 0, // oi0
-			 0, // ei0
-			 1, // ui
-			 1, // oi
-			 1, // ei
-			 0, // x0
-			 0, // u0
-			 0, // o0
-			 1, // e0
-			 1, // f0
-			 1, // t0
-			 0, // s0
-			 1, // xf0
-			 1, // uf0
-			 1, // of0
-			 1, // ef0
-			 0, // ff0
-			 0, // tf0
-			 0, // sf0
-			 1, // x
-			 1, // u
-			 1, // o
-			 0, // e
-			 0, // f
-			 0, // t
-			 1, // s
-			 0, // xf
-			 0, // uf
-			 0, // of
-			 0, // ef
-			 1, // ff
-			 1, // tf
-			 1);// sf
+  int flag_ui0 = 0;
+  int flag_oi0 = 0;
+  int flag_ei0 = 0;
+  int flag_ui = 0;
+  int flag_oi = 0;
+  int flag_ei = 0;
+  int flag_x0 = 0;
+  int flag_u0 = 0;
+  int flag_o0 = 0;
+  int flag_e0 = 0;
+  int flag_f0 = 0;
+  int flag_t0 = 0;
+  int flag_s0 = 0;
+  int flag_xf0 = 0;
+  int flag_uf0 = 0;
+  int flag_of0 = 0;
+  int flag_ef0 = 0;
+  int flag_ff0 = 0;
+  int flag_tf0 = 0;
+  int flag_sf0 = 0;
+  int flag_x = 0;
+  int flag_u = 0;
+  int flag_o = 0;
+  int flag_e = 0;
+  int flag_f = 0;
+  int flag_t = 0;
+  int flag_s = 0;
+  int flag_xf = 0;
+  int flag_uf = 0;
+  int flag_of = 0;
+  int flag_ef = 0;
+  int flag_ff = 0;
+  int flag_tf = 0;
+  int flag_sf = 0;
+  int flag_a = 0;
+  int flag_af = 0;
+
+  if (nf == 0)
+    {
+      flag_a = flag_poly;
+      if (version == 0) // F version
+	{
+	  flag_f0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+	}
+      else if (version == 1) // FT version
+	{
+	  flag_f0 = 1;
+	  flag_t0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+	  flag_o = 1;
+	}
+      else // FTS version
+	{
+	  flag_f0 = 1;
+	  flag_t0 = 1;
+	  flag_e0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+	  flag_o = 1;
+	  flag_s = 1;
+	}
+    }
+  else if (nf > 0)
+    {
+      flag_a = flag_poly;
+      flag_af = flag_poly;
+      if (version == 0) // F version
+	{
+	  flag_f0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+
+	  flag_uf0 = 1;
+	  flag_xf0 = 1;
+	  flag_ff = 1;
+
+	  if (flag_it == 0)
+	    {
+	      flag_ui0 = 1;
+	    }
+	  else
+	    {
+	      flag_ui = 1;
+	    }
+	}
+      else if (version == 1) // FT version
+	{
+	  flag_f0 = 1;
+	  flag_t0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+	  flag_o = 1;
+
+	  flag_uf0 = 1;
+	  flag_of0 = 1;
+	  flag_xf0 = 1;
+	  flag_ff = 1;
+	  flag_tf = 1;
+
+	  if (flag_it == 0)
+	    {
+	      flag_ui0 = 1;
+	      flag_oi0 = 1;
+	    }
+	  else
+	    {
+	      flag_ui = 1;
+	      flag_oi = 1;
+	    }
+	}
+      else // FTS version
+	{
+	  flag_f0 = 1;
+	  flag_t0 = 1;
+	  flag_e0 = 1;
+	  flag_x = 1;
+	  flag_u = 1;
+	  flag_o = 1;
+	  flag_s = 1;
+
+	  flag_uf0 = 1;
+	  flag_of0 = 1;
+	  flag_ef0 = 1;
+	  flag_xf0 = 1;
+	  flag_ff = 1;
+	  flag_tf = 1;
+	  flag_sf = 1;
+
+	  if (flag_it == 0)
+	    {
+	      flag_ui0 = 1;
+	      flag_oi0 = 1;
+	      flag_ei0 = 1;
+	    }
+	  else
+	    {
+	      flag_ui = 1;
+	      flag_oi = 1;
+	      flag_ei = 1;
+	    }
+	}
+    }
+
+  return stokes_nc_init_ (filename, np, nf,
+			  flag_ui0, flag_oi0, flag_ei0,
+			  flag_ui,  flag_oi,  flag_ei,
+			  flag_x0,
+			  flag_u0,  flag_o0,  flag_e0,
+			  flag_f0,  flag_t0,  flag_s0,
+			  flag_xf0,
+			  flag_uf0, flag_of0, flag_ef0,
+			  flag_ff0, flag_tf0, flag_sf0,
+			  flag_x,
+			  flag_u,   flag_o,   flag_e,
+			  flag_f,   flag_t,   flag_s,
+			  flag_xf,
+			  flag_uf,  flag_of,  flag_ef,
+			  flag_ff,  flag_tf,  flag_sf,
+			  flag_a,   flag_af);
 }
 
 
@@ -1456,7 +1328,7 @@ stokes_nc_set_l (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for l in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_l", NULL);
     }
 }
 /* set ui
@@ -1479,7 +1351,7 @@ stokes_nc_set_ui (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for ui in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_ui", NULL);
     }
 }
 /* set oi
@@ -1502,7 +1374,7 @@ stokes_nc_set_oi (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for oi in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_oi", NULL);
     }
 }
 /* set ei
@@ -1525,7 +1397,7 @@ stokes_nc_set_ei (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for ei in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_ei", NULL);
     }
 }
 
@@ -1551,7 +1423,7 @@ stokes_nc_set_x0 (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for x0 in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_x0", NULL);
     }
 }
 /* set u0
@@ -1575,8 +1447,7 @@ stokes_nc_set_u0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for u0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_u0", NULL);
     }
 }
 /* set o0 data
@@ -1600,8 +1471,7 @@ stokes_nc_set_o0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for o0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_o0", NULL);
     }
 }
 /* set e0 data
@@ -1625,8 +1495,7 @@ stokes_nc_set_e0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for e0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_e0", NULL);
     }
 }
 /* set f0 data
@@ -1650,8 +1519,7 @@ stokes_nc_set_f0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for f0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_f0", NULL);
     }
 }
 /* set t0 data
@@ -1675,8 +1543,7 @@ stokes_nc_set_t0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for t0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_t0", NULL);
     }
 }
 /* set s0 data
@@ -1700,8 +1567,7 @@ stokes_nc_set_s0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for s0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_s0", NULL);
     }
 }
 /* set xf0
@@ -1726,7 +1592,7 @@ stokes_nc_set_xf0 (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for xf0 in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_xf0", NULL);
     }
 }
 /* set uf0
@@ -1750,8 +1616,7 @@ stokes_nc_set_uf0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for uf0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_uf0", NULL);
     }
 }
 /* set of0 data
@@ -1775,8 +1640,7 @@ stokes_nc_set_of0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for of0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_of0", NULL);
     }
 }
 /* set ef0 data
@@ -1800,8 +1664,7 @@ stokes_nc_set_ef0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for ef0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_ef0", NULL);
     }
 }
 /* set ff0 data
@@ -1825,8 +1688,7 @@ stokes_nc_set_ff0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for ff0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_ff0", NULL);
     }
 }
 /* set tf0 data
@@ -1850,8 +1712,7 @@ stokes_nc_set_tf0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for tf0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_tf0", NULL);
     }
 }
 /* set sf0 data
@@ -1875,8 +1736,53 @@ stokes_nc_set_sf0 (struct stokes_nc * nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error (status,
-		       "at nc_put_vara_double() for sf0"
-		       " in stokes_nc_append", NULL);
+		       "at nc_put_vara_double() in stokes_nc_set_sf0", NULL);
+    }
+}
+/* set a
+ */
+void
+stokes_nc_set_a (struct stokes_nc * nc,
+		 const double * a)
+{
+  size_t start[1];
+  size_t count[1];
+
+  int status;
+
+  start[0] = 0;
+
+  count[0] = nc->np;
+
+  status = nc_put_vara_double(nc->id, nc->a_id, start, count, a);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_a", NULL);
+    }
+}
+/* set af
+ */
+void
+stokes_nc_set_af (struct stokes_nc * nc,
+		  const double * af)
+{
+  size_t start[1];
+  size_t count[1];
+
+  int status;
+
+  start[0] = 0;
+
+  count[0] = nc->npf;
+
+  status = nc_put_vara_double(nc->id, nc->af_id, start, count, af);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_af", NULL);
     }
 }
 
