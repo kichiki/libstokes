@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.7 2007/05/11 01:59:21 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.8 2007/05/12 04:28:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -477,8 +477,8 @@ stokes_nc_init_t_vec (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_t_vec", name);
     }
 }
-/* init a variable x[time][stt]
- * (stt = symmetric traceless tensor)
+/* init a variable x[time][stt] 
+* (stt = symmetric traceless tensor)
  */
 static void
 stokes_nc_init_t_stt (struct stokes_nc * nc,
@@ -1096,26 +1096,21 @@ stokes_nc_x_init (const char * filename, int np)
  *              1 = polydisperse (set particle radius)
  *  flag_it   : 0 = constant imposed flow
  *              1 = time-changing imposed flow
- *              this is only effective for nf != 0 (mixed problem)
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
- *   [F mob]      : f0, x, u.
- *   [FT mob]     : f0, t0, x, u, o.
- *   [FTS mob]    : f0, t0, e0, x, u, o, s.
- *   [F mix]      : ui0,
+ *   [F mob]      : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, x, u.
+ *   [FT mob]     : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, t0, x, u, o.
+ *   [FTS mob]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, t0, e0, x, u, o, s.
+ *   [F mix]      : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, uf0, x, u, ff.
- *   [FT mix]     : ui0, oi0,
+ *   [FT mix]     : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- *   [FTS mix]    : ui0, oi0, ei0,
+ *   [FTS mix]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
- *   [F mix it]   : ui,
- *                  xf0, f0, uf0, x, u, ff.
- *   [FT mix it]  : ui, oi,
- *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- *   [FTS mix it] : ui, oi, ei,
- *                  xf0, f0, t0, e0, uf0, of0, ef0,
- *                  x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
 stokes_nc_init (const char *filename, int np, int nf,
@@ -1160,6 +1155,20 @@ stokes_nc_init (const char *filename, int np, int nf,
   int flag_a = 0;
   int flag_af = 0;
 
+
+  if (flag_it == 0)
+    {
+      flag_ui0 = 1;
+      flag_oi0 = 1;
+      flag_ei0 = 1;
+    }
+  else
+    {
+      flag_ui = 1;
+      flag_oi = 1;
+      flag_ei = 1;
+    }
+
   if (nf == 0)
     {
       flag_a = flag_poly;
@@ -1201,15 +1210,6 @@ stokes_nc_init (const char *filename, int np, int nf,
 	  flag_uf0 = 1;
 	  flag_xf0 = 1;
 	  flag_ff = 1;
-
-	  if (flag_it == 0)
-	    {
-	      flag_ui0 = 1;
-	    }
-	  else
-	    {
-	      flag_ui = 1;
-	    }
 	}
       else if (version == 1) // FT version
 	{
@@ -1224,17 +1224,6 @@ stokes_nc_init (const char *filename, int np, int nf,
 	  flag_xf0 = 1;
 	  flag_ff = 1;
 	  flag_tf = 1;
-
-	  if (flag_it == 0)
-	    {
-	      flag_ui0 = 1;
-	      flag_oi0 = 1;
-	    }
-	  else
-	    {
-	      flag_ui = 1;
-	      flag_oi = 1;
-	    }
 	}
       else // FTS version
 	{
@@ -1253,19 +1242,6 @@ stokes_nc_init (const char *filename, int np, int nf,
 	  flag_ff = 1;
 	  flag_tf = 1;
 	  flag_sf = 1;
-
-	  if (flag_it == 0)
-	    {
-	      flag_ui0 = 1;
-	      flag_oi0 = 1;
-	      flag_ei0 = 1;
-	    }
-	  else
-	    {
-	      flag_ui = 1;
-	      flag_oi = 1;
-	      flag_ei = 1;
-	    }
 	}
     }
 
@@ -1331,11 +1307,11 @@ stokes_nc_set_l (struct stokes_nc * nc,
 	 "at nc_put_vara_double() in stokes_nc_set_l", NULL);
     }
 }
-/* set ui
+/* set ui0[vec]
  */
 void
-stokes_nc_set_ui (struct stokes_nc * nc,
-		  const double * ui)
+stokes_nc_set_ui0 (struct stokes_nc * nc,
+		   const double * ui0)
 {
   size_t start[1];
   size_t count[1];
@@ -1346,19 +1322,19 @@ stokes_nc_set_ui (struct stokes_nc * nc,
 
   count[0] = nc->nvec;
 
-  status = nc_put_vara_double(nc->id, nc->ui_id, start, count, ui);
+  status = nc_put_vara_double(nc->id, nc->ui0_id, start, count, ui0);
   if (status != NC_NOERR)
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() in stokes_nc_set_ui", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_ui0", NULL);
     }
 }
-/* set oi
+/* set oi[vec]
  */
 void
-stokes_nc_set_oi (struct stokes_nc * nc,
-		  const double * oi)
+stokes_nc_set_oi0 (struct stokes_nc * nc,
+		   const double * oi0)
 {
   size_t start[1];
   size_t count[1];
@@ -1369,19 +1345,19 @@ stokes_nc_set_oi (struct stokes_nc * nc,
 
   count[0] = nc->nvec;
 
-  status = nc_put_vara_double(nc->id, nc->oi_id, start, count, oi);
+  status = nc_put_vara_double(nc->id, nc->oi0_id, start, count, oi0);
   if (status != NC_NOERR)
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() in stokes_nc_set_oi", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_oi0", NULL);
     }
 }
-/* set ei
+/* set ei0[stt]
  */
 void
-stokes_nc_set_ei (struct stokes_nc * nc,
-		  const double * ei)
+stokes_nc_set_ei0 (struct stokes_nc * nc,
+		   const double * ei0)
 {
   size_t start[1];
   size_t count[1];
@@ -1392,7 +1368,7 @@ stokes_nc_set_ei (struct stokes_nc * nc,
 
   count[0] = nc->nstt;
 
-  status = nc_put_vara_double(nc->id, nc->ei_id, start, count, ei);
+  status = nc_put_vara_double(nc->id, nc->ei0_id, start, count, ei0);
   if (status != NC_NOERR)
     {
       stokes_nc_error
@@ -1401,7 +1377,7 @@ stokes_nc_set_ei (struct stokes_nc * nc,
     }
 }
 
-/* set x0
+/* set x0[np][vec]
  */
 void
 stokes_nc_set_x0 (struct stokes_nc * nc,
@@ -1426,7 +1402,7 @@ stokes_nc_set_x0 (struct stokes_nc * nc,
 	 "at nc_put_vara_double() in stokes_nc_set_x0", NULL);
     }
 }
-/* set u0
+/* set u0[np][vec]
  */
 void
 stokes_nc_set_u0 (struct stokes_nc * nc,
@@ -1450,7 +1426,7 @@ stokes_nc_set_u0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_u0", NULL);
     }
 }
-/* set o0 data
+/* set o0[np][vec]
  */
 void
 stokes_nc_set_o0 (struct stokes_nc * nc,
@@ -1474,7 +1450,7 @@ stokes_nc_set_o0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_o0", NULL);
     }
 }
-/* set e0 data
+/* set e0[np][stt]
  */
 void
 stokes_nc_set_e0 (struct stokes_nc * nc,
@@ -1498,7 +1474,7 @@ stokes_nc_set_e0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_e0", NULL);
     }
 }
-/* set f0 data
+/* set f0[np][vec]
  */
 void
 stokes_nc_set_f0 (struct stokes_nc * nc,
@@ -1522,7 +1498,7 @@ stokes_nc_set_f0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_f0", NULL);
     }
 }
-/* set t0 data
+/* set t0[np][vec]
  */
 void
 stokes_nc_set_t0 (struct stokes_nc * nc,
@@ -1546,7 +1522,7 @@ stokes_nc_set_t0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_t0", NULL);
     }
 }
-/* set s0 data
+/* set s0[np][stt]
  */
 void
 stokes_nc_set_s0 (struct stokes_nc * nc,
@@ -1570,7 +1546,7 @@ stokes_nc_set_s0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_s0", NULL);
     }
 }
-/* set xf0
+/* set xf0[npf][vec]
  */
 void
 stokes_nc_set_xf0 (struct stokes_nc * nc,
@@ -1595,7 +1571,7 @@ stokes_nc_set_xf0 (struct stokes_nc * nc,
 	 "at nc_put_vara_double() in stokes_nc_set_xf0", NULL);
     }
 }
-/* set uf0
+/* set uf0[npf][vec]
  */
 void
 stokes_nc_set_uf0 (struct stokes_nc * nc,
@@ -1619,7 +1595,7 @@ stokes_nc_set_uf0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_uf0", NULL);
     }
 }
-/* set of0 data
+/* set of0[npf][vec]
  */
 void
 stokes_nc_set_of0 (struct stokes_nc * nc,
@@ -1643,7 +1619,7 @@ stokes_nc_set_of0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_of0", NULL);
     }
 }
-/* set ef0 data
+/* set ef0[npf][stt]
  */
 void
 stokes_nc_set_ef0 (struct stokes_nc * nc,
@@ -1667,7 +1643,7 @@ stokes_nc_set_ef0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_ef0", NULL);
     }
 }
-/* set ff0 data
+/* set ff0[npf][vec]
  */
 void
 stokes_nc_set_ff0 (struct stokes_nc * nc,
@@ -1691,7 +1667,7 @@ stokes_nc_set_ff0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_ff0", NULL);
     }
 }
-/* set tf0 data
+/* set tf0[npf][vec]
  */
 void
 stokes_nc_set_tf0 (struct stokes_nc * nc,
@@ -1715,7 +1691,7 @@ stokes_nc_set_tf0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_tf0", NULL);
     }
 }
-/* set sf0 data
+/* set sf0[npf][stt]
  */
 void
 stokes_nc_set_sf0 (struct stokes_nc * nc,
@@ -1739,7 +1715,7 @@ stokes_nc_set_sf0 (struct stokes_nc * nc,
 		       "at nc_put_vara_double() in stokes_nc_set_sf0", NULL);
     }
 }
-/* set a
+/* set a[np]
  */
 void
 stokes_nc_set_a (struct stokes_nc * nc,
@@ -1762,7 +1738,7 @@ stokes_nc_set_a (struct stokes_nc * nc,
 	 "at nc_put_vara_double() in stokes_nc_set_a", NULL);
     }
 }
-/* set af
+/* set af[npf]
  */
 void
 stokes_nc_set_af (struct stokes_nc * nc,
@@ -1801,6 +1777,85 @@ stokes_nc_set_time (struct stokes_nc * nc,
       stokes_nc_error
 	(status,
 	 "at nc_put_vara_double() for time in stokes_nc_append", NULL);
+    }
+}
+
+/* set ui[time][vec] at time (step)
+ */
+void
+stokes_nc_set_ui (struct stokes_nc * nc,
+		  int step,
+		  const double * ui)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+
+  count[0] = 1;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->ui_id, start, count, ui);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_ui", NULL);
+    }
+}
+/* set oi[time][vec] at time (step)
+ */
+void
+stokes_nc_set_oi (struct stokes_nc * nc,
+		  int step,
+		  const double * oi)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+
+  count[0] = 1;
+  count[1] = nc->nvec;
+
+  status = nc_put_vara_double(nc->id, nc->oi_id, start, count, oi);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_oi", NULL);
+    }
+}
+/* set ei[time][stt] at time (step)
+ */
+void
+stokes_nc_set_ei (struct stokes_nc * nc,
+		  int step,
+		  const double * ei)
+{
+  size_t start[2];
+  size_t count[2];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+
+  count[0] = 1;
+  count[1] = nc->nstt;
+
+  status = nc_put_vara_double(nc->id, nc->ei_id, start, count, ei);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_ei", NULL);
     }
 }
 /* set x at time (step)
