@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.4 2007/05/11 02:01:13 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.5 2007/05/12 04:28:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -591,6 +591,112 @@ stokes_nc_open (const char * filename)
 }
 
 
+/* read 1d array [vec/stt]
+ * INPUT
+ *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei
+ * OUTPUT
+ *  x[]
+ */
+void
+stokes_nc_get_array1d (struct stokes_nc * nc,
+		       const char * name,
+		       double * x)
+{
+  size_t start[1];
+  size_t count[1];
+
+  int status;
+
+
+  start[0] = 0;
+
+  if (strcmp ("Ui0", name) == 0)
+    {
+      count[0] = nc->nvec;
+
+      status = nc_get_vara_double (nc->id, nc->ui0_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("Oi0", name) == 0)
+    {
+      count[0] = nc->nvec;
+
+      status = nc_get_vara_double (nc->id, nc->oi0_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("Ei0", name) == 0)
+    {
+      count[0] = nc->nstt;
+
+      status = nc_get_vara_double (nc->id, nc->ei0_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("Ui", name) == 0)
+    {
+      count[0] = nc->nvec;
+
+      status = nc_get_vara_double (nc->id, nc->ui_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("Oi", name) == 0)
+    {
+      count[0] = nc->nvec;
+
+      status = nc_get_vara_double (nc->id, nc->oi_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("Ei", name) == 0)
+    {
+      count[0] = nc->nstt;
+
+      status = nc_get_vara_double (nc->id, nc->ei0_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else
+    {
+      fprintf (stderr, "invalid name for stokes_nc_get_array1d()\n"
+	       "which is for Ui0, Oi0, Ei0, Ui, Oi, or Ei.\n");
+    }
+}
+
+/* read constant data for particles in 2d array [np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data0 (struct stokes_nc * nc,
 		     const char * name,
@@ -801,8 +907,16 @@ stokes_nc_get_data0 (struct stokes_nc * nc,
 	     "at nc_get_vara_double() in stokes_nc_get_data0", name);
 	}
     }
+  else
+    {
+      fprintf (stderr, "invalid name for stokes_nc_get_data0()\n"
+	       "which is for x0, U0, O0, E0, F0, T0, S0,\n"
+	       "xf0, Uf0, Of0, Ef0, Ff0, Tf0, or Sf0.\n");
+    }
 }
 
+/* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data (struct stokes_nc * nc,
 		    const char * name,
@@ -1016,6 +1130,12 @@ stokes_nc_get_data (struct stokes_nc * nc,
 	    (status,
 	     "at nc_get_vara_double() in stokes_nc_get_data", name);
 	}
+    }
+  else
+    {
+      fprintf (stderr, "invalid name for stokes_nc_get_data()\n"
+	       "which is for x, U, O, E, F, T, S,\n"
+	       "xf, Uf, Of, Ef, Ff, Tf, or Sf.\n");
     }
 }
 

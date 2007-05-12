@@ -1,7 +1,7 @@
 /* header file for stokes-nc-read.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.h,v 5.3 2007/02/15 23:55:49 kichiki Exp $
+ * $Id: stokes-nc-read.h,v 5.4 2007/05/12 04:29:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,10 +24,24 @@
 struct stokes_nc *
 stokes_nc_open (const char * filename);
 
+/* read 1d array [vec/stt]
+ * INPUT
+ *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei
+ * OUTPUT
+ *  x[]
+ */
+void
+stokes_nc_get_array1d (struct stokes_nc * nc,
+		       const char * name,
+		       double * x);
+/* read constant data for particles in 2d array [np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data0 (struct stokes_nc * nc,
 		     const char * name,
 		     double * x);
+/* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data (struct stokes_nc * nc,
 		    const char * name,
