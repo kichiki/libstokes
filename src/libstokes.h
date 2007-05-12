@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.31 2007/05/11 02:00:41 kichiki Exp $
+ * $Id: libstokes.h,v 1.32 2007/05/12 04:30:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -362,26 +362,21 @@ stokes_nc_x_init (const char * filename, int np);
  *              1 = polydisperse (set particle radius)
  *  flag_it   : 0 = constant imposed flow
  *              1 = time-changing imposed flow
- *              this is only effective for nf != 0 (mixed problem)
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
- *   [F mob]      : f0, x, u.
- *   [FT mob]     : f0, t0, x, u, o.
- *   [FTS mob]    : f0, t0, e0, x, u, o, s.
- *   [F mix]      : ui0,
+ *   [F mob]      : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, x, u.
+ *   [FT mob]     : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, t0, x, u, o.
+ *   [FTS mob]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
+ *                  f0, t0, e0, x, u, o, s.
+ *   [F mix]      : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, uf0, x, u, ff.
- *   [FT mix]     : ui0, oi0,
+ *   [FT mix]     : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- *   [FTS mix]    : ui0, oi0, ei0,
+ *   [FTS mix]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
- *   [F mix it]   : ui,
- *                  xf0, f0, uf0, x, u, ff.
- *   [FT mix it]  : ui, oi,
- *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
- *   [FTS mix it] : ui, oi, ei,
- *                  xf0, f0, t0, e0, uf0, of0, ef0,
- *                  x, u, o, s, ff, tf, sf.
  */
 struct stokes_nc *
 stokes_nc_init (const char *filename, int np, int nf,
@@ -401,97 +396,97 @@ stokes_nc_free (struct stokes_nc * nc);
 void
 stokes_nc_set_l (struct stokes_nc * nc,
 		 const double * l);
-/* set ui
+/* set ui0[vec]
  */
 void
-stokes_nc_set_ui (struct stokes_nc * nc,
-		  const double * ui);
-/* set oi
+stokes_nc_set_ui0 (struct stokes_nc * nc,
+		   const double * ui0);
+/* set oi[vec]
  */
 void
-stokes_nc_set_oi (struct stokes_nc * nc,
-		  const double * oi);
-/* set ei
+stokes_nc_set_oi0 (struct stokes_nc * nc,
+		   const double * oi0);
+/* set ei0[stt]
  */
 void
-stokes_nc_set_ei (struct stokes_nc * nc,
-		  const double * ei);
-/* set x0
+stokes_nc_set_ei0 (struct stokes_nc * nc,
+		   const double * ei0);
+/* set x0[np][vec]
  */
 void
 stokes_nc_set_x0 (struct stokes_nc * nc,
 		  const double * x0);
-/* set u0
+/* set u0[np][vec]
  */
 void
 stokes_nc_set_u0 (struct stokes_nc * nc,
 		  const double * u0);
-/* set o0 data
+/* set o0[np][vec]
  */
 void
 stokes_nc_set_o0 (struct stokes_nc * nc,
 		  const double * o0);
-/* set e0 data
+/* set e0[np][stt]
  */
 void
 stokes_nc_set_e0 (struct stokes_nc * nc,
 		  const double * e0);
-/* set f0 data
+/* set f0[np][vec]
  */
 void
 stokes_nc_set_f0 (struct stokes_nc * nc,
 		  const double * f0);
-/* set t0 data
+/* set t0[np][vec]
  */
 void
 stokes_nc_set_t0 (struct stokes_nc * nc,
 		  const double * t0);
-/* set s0 data
+/* set s0[np][stt]
  */
 void
 stokes_nc_set_s0 (struct stokes_nc * nc,
 		  const double * s0);
-/* set xf0
+/* set xf0[npf][vec]
  */
 void
 stokes_nc_set_xf0 (struct stokes_nc * nc,
 		   const double * xf0);
-/* set uf0
+/* set uf0[npf][vec]
  */
 void
 stokes_nc_set_uf0 (struct stokes_nc * nc,
 		   const double * uf0);
-/* set of0 data
+/* set of0[npf][vec]
  */
 void
 stokes_nc_set_of0 (struct stokes_nc * nc,
 		   const double * of0);
-/* set ef0 data
+/* set ef0[npf][stt]
  */
 void
 stokes_nc_set_ef0 (struct stokes_nc * nc,
 		   const double * ef0);
-/* set ff0 data
+/* set ff0[npf][vec]
  */
 void
 stokes_nc_set_ff0 (struct stokes_nc * nc,
 		   const double * ff0);
-/* set tf0 data
+/* set tf0[npf][vec]
  */
 void
 stokes_nc_set_tf0 (struct stokes_nc * nc,
 		   const double * tf0);
-/* set sf0 data
+/* set sf0[npf][stt]
  */
 void
 stokes_nc_set_sf0 (struct stokes_nc * nc,
 		   const double * sf0);
-/* set a
+/* set a[np]
  */
 void
 stokes_nc_set_a (struct stokes_nc * nc,
 		 const double * a);
-/* set af
+/* set af[npf]
  */
 void
 stokes_nc_set_af (struct stokes_nc * nc,
@@ -502,6 +497,24 @@ stokes_nc_set_af (struct stokes_nc * nc,
 void
 stokes_nc_set_time (struct stokes_nc * nc,
 		    int step, double time);
+/* set ui[time][vec] at time (step)
+ */
+void
+stokes_nc_set_ui (struct stokes_nc * nc,
+		  int step,
+		  const double * ui);
+/* set oi[time][vec] at time (step)
+ */
+void
+stokes_nc_set_oi (struct stokes_nc * nc,
+		  int step,
+		  const double * oi);
+/* set ei[time][stt] at time (step)
+ */
+void
+stokes_nc_set_ei (struct stokes_nc * nc,
+		  int step,
+		  const double * ei);
 /* set x at time (step)
  */
 void
@@ -593,10 +606,24 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 struct stokes_nc *
 stokes_nc_open (const char * filename);
 
+/* read 1d array [vec/stt]
+ * INPUT
+ *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei
+ * OUTPUT
+ *  x[]
+ */
+void
+stokes_nc_get_array1d (struct stokes_nc * nc,
+		       const char * name,
+		       double * x);
+/* read constant data for particles in 2d array [np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data0 (struct stokes_nc * nc,
 		     const char * name,
 		     double * x);
+/* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
+ */
 void
 stokes_nc_get_data (struct stokes_nc * nc,
 		    const char * name,
