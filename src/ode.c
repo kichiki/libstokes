@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.2 2007/05/04 01:10:23 kichiki Exp $
+ * $Id: ode.c,v 1.3 2007/05/14 00:16:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,9 +18,8 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include "memory-check.h"
-
 #include <gsl/gsl_errno.h> // GSL_SUCCESS
+#include "memory-check.h"
 
 #include "stokes.h" // struct stokes
 #include "ewald-3f.h"
@@ -39,7 +38,7 @@
 
 /* wrapper for solving mob and mix problems in ODE routines
  */
-static void
+void
 solve_mix_3all (struct stokes * sys,
 		int flag_lub,
 		int flag_mat,

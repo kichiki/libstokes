@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.h,v 1.1 2007/04/15 19:59:28 kichiki Exp $
+ * $Id: ode.h,v 1.2 2007/05/14 00:17:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,19 @@
  */
 #ifndef	_ODE_H_
 #define	_ODE_H_
+
+#include "stokes.h" // struct stokes
+
+/* wrapper for solving mob and mix problems in ODE routines
+ */
+void
+solve_mix_3all (struct stokes * sys,
+		int flag_lub,
+		int flag_mat,
+		const double *fm, const double *tm, const double *em,
+		const double *uf, const double *of, const double *ef,
+		double *um, double *om, double *sm,
+		double *ff, double *tf, double *sf);
 
 
 struct ode_params
