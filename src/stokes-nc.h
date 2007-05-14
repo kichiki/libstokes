@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.8 2007/05/12 04:28:34 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.9 2007/05/14 00:18:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,10 @@ struct stokes_nc {
   int stt_dim;
   int stt_id;
 
+  int nquat;
+  int quat_dim;
+  int quat_id;
+
   int ntime;
   int time_dim;
   int time_id;
@@ -75,6 +79,7 @@ struct stokes_nc {
   int f_id;
   int t_id;
   int s_id;
+  int q_id;
 
   int xf_id;
   int uf_id;
@@ -119,6 +124,7 @@ struct stokes_nc {
   int flag_f;
   int flag_t;
   int flag_s;
+  int flag_q;
 
   int flag_xf;
   int flag_uf;
@@ -175,11 +181,13 @@ stokes_nc_x_init (const char * filename, int np);
  *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  *   [FTS mix]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
+ *  for all cases, q is set if flag_Q == 1.
  */
 struct stokes_nc *
 stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
+		int flag_Q,
 		int flag_it);
 
 /* close (and write if necessary) NetCDF file for libstokes
@@ -319,6 +327,12 @@ void
 stokes_nc_set_x (struct stokes_nc * nc,
 		 int step,
 		 const double * x);
+/* set q at time (step)
+ */
+void
+stokes_nc_set_q (struct stokes_nc * nc,
+		 int step,
+		 const double * q);
 /* set u at time (step)
  */
 void

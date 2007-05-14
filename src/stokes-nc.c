@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.8 2007/05/12 04:28:11 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.9 2007/05/14 00:17:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -91,6 +91,8 @@ stokes_nc_print_actives (struct stokes_nc * nc,
 	   nc->flag_tf,
 	   nc->flag_sf);
   fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "q   | %d |\n",
+	   nc->flag_q);
   fprintf (out, "a   | %d |\n",
 	   nc->flag_a);
   fprintf (out, "af  | %d |\n",
@@ -157,6 +159,37 @@ stokes_nc_init_t_p_stt (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status, "at nc_put_att() in stokes_nc_init_t_p_stt", name);
+    }
+}
+
+/* init a variable x[time][p][quat]
+ */
+static void
+stokes_nc_init_t_p_quat (struct stokes_nc * nc,
+			 const char * name,
+			 const char * longname,
+			 int * var_id)
+{
+  int status;
+  int dimids[3];
+
+  dimids[0] = nc->time_dim;
+  dimids[1] = nc->p_dim;
+  dimids[2] = nc->quat_dim;
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 3, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_t_p_quat", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_t_p_quat", name);
     }
 }
 
@@ -546,6 +579,7 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 		 int flag_f,
 		 int flag_t,
 		 int flag_s,
+		 int flag_q,
 		 int flag_xf,
 		 int flag_uf,
 		 int flag_of,
@@ -587,6 +621,7 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   nc->flag_f = flag_f;
   nc->flag_t = flag_t;
   nc->flag_s = flag_s;
+  nc->flag_q = flag_q;
   nc->flag_xf = flag_xf;
   nc->flag_uf = flag_uf;
   nc->flag_of = flag_of;
@@ -614,6 +649,7 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   nc->npf = nf;
   nc->nvec = 3; // number of vector components
   nc->nstt = 5; // number of symmetric traceless tensor components
+  nc->nquat= 4; // number of components for quaternion
 
   /* particle index */
   status = nc_def_dim (nc->id, "p", nc->np, &(nc->p_dim));
@@ -679,6 +715,21 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 		       "at nc_def_dim() for stt in stokes_nc_init", NULL);
     }
 
+  /* quaternion index */
+  status = nc_def_dim (nc->id, "quat", nc->nquat, &(nc->quat_dim));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_def_dim() for quat in stokes_nc_init", NULL);
+    }
+  dimids[0] = nc->quat_dim;
+  status = nc_def_var (nc->id, "quat", NC_INT, 1, dimids, &(nc->quat_id));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error (status,
+		       "at nc_def_dim() for quat in stokes_nc_init", NULL);
+    }
+
   /* time index */
   status = nc_def_dim(nc->id, "time", NC_UNLIMITED, &(nc->time_dim));
   if (status != NC_NOERR)
@@ -726,15 +777,15 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   if (flag_ui != 0)
     {
       stokes_nc_init_t_vec (nc, "Ui",
-			  "(changing) imposed translational velocity",
-			  &nc->ui_id);
+			    "(changing) imposed translational velocity",
+			    &nc->ui_id);
     }
   /* Oi */
   if (flag_oi != 0)
     {
       stokes_nc_init_t_vec (nc, "Oi",
-			  "(changing) imposed angular velocity",
-			  &nc->oi_id);
+			    "(changing) imposed angular velocity",
+			    &nc->oi_id);
     }
   /* Ei */
   if (flag_ei != 0)
@@ -749,50 +800,50 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   if (flag_x0 != 0)
     {
       stokes_nc_init_p_vec (nc, "x0",
-			   "positions of particle center at t0",
-			   &nc->x0_id);
+			    "positions of particle center at t0",
+			    &nc->x0_id);
     }
   /* U0 */
   if (flag_u0 != 0)
     {
       stokes_nc_init_p_vec (nc, "U0",
-			   "translational velocities at t0",
-			   &nc->u0_id);
+			    "translational velocities at t0",
+			    &nc->u0_id);
     }
   /* O0 */
   if (flag_o0 != 0)
     {
       stokes_nc_init_p_vec (nc, "O0",
-			   "angular velocities at t0",
-			   &nc->o0_id);
+			    "angular velocities at t0",
+			    &nc->o0_id);
     }
   /* E0 */
   if (flag_e0 != 0)
     {
       stokes_nc_init_p_stt (nc, "E0",
-			   "rate of strain at t0",
-			   &nc->e0_id);
+			    "rate of strain at t0",
+			    &nc->e0_id);
     }
   /* F0 */
   if (flag_f0 != 0)
     {
       stokes_nc_init_p_vec (nc, "F0",
-			   "forces at t0",
-			   &nc->f0_id);
+			    "forces at t0",
+			    &nc->f0_id);
     }
   /* T0 */
   if (flag_t0 != 0)
     {
       stokes_nc_init_p_vec (nc, "T0",
-			   "torques at t0",
-			   &nc->t0_id);
+			    "torques at t0",
+			    &nc->t0_id);
     }
   /* S0 */
   if (flag_s0 != 0)
     {
       stokes_nc_init_p_stt (nc, "S0",
-			   "stresslets at t0",
-			   &nc->s0_id);
+			    "stresslets at t0",
+			    &nc->s0_id);
     }
 
   /* data for (mobile) particles */
@@ -800,8 +851,15 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   if (flag_x != 0)
     {
       stokes_nc_init_t_p_vec (nc, "x",
-			  "positions of particle center",
-			  &nc->x_id);
+			      "positions of particle center",
+			      &nc->x_id);
+    }
+  /* q */
+  if (flag_q != 0)
+    {
+      stokes_nc_init_t_p_quat (nc, "q",
+			       "quaternion of particle direction",
+			       &nc->q_id);
     }
   /* a */
   if (flag_a != 0)
@@ -814,43 +872,43 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
   if (flag_u != 0)
     {
       stokes_nc_init_t_p_vec (nc, "U",
-			  "translational velocities",
-			  &nc->u_id);
+			      "translational velocities",
+			      &nc->u_id);
     }
   /* O */
   if (flag_o != 0)
     {
       stokes_nc_init_t_p_vec (nc, "O",
-			  "angular velocities",
-			  &nc->o_id);
+			      "angular velocities",
+			      &nc->o_id);
     }
   /* E */
   if (flag_e != 0)
     {
       stokes_nc_init_t_p_stt (nc, "E",
-			  "rate of strain",
-			  &nc->e_id);
+			      "rate of strain",
+			      &nc->e_id);
     }
   /* F */
   if (flag_f != 0)
     {
       stokes_nc_init_t_p_vec (nc, "F",
-			  "forces",
-			  &nc->f_id);
+			      "forces",
+			      &nc->f_id);
     }
   /* T */
   if (flag_t != 0)
     {
       stokes_nc_init_t_p_vec (nc, "T",
-			  "torques",
-			  &nc->t_id);
+			      "torques",
+			      &nc->t_id);
     }
   /* S */
   if (flag_s != 0)
     {
       stokes_nc_init_t_p_stt (nc, "S",
-			  "stresslets",
-			  &nc->s_id);
+			      "stresslets",
+			      &nc->s_id);
     }
 
   /* data for fixed particles */
@@ -1020,6 +1078,16 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 	     "at nc_put_var1() for stt in stokes_nc_init", NULL);
 	}
     }
+  for (i = 0; i < nc->nquat; i ++)
+    {
+      status = nc_put_var1_int (nc->id, nc->quat_id, &i, &i);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_put_var1() for quat in stokes_nc_init", NULL);
+	}
+    }
 
   if (nf > 0)
     {
@@ -1076,6 +1144,7 @@ stokes_nc_x_init (const char * filename, int np)
 			  0, // f
 			  0, // t
 			  0, // s
+			  0, // q
 			  0, // xf
 			  0, // uf
 			  0, // of
@@ -1111,11 +1180,13 @@ stokes_nc_x_init (const char * filename, int np)
  *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  *   [FTS mix]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
+ *  for all cases, q is set if flag_Q == 1.
  */
 struct stokes_nc *
 stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
+		int flag_Q,
 		int flag_it)
 {
   int flag_ui0 = 0;
@@ -1257,6 +1328,7 @@ stokes_nc_init (const char *filename, int np, int nf,
 			  flag_x,
 			  flag_u,   flag_o,   flag_e,
 			  flag_f,   flag_t,   flag_s,
+			  flag_Q,
 			  flag_xf,
 			  flag_uf,  flag_of,  flag_ef,
 			  flag_ff,  flag_tf,  flag_sf,
@@ -1883,7 +1955,35 @@ stokes_nc_set_x (struct stokes_nc * nc,
     {
       stokes_nc_error
 	(status,
-	 "at nc_put_vara_double() for x in stokes_nc_append", NULL);
+	 "at nc_put_vara_double() in stokes_nc_set_x", NULL);
+    }
+}
+/* set q at time (step)
+ */
+void
+stokes_nc_set_q (struct stokes_nc * nc,
+		 int step,
+		 const double * q)
+{
+  size_t start[3];
+  size_t count[3];
+
+  int status;
+
+  start[0] = step;
+  start[1] = 0;
+  start[2] = 0;
+
+  count[0] = 1;
+  count[1] = nc->np;
+  count[2] = nc->nquat;
+
+  status = nc_put_vara_double(nc->id, nc->q_id, start, count, q);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_q", NULL);
     }
 }
 /* set u at time (step)
