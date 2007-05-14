@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.5 2007/05/12 04:28:56 kichiki Exp $
+ * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc-read.c,v 5.6 2007/05/14 00:18:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -185,6 +185,11 @@ stokes_nc_open (const char * filename)
 	  nc->stt_dim = i;
 	  nc->nstt = len;
 	}
+      else if (strcmp ("quat", name) == 0)
+	{
+	  nc->quat_dim = i;
+	  nc->nquat = len;
+	}
       else if (strcmp ("time", name) == 0)
 	{
 	  nc->time_dim = i;
@@ -230,6 +235,7 @@ stokes_nc_open (const char * filename)
   nc->flag_f = 0;
   nc->flag_t = 0;
   nc->flag_s = 0;
+  nc->flag_q = 0;
 
   nc->flag_xf = 0;
   nc->flag_uf = 0;
@@ -306,6 +312,19 @@ stokes_nc_open (const char * filename)
 	  else
 	    {
 	      nc->stt_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("quat", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable quat"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->quat_id = d_ids[0];
 	    }
 	}
       /* system data */
@@ -423,6 +442,13 @@ stokes_nc_open (const char * filename)
 			     nc->time_dim, nc->p_dim, nc->vec_dim,
 			     &(nc->x_id),
 			     &(nc->flag_x));
+	}
+      else if (strcmp ("q", name) == 0)
+	{
+	  stokes_nc_check_3 (i, xtype, nd, d_ids,
+			     nc->time_dim, nc->p_dim, nc->quat_dim,
+			     &(nc->q_id),
+			     &(nc->flag_q));
 	}
       else if (strcmp ("a", name) == 0)
 	{
@@ -941,6 +967,20 @@ stokes_nc_get_data (struct stokes_nc * nc,
       count[2] = nc->nvec;
 
       status = nc_get_vara_double (nc->id, nc->x_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() in stokes_nc_get_data", name);
+	}
+    }
+  else if (strcmp ("q", name) == 0)
+    {
+      count[1] = nc->np;
+      count[2] = nc->nquat;
+
+      status = nc_get_vara_double (nc->id, nc->q_id,
 				   start, count, x);
       if (status != NC_NOERR)
 	{
