@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.8 2007/05/11 02:08:10 kichiki Exp $
+ * $Id: test-all.c,v 1.9 2007/05/14 00:21:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,6 +28,7 @@
 #include "check-lub-poly.h" // check_lub_fts_2b_poly()
 #include "check-ewald.h" // check_atimes_ewald_3all_SC ()
 #include "check-ewald-poly.h" // check_atimes_ewald_3all_poly_SC_...()
+#include "check-ode-quaternion.h" // check_quaternion_Winv()
 
 #include "memory-check.h"
 
@@ -129,6 +130,10 @@ main (int argc, char** argv)
     (version, 2, // z dir
      phi, ewald_tr, ewald_eps,
      1, 1.0e-14);
+
+  // check-ode-quaternion.c
+  check += check_quaternion_Winv (1, 3.0e-16);
+
 
   fprintf (stdout,
 	   "==================================================\n"
