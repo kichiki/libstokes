@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.32 2007/05/12 04:30:14 kichiki Exp $
+ * $Id: libstokes.h,v 1.33 2007/05/14 00:19:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -242,6 +242,10 @@ struct stokes_nc {
   int stt_dim;
   int stt_id;
 
+  int nquat;
+  int quat_dim;
+  int quat_id;
+
   int ntime;
   int time_dim;
   int time_id;
@@ -277,6 +281,7 @@ struct stokes_nc {
   int f_id;
   int t_id;
   int s_id;
+  int q_id;
 
   int xf_id;
   int uf_id;
@@ -321,6 +326,7 @@ struct stokes_nc {
   int flag_f;
   int flag_t;
   int flag_s;
+  int flag_q;
 
   int flag_xf;
   int flag_uf;
@@ -377,11 +383,13 @@ stokes_nc_x_init (const char * filename, int np);
  *                  xf0, f0, t0, uf0, of0, x, u, o, ff, tf.
  *   [FTS mix]    : ui0, oi0, ei0 (for it = 0) or ui, oi, ei (for it = 1) and
  *                  xf0, f0, t0, e0, uf0, of0, ef0, x, u, o, s, ff, tf, sf.
+ *  for all cases, q is set if flag_Q == 1.
  */
 struct stokes_nc *
 stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
+		int flag_Q,
 		int flag_it);
 
 /* close (and write if necessary) NetCDF file for libstokes
@@ -521,6 +529,12 @@ void
 stokes_nc_set_x (struct stokes_nc * nc,
 		 int step,
 		 const double * x);
+/* set q at time (step)
+ */
+void
+stokes_nc_set_q (struct stokes_nc * nc,
+		 int step,
+		 const double * q);
 /* set u at time (step)
  */
 void
@@ -943,6 +957,63 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 int
 dydt_hydro (double t, const double *y, double *dydt,
 	    void *params);
+
+/* from ode-quaternion.h */
+/* calc dydt for center and angle by gsl_odeiv with hydrodynamics
+ * without inertia (zero Stokes number)
+ * INPUT
+ *  t   : current time
+ *  y[nm*3 + nm*4] : center position and quaternion of particles at time t
+ *  params : (struct ode_params*)ode.
+ *           the following parameters are used here;
+ *           ode->sys       : (struct stokes *)
+ *           ode->pos_fixed : 
+ *           ode->F [np*3]
+ *           ode->T [np*3]
+ *           ode->E [np*5]
+ *           ode->uf [np*3]
+ *           ode->of [np*3]
+ *           ode->ef [np*5]
+ *           ode->flag_mat
+ *           ode->flag_lub
+ *           ode->bonds     : (struct bonds *)
+ * OUTPUT
+ *  dydt[] := (d/dt) x(t) = U(t)
+ *         where U(t) := R^-1 . F, the terminal velocity
+ */
+int
+dydt_Q_hydro (double t, const double *y, double *dydt,
+	      void *params);
+
+/* calc dydt for center and angle by gsl_odeiv with hydrodynamics
+ * with inertia (scaled Stokes number)
+ * INPUT
+ *  t   : current time
+ *  y[nm*3 + nm*3 + nm*4] :
+ *           position, (real) velocity, and quaternion of particles at time t
+ *  params : (struct ode_params*)ode.
+ *           the following parameters are used here;
+ *           ode->sys       : (struct stokes *)
+ *           ode->pos_fixed : 
+ *           ode->F [np*3]
+ *           ode->T [np*3]
+ *           ode->E [np*5]
+ *           ode->uf [np*3]
+ *           ode->of [np*3]
+ *           ode->ef [np*5]
+ *           ode->flag_mat
+ *           ode->flag_lub
+ *           ode->stokes
+ *           ode->bonds     : (struct bonds *)
+ * OUTPUT
+ *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
+ *         (d/dt) x(t) = U(t)
+ *         (d/dt) U(t) = (1/stokes)(-U(t) + V(t)),
+ *         where V(t) := R^-1 . F, the terminal velocity
+ */
+int
+dydt_Q_hydro_st (double t, const double *y, double *dydt,
+		 void *params);
 
 
 /************************************
