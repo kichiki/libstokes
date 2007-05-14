@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.1 2007/03/27 00:53:34 kichiki Exp $
+ * $Id: bonds.h,v 1.2 2007/05/14 00:19:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,9 @@
  */
 #ifndef	_BONDS_H_
 #define	_BONDS_H_
+
+
+#include "stokes.h" // struct stokes
 
 
 struct bond_pairs {
