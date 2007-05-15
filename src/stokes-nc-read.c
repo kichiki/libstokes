@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.6 2007/05/14 00:18:32 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.7 2007/05/15 07:23:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -93,21 +93,19 @@ stokes_nc_check_3 (int id,
     }
 }
 
-struct stokes_nc *
-stokes_nc_open (const char * filename)
+
+static struct stokes_nc *
+stokes_nc_open_ (const char * filename, int omode)
 {
-  struct stokes_nc * nc;
-  int status;
-
-
-  nc = (struct stokes_nc *) malloc (sizeof (struct stokes_nc));
+  struct stokes_nc *nc
+    = (struct stokes_nc *) malloc (sizeof (struct stokes_nc));
   if (nc == NULL)
     {
       fprintf (stderr, "allocation error in stokes_nc_open()\n");
       exit (1);
     }
 
-  status = nc_open (filename, NC_NOWRITE, &(nc->id));
+  int status = nc_open (filename, omode, &(nc->id));
   if (status != NC_NOERR)
     {
       stokes_nc_error
@@ -616,15 +614,33 @@ stokes_nc_open (const char * filename)
   return (nc);
 }
 
+/* open stokes_nc file in NC_NOWRITE mode
+ * this is for usual analysis
+ */
+struct stokes_nc *
+stokes_nc_open (const char * filename)
+{
+  return (stokes_nc_open_ (filename, NC_NOWRITE));
+}
 
-/* read 1d array [vec/stt]
+/* open stokes_nc file in NC_WRITE mode
+ * this is for continuation (appending the results)
+ */
+struct stokes_nc *
+stokes_nc_reopen (const char * filename)
+{
+  return (stokes_nc_open_ (filename, NC_WRITE));
+}
+
+
+/* read 1d array [vec/stt/np/npf]
  * INPUT
- *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei
+ *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei, a, af, l
  * OUTPUT
  *  x[]
  */
 void
-stokes_nc_get_array1d (struct stokes_nc * nc,
+stokes_nc_get_array1d (const struct stokes_nc * nc,
 		       const char * name,
 		       double * x)
 {
@@ -714,17 +730,56 @@ stokes_nc_get_array1d (struct stokes_nc * nc,
 	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
 	}
     }
+  else if (strcmp ("a", name) == 0)
+    {
+      count[0] = nc->np;
+
+      status = nc_get_vara_double (nc->id, nc->a_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("af", name) == 0)
+    {
+      count[0] = nc->npf;
+
+      status = nc_get_vara_double (nc->id, nc->af_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
+  else if (strcmp ("l", name) == 0)
+    {
+      count[0] = nc->nvec;
+
+      status = nc_get_vara_double (nc->id, nc->l_id,
+				   start, count, x);
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error
+	    (status,
+	     "at nc_get_vara_double() for in stokes_nc_get_array1d", name);
+	}
+    }
   else
     {
       fprintf (stderr, "invalid name for stokes_nc_get_array1d()\n"
-	       "which is for Ui0, Oi0, Ei0, Ui, Oi, or Ei.\n");
+	       "which is for Ui0, Oi0, Ei0, Ui, Oi, Ei, a, af, or l.\n");
     }
 }
 
 /* read constant data for particles in 2d array [np/npf][vec/stt]
  */
 void
-stokes_nc_get_data0 (struct stokes_nc * nc,
+stokes_nc_get_data0 (const struct stokes_nc * nc,
 		     const char * name,
 		     double * x)
 {
@@ -944,7 +999,7 @@ stokes_nc_get_data0 (struct stokes_nc * nc,
 /* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
  */
 void
-stokes_nc_get_data (struct stokes_nc * nc,
+stokes_nc_get_data (const struct stokes_nc * nc,
 		    const char * name,
 		    int step,
 		    double * x)
@@ -1179,35 +1234,6 @@ stokes_nc_get_data (struct stokes_nc * nc,
     }
 }
 
-/* read lattice vector
- * INPUT
- *  l[nc->nvec]
- * OUTPUT
- *  l[nc->nvec]
- */
-void
-stokes_nc_get_l (struct stokes_nc * nc,
-		 double * l)
-{
-  size_t start;
-  size_t count;
-  int status;
-
-
-  start = 0;
-  count = nc->nvec;
-
-  status = nc_get_vara_double (nc->id, nc->l_id,
-			       &start, &count,
-			       l);
-  if (status != NC_NOERR)
-    {
-      stokes_nc_error
-	(status,
-	 "at nc_get_vara_double() in stokes_nc_get_l", "l");
-    }
-}
-
 /* read (the whole) time vector
  * INPUT
  *  time[nc->ntime]
@@ -1215,7 +1241,7 @@ stokes_nc_get_l (struct stokes_nc * nc,
  *  time[nc->ntime]
  */
 void
-stokes_nc_get_time (struct stokes_nc * nc,
+stokes_nc_get_time (const struct stokes_nc * nc,
 		    double * time)
 {
   size_t start;
@@ -1244,7 +1270,7 @@ stokes_nc_get_time (struct stokes_nc * nc,
  *  returned value : time[step]
  */
 double
-stokes_nc_get_time_step (struct stokes_nc * nc,
+stokes_nc_get_time_step (const struct stokes_nc * nc,
 			 int step)
 {
   double time;
