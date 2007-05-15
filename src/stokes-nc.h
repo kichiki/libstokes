@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.9 2007/05/14 00:18:09 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.10 2007/05/15 07:24:20 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,8 @@
  */
 #ifndef	_STOKES_NC_H_
 #define	_STOKES_NC_H_
+
+#include "stokes.h" // struct stokes
 
 
 struct stokes_nc {
@@ -411,6 +413,57 @@ void
 stokes_nc_set_sf (struct stokes_nc * nc,
 		  int step,
 		  const double * sf);
+
+
+/** utility routines **/
+/* set stokes_nc data by the parameters
+ * INPUT
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+struct stokes_nc *
+stokes_nc_set_by_params (const char *out_file,
+			 const struct stokes *sys,
+			 int flag_Q,
+			 const double *Ui, const double *Oi, const double *Ei,
+			 const double *F,  const double *T,  const double *E,
+			 const double *uf, const double *of, const double *ef,
+			 const double *xf,
+			 const double *lat);
+
+/* check stokes_nc data with the parameters
+ * INPUT
+ *  nc         :
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+int
+check_nc_with_params (const struct stokes_nc *nc,
+		      const struct stokes *sys,
+		      int flag_Q,
+		      const double *Ui, const double *Oi, const double *Ei,
+		      const double *F, const double *T, const double *E,
+		      const double *uf, const double *of, const double *ef,
+		      const double *xf,
+		      const double *lat);
 
 
 #endif /* !_STOKES_NC_H_ */

@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.9 2007/05/14 00:17:46 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.10 2007/05/15 07:24:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,10 +19,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h> // fabs()
 
 #include <netcdf.h>
 #include "memory-check.h"
 
+#include "stokes-nc-read.h"
 #include "stokes-nc.h"
 
 
@@ -2350,4 +2352,461 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 		       "at nc_put_vara_double() for sf"
 		       " in stokes_nc_append", NULL);
     }
+}
+
+
+/** utility routines **/
+/* set stokes_nc data by the parameters
+ * INPUT
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+struct stokes_nc *
+stokes_nc_set_by_params (const char *out_file,
+			 const struct stokes *sys,
+			 int flag_Q,
+			 const double *Ui, const double *Oi, const double *Ei,
+			 const double *F,  const double *T,  const double *E,
+			 const double *uf, const double *of, const double *ef,
+			 const double *xf,
+			 const double *lat)
+{
+  int nm = sys->nm;
+  int nf = sys->np - nm;
+
+  int flag_poly = 0;
+  if (sys->a != NULL) flag_poly = 1;
+
+  // create new stokes_nc
+  struct stokes_nc *nc = stokes_nc_init (out_file, nm, nf,
+					 sys->version, flag_poly, flag_Q, 0);
+  stokes_nc_set_ui0 (nc, Ui);
+  stokes_nc_set_oi0 (nc, Oi);
+  stokes_nc_set_ei0 (nc, Ei);
+  // non-periodic system
+  if (sys->periodic == 1)
+    {
+      stokes_nc_set_l (nc, lat);
+    }
+
+  // first for mobile particle informations (for both mob and mix)
+  if (flag_poly != 0)
+    {
+      stokes_nc_set_a (nc, sys->a);
+    }
+  if (sys->version == 0)
+    {
+      // F version
+      stokes_nc_set_f0 (nc, F);
+    }
+  else if (sys->version == 1)
+    {
+      // FT version
+      stokes_nc_set_f0 (nc, F);
+      stokes_nc_set_t0 (nc, T);
+    }
+  else
+    {
+      // FTS version
+      stokes_nc_set_f0 (nc, F);
+      stokes_nc_set_t0 (nc, T);
+      stokes_nc_set_e0 (nc, E);
+    }
+
+  // mix problem (with fixed particles)
+  if (nf > 0)
+    {
+      if (flag_poly != 0)
+	{
+	  stokes_nc_set_af (nc, sys->a + sys->nm);
+	}
+
+      if (sys->version == 0)
+	{
+	  // F version
+	  stokes_nc_set_uf0 (nc, uf);
+	}
+      else if (sys->version == 1)
+	{
+	  // FT version
+	  stokes_nc_set_uf0 (nc, uf);
+	  stokes_nc_set_of0 (nc, of);
+	}
+      else
+	{
+	  // FTS version
+	  stokes_nc_set_uf0 (nc, uf);
+	  stokes_nc_set_of0 (nc, of);
+	  stokes_nc_set_ef0 (nc, ef);
+	}
+      stokes_nc_set_xf0 (nc, xf);
+    }
+
+  return (nc);
+}
+
+/*
+ * INPUT
+ *  x[n] :
+ *  y[n] :
+ *  tiny : if (fabs (x[i] - y[i]) < tiny), x[i] == y[i].
+ * OUTPUT
+ *  0 : x[] == y[]
+ *  1 : x[] != y[]
+ */
+static int
+comp_array (const double *x, const double *y, int n, double tiny)
+{
+  int check = 0;
+  int i;
+  for (i = 0; i < n; i ++)
+    {
+      double d = fabs (x[i] - y[i]);
+      if (d >= tiny)
+	{
+	  check = 1;
+	  break;
+	}
+    }
+  return (check);
+}
+
+/* check stokes_nc data with the parameters
+ * INPUT
+ *  nc         :
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+int
+stokes_nc_check_params (const struct stokes_nc *nc,
+			const struct stokes *sys,
+			int flag_Q,
+			const double *Ui, const double *Oi, const double *Ei,
+			const double *F, const double *T, const double *E,
+			const double *uf, const double *of, const double *ef,
+			const double *xf,
+			const double *lat)
+{
+  int nm = sys->nm;
+  int nf = sys->np - nm;
+
+  int nm3 = nm * 3;
+  int nm5 = nm * 5;
+  int nf3 = nf * 3;
+  int nf5 = nf * 5;
+
+  // check the parameters
+  int check = 0;
+  if (nm != nc->np)
+    {
+      fprintf (stderr, "mismatch np %d != %d\n", nm, nc->np);
+      check ++;
+    }
+  if (nf != nc->npf)
+    {
+      fprintf (stderr, "mismatch npf %d != %d\n", nf, nc->npf);
+      check ++;
+    }
+  if (nf != nc->npf)
+    {
+      fprintf (stderr, "mismatch npf %d != %d\n", nf, nc->npf);
+      check ++;
+    }
+  // because flag_it is always 1 now
+  if (nc->flag_ui0 != 1 ||
+      nc->flag_oi0 != 1 ||
+      nc->flag_ei0 != 1)
+    {
+      fprintf (stderr, "imposed flows are not set (%d,%d,%d)\n",
+	       nc->flag_ui0,
+	       nc->flag_oi0,
+	       nc->flag_ei0);
+      check ++;
+    }
+  if (nf == 0)
+    {
+      if ((sys->a == NULL && nc->flag_a != 0) ||
+	  (sys->a != NULL && nc->flag_a == 0))
+	{
+	  fprintf (stderr, "mismatch flag_a\n");
+	  check ++;
+	}
+      if (sys->version == 0) // F version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1)
+	    {
+	      fprintf (stderr, "F params are not set properly.\n");
+	      check ++;
+	    }
+	}
+      else if (sys->version == 1) // FT version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_t0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1 ||
+	      nc->flag_o != 1)
+	    {
+	      fprintf (stderr, "FT params are not set properly.\n");
+	      check ++;
+	    }
+	}
+      else // FTS version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_t0 != 1 ||
+	      nc->flag_e0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1 ||
+	      nc->flag_o != 1 ||
+	      nc->flag_s != 1)
+	    {
+	      fprintf (stderr, "FTS params are not set properly.\n");
+	      check ++;
+	    }
+	}
+    }
+  else if (nf > 0)
+    {
+      if ((sys->a == NULL && nc->flag_af != 0) ||
+	  (sys->a != NULL && nc->flag_af == 0))
+	{
+	  fprintf (stderr, "mismatch flag_af\n");
+	  check ++;
+	}
+      if (sys->version == 0) // F version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1 ||
+	      nc->flag_uf0 != 1 ||
+	      nc->flag_xf0 != 1 ||
+	      nc->flag_ff != 1)
+	    {
+	      fprintf (stderr, "F-fix params are not set properly.\n");
+	      check ++;
+	    }
+	}
+      else if (sys->version == 1) // FT version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_t0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1 ||
+	      nc->flag_o != 1 ||
+	      nc->flag_uf0 != 1 ||
+	      nc->flag_of0 != 1 ||
+	      nc->flag_xf0 != 1 ||
+	      nc->flag_ff != 1 ||
+	      nc->flag_tf != 1)
+	    {
+	      fprintf (stderr, "FT-fix params are not set properly.\n");
+	      check ++;
+	    }
+	}
+      else // FTS version
+	{
+	  if (nc->flag_f0 != 1 ||
+	      nc->flag_t0 != 1 ||
+	      nc->flag_e0 != 1 ||
+	      nc->flag_x != 1 ||
+	      nc->flag_u != 1 ||
+	      nc->flag_o != 1 ||
+	      nc->flag_s != 1 ||
+	      nc->flag_uf0 != 1 ||
+	      nc->flag_of0 != 1 ||
+	      nc->flag_ef0 != 1 ||
+	      nc->flag_xf0 != 1 ||
+	      nc->flag_ff != 1 ||
+	      nc->flag_tf != 1 ||
+	      nc->flag_sf != 1)
+	    {
+	      fprintf (stderr, "FTS-fix params are not set properly.\n");
+	      check ++;
+	    }
+	}
+    }
+  double check_array [5];
+  stokes_nc_get_array1d (nc, "Ui0", check_array);
+  if (comp_array (Ui, check_array, 3, 1.0e-16) != 0)
+    {
+      fprintf (stderr, "Ui mismatch\n");
+      check ++;
+    }
+  stokes_nc_get_array1d (nc, "Oi0", check_array);
+  if (comp_array (Oi, check_array, 3, 1.0e-16) != 0)
+    {
+      fprintf (stderr, "Oi mismatch\n");
+      check ++;
+    }
+  stokes_nc_get_array1d (nc, "Ei0", check_array);
+  if (comp_array (Ei, check_array, 5, 1.0e-16) != 0)
+    {
+      fprintf (stderr, "Ei mismatch\n");
+      check ++;
+    }
+
+  // non-periodic system
+  if (sys->periodic == 1)
+    {
+      stokes_nc_get_l (nc, check_array);
+      if (comp_array (lat, check_array, 3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "l mismatch\n");
+	  check ++;
+	}
+    }
+
+  // first for mobile particle informations (for both mob and mix)
+  double *check_parray = (double *)malloc (sizeof (double) * sys->np * 3);
+  if (sys->a != NULL)
+    {
+      stokes_nc_get_array1d (nc, "a", check_array);
+      if (comp_array (sys->a, check_parray, nm, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "a mismatch\n");
+	  check ++;
+	}
+    }
+
+  if (sys->version == 0)
+    {
+      // F version
+      stokes_nc_get_data0 (nc, "F0", check_parray);
+      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "F0 mismatch\n");
+	  check ++;
+	}
+    }
+  else if (sys->version == 1)
+    {
+      // FT version
+      stokes_nc_get_data0 (nc, "F0", check_parray);
+      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "F0 mismatch\n");
+	  check ++;
+	}
+      stokes_nc_get_data0 (nc, "T0", check_parray);
+      if (comp_array (T, check_parray, nm3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "T0 mismatch\n");
+	  check ++;
+	}
+    }
+  else
+    {
+      // FTS version
+      stokes_nc_get_data0 (nc, "F0", check_parray);
+      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "F0 mismatch\n");
+	  check ++;
+	}
+      stokes_nc_get_data0 (nc, "T0", check_parray);
+      if (comp_array (T, check_parray, nm3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "T0 mismatch\n");
+	  check ++;
+	}
+      stokes_nc_get_data0 (nc, "E0", check_parray);
+      if (comp_array (E, check_parray, nm5, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "E0 mismatch\n");
+	  check ++;
+	}
+    }
+  if (nf > 0)
+    {
+      // mix problem (with fixed particles)
+      if (sys->a != NULL)
+	{
+	  stokes_nc_get_array1d (nc, "af", check_array);
+	  if (comp_array (sys->a + sys->nm,
+			  check_parray, nf, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "af mismatch\n");
+	      check ++;
+	    }
+	}
+
+      if (sys->version == 0)
+	{
+	  // F version
+	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
+	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Uf0 mismatch\n");
+	      check ++;
+	    }
+	}
+      else if (sys->version == 1)
+	{
+	  // FT version
+	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
+	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Uf0 mismatch\n");
+	      check ++;
+	    }
+	  stokes_nc_get_data0 (nc, "Of0", check_parray);
+	  if (comp_array (of, check_parray, nf3, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Of0 mismatch\n");
+	      check ++;
+	    }
+	}
+      else
+	{
+	  // FTS version
+	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
+	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Uf0 mismatch\n");
+	      check ++;
+	    }
+	  stokes_nc_get_data0 (nc, "Of0", check_parray);
+	  if (comp_array (of, check_parray, nf3, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Of0 mismatch\n");
+	      check ++;
+	    }
+	  stokes_nc_get_data0 (nc, "Ef0", check_parray);
+	  if (comp_array (ef, check_parray, nf5, 1.0e-16) != 0)
+	    {
+	      fprintf (stderr, "Ef0 mismatch\n");
+	      check ++;
+	    }
+	}
+      stokes_nc_get_data0 (nc, "xf0", check_parray);
+      if (comp_array (xf, check_parray, nf3, 1.0e-16) != 0)
+	{
+	  fprintf (stderr, "xf0 mismatch\n");
+	  check ++;
+	}
+    }
+  free (check_parray);
+
+  return (check);
 }
