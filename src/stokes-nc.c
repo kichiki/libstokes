@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.10 2007/05/15 07:24:00 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.11 2007/05/15 07:54:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2494,6 +2494,7 @@ comp_array (const double *x, const double *y, int n, double tiny)
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  tiny       : small value for the check criteria
  */
 int
 stokes_nc_check_params (const struct stokes_nc *nc,
@@ -2503,7 +2504,8 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 			const double *F, const double *T, const double *E,
 			const double *uf, const double *of, const double *ef,
 			const double *xf,
-			const double *lat)
+			const double *lat,
+			double tiny)
 {
   int nm = sys->nm;
   int nf = sys->np - nm;
@@ -2648,19 +2650,19 @@ stokes_nc_check_params (const struct stokes_nc *nc,
     }
   double check_array [5];
   stokes_nc_get_array1d (nc, "Ui0", check_array);
-  if (comp_array (Ui, check_array, 3, 1.0e-16) != 0)
+  if (comp_array (Ui, check_array, 3, tiny) != 0)
     {
       fprintf (stderr, "Ui mismatch\n");
       check ++;
     }
   stokes_nc_get_array1d (nc, "Oi0", check_array);
-  if (comp_array (Oi, check_array, 3, 1.0e-16) != 0)
+  if (comp_array (Oi, check_array, 3, tiny) != 0)
     {
       fprintf (stderr, "Oi mismatch\n");
       check ++;
     }
   stokes_nc_get_array1d (nc, "Ei0", check_array);
-  if (comp_array (Ei, check_array, 5, 1.0e-16) != 0)
+  if (comp_array (Ei, check_array, 5, tiny) != 0)
     {
       fprintf (stderr, "Ei mismatch\n");
       check ++;
@@ -2669,8 +2671,8 @@ stokes_nc_check_params (const struct stokes_nc *nc,
   // non-periodic system
   if (sys->periodic == 1)
     {
-      stokes_nc_get_l (nc, check_array);
-      if (comp_array (lat, check_array, 3, 1.0e-16) != 0)
+      stokes_nc_get_array1d (nc, "l", check_array);
+      if (comp_array (lat, check_array, 3, tiny) != 0)
 	{
 	  fprintf (stderr, "l mismatch\n");
 	  check ++;
@@ -2682,7 +2684,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
   if (sys->a != NULL)
     {
       stokes_nc_get_array1d (nc, "a", check_array);
-      if (comp_array (sys->a, check_parray, nm, 1.0e-16) != 0)
+      if (comp_array (sys->a, check_parray, nm, tiny) != 0)
 	{
 	  fprintf (stderr, "a mismatch\n");
 	  check ++;
@@ -2693,7 +2695,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
     {
       // F version
       stokes_nc_get_data0 (nc, "F0", check_parray);
-      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+      if (comp_array (F, check_parray, nm3, tiny) != 0)
 	{
 	  fprintf (stderr, "F0 mismatch\n");
 	  check ++;
@@ -2703,13 +2705,13 @@ stokes_nc_check_params (const struct stokes_nc *nc,
     {
       // FT version
       stokes_nc_get_data0 (nc, "F0", check_parray);
-      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+      if (comp_array (F, check_parray, nm3, tiny) != 0)
 	{
 	  fprintf (stderr, "F0 mismatch\n");
 	  check ++;
 	}
       stokes_nc_get_data0 (nc, "T0", check_parray);
-      if (comp_array (T, check_parray, nm3, 1.0e-16) != 0)
+      if (comp_array (T, check_parray, nm3, tiny) != 0)
 	{
 	  fprintf (stderr, "T0 mismatch\n");
 	  check ++;
@@ -2719,19 +2721,19 @@ stokes_nc_check_params (const struct stokes_nc *nc,
     {
       // FTS version
       stokes_nc_get_data0 (nc, "F0", check_parray);
-      if (comp_array (F, check_parray, nm3, 1.0e-16) != 0)
+      if (comp_array (F, check_parray, nm3, tiny) != 0)
 	{
 	  fprintf (stderr, "F0 mismatch\n");
 	  check ++;
 	}
       stokes_nc_get_data0 (nc, "T0", check_parray);
-      if (comp_array (T, check_parray, nm3, 1.0e-16) != 0)
+      if (comp_array (T, check_parray, nm3, tiny) != 0)
 	{
 	  fprintf (stderr, "T0 mismatch\n");
 	  check ++;
 	}
       stokes_nc_get_data0 (nc, "E0", check_parray);
-      if (comp_array (E, check_parray, nm5, 1.0e-16) != 0)
+      if (comp_array (E, check_parray, nm5, tiny) != 0)
 	{
 	  fprintf (stderr, "E0 mismatch\n");
 	  check ++;
@@ -2744,7 +2746,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 	{
 	  stokes_nc_get_array1d (nc, "af", check_array);
 	  if (comp_array (sys->a + sys->nm,
-			  check_parray, nf, 1.0e-16) != 0)
+			  check_parray, nf, tiny) != 0)
 	    {
 	      fprintf (stderr, "af mismatch\n");
 	      check ++;
@@ -2755,7 +2757,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 	{
 	  // F version
 	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
-	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	  if (comp_array (uf, check_parray, nf3, tiny) != 0)
 	    {
 	      fprintf (stderr, "Uf0 mismatch\n");
 	      check ++;
@@ -2765,13 +2767,13 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 	{
 	  // FT version
 	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
-	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	  if (comp_array (uf, check_parray, nf3, tiny) != 0)
 	    {
 	      fprintf (stderr, "Uf0 mismatch\n");
 	      check ++;
 	    }
 	  stokes_nc_get_data0 (nc, "Of0", check_parray);
-	  if (comp_array (of, check_parray, nf3, 1.0e-16) != 0)
+	  if (comp_array (of, check_parray, nf3, tiny) != 0)
 	    {
 	      fprintf (stderr, "Of0 mismatch\n");
 	      check ++;
@@ -2781,26 +2783,26 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 	{
 	  // FTS version
 	  stokes_nc_get_data0 (nc, "Uf0", check_parray);
-	  if (comp_array (uf, check_parray, nf3, 1.0e-16) != 0)
+	  if (comp_array (uf, check_parray, nf3, tiny) != 0)
 	    {
 	      fprintf (stderr, "Uf0 mismatch\n");
 	      check ++;
 	    }
 	  stokes_nc_get_data0 (nc, "Of0", check_parray);
-	  if (comp_array (of, check_parray, nf3, 1.0e-16) != 0)
+	  if (comp_array (of, check_parray, nf3, tiny) != 0)
 	    {
 	      fprintf (stderr, "Of0 mismatch\n");
 	      check ++;
 	    }
 	  stokes_nc_get_data0 (nc, "Ef0", check_parray);
-	  if (comp_array (ef, check_parray, nf5, 1.0e-16) != 0)
+	  if (comp_array (ef, check_parray, nf5, tiny) != 0)
 	    {
 	      fprintf (stderr, "Ef0 mismatch\n");
 	      check ++;
 	    }
 	}
       stokes_nc_get_data0 (nc, "xf0", check_parray);
-      if (comp_array (xf, check_parray, nf3, 1.0e-16) != 0)
+      if (comp_array (xf, check_parray, nf3, tiny) != 0)
 	{
 	  fprintf (stderr, "xf0 mismatch\n");
 	  check ++;

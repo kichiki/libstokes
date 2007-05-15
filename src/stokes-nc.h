@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.10 2007/05/15 07:24:20 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.11 2007/05/15 07:54:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -454,16 +454,18 @@ stokes_nc_set_by_params (const char *out_file,
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  tiny       : small value for the check criteria
  */
 int
-check_nc_with_params (const struct stokes_nc *nc,
-		      const struct stokes *sys,
-		      int flag_Q,
-		      const double *Ui, const double *Oi, const double *Ei,
-		      const double *F, const double *T, const double *E,
-		      const double *uf, const double *of, const double *ef,
-		      const double *xf,
-		      const double *lat);
+stokes_nc_check_params (const struct stokes_nc *nc,
+			const struct stokes *sys,
+			int flag_Q,
+			const double *Ui, const double *Oi, const double *Ei,
+			const double *F, const double *T, const double *E,
+			const double *uf, const double *of, const double *ef,
+			const double *xf,
+			const double *lat,
+			double tiny);
 
 
 #endif /* !_STOKES_NC_H_ */

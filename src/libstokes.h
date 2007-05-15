@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.34 2007/05/15 07:25:08 kichiki Exp $
+ * $Id: libstokes.h,v 1.35 2007/05/15 07:55:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -654,6 +654,7 @@ stokes_nc_set_by_params (const char *out_file,
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  tiny       : small value for the check criteria
  */
 int
 stokes_nc_check_params (const struct stokes_nc *nc,
@@ -663,7 +664,8 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 			const double *F, const double *T, const double *E,
 			const double *uf, const double *of, const double *ef,
 			const double *xf,
-			const double *lat);
+			const double *lat,
+			double tiny);
 
 
 /* from stokes-nc-read.h
