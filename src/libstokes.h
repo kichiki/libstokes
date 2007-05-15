@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.33 2007/05/14 00:19:00 kichiki Exp $
+ * $Id: libstokes.h,v 1.34 2007/05/15 07:25:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -615,44 +615,95 @@ stokes_nc_set_sf (struct stokes_nc * nc,
 		  const double * sf);
 
 
+/** utility routines **/
+/* set stokes_nc data by the parameters
+ * INPUT
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+struct stokes_nc *
+stokes_nc_set_by_params (const char *out_file,
+			 const struct stokes *sys,
+			 int flag_Q,
+			 const double *Ui, const double *Oi, const double *Ei,
+			 const double *F,  const double *T,  const double *E,
+			 const double *uf, const double *of, const double *ef,
+			 const double *xf,
+			 const double *lat);
+
+/* check stokes_nc data with the parameters
+ * INPUT
+ *  nc         :
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ */
+int
+stokes_nc_check_params (const struct stokes_nc *nc,
+			const struct stokes *sys,
+			int flag_Q,
+			const double *Ui, const double *Oi, const double *Ei,
+			const double *F, const double *T, const double *E,
+			const double *uf, const double *of, const double *ef,
+			const double *xf,
+			const double *lat);
+
+
 /* from stokes-nc-read.h
+ */
+
+/* open stokes_nc file in NC_NOWRITE mode
+ * this is for usual analysis
  */
 struct stokes_nc *
 stokes_nc_open (const char * filename);
 
-/* read 1d array [vec/stt]
+/* open stokes_nc file in NC_WRITE mode
+ * this is for continuation (appending the results)
+ */
+struct stokes_nc *
+stokes_nc_reopen (const char * filename);
+
+/* read 1d array [vec/stt/np/npf]
  * INPUT
- *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei
+ *  name : either one of them, Ui0, Oi0, Ei0, Ui, Oi, Ei, a, af, l
  * OUTPUT
  *  x[]
  */
 void
-stokes_nc_get_array1d (struct stokes_nc * nc,
+stokes_nc_get_array1d (const struct stokes_nc * nc,
 		       const char * name,
 		       double * x);
 /* read constant data for particles in 2d array [np/npf][vec/stt]
  */
 void
-stokes_nc_get_data0 (struct stokes_nc * nc,
+stokes_nc_get_data0 (const struct stokes_nc * nc,
 		     const char * name,
 		     double * x);
 /* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
  */
 void
-stokes_nc_get_data (struct stokes_nc * nc,
+stokes_nc_get_data (const struct stokes_nc * nc,
 		    const char * name,
 		    int step,
 		    double * x);
-
-/* read lattice vector
- * INPUT
- *  l[nc->nvec]
- * OUTPUT
- *  l[nc->nvec]
- */
-void
-stokes_nc_get_l (struct stokes_nc * nc,
-		 double * l);
 
 /* read (the whole) time vector
  * INPUT
@@ -661,7 +712,7 @@ stokes_nc_get_l (struct stokes_nc * nc,
  *  time[nc->ntime]
  */
 void
-stokes_nc_get_time (struct stokes_nc * nc,
+stokes_nc_get_time (const struct stokes_nc * nc,
 		    double * time);
 
 /* read time at a step
@@ -671,7 +722,7 @@ stokes_nc_get_time (struct stokes_nc * nc,
  *  returned value : time[step]
  */
 double
-stokes_nc_get_time_step (struct stokes_nc * nc,
+stokes_nc_get_time_step (const struct stokes_nc * nc,
 			 int step);
 
 
