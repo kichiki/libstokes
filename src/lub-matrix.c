@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.12 2007/05/04 01:14:44 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.13 2007/05/26 06:08:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -257,7 +257,7 @@ make_matrix_lub_3f (struct stokes *sys,
 			  else
 			    {
 			      // polydisperse
-			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+			      if (cond_lub_poly (sys->pos + i3, tmp_pos,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
@@ -386,7 +386,7 @@ make_matrix_lub_3ft (struct stokes *sys,
 			  else
 			    {
 			      // polydisperse
-			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+			      if (cond_lub_poly (sys->pos + i3, tmp_pos,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
@@ -515,7 +515,7 @@ make_matrix_lub_3fts (struct stokes *sys,
 			  else
 			    {
 			      // polydisperse
-			      if (cond_lub_poly (sys->pos + i3, sys->pos + j3,
+			      if (cond_lub_poly (sys->pos + i3, tmp_pos,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
