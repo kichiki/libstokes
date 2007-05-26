@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.17 2007/05/04 01:17:36 kichiki Exp $
+ * $Id: stokes.c,v 2.18 2007/05/26 06:09:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -783,9 +783,9 @@ stokes_set_radius (struct stokes *sys,
   int il;
   for (i = 0; i < sys->np; i ++)
     {
-      sys->poly_table [i *sys->np+ i] = -1; // undefined for the self
+      // for periodic system of monolayer, self might have lub contrib.
       int j;
-      for (j = i+1; j < sys->np; j ++)
+      for (j = i; j < sys->np; j ++)
 	{
 	  // for (i,j) pair
 	  lambda = a[j] / a[i];
