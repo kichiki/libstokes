@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.3 2007/05/04 01:20:47 kichiki Exp $
+ * $Id: bonds.c,v 1.4 2007/05/31 05:51:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -164,6 +164,19 @@ bonds_calc_force (struct bonds *bonds,
 	  double x = sys->pos [ia3+0] - sys->pos [ib3+0];
 	  double y = sys->pos [ia3+1] - sys->pos [ib3+1];
 	  double z = sys->pos [ia3+2] - sys->pos [ib3+2];
+	  if (sys->periodic != 0)
+	    {
+	      // periodic system
+	      // search the nearest image
+	      if      (x > 0.5 * sys->lx) x -= sys->lx;
+	      else if (x <-0.5 * sys->lx) x += sys->lx;
+
+	      if      (y > 0.5 * sys->ly) y -= sys->ly;
+	      else if (y <-0.5 * sys->ly) y += sys->ly;
+
+	      if      (z > 0.5 * sys->lz) z -= sys->lz;
+	      else if (z <-0.5 * sys->lz) z += sys->lz;
+	    }
 	  double r = sqrt (x*x + y*y + z*z);
 	  double ex = x / r;
 	  double ey = y / r;
