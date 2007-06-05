@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.11 2007/05/15 07:54:08 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.12 2007/06/05 04:06:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2681,9 +2681,10 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 
   // first for mobile particle informations (for both mob and mix)
   double *check_parray = (double *)malloc (sizeof (double) * sys->np * 3);
+  CHECK_MALLOC (check_parray, "stokes_nc_check_params");
   if (sys->a != NULL)
     {
-      stokes_nc_get_array1d (nc, "a", check_array);
+      stokes_nc_get_array1d (nc, "a", check_parray);
       if (comp_array (sys->a, check_parray, nm, tiny) != 0)
 	{
 	  fprintf (stderr, "a mismatch\n");
@@ -2744,7 +2745,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
       // mix problem (with fixed particles)
       if (sys->a != NULL)
 	{
-	  stokes_nc_get_array1d (nc, "af", check_array);
+	  stokes_nc_get_array1d (nc, "af", check_parray);
 	  if (comp_array (sys->a + sys->nm,
 			  check_parray, nf, tiny) != 0)
 	    {
