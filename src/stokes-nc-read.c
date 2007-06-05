@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.7 2007/05/15 07:23:10 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.8 2007/06/05 04:07:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "memory-check.h"
 
 #include <netcdf.h>
 
@@ -98,12 +99,8 @@ static struct stokes_nc *
 stokes_nc_open_ (const char * filename, int omode)
 {
   struct stokes_nc *nc
-    = (struct stokes_nc *) malloc (sizeof (struct stokes_nc));
-  if (nc == NULL)
-    {
-      fprintf (stderr, "allocation error in stokes_nc_open()\n");
-      exit (1);
-    }
+    = (struct stokes_nc *)malloc (sizeof (struct stokes_nc));
+  CHECK_MALLOC (nc, "stokes_nc_open_");
 
   int status = nc_open (filename, omode, &(nc->id));
   if (status != NC_NOERR)
