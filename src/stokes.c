@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.18 2007/05/26 06:09:39 kichiki Exp $
+ * $Id: stokes.c,v 2.19 2007/08/12 23:57:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -301,6 +301,12 @@ stokes_init (void)
   sys->pos = NULL;
   sys->a   = NULL;
 
+  sys->slip     = NULL;
+  sys->slip_a   = NULL;
+  sys->slip_G32 = NULL;
+  sys->slip_G30 = NULL;
+  sys->slip_G52 = NULL;
+
   sys->version = 0;
   sys->periodic = 0;
 
@@ -407,11 +413,13 @@ stokes_free (struct stokes * sys)
 
       stokes_unset_radius (sys);
       /*
-      if (sys->a != NULL) free (sys->a);
-      if (sys->poly_table != NULL) free (sys->poly_table);
-      if (sys->twobody_f_list != NULL)
+	if (sys->a != NULL) free (sys->a);
+	if (sys->poly_table != NULL) free (sys->poly_table);
+	if (sys->twobody_f_list != NULL)
 	twobody_f_list_free (sys->twobody_f_list);
       */
+
+      stokes_unset_slip (sys);
 
       if (sys->rlx != NULL) free (sys->rlx);
       if (sys->rly != NULL) free (sys->rly);
@@ -817,7 +825,7 @@ stokes_set_radius (struct stokes *sys,
 }
 
 /* unset radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
- * that is, the system is treated for monodisperse system
+ * that is, the system is treated as a monodisperse system
  * where a=1 for all particles as in the default setting.
  * INPUT
  *  sys                    : struct stokes
@@ -840,4 +848,92 @@ stokes_unset_radius (struct stokes *sys)
       twobody_f_list_free (sys->twobody_f_list);
     }
   sys->twobody_f_list = NULL;
+}
+
+
+/** slip parameters **/
+/* set slip parameters (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
+ * Note that the default setting (sys->slip == NULL) is for no-slip system
+ * where gamma=0 for all particles
+ * INPUT
+ *  gamma[np] : slip length
+ * OUTPUT
+ *  sys->slip[np]     : slip length
+ *  sys->slip_a[np]   : effective radius for the laplacian terms
+ *  sys->slip_G32[np] : Lambda(3,2) = 1/Lambda(2,3) for a-self.
+ *  sys->slip_G30[np] : Lambda(3,0) = 1/Lambda(0,3) for c-self.
+ *  sys->slip_G52[np] : Lambda(5,2) = 1/Lambda(2,5) for m-self.
+ */
+void
+stokes_set_slip (struct stokes *sys,
+		 const double *gamma)
+{
+  // make sure the entries are free
+  stokes_unset_slip (sys);
+
+  // set sys->slip[]
+  sys->slip     = (double *)malloc (sizeof (double) * sys->np);
+  sys->slip_a   = (double *)malloc (sizeof (double) * sys->np);
+  sys->slip_G32 = (double *)malloc (sizeof (double) * sys->np);
+  sys->slip_G30 = (double *)malloc (sizeof (double) * sys->np);
+  sys->slip_G52 = (double *)malloc (sizeof (double) * sys->np);
+  CHECK_MALLOC (sys->slip,     "stokes_set_radius");
+  CHECK_MALLOC (sys->slip_a,   "stokes_set_radius");
+  CHECK_MALLOC (sys->slip_G32, "stokes_set_radius");
+  CHECK_MALLOC (sys->slip_G30, "stokes_set_radius");
+  CHECK_MALLOC (sys->slip_G52, "stokes_set_radius");
+
+  int i;
+  for (i = 0; i < sys->np; i ++)
+    {
+      sys->slip[i] = gamma[i];
+
+      double l2;
+      double l3;
+      double l5;
+      if (sys->a == NULL)
+	{
+	  l2 = 1.0 + 2.0 * gamma[i];
+	  l3 = 1.0 + 3.0 * gamma[i];
+	  l5 = 1.0 + 5.0 * gamma[i];
+	}
+      else
+	{
+	  l2 = 1.0 + 2.0 * gamma[i] / sys->a[i];
+	  l3 = 1.0 + 3.0 * gamma[i] / sys->a[i];
+	  l5 = 1.0 + 5.0 * gamma[i] / sys->a[i];
+	}
+      sys->slip_a[i]   = sqrt (1.0 / l2);
+      sys->slip_G32[i] = l3 / l2;
+      sys->slip_G30[i] = l3;
+      sys->slip_G52[i] = l5 / l2;
+    }
+}
+
+/* unset slip params (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
+ * that is, the system is treated as a no-slip system
+ * where gamma=0 for all particles as in the default setting.
+ * INPUT
+ *  sys                    : struct stokes
+ * OUTPUT
+ *  sys->slip[np]     : freed and set NULL
+ *  sys->slip_a[np]   : freed and set NULL
+ *  sys->slip_G32[np] : freed and set NULL
+ *  sys->slip_G30[np] : freed and set NULL
+ *  sys->slip_G52[np] : freed and set NULL
+ */
+void
+stokes_unset_slip (struct stokes *sys)
+{
+  if (sys->slip     != NULL) free (sys->slip);
+  if (sys->slip_a   != NULL) free (sys->slip_a);
+  if (sys->slip_G32 != NULL) free (sys->slip_G32);
+  if (sys->slip_G30 != NULL) free (sys->slip_G30);
+  if (sys->slip_G52 != NULL) free (sys->slip_G52);
+
+  sys->slip     = NULL;
+  sys->slip_a   = NULL;
+  sys->slip_G32 = NULL;
+  sys->slip_G30 = NULL;
+  sys->slip_G52 = NULL;
 }

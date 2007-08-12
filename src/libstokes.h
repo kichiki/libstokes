@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.35 2007/05/15 07:55:00 kichiki Exp $
+ * $Id: libstokes.h,v 1.36 2007/08/12 23:57:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -206,7 +206,7 @@ void
 stokes_set_radius (struct stokes *sys,
 		   const double *a);
 /* unset radius (sys->a[], sys->twobody_f_list, and sys->poly_table).
- * that is, the system is treated for monodisperse system
+ * that is, the system is treated as a monodisperse system
  * where a=1 for all particles as in the default setting.
  * INPUT
  *  sys                    : struct stokes
@@ -217,6 +217,39 @@ stokes_set_radius (struct stokes *sys,
  */
 void
 stokes_unset_radius (struct stokes *sys);
+
+
+/** slip parameters **/
+/* set slip parameters (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
+ * Note that the default setting (sys->slip == NULL) is for no-slip system
+ * where gamma=0 for all particles
+ * INPUT
+ *  gamma[np] : slip length
+ * OUTPUT
+ *  sys->slip[np]     : slip length
+ *  sys->slip_a[np]   : effective radius for the laplacian terms
+ *  sys->slip_G32[np] : Lambda(3,2) = 1/Lambda(2,3) for a-self.
+ *  sys->slip_G30[np] : Lambda(3,0) = 1/Lambda(0,3) for c-self.
+ *  sys->slip_G52[np] : Lambda(5,2) = 1/Lambda(2,5) for m-self.
+ */
+void
+stokes_set_slip (struct stokes *sys,
+		 const double *gamma);
+
+/* unset slip params (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
+ * that is, the system is treated as a no-slip system
+ * where gamma=0 for all particles as in the default setting.
+ * INPUT
+ *  sys                    : struct stokes
+ * OUTPUT
+ *  sys->slip[np]     : freed and set NULL
+ *  sys->slip_a[np]   : freed and set NULL
+ *  sys->slip_G32[np] : freed and set NULL
+ *  sys->slip_G30[np] : freed and set NULL
+ *  sys->slip_G52[np] : freed and set NULL
+ */
+void
+stokes_unset_slip (struct stokes *sys);
 
 
 /************************************
