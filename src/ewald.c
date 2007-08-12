@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.7 2007/04/18 01:27:45 kichiki Exp $
+ * $Id: ewald.c,v 1.8 2007/08/12 18:09:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -378,7 +378,7 @@ scalars_ewald_real_poly (int version,
  *  yh,
  *  xm, ym, zm : for FTS version
  */
-static void
+void
 scalars_mob_poly_scale_SD_ (int version,
 			   double a1,
 			    double *xa, double *ya,
