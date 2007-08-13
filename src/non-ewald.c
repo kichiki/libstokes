@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.6 2007/04/12 05:37:55 kichiki Exp $
+ * $Id: non-ewald.c,v 1.7 2007/08/13 00:31:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -351,32 +351,44 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
     }
 
   /* diagonal part ( self part ) */
+  // the default values are for no-slip case
+  double self_a = 1.0;
+  double self_c = 0.75;
+  double self_m = 0.9;
+
   for (i = 0; i < sys->np; i++)
     {
+      if (sys->slip != NULL) // slip
+	{
+	  self_a = 1.0  * sys->slip_G32 [i]; // Lambda(3,2) = 1/Lambda(2,3)
+	  self_c = 0.75 * sys->slip_G30 [i]; // Lambda(3,0) = 1/Lambda(0,3)
+	  self_m = 0.9  * sys->slip_G52 [i]; // Lambda(5,2) = 1/Lambda(2,5)
+	}
+
       if (sys->version == 0) // F version
 	{
 	  matrix_f_atimes (x + i*3, y + i*3,
 			   0.0, 0.0, 0.0,
-			   1.0, 1.0); // a part
+			   self_a, self_a); // a part
 	}
       else if (sys->version == 1) // FT version
 	{
 	  matrix_ft_atimes (x + i*6, y + i*6,
 			    0.0, 0.0, 0.0,
-			    1.0, 1.0, // a part
+			    self_a, self_a, // a part
 			    0.0,
-			    0.75, 0.75); // c part
+			    self_c, self_c); // c part
 	}
       else // FTS version
 	{
 	  matrix_fts_atimes (x + i*11, y + i*11,
 			     0.0, 0.0, 0.0,
-			     1.0, 1.0, // a part
+			     self_a, self_a, // a part
 			     0.0,
-			     0.75, 0.75, // c part
+			     self_c, self_c, // c part
 			     0.0, 0.0,
 			     0.0,
-			     0.9, 0.9, 0.9); // m part
+			     self_m, self_m, self_m); // m part
 	}
     }
 
@@ -386,6 +398,12 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
       ix = i * 3;
       iy = ix + 1;
       iz = ix + 2;
+
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
 	  // exclude the self part
@@ -405,14 +423,13 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 	  ey = yy / r;
 	  ez = zz / r;
 
-	  if (sys->a == NULL)
+	  if (sys->slip == NULL // no-slip
+	      && sys->a == NULL) // monodisperse
 	    {
-	      // monodisperse
 	      scalars_nonewald (sys->version, r, mob);
 	    }
-	  else
+	  else if (sys->slip == NULL) // no-slip polydisperse
 	    {
-	      // polydisperse
 	      scalars_nonewald_poly (sys->version, r,
 				     sys->a[i], sys->a[j],
 				     mob);
@@ -420,6 +437,22 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 					 sys->a[i],
 					 mob);
 	      // now mob is in the SD form
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      // use the effective radius in slip->a[] defined by
+	      // slip->a[i] = sys->a[i] * sqrt (Lambda^(i)(0,2)).
+	      // for both monodisperse and polydisperse.
+	      // (slip->a[] is defined for both cases properly.)
+	      scalars_nonewald_poly (sys->version, r,
+				     sys->slip_a[i], sys->slip_a[j],
+				     mob);
+	      // scale is done by the real radius
+	      scalars_mob_poly_scale_SD (sys->version,
+					 //sys->a[i],
+					 ai,
+					 mob);
+	      // now scalars are in the SD form
 	    }
 
 	  // note that interaction (i,j) should be for (U[i], F[j])
@@ -497,34 +530,46 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
     }
 
   /* diagonal part ( self part ) */
+  // the default values are for no-slip case
+  double self_a = 1.0;
+  double self_c = 0.75;
+  double self_m = 0.9;
+
   for (i = 0; i < sys->np; i++)
     {
+      if (sys->slip != NULL) // slip
+	{
+	  self_a = 1.0  * sys->slip_G32 [i]; // Lambda(3,2) = 1/Lambda(2,3)
+	  self_c = 0.75 * sys->slip_G30 [i]; // Lambda(3,0) = 1/Lambda(0,3)
+	  self_m = 0.9  * sys->slip_G52 [i]; // Lambda(5,2) = 1/Lambda(2,5)
+	}
+
       if (sys->version == 0) // F version
 	{
 	  matrix_f_ij (i, i,
 		       0.0, 0.0, 0.0,
-		       1.0, 1.0, // a part
+		       self_a, self_a, // a part
 		       n, mat);
 	}
       else if (sys->version == 1) // FT version
 	{
 	  matrix_ft_ij (i, i,
 			0.0, 0.0, 0.0,
-			1.0, 1.0, // a part
+			self_a, self_a, // a part
 			0.0,
-			0.75, 0.75, // c part
+			self_c, self_c, // c part
 			n, mat);
 	}
       else // FTS version
 	{
 	  matrix_fts_ij (i, i,
 			 0.0, 0.0, 0.0,
-			 1.0, 1.0, // a part
+			 self_a, self_a, // a part
 			 0.0,
-			 0.75, 0.75, // c part
+			 self_c, self_c, // c part
 			 0.0, 0.0,
 			 0.0,
-			 0.9, 0.9, 0.9, // m part
+			 self_m, self_m, self_m, // m part
 			 n, mat);
 	}
     }
@@ -535,6 +580,12 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
       ix = i * 3;
       iy = ix + 1;
       iz = ix + 2;
+
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
 	  // exclude the self part
@@ -554,14 +605,13 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 	  ey = yy / r;
 	  ez = zz / r;
 
-	  if (sys->a == NULL)
+	  if (sys->slip == NULL // no-slip
+	      && sys->a == NULL) // monodisperse
 	    {
-	      // monodisperse
 	      scalars_nonewald (sys->version, r, mob);
 	    }
-	  else
+	  else if (sys->slip == NULL) // no-slip polydisperse
 	    {
-	      // polydisperse
 	      scalars_nonewald_poly (sys->version, r,
 				     sys->a[i], sys->a[j],
 				     mob);
@@ -569,6 +619,22 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 					 sys->a[i],
 					 mob);
 	      // now mob is in the SD form
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      // use the effective radius in slip->a[] defined by
+	      // slip->a[i] = sys->a[i] * sqrt (Lambda^(i)(0,2)).
+	      // for both monodisperse and polydisperse.
+	      // (slip->a[] is defined for both cases properly.)
+	      scalars_nonewald_poly (sys->version, r,
+				     sys->slip_a[i], sys->slip_a[j],
+				     mob);
+	      // scale is done by the real radius
+	      scalars_mob_poly_scale_SD (sys->version,
+					 //sys->a[i],
+					 ai,
+					 mob);
+	      // now scalars are in the SD form
 	    }
 
 	  if (sys->version == 0) // F version
