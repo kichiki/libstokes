@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.8 2007/08/12 18:09:49 kichiki Exp $
+ * $Id: ewald.c,v 1.9 2007/08/13 00:30:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -564,9 +564,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
     }
 
   /* diagonal part ( self part ) */
-  if (sys->a == NULL)
+  if (sys->slip == NULL // no-slip
+      && sys->a == NULL) // monodisperse
     {
-      // monodisperse
       for (i = 0; i < sys->np; i++)
 	{
 	  if (sys->version == 0) // F version
@@ -596,25 +596,49 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 	    }
 	}
     }
-  else
+  else // slip or no-slip polydisperse
     {
-      // polydisperse
       double self_a;
       double self_c;
       double self_m;
 
       for (i = 0; i < sys->np; i++)
 	{
-	  double a = sys->a [i];
-	  double a2 = a*a;
-	  double a3 = a2*a;
-	  self_a = 1.0
-	    - a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
-	  self_c = 0.75
-	    - a3 * sys->xiaspi * sys->xia2 * 10.0;
-	  self_m = 0.9
-	    - a3 * sys->xiaspi * sys->xia2 * (12.0 - 30.24 * sys->xia2 * a2);
-	  // in SD scaling
+	  double a;
+	  double a2;
+	  double a3;
+
+	  if (sys->slip == NULL) // no-slip
+	    {
+	      a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      if (sys->a == NULL) a = 1.0;
+	      else                a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0  * sys->slip_G32 [i] // Lambda(3,2) = 1/Lambda(2,3)
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75 * sys->slip_G30 [i] // Lambda(3,0) = 1/Lambda(0,3)
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9  * sys->slip_G52 [i] // Lambda(5,2) = 1/Lambda(2,5)
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
 
 	  if (sys->version == 0) // F version
 	    {
@@ -654,6 +678,12 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
       ix = i * 3;
       iy = ix + 1;
       iz = ix + 2;
+
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
 	  jx = j * 3;
@@ -675,9 +705,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 	      ey = yy / r;
 	      ez = zz / r;
 
-	      if (sys->a == NULL)
+	      if (sys->slip == NULL // no-slip
+		  && sys->a == NULL) // monodisperse
 		{
-		  // monodisperse
 		  scalars_ewald_real (sys->version,
 				      sys->xi, r,
 				      &xa, &ya,
@@ -687,9 +717,8 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 				      &yh,
 				      &xm, &ym, &zm);
 		}
-	      else
+	      else if (sys->slip == NULL) // no-slip polydisperse
 		{
-		  // polydisperse
 		  scalars_ewald_real_poly (sys->version,
 					   sys->xi, r,
 					   sys->a[i], sys->a[j],
@@ -701,6 +730,32 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 					   &xm, &ym, &zm);
 		  scalars_mob_poly_scale_SD_ (sys->version,
 					      sys->a[i],
+					      &xa, &ya,
+					      &yb,
+					      &xc, &yc,
+					      &xg, &yg,
+					      &yh,
+					      &xm, &ym, &zm);
+		  // now scalars are in the SD form
+		}
+	      else // slip (for both mono- and poly-disperse systems)
+		{
+		  // use the effective radius in sys->slip_a[] defined by
+		  // sys->slip_a[i] := sys->a[i] * sqrt (Lambda^(i)(0,2))
+		  // for both monodisperse and polydisperse.
+		  // (sys->slip_a[] is defined for both cases properly.)
+		  scalars_ewald_real_poly (sys->version,
+					   sys->xi, r,
+					   sys->slip_a[i], sys->slip_a[j],
+					   &xa, &ya,
+					   &yb,
+					   &xc, &yc,
+					   &xg, &yg,
+					   &yh,
+					   &xm, &ym, &zm);
+		  scalars_mob_poly_scale_SD_ (sys->version,
+					      //sys->a[i],
+					      ai,
 					      &xa, &ya,
 					      &yb,
 					      &xc, &yc,
@@ -772,9 +827,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 	      k2 = sys->k2[m];
 	      k3 = sys->k3[m];
 
-	      if (sys->a == NULL)
+	      if (sys->slip == NULL // no-slip
+		  && sys->a == NULL) // monodisperse
 		{
-		  // monodisperse
 		  ya = sys->ya[m];
 		  yb = sys->yb[m];
 		  yc = sys->yc[m];
@@ -782,18 +837,35 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		  yh = sys->yh[m];
 		  ym = sys->ym[m];
 		}
-	      else
+	      else // slip or no-slip polydisperse
 		{
-		  // polydisperse
 		  double aa;
 		  double aa3;
 		  double aa2;
-		  aa = sys->a [i];
+		  if (sys->a == NULL) aa = 1.0;
+		  else                aa = sys->a [i];
 		  aa2 = aa * aa;
 		  aa3 = aa2 * aa;
-		  double ab2;
-		  ab2 = sys->a [j];
-		  ab2 *= ab2;
+
+		  // a^2 in nabla^2 term
+		  double a2a;
+		  double a2b;
+		  if (sys->slip == NULL) // no-slip
+		    {
+		      a2a = aa2;
+
+		      if (sys->a == NULL) a2b = 1.0;
+		      else                a2b = sys->a [j];
+		      a2b *= a2b;
+		    }
+		  else // slip
+		    {
+		      a2a = sys->slip_a [i];
+		      a2a *= a2a;
+
+		      a2b = sys->slip_a [j];
+		      a2b *= a2b;
+		    }
 
 		  double k = sys->k [m];
 		  double kk = k * k;
@@ -802,12 +874,12 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
-		  ya = aa * 6.0 * (1.0 - kk * (aa2+ab2) / 6.0) * kexp;
+		  ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0) * kexp;
 		  yb = aa2 * 3.0 * k * kexp;
 		  yc = aa3 * 3.0 / 2.0 * kk * kexp;
-		  yg = aa2 * 3.0 * (1.0 - kk * (aa2/10.0 + ab2/6.0)) * k * kexp;
+		  yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0)) * k * kexp;
 		  yh = aa3 * 3.0 / 2.0 * kk * kexp;
-		  ym = aa3 * 3.0 * (1.0 - kk * (aa2+ab2) / 10.0) * kk * kexp;
+		  ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0) * kk * kexp;
 		  // in SD scaling
 		}
 
@@ -915,9 +987,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
     }
 
   /* diagonal part ( self part ) */
-  if (sys->a == NULL)
+  if (sys->slip == NULL // no-slip
+      && sys->a == NULL) // monodisperse
     {
-      // monodisperse
       for (i = 0; i < sys->np; i++)
 	{
 	  if (sys->version == 0) // F version
@@ -950,25 +1022,49 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 	    }
 	}
     }
-  else
+  else // slip or no-slip polydisperse
     {
-      // polydisperse
       double self_a;
       double self_c;
       double self_m;
 
       for (i = 0; i < sys->np; i++)
 	{
-	  double a = sys->a [i];
-	  double a2 = a*a;
-	  double a3 = a2*a;
-	  self_a = 1.0
-	    - a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
-	  self_c = 0.75
-	    - a3 * sys->xiaspi * sys->xia2 * 10.0;
-	  self_m = 0.9
-	    - a3 * sys->xiaspi * sys->xia2 * (12.0 - 30.24 * sys->xia2 * a2);
-	  // in SD scaling
+	  double a;
+	  double a2;
+	  double a3;
+
+	  if (sys->slip == NULL) // no-slip
+	    {
+	      a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      if (sys->a == NULL) a = 1.0;
+	      else                a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0  * sys->slip_G32 [i] // Lambda(3,2) = 1/Lambda(2,3)
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75 * sys->slip_G30 [i] // Lambda(3,0) = 1/Lambda(0,3)
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9  * sys->slip_G52 [i] // Lambda(5,2) = 1/Lambda(2,5)
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
 
 	  if (sys->version == 0) // F version
 	    {
@@ -1011,6 +1107,12 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
       ix = i * 3;
       iy = ix + 1;
       iz = ix + 2;
+
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
 	  jx = j * 3;
@@ -1032,9 +1134,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 	      ey = yy / r;
 	      ez = zz / r;
 
-	      if (sys->a == NULL)
+	      if (sys->slip == NULL // no-slip
+		  && sys->a == NULL) // monodisperse
 		{
-		  // monodisperse
 		  scalars_ewald_real (sys->version,
 				      sys->xi, r,
 				      &xa, &ya,
@@ -1044,9 +1146,8 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 				      &yh,
 				      &xm, &ym, &zm);
 		}
-	      else
+	      else if (sys->slip == NULL) // no-slip polydisperse
 		{
-		  // polydisperse
 		  scalars_ewald_real_poly (sys->version,
 					   sys->xi, r,
 					   sys->a[i], sys->a[j],
@@ -1058,6 +1159,32 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 					   &xm, &ym, &zm);
 		  scalars_mob_poly_scale_SD_ (sys->version,
 					      sys->a[i],
+					      &xa, &ya,
+					      &yb,
+					      &xc, &yc,
+					      &xg, &yg,
+					      &yh,
+					      &xm, &ym, &zm);
+		  // now scalars are in the SD form
+		}
+	      else // slip (for both mono- and poly-disperse systems)
+		{
+		  // use the effective radius in sys->slip_a[] defined by
+		  // sys->slip_a[i] := sys->a[i] * sqrt (Lambda^(i)(0,2))
+		  // for both monodisperse and polydisperse.
+		  // (sys->slip_a[] is defined for both cases properly.)
+		  scalars_ewald_real_poly (sys->version,
+					   sys->xi, r,
+					   sys->slip_a[i], sys->slip_a[j],
+					   &xa, &ya,
+					   &yb,
+					   &xc, &yc,
+					   &xg, &yg,
+					   &yh,
+					   &xm, &ym, &zm);
+		  scalars_mob_poly_scale_SD_ (sys->version,
+					      //sys->a[i],
+					      ai,
 					      &xa, &ya,
 					      &yb,
 					      &xc, &yc,
@@ -1130,9 +1257,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 	      k2 = sys->k2[m];
 	      k3 = sys->k3[m];
 
-	      if (sys->a == NULL)
+	      if (sys->slip == NULL // no-slip
+		  && sys->a == NULL) // monodisperse
 		{
-		  // monodisperse
 		  ya = sys->ya[m];
 		  yb = sys->yb[m];
 		  yc = sys->yc[m];
@@ -1140,18 +1267,35 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 		  yh = sys->yh[m];
 		  ym = sys->ym[m];
 		}
-	      else
+	      else // slip or no-slip polydisperse
 		{
-		  // polydisperse
 		  double aa;
 		  double aa3;
 		  double aa2;
-		  aa = sys->a [i];
+		  if (sys->a == NULL) aa = 1.0;
+		  else                aa = sys->a [i];
 		  aa2 = aa * aa;
 		  aa3 = aa2 * aa;
-		  double ab2;
-		  ab2 = sys->a [j];
-		  ab2 *= ab2;
+
+		  // a^2 in nabla^2 term
+		  double a2a;
+		  double a2b;
+		  if (sys->slip == NULL) // no-slip
+		    {
+		      a2a = aa2;
+
+		      if (sys->a == NULL) a2b = 1.0;
+		      else                a2b = sys->a [j];
+		      a2b *= a2b;
+		    }
+		  else // slip
+		    {
+		      a2a = sys->slip_a [i];
+		      a2a *= a2a;
+
+		      a2b = sys->slip_a [j];
+		      a2b *= a2b;
+		    }
 
 		  double k = sys->k [m];
 		  double kk = k * k;
@@ -1160,12 +1304,12 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
-		  ya = aa * 6.0 * (1.0 - kk * (aa2+ab2) / 6.0) * kexp;
+		  ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0) * kexp;
 		  yb = aa2 * 3.0 * k * kexp;
 		  yc = aa3 * 3.0 / 2.0 * kk * kexp;
-		  yg = aa2 * 3.0 * (1.0 - kk * (aa2/10.0 + ab2/6.0)) * k * kexp;
+		  yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0)) * k * kexp;
 		  yh = aa3 * 3.0 / 2.0 * kk * kexp;
-		  ym = aa3 * 3.0 * (1.0 - kk * (aa2+ab2) / 10.0) * kk * kexp;
+		  ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0) * kk * kexp;
 		  // in SD scaling
 		}
 
