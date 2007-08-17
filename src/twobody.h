@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.7 2007/04/26 05:10:43 kichiki Exp $
+ * $Id: twobody.h,v 1.8 2007/08/17 04:21:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -239,6 +239,36 @@ void twobody_ZM_far (int n, double l, double s,
 void twobody_far (int version, int n, double l, double s,
 		  double *far);
 
+/* calc scalar functions of resistance problem by 1/s expansion
+ * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_far_with_f (int version,
+			 struct twobody_f *f12,
+			 int n, double l, double s,
+			 double *far);
+
 
 /** lubrication form **/
 
@@ -400,9 +430,10 @@ void twobody_lub (int version, int n, double l, double s,
 
 /* calc scalar functions of resistance problem by lub form
  * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
  * INPUT
  *  version : 0=F, 1=FT, 2=FTS.
- *  f2b     : struct twobody_f for the pair
+ *  f12     : struct twobody_f for the pair
  *            you can give NULL for them.
  *            then, the coefs are calculated on-the-fly (terribly slow).
  *  n : max order
@@ -462,7 +493,6 @@ twobody_scale (int version, double *two, double a1, double l);
  *  f12        : (struct twobody_f *).
  *               you can give NULL for them.
  *               then, the coefs are calculated on-the-fly (terribly slow).
- *               only functional for the lub form, for now.
  *  n          : max order for the coefficients
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()

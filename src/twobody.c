@@ -1,6 +1,6 @@
 /* RYUON-twobody : exact 2-body resistance scalar functions
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.c,v 1.8 2007/04/27 00:58:50 kichiki Exp $
+ * $Id: twobody.c,v 1.9 2007/08/17 04:19:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,17 +36,17 @@ twobody_f_init (int nmax, double lambda)
   f->nmax = nmax;
   f->lambda = lambda;
 
-  f->XA = (double *)malloc (sizeof (double) * nmax);
-  f->YA = (double *)malloc (sizeof (double) * nmax);
-  f->YB = (double *)malloc (sizeof (double) * nmax);
-  f->XC = (double *)malloc (sizeof (double) * nmax);
-  f->YC = (double *)malloc (sizeof (double) * nmax);
-  f->XG = (double *)malloc (sizeof (double) * nmax);
-  f->YG = (double *)malloc (sizeof (double) * nmax);
-  f->YH = (double *)malloc (sizeof (double) * nmax);
-  f->XM = (double *)malloc (sizeof (double) * nmax);
-  f->YM = (double *)malloc (sizeof (double) * nmax);
-  f->ZM = (double *)malloc (sizeof (double) * nmax);
+  f->XA = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YA = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YB = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->XC = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YC = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->XG = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YG = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YH = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->XM = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->YM = (double *)malloc (sizeof (double) * (nmax + 1));
+  f->ZM = (double *)malloc (sizeof (double) * (nmax + 1));
 
   CHECK_MALLOC (f->XA, "twobody_f_init");
   CHECK_MALLOC (f->YA, "twobody_f_init");
@@ -162,7 +162,7 @@ void twobody_XA_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XA_far");
 
   twobody_XA (n, l, f);
@@ -205,7 +205,7 @@ void twobody_YA_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YA_far");
 
   twobody_YA (n, l, f);
@@ -248,7 +248,7 @@ void twobody_YB_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YB_far");
 
   twobody_YB (n, l, f);
@@ -291,7 +291,7 @@ void twobody_XC_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XC_far");
 
   twobody_XC (n, l, f);
@@ -334,7 +334,7 @@ void twobody_YC_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YC_far");
 
   twobody_YC (n, l, f);
@@ -377,7 +377,7 @@ void twobody_XG_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XG_far");
 
   twobody_XG (n, l, f);
@@ -420,7 +420,7 @@ void twobody_YG_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YG_far");
 
   twobody_YG (n, l, f);
@@ -463,7 +463,7 @@ void twobody_YH_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YH_far");
 
   twobody_YH (n, l, f);
@@ -506,7 +506,7 @@ void twobody_XM_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XM_far");
 
   twobody_XM (n, l, f);
@@ -549,7 +549,7 @@ void twobody_YM_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YM_far");
 
   twobody_YM (n, l, f);
@@ -592,7 +592,7 @@ void twobody_ZM_far (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_ZM_far");
 
   twobody_ZM (n, l, f);
@@ -661,6 +661,330 @@ void twobody_far (int version, int n, double l, double s,
   twobody_ZM_far (n, l, s, far + 20, far + 21);
 }
 
+/* calc scalar functions of resistance problem by 1/s expansion
+ * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_far_with_f (int version,
+			 struct twobody_f *f12,
+			 int n, double l, double s,
+			 double *far)
+{
+  if (n%2 != 0) n--; // make n even for fail-safe
+
+  double *f = NULL;
+  if (f12 == NULL)
+    {
+      f = (double *)malloc (sizeof (double) * (n + 1));
+      CHECK_MALLOC (f, "twobody_far_with_f");
+    }
+
+  double l1 = 1.0 + l;
+  double l12 = l1 * l1;
+  double l13 = l12 * l1;
+
+  double s1l = s * l1;
+  double s11, s12;
+  double s2;
+  int i;
+
+  // XA
+  if (f12 == NULL)
+    {
+      twobody_XA (n, l, f);
+    }
+  else
+    {
+      f = f12->XA;
+    }
+  far [0] = 0.0;
+  far [1] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far [0] += f[i*2  ] / s11;
+      far [1] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far [1] *= -2.0 / l1;
+
+  // YA
+  if (f12 == NULL)
+    {
+      twobody_YA (n, l, f);
+    }
+  else
+    {
+      f = f12->YA;
+    }
+  far [2] = 0.0;
+  far [3] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far [2] += f[i*2  ] / s11;
+      far [3] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far [3] *= -2.0 / l1;
+
+  // F version
+  if (version == 0) return;
+
+  // YB
+  if (f12 == NULL)
+    {
+      twobody_YB (n, l, f);
+    }
+  else
+    {
+      f = f12->YB;
+    }
+  far [4] = 0.0;
+  far [5] = 0.0;
+  s11 = s1l; // odd
+  s12 = 1.0; // even
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far [4] += f[i*2+1] / s11;
+      far [5] += f[i*2  ] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far [5] *= -4.0 / l12;
+
+  // XC
+  if (f12 == NULL)
+    {
+      twobody_XC (n, l, f);
+    }
+  else
+    {
+      f = f12->XC;
+    }
+  far[6] = 0.0;
+  far[7] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[6] += f[i*2  ] / s11;
+      far[7] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[7] *= -8.0 / l13;
+
+  // YC
+  if (f12 == NULL)
+    {
+      twobody_YC (n, l, f);
+    }
+  else
+    {
+      f = f12->YC;
+    }
+  far[8] = 0.0;
+  far[9] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[8] += f[i*2  ] / s11;
+      far[9] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[9] *= 8.0 / l13;
+
+  // FT version
+  if (version == 1) return;
+
+  // XG
+  if (f12 == NULL)
+    {
+      twobody_XG (n, l, f);
+    }
+  else
+    {
+      f = f12->XG;
+    }
+  far[10] = 0.0;
+  far[11] = 0.0;
+  s11 = s1l; // odd
+  s12 = 1.0; // even
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[10] += f[i*2+1] / s11;
+      far[11] += f[i*2  ] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[11] *= -4.0 / l12;
+
+  // YG
+  if (f12 == NULL)
+    {
+      twobody_YG (n, l, f);
+    }
+  else
+    {
+      f = f12->YG;
+    }
+  far[12] = 0.0;
+  far[13] = 0.0;
+  s11 = s1l; // odd
+  s12 = 1.0; // even
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[12] += f[i*2+1] / s11;
+      far[13] += f[i*2  ] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[13] *= - 4.0 / l12;
+
+  // YH
+  if (f12 == NULL)
+    {
+      twobody_YH (n, l, f);
+    }
+  else
+    {
+      f = f12->YH;
+    }
+  far[14] = 0.0;
+  far[15] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[14] += f[i*2  ] / s11;
+      far[15] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[15] *= 8.0 / l13;
+
+  // XM
+  if (f12 == NULL)
+    {
+      twobody_XM (n, l, f);
+    }
+  else
+    {
+      f = f12->XM;
+    }
+  far[16] = 0.0;
+  far[17] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[16] += f[i*2  ] / s11;
+      far[17] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[17] *= 8.0 / l13;
+
+  // YM
+  if (f12 == NULL)
+    {
+      twobody_YM (n, l, f);
+    }
+  else
+    {
+      f = f12->YM;
+    }
+  far[18] = 0.0;
+  far[19] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[18] += f[i*2  ] / s11;
+      far[19] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[19] *= 8.0 / l13;
+
+  // ZM
+  if (f12 == NULL)
+    {
+      twobody_ZM (n, l, f);
+    }
+  else
+    {
+      f = f12->ZM;
+    }
+  far[20] = 0.0;
+  far[21] = 0.0;
+  s11 = 1.0; // even
+  s12 = s1l; // odd
+  s2 = s1l * s1l;
+  for (i = 0; i < n/2; i ++)
+    {
+      far[20] += f[i*2  ] / s11;
+      far[21] += f[i*2+1] / s12;
+
+      s11 *= s2;
+      s12 *= s2;
+    }
+  far[21] *= - 8.0 / l13;
+
+  if (f12 == NULL)
+    {
+      free (f);
+    }
+}
+
 
 /** lubrication form **/
 
@@ -678,7 +1002,7 @@ void twobody_XA_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XA_lub");
 
   twobody_XA (n, l, f);
@@ -770,7 +1094,7 @@ void twobody_YA_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YA_lub");
 
   twobody_YA (n, l, f);
@@ -859,7 +1183,7 @@ void twobody_YB_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YB_lub");
 
   twobody_YB (n, l, f);
@@ -946,7 +1270,7 @@ void twobody_XC_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XC_lub");
 
   twobody_XC (n, l, f);
@@ -1018,7 +1342,7 @@ void twobody_YC_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YC_lub");
 
   twobody_YC (n, l, f);
@@ -1109,7 +1433,7 @@ void twobody_XG_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XG_lub");
 
   twobody_XG (n, l, f);
@@ -1190,7 +1514,7 @@ void twobody_YG_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YG_lub");
 
   twobody_YG (n, l, f);
@@ -1270,7 +1594,7 @@ void twobody_YH_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YH_lub");
 
   twobody_YH (n, l, f);
@@ -1352,7 +1676,7 @@ void twobody_XM_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_XM_lub");
 
   twobody_XM (n, l, f);
@@ -1436,7 +1760,7 @@ void twobody_YM_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_YM_lub");
 
   twobody_YM (n, l, f);
@@ -1519,7 +1843,7 @@ void twobody_ZM_lub (int n, double l, double s,
 {
   if (n%2 != 0) n--; // make n even for fail-safe
 
-  double *f = (double *)malloc (sizeof (double) * n);
+  double *f = (double *)malloc (sizeof (double) * (n + 1));
   CHECK_MALLOC (f, "twobody_ZM_lub");
 
   twobody_ZM (n, l, f);
@@ -1627,6 +1951,7 @@ void twobody_lub (int version, int n, double l, double s,
 
 /* calc scalar functions of resistance problem by lub form
  * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
  * INPUT
  *  version : 0=F, 1=FT, 2=FTS.
  *  f12     : struct twobody_f for the pair
@@ -1659,7 +1984,7 @@ void twobody_lub_with_f (int version,
   double *f = NULL;
   if (f12 == NULL)
     {
-      f = (double *)malloc (sizeof (double) * n);
+      f = (double *)malloc (sizeof (double) * (n + 1));
       CHECK_MALLOC (f, "twobody_lub_with_f");
     }
 
@@ -1750,9 +2075,7 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub [1] *= -2.0 / l1;
-
 
   // YA
   if (f12 == NULL)
@@ -1812,12 +2135,10 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub [3] *= -2.0 / l1;
 
   // F version
   if (version == 0) return;
-
 
   // YB
   if (f12 == NULL)
@@ -1875,7 +2196,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub [5] *= -4.0 / l12;
 
   // XC
@@ -1920,7 +2240,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub [7] *= -8.0 / l13;
 
   // YC
@@ -1983,7 +2302,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub [9] *= 8.0 / l13;
 
   // FT version
@@ -2049,7 +2367,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[11] *= 4.0 / l12;
 
   // YG
@@ -2100,7 +2417,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[13] *= 4.0 / l12;
 
   // YH
@@ -2153,7 +2469,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[15] *= 8.0 / l13;
 
   // XM
@@ -2208,7 +2523,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[17] *= 8.0 / l13;
 
   // YM
@@ -2262,7 +2576,6 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[19] *= 8.0 / l13;
 
   // ZM
@@ -2310,9 +2623,7 @@ void twobody_lub_with_f (int version,
       s1lm *= s1l;
       s2m  *= s21;
     }
-
   lub[21] *= 8.0 / l13;
-
 
   if (f12 == NULL)
     {
@@ -2461,7 +2772,6 @@ twobody_scale (int version, double *two, double a1, double l)
  *  f12        : (struct twobody_f *).
  *               you can give NULL for them.
  *               then, the coefs are calculated on-the-fly (terribly slow).
- *               only functional for the lub form, for now.
  *  n          : max order for the coefficients
  *  flag_lub   : 0 to use twobody_far()
  *               1 to use twobody_lub()
