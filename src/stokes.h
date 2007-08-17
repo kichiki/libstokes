@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.19 2007/08/12 23:57:26 kichiki Exp $
+ * $Id: stokes.h,v 1.20 2007/08/17 04:35:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,11 +32,16 @@ struct stokes {
 		* Note : NULL (default) is for monodisperse system  */
 
   // slip parameters
+  /* Note: if slip == NULL, the system is treated as the no-slip */
   double *slip;     // slip length
   double *slip_a;   // effective radius for the laplacian terms
   double *slip_G32; // Lambda(3,2) = 1/Lambda(2,3) for a-self.
   double *slip_G30; // Lambda(3,0) = 1/Lambda(0,3) for c-self.
   double *slip_G52; // Lambda(5,2) = 1/Lambda(2,5) for m-self.
+  // slip table -- twobody_nmax and twobody_lub below are used, too
+  int *slip_table; /* for (i,j), [i*np+j] gives the index
+		    * of "twobody_slip_f_list" */
+  struct twobody_slip_f_list *twobody_slip_f_list;
 
   int version; /* 0 = F, 1 = FT, 2 = FTS  */
 

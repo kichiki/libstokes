@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.19 2007/08/12 23:57:00 kichiki Exp $
+ * $Id: stokes.c,v 2.20 2007/08/17 04:34:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include "twobody.h" // twobody_f_free()
+#include "twobody-slip.h" // struct twobody_slip_f, twobody_slip_f_list
 
 #include "stokes.h"
 
@@ -306,6 +307,8 @@ stokes_init (void)
   sys->slip_G32 = NULL;
   sys->slip_G30 = NULL;
   sys->slip_G52 = NULL;
+  sys->slip_table = NULL;
+  sys->twobody_slip_f_list = NULL;
 
   sys->version = 0;
   sys->periodic = 0;
@@ -852,6 +855,113 @@ stokes_unset_radius (struct stokes *sys)
 
 
 /** slip parameters **/
+/*
+ * OUTPUT
+ * (returned value) : the index of list with lambda if lambda exists
+ *                    (-1) is returned if no entry in the list.
+ */
+static int
+twobody_slip_f_list_get_index (struct twobody_slip_f_list *list,
+			       double lambda,
+			       double hat_g1, double hat_g2)
+{
+  if (list == NULL) return (-1);
+
+  int i;
+  for (i = 0; i < list->n; i ++)
+    {
+      if (lambda == list->f[i]->lambda &&
+	  hat_g1 == list->f[i]->hat_g1 &&
+	  hat_g2 == list->f[i]->hat_g2) return i;
+    }
+  return (-1);
+}
+
+/* set twobody_slip_f_list and slip_table by a[np] and slip[np]
+ * INPUT
+ *  a[np] :
+ *  slip[np] :
+ *  nmax : 
+ * OUTPUT
+ *  poly_table [np*np]     :
+ *  f_list [] :
+ */
+static void
+stokes_set_twobody_slip_f (int np,
+			   const double *a,
+			   const double *slip,
+			   int nmax,
+			   int *slip_table,
+			   struct twobody_slip_f_list *f_list)
+{
+  if (slip_table != NULL) free (slip_table);
+  slip_table = (int *)malloc (sizeof (int) * np * np);
+  CHECK_MALLOC (slip_table, "stokes_set_twobody_slip_f");
+
+  if (f_list != NULL) twobody_slip_f_list_free (f_list);
+  f_list = twobody_slip_f_list_init();
+  CHECK_MALLOC (f_list, "stokes_set_twobody_slip_f");
+
+  double lambda;
+  double hat_g1;
+  double hat_g2;
+  double slip_a1;
+  double slip_a2;
+  int il;
+  int i;
+  for (i = 0; i < np; i ++)
+    {
+      // for periodic system of monolayer, self might have lub contrib.
+      int j;
+      for (j = i; j < np; j ++)
+	{
+	  // for (i,j) pair
+	  lambda = a[j] / a[i];
+	  hat_g1 = slip[i] / a[i];
+	  hat_g2 = slip[j] / a[j];
+	  if (slip[i] < 0.0) slip_a1 = 0.0;
+	  else               slip_a1 = a[i] / sqrt (1.0 + 2.0 * hat_g1);
+	  if (slip[j] < 0.0) slip_a2 = 0.0;
+	  else               slip_a2 = a[j] / sqrt (1.0 + 2.0 * hat_g2);
+	  il = twobody_slip_f_list_get_index (f_list,
+					      lambda, hat_g1, hat_g2);
+	  if (il < 0)
+	    {
+	      // lambda does not exist in the "list"
+	      twobody_slip_f_list_append (f_list,
+					  nmax,
+					  lambda, hat_g1, hat_g2,
+					  slip_a1, slip_a2);
+	      // the last entry is the one
+	      il = f_list->n - 1;
+	    }
+	  slip_table [i *np+ j] = il;
+
+	  // for (j,i) pair
+	  lambda = a[i] / a[j];
+	  hat_g1 = slip[j] / a[j];
+	  hat_g2 = slip[i] / a[i];
+	  if (slip[j] < 0.0) slip_a1 = 0.0;
+	  else               slip_a1 = a[j] / sqrt (1.0 + 2.0 * hat_g1);
+	  if (slip[i] < 0.0) slip_a2 = 0.0;
+	  else               slip_a2 = a[i] / sqrt (1.0 + 2.0 * hat_g2);
+	  il = twobody_slip_f_list_get_index (f_list,
+					      lambda, hat_g1, hat_g2);
+	  if (il < 0)
+	    {
+	      // lambda does not exist in the "list"
+	      twobody_slip_f_list_append (f_list,
+					  nmax,
+					  lambda, hat_g1, hat_g2,
+					  slip_a1, slip_a2);
+	      // the last entry is the one
+	      il = f_list->n - 1;
+	    }
+	  slip_table [j *np+ i] = il;
+	}
+    }
+}
+
 /* set slip parameters (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
  * Note that the default setting (sys->slip == NULL) is for no-slip system
  * where gamma=0 for all particles
@@ -908,6 +1018,25 @@ stokes_set_slip (struct stokes *sys,
       sys->slip_G30[i] = l3;
       sys->slip_G52[i] = l5 / l2;
     }
+
+  // make a slip table
+  double *a;
+  if (sys->a == NULL)
+    {
+      a = (double *)malloc (sizeof (double) * sys->np);
+      CHECK_MALLOC (a, "stokes_set_radius");
+
+      for (i = 0; i < sys->np; i ++) a[i] = 1.0;
+    }
+  else
+    {
+      a = sys->a;
+    }
+  stokes_set_twobody_slip_f (sys->np,
+			     a, gamma,
+			     sys->twobody_nmax,
+			     sys->slip_table,
+			     sys->twobody_slip_f_list);
 }
 
 /* unset slip params (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
@@ -936,4 +1065,16 @@ stokes_unset_slip (struct stokes *sys)
   sys->slip_G32 = NULL;
   sys->slip_G30 = NULL;
   sys->slip_G52 = NULL;
+
+  if (sys->slip_table != NULL)
+    {
+      free (sys->slip_table);
+      sys->slip_table = NULL;
+    }
+  if (sys->twobody_slip_f_list != NULL)
+    {
+      twobody_slip_f_list_free (sys->twobody_slip_f_list);
+      sys->twobody_slip_f_list = NULL;
+    }
 }
+
