@@ -1,7 +1,7 @@
 /* header file for minv-poly.c --
  * calc (M^inf)^-1 for unequal spheres
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: minv-poly.h,v 1.4 2007/04/26 05:11:32 kichiki Exp $
+ * $Id: minv-poly.h,v 1.5 2007/08/21 05:47:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -100,6 +100,8 @@ scalars_res_poly_scale_SD (int version,
 
 
 /** lubrication functions for polydisperse systems **/
+
+#include "twobody.h" // struct twobody_f
 
 /* calc scalar functions of lubrication correction for unequal spheres
  * INPUT
