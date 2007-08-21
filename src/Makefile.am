@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.14 2007/05/14 00:17:24 kichiki Exp $
+# $Id: Makefile.am,v 1.15 2007/08/21 05:54:31 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -29,6 +29,18 @@ libstokes_la_SOURCES = \
 	XP.c			\
 	XQ.c			\
 	twobody.c		\
+        XA-slip.c		\
+        YA-slip.c		\
+        YB-slip.c		\
+        XC-slip.c		\
+        YC-slip.c		\
+        XG-slip.c		\
+        YG-slip.c		\
+        YH-slip.c		\
+        XM-slip.c		\
+        YM-slip.c		\
+        ZM-slip.c		\
+	twobody-slip.c		\
 	lub.c			\
 	minv-poly.c		\
 	ewald.c			\
@@ -53,6 +65,6 @@ libstokes_la_SOURCES = \
 	ode-quaternion.c
 
 
-libstokes_la_LDFLAGS = -version-info 5:0:0
+libstokes_la_LDFLAGS = -version-info 6:0:0
 
 include_HEADERS = libstokes.h
