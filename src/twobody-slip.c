@@ -1,6 +1,6 @@
 /* twobody solutions for slip particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody-slip.c,v 1.1 2007/08/17 04:31:19 kichiki Exp $
+ * $Id: twobody-slip.c,v 1.2 2007/08/21 05:52:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1335,6 +1335,7 @@ scalars_lub_slip_full (int version,
 
 
 /** F version **/
+#include "f.h"
 
 /* calculate f by u for pair of particles 1 and 2 for unequal spheres
  * Note that this take care of both (12)- and (21)-interactions,
@@ -1544,6 +1545,7 @@ matrix_lub_f_2b_slip (struct stokes *sys,
 
 
 /** FT version **/
+#include "ft.h"
 
 /* calculate ft by uo for pair of particles 1 and 2 for unequal spheres
  * Note that this take care of both (12)- and (21)-interactions,
@@ -1799,6 +1801,7 @@ matrix_lub_ft_2b_slip (struct stokes *sys,
 
 
 /** FTS version **/
+#include "fts.h"
 
 /* calculate fts by uoe for pair of particles 1 and 2 for unequal spheres
  * Note that this take care of both (12)- and (21)-interactions,
