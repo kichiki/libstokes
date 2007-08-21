@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.10 2007/05/26 06:08:08 kichiki Exp $
+ * $Id: lub.c,v 5.11 2007/08/21 05:45:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@
 #include "f.h"
 #include "ft.h"
 #include "fts.h"
+#include "twobody-slip.h" // calc_lub_[f,ft,fts]_2b_slip()
 
 #include "lub.h"
 
@@ -149,7 +150,7 @@ set_imax_lub_periodic (struct stokes *sys,
 
 /* calculate lubrication f by u for all particles
  * for both under the periodic and non-periodic boundary conditions.
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -206,10 +207,25 @@ calc_lub_3f (struct stokes *sys,
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      calc_lub_f_2b (sys,
-				     u + i3, u + j3,
-				     sys->pos + i3, sys->pos + j3,
-				     f + i3, f + j3);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_f_2b
+			    (sys,
+			     u + i3, u + j3,
+			     sys->pos + i3, sys->pos + j3,
+			     f + i3, f + j3);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_f_2b_slip
+			    (sys,
+			     u + i3, u + j3,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     f + i3, f + j3);
+			}
 		    }
 		}
 	      else
@@ -219,11 +235,26 @@ calc_lub_3f (struct stokes *sys,
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      calc_lub_f_2b_poly (sys,
-					  u + i3, u + j3,
-					  sys->pos + i3, sys->pos + j3,
-					  i, j,
-					  f + i3, f + j3);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_f_2b_poly
+			    (sys,
+			     u + i3, u + j3,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     f + i3, f + j3);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_f_2b_slip
+			    (sys,
+			     u + i3, u + j3,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     f + i3, f + j3);
+			}
 		    }
 		}
 	    }
@@ -246,10 +277,25 @@ calc_lub_3f (struct stokes *sys,
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  calc_lub_f_2b (sys,
-						 u + i3, u + j3,
-						 sys->pos + i3, tmp_pos,
-						 f + i3, f + j3);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_f_2b
+					(sys,
+					 u + i3, u + j3,
+					 sys->pos + i3, tmp_pos,
+					 f + i3, f + j3);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_f_2b_slip
+					(sys,
+					 u + i3, u + j3,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 f + i3, f + j3);
+				    }
 				}
 			    }
 			  else
@@ -259,11 +305,26 @@ calc_lub_3f (struct stokes *sys,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  calc_lub_f_2b_poly (sys,
-						      u + i3, u + j3,
-						      sys->pos + i3, tmp_pos,
-						      i, j,
-						      f + i3, f + j3);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_f_2b_poly
+					(sys,
+					 u + i3, u + j3,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 f + i3, f + j3);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_f_2b_slip
+					(sys,
+					 u + i3, u + j3,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 f + i3, f + j3);
+				    }
 				}
 			    }
 			}
@@ -276,7 +337,7 @@ calc_lub_3f (struct stokes *sys,
 
 /* calculate lubrication ft by uoe for all particles
  * for both under the periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -334,10 +395,25 @@ calc_lub_3ft (struct stokes * sys,
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      calc_lub_ft_2b (sys,
-				      uo + i6, uo + j6,
-				      sys->pos + i3, sys->pos + j3,
-				      ft + i6, ft + j6);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_ft_2b
+			    (sys,
+			     uo + i6, uo + j6,
+			     sys->pos + i3, sys->pos + j3,
+			     ft + i6, ft + j6);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_ft_2b_slip
+			    (sys,
+			     uo + i6, uo + j6,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     ft + i6, ft + j6);
+			}
 		    }
 		}
 	      else
@@ -347,11 +423,26 @@ calc_lub_3ft (struct stokes * sys,
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      calc_lub_ft_2b_poly (sys,
-					   uo + i6, uo + j6,
-					   sys->pos + i3, sys->pos + j3,
-					   i, j,
-					   ft + i6, ft + j6);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_ft_2b_poly
+			    (sys,
+			     uo + i6, uo + j6,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     ft + i6, ft + j6);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_ft_2b_slip
+			    (sys,
+			     uo + i6, uo + j6,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     ft + i6, ft + j6);
+			}
 		    }
 		}
 	    }
@@ -374,10 +465,25 @@ calc_lub_3ft (struct stokes * sys,
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  calc_lub_ft_2b (sys,
-						  uo + i6, uo + j6,
-						  sys->pos + i3, tmp_pos,
-						  ft + i6, ft + j6);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_ft_2b
+					(sys,
+					 uo + i6, uo + j6,
+					 sys->pos + i3, tmp_pos,
+					 ft + i6, ft + j6);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_ft_2b_slip
+					(sys,
+					 uo + i6, uo + j6,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 ft + i6, ft + j6);
+				    }
 				}
 			    }
 			  else
@@ -387,11 +493,26 @@ calc_lub_3ft (struct stokes * sys,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  calc_lub_ft_2b_poly (sys,
-						       uo + i6, uo + j6,
-						       sys->pos + i3, tmp_pos,
-						       i, j,
-						       ft + i6, ft + j6);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_ft_2b_poly
+					(sys,
+					 uo + i6, uo + j6,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 ft + i6, ft + j6);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_ft_2b_slip
+					(sys,
+					 uo + i6, uo + j6,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 ft + i6, ft + j6);
+				    }
 				}
 			    }
 			}
@@ -404,7 +525,7 @@ calc_lub_3ft (struct stokes * sys,
 
 /* calculate lubrication fts by uoe for all particles
  * for both under the periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -462,10 +583,25 @@ calc_lub_3fts (struct stokes * sys,
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      calc_lub_fts_2b (sys,
-				       uoe + i11, uoe + j11,
-				       sys->pos + i3, sys->pos + j3,
-				       fts + i11, fts + j11);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_fts_2b
+			    (sys,
+			     uoe + i11, uoe + j11,
+			     sys->pos + i3, sys->pos + j3,
+			     fts + i11, fts + j11);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_ft_2b_slip
+			    (sys,
+			     uoe + i11, uoe + j11,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     fts + i11, fts + j11);
+			}
 		    }
 		}
 	      else
@@ -475,11 +611,26 @@ calc_lub_3fts (struct stokes * sys,
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      calc_lub_fts_2b_poly (sys,
-					    uoe + i11, uoe + j11,
-					    sys->pos + i3, sys->pos + j3,
-					    i, j,
-					    fts + i11, fts + j11);
+		      if (sys->slip == NULL)
+			{
+			  // noslip
+			  calc_lub_fts_2b_poly
+			    (sys,
+			     uoe + i11, uoe + j11,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     fts + i11, fts + j11);
+			}
+		      else
+			{
+			  // slip
+			  calc_lub_ft_2b_slip
+			    (sys,
+			     uoe + i11, uoe + j11,
+			     sys->pos + i3, sys->pos + j3,
+			     i, j,
+			     fts + i11, fts + j11);
+			}
 		    }
 		}
 	    }
@@ -502,10 +653,25 @@ calc_lub_3fts (struct stokes * sys,
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  calc_lub_fts_2b (sys,
-						   uoe + i11, uoe + j11,
-						   sys->pos + i3, tmp_pos,
-						   fts + i11, fts + j11);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_fts_2b
+					(sys,
+					 uoe + i11, uoe + j11,
+					 sys->pos + i3, tmp_pos,
+					 fts + i11, fts + j11);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_ft_2b_slip
+					(sys,
+					 uoe + i11, uoe + j11,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 fts + i11, fts + j11);
+				    }
 				}
 			    }
 			  else
@@ -515,11 +681,26 @@ calc_lub_3fts (struct stokes * sys,
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  calc_lub_fts_2b_poly (sys,
-							uoe + i11, uoe + j11,
-							sys->pos + i3, tmp_pos,
-							i, j,
-							fts + i11, fts + j11);
+				  if (sys->slip == NULL)
+				    {
+				      // noslip
+				      calc_lub_fts_2b_poly
+					(sys,
+					 uoe + i11, uoe + j11,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 fts + i11, fts + j11);
+				    }
+				  else
+				    {
+				      // slip
+				      calc_lub_ft_2b_slip
+					(sys,
+					 uoe + i11, uoe + j11,
+					 sys->pos + i3, tmp_pos,
+					 i, j,
+					 fts + i11, fts + j11);
+				    }
 				}
 			    }
 			}

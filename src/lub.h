@@ -1,7 +1,7 @@
 /* header file for lub.c --
  * lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.h,v 5.3 2007/04/14 00:33:51 kichiki Exp $
+ * $Id: lub.h,v 5.4 2007/08/21 05:46:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 
 /* calculate lubrication f by u for all particles
  * for both under the periodic and non-periodic boundary conditions.
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -39,7 +39,7 @@ calc_lub_3f (struct stokes *sys,
 
 /* calculate lubrication ft by uoe for all particles
  * for both under the periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
@@ -54,7 +54,7 @@ calc_lub_3ft (struct stokes * sys,
 
 /* calculate lubrication fts by uoe for all particles
  * for both under the periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
+ * polydisperse and slip systems can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
