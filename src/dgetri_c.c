@@ -1,9 +1,10 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
- * Copyright (C) 2005-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dgetri_c.c,v 1.5 2006/09/29 04:16:22 ichiki Exp $
+ * Copyright (C) 2005-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: dgetri_c.c,v 1.6 2007/09/30 04:12:46 kichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include "memory-check.h" // CHECK_MALLOC
 
 /*
 DGETRI(l)                              )                             DGETRI(l)
@@ -142,27 +143,26 @@ void dgetrf_ (int *m, int *n, double *a, int *lda, int *ipiv,
 void lapack_inv (int n, const double *a,
 		 double *ai)
 {
-  int i;
-  int * ipvt = NULL;
   int info;
-  double * work = NULL;
+  int *ipvt = (int *)malloc (sizeof (int) * n);
+  double *work = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (ipvt, "lapack_inv");
+  CHECK_MALLOC (work, "lapack_inv");
 
-  ipvt = (int *) malloc (sizeof (int) * n);
-  work = (double *) malloc (sizeof (double) * n);
-
+  int i;
   for (i = 0; i < n*n; i ++)
     {
       ai[i] = a[i];
     }
   dgetrf_ (&n, &n, ai, &n, ipvt, &info);
-  if (info > 0)
+  if (info != 0)
     {
       fprintf (stderr, "singular matrix met at dgetrf (info = %d)\n", info);
       exit (1);
     }
 
   dgetri_ (&n, ai, &n, ipvt, work, &n, &info);
-  if (info > 0)
+  if (info != 0)
     {
       fprintf (stderr, "singular matrix met at dgetri (info = %d)\n", info);
       exit (1);
@@ -176,22 +176,21 @@ void lapack_inv (int n, const double *a,
  */
 void lapack_inv_ (int n, double *a)
 {
-  int * ipvt = NULL;
   int info;
-  double * work = NULL;
-
-  ipvt = (int *) malloc (sizeof (int) * n);
-  work = (double *) malloc (sizeof (double) * n);
+  int *ipvt = (int *)malloc (sizeof (int) * n);
+  double *work = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (ipvt, "lapack_inv_");
+  CHECK_MALLOC (work, "lapack_inv_");
 
   dgetrf_ (&n, &n, a, &n, ipvt, &info);
-  if (info > 0)
+  if (info != 0)
     {
       fprintf (stderr, "singular matrix met at dgetrf (info = %d)\n", info);
       exit (1);
     }
 
   dgetri_ (&n, a, &n, ipvt, work, &n, &info);
-  if (info > 0)
+  if (info != 0)
     {
       fprintf (stderr, "singular matrix met at dgetri (info = %d)\n", info);
       exit (1);

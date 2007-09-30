@@ -1,6 +1,6 @@
 /* C wrappers for BLAS' dgemm_()
  * Copyright (C) 2005-2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dgemm_c.c,v 1.1 2006/10/22 22:43:44 kichiki Exp $
+ * $Id: dgemm_c.c,v 1.2 2007/09/30 04:12:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,7 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+#include <stdio.h>
 #include <stdlib.h>
+#include "memory-check.h" // macro CHECK_MALLOC
 
 /*
 DGEMM(l)                         BLAS routine                         DGEMM(l)
@@ -189,10 +191,10 @@ void dgemm_wrap (int m, int n, int k,
 		 double beta, double *c)
 {
   char trans = 'T'; /* fortran's memory allocation is transposed */
-  double *d = NULL;
-  int i,j;
+  double *d = (double *)malloc (sizeof (double) * m*n);
+  CHECK_MALLOC (d, "dgemm_wrap");
 
-  d = (double *) malloc (sizeof (double) * m*n);
+  int i, j;
   for (i = 0; i < m; i ++)
     {
       for (j = 0; j < n; j ++)
@@ -212,5 +214,6 @@ void dgemm_wrap (int m, int n, int k,
 	  c[i*n+j] = d[j*m+i];
 	}
     }
+
   free (d);
 }
