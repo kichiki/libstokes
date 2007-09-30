@@ -1,6 +1,6 @@
 /* test code for chebyshev.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-chebyshev.c,v 1.1 2007/09/29 20:28:17 kichiki Exp $
+ * $Id: check-chebyshev.c,v 1.2 2007/09/30 03:54:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -90,10 +90,8 @@ check_chebyshev (int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, "check_chebyshev : PASSED\n\n");
-      else
-	fprintf (stdout, "check_chebyshev : FAILED\n\n");
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
