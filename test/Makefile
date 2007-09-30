@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 2007/05/14 00:23:22 kichiki Exp $
+# $Id: Makefile,v 1.8 2007/09/30 04:02:56 kichiki Exp $
 
 CC           = cc
 LD           = libtool --mode=link $(CC)
@@ -19,8 +19,9 @@ CFLAGS	     = -Wall\
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.0 -lgfortran \
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas
+	-L/usr/local/lib/gcc-4.2.2 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
+	-larpack
 
 LDFLAGS      =
 LIBS         = ../src/libstokes.la\
@@ -30,7 +31,10 @@ LIBS         = ../src/libstokes.la\
 		-lnetcdf\
 		$(GUILE_LIB)
 
-all:	test-all
+all:	test-all	\
+	test-twobody	\
+	make-lub-table	\
+	test-twobody-slip
 
 
 # test-all
@@ -47,7 +51,13 @@ test-all-OBJ =\
 	check-lub-poly.o	\
 	check-ewald.o		\
 	check-ewald-poly.o	\
-	check-ode-quaternion.o
+	check-ode-quaternion.o	\
+	check-twobody-slip.o	\
+	check-dsaupd_c.o	\
+	check-dnaupd_c.o	\
+	check-chebyshev.o	\
+	check-bd.o		\
+	check-dgeev_c.o
 
 
 test-all:	$(test-all-OBJ)
@@ -55,7 +65,37 @@ test-all:	$(test-all-OBJ)
 	$(test-all-OBJ)		\
 	$(LIBS)
 
+# test-twobody
+test-twobody-OBJ =\
+	test-twobody.o
+
+test-twobody:	$(test-twobody-OBJ)
+	$(LD) $(LDFLAGS) -o test-twobody	\
+	$(test-twobody-OBJ)		\
+	$(LIBS)
+
+# make-lub-table
+make-lub-table-OBJ =\
+	make-lub-table.o
+
+make-lub-table:	$(make-lub-table-OBJ)
+	$(LD) $(LDFLAGS) -o make-lub-table	\
+	$(make-lub-table-OBJ)	\
+	$(LIBS)
+
+
+# test-twobody-slip
+test-twobody-slip-OBJ =\
+	test-twobody-slip.o
+
+test-twobody-slip:	$(test-twobody-slip-OBJ)
+	$(LD) $(LDFLAGS) -o test-twobody-slip	\
+	$(test-twobody-slip-OBJ)		\
+	$(LIBS)
 
 clean:	
 	rm -f *~ *.o	\
-	test-all
+	test-all	\
+	test-twobody	\
+	make-lub-table	\
+	test-twobody-slip
