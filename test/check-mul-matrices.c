@@ -1,6 +1,6 @@
 /* test code for mul_matrices() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-mul-matrices.c,v 1.1 2007/03/19 02:55:29 kichiki Exp $
+ * $Id: check-mul-matrices.c,v 1.2 2007/09/30 03:59:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h> // fabs()
+#include "check.h" // compare()
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include <matrix.h> // mul_matrices()
@@ -48,26 +49,25 @@ mul_matrices_ (const double *A, int na1, int na2,
 
 
 int
-check_mul_matrices (int n,
-		    int verbose)
+check_mul_matrices (int n, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_mul_matrices : start\n");
+    }
+
   int check = 0;
 
 
-  double *a = NULL;
-  a = (double *)malloc (sizeof (double) * n * n);
+  double *a = (double *)malloc (sizeof (double) * n * n);
+  double *b = (double *)malloc (sizeof (double) * n * n);
+  double *c1 = (double *)malloc (sizeof (double) * n * n);
+  double *c2 = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (a, "check_mul_matrices");
-
-  double *b = NULL;
-  b = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (a, "check_mul_matrices");
-
-  double *c1 = NULL;
-  c1 = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (c1, "check_mul_matrices");
-
-  double *c2 = NULL;
-  c2 = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (c2, "check_mul_matrices");
 
   int i, j;
@@ -87,34 +87,26 @@ check_mul_matrices (int n,
   mul_matrices (a, n, n, b, n, n, c2);
   
   // check for mul_matrices
+  char label[80];
   for (i = 0; i < n; i ++)
     {
       for (j = 0; j < n; j++)
 	{
-	  double d;
-	  d = fabs (c1 [i*n+j] - c2 [i*n+j]);
-	  if (d > 1.0e-10)
-	    {
-	      if (verbose != 0)
-		{
-		  fprintf (stdout, "check_mul_matrices:"
-			   " %d %d %f %f %e\n",
-			   i, j, c1 [i*n+j], c2 [i*n+j], d);
-		}
-	      check ++;
-	    }
+	  sprintf (label, "check_mul_matrices : c1-c2[%d,%d]", i, j);
+	  check += compare (c1[i*n+j], c2[i*n+j], label, verbose, tiny);
 	}
-    }
-
-  if (check == 0 && verbose != 0)
-    {
-      fprintf (stdout, "check_mul_matrices: PASSED\n");
     }
 
   free (a);
   free (b);
   free (c1);
   free (c2);
+
+  if (verbose != 0)
+    {
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }

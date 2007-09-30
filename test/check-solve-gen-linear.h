@@ -1,7 +1,7 @@
 /* header file for check-solve-gen-linear --
  * test code for solve_gen_linear() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-solve-gen-linear.h,v 1.1 2007/03/19 02:59:18 kichiki Exp $
+ * $Id: check-solve-gen-linear.h,v 1.2 2007/09/30 04:00:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@
  */
 int
 check_split_merge (int n1, int n2,
-		   int verbose);
+		   int verbose, double tiny);
 
 
 /* check for local test implementation inverse_by_sub()
@@ -42,7 +42,7 @@ check_split_merge (int n1, int n2,
  */
 int
 check_inverse_by_sub (int n1, int n2,
-		      int verbose);
+		      int verbose, double tiny);
 
 
 /* 
@@ -54,7 +54,7 @@ check_inverse_by_sub (int n1, int n2,
  */
 int
 check_solve_gen_linear (int n1, int n2,
-			int verbose);
+			int verbose, double tiny);
 
 
 #endif /* !_CHECK_SOLVE_GEN_LINEAR_H_ */

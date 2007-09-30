@@ -1,7 +1,7 @@
 /* header file for check-mul-matrices.c --
  * test code for mul_matrices() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-mul-matrices.h,v 1.1 2007/03/19 02:56:50 kichiki Exp $
+ * $Id: check-mul-matrices.h,v 1.2 2007/09/30 03:59:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +29,7 @@
  *                     otherwise => failed
  */
 int
-check_mul_matrices (int n,
-		    int verbose);
+check_mul_matrices (int n, int verbose, double tiny);
 
 
 #endif /* !_CHECK_MUL_MATRICES_H_ */

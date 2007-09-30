@@ -1,7 +1,7 @@
 /* header file for check-lapack-inv.c --
  * test code for lapack_inv_() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lapack-inv.h,v 1.1 2007/03/19 02:51:59 kichiki Exp $
+ * $Id: check-lapack-inv.h,v 1.2 2007/09/30 03:59:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +29,7 @@
  *                     otherwise => failed
  */
 int
-check_lapack_inv_ (int n,
-		   int verbose);
+check_lapack_inv_ (int n, int verbose, double tiny);
 
 
 #endif /* !_CHECK_LAPACK_INV_H_ */

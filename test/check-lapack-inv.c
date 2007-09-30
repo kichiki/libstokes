@@ -1,6 +1,6 @@
 /* test code for lapack_inv_() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lapack-inv.c,v 1.1 2007/03/19 02:51:07 kichiki Exp $
+ * $Id: check-lapack-inv.c,v 1.2 2007/09/30 03:58:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h> // fabs()
+#include "check.h" // compare()
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include <dgetri_c.h> // lapack_inv_()
@@ -33,21 +34,27 @@
  *                     otherwise => failed
  */
 int
-check_lapack_inv_ (int n,
-		   int verbose)
+check_lapack_inv_ (int n, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_lapack_inv_ : start\n");
+    }
+
   int check = 0;
 
 
-  double *a = NULL;
-  a = (double *)malloc (sizeof (double) * n * n);
-  CHECK_MALLOC (a, "check_lapack_inv_");
-
-  double *a_ = NULL;
-  a_ = (double *)malloc (sizeof (double) * n * n);
+  double *a  = (double *)malloc (sizeof (double) * n * n);
+  double *a_ = (double *)malloc (sizeof (double) * n * n);
+  double *b  = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (a,  "check_lapack_inv_");
   CHECK_MALLOC (a_, "check_lapack_inv_");
+  CHECK_MALLOC (b, "check_lapack_inv_");
 
   int i;
+  srand48 (0);
   for (i = 0; i < n * n; i ++)
     {
       a [i] = drand48();
@@ -57,13 +64,24 @@ check_lapack_inv_ (int n,
   // a = a^-1
   lapack_inv_ (n, a);
 
-  double *b = NULL;
-  b = (double *)malloc (sizeof (double) * n * n);
-  CHECK_MALLOC (b, "check_lapack_inv_");
-
   // b = a^-1 . a
   mul_matrices (a, n, n, a_, n, n, b);
+  /*
+  int j, k;
+  for (i = 0; i < n; i ++)
+    {
+      for (j = 0; j < n; j ++)
+	{
+	  b[i*n+j] = 0.0;
+	  for (k = 0; k < n; k ++)
+	    {
+	      b[i*n+j] += a[i*n+k] * a_[k*n+j];
+	    }
+	}
+    }
+  */
 
+  char label[80];
   double d;
   for (i = 0; i < n; i ++)
     {
@@ -73,27 +91,20 @@ check_lapack_inv_ (int n,
 	  if (i == j) d = fabs (b [i*n+j] - 1.0);
 	  else        d = fabs (b [i*n+j]);
 
-	  if (d > 1.0e-10)
-	    {
-	      if (verbose != 0)
-		{
-		  fprintf (stdout, "check_lapack_inv_ : %d %d %f\n",
-			   i, j, b[i*n+j]);
-		}
-	      check ++;
-	    }
+	  sprintf (label, "check_lapack_inv_ : [%d]", i);
+	  check += compare (d+1.0, 1.0, label, verbose, tiny);
 	}
     }
-
-  if (check == 0 && verbose != 0)
-    {
-      fprintf (stdout, "check_lapack_inv_ : PASSED\n");
-    }
-
 
   free (a);
   free (a_);
   free (b);
+
+  if (verbose != 0)
+    {
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }
