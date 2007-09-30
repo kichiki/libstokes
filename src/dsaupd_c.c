@@ -1,6 +1,6 @@
 /* C wrappers for ARPACK's dsaupd_()
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dsaupd_c.c,v 1.1 2007/09/29 20:20:47 kichiki Exp $
+ * $Id: dsaupd_c.c,v 1.2 2007/09/30 04:14:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -836,7 +836,6 @@ void dsaupd_wrap_min_max (int n, double *l,
   double *resid = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (resid, "dsaupd_wrap_min_max");
 
-
   int ncv;
   /*
   //ncv = 2 * nev + 1;
@@ -876,6 +875,7 @@ void dsaupd_wrap_min_max (int n, double *l,
   int *select = (int *)malloc (sizeof (int) * ncv);
   double *d = (double *)malloc (sizeof (double) * nev);
   double *z = (double *)malloc (sizeof (double) * n * nev);
+  CHECK_MALLOC (select, "dsaupd_wrap_min_max");
   CHECK_MALLOC (d, "dsaupd_wrap_min_max");
   CHECK_MALLOC (z, "dsaupd_wrap_min_max");
   int ldz = n;

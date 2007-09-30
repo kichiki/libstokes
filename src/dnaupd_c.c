@@ -1,6 +1,6 @@
 /* C wrappers for ARPACK's dnaupd_()
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dnaupd_c.c,v 1.1 2007/09/29 20:20:47 kichiki Exp $
+ * $Id: dnaupd_c.c,v 1.2 2007/09/30 04:14:20 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -961,6 +961,7 @@ void dnaupd_wrap_min_max (int n, double *l,
   double *dr = (double *)malloc (sizeof (double) * nev + 1);
   double *di = (double *)malloc (sizeof (double) * nev + 1);
   double *workev = (double *)malloc (sizeof (double) * 3 * ncv);
+  CHECK_MALLOC (select, "dnaupd_wrap_min_max");
   CHECK_MALLOC (dr, "dnaupd_wrap_min_max");
   CHECK_MALLOC (di, "dnaupd_wrap_min_max");
   CHECK_MALLOC (workev, "dnaupd_wrap_min_max");
