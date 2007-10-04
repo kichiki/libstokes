@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.8 2007/06/05 04:07:45 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.9 2007/10/04 02:44:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -150,11 +150,11 @@ stokes_nc_open_ (const char * filename, int omode)
 
   int i;
   char name[NC_MAX_NAME+1];
-  int len;
+  size_t len[1];
   nc->npf = 0; // to detect the case of nf == 0
   for (i = 0; i < ndims; i ++)
     {
-      status = nc_inq_dim (nc->id, i, name, &len);
+      status = nc_inq_dim (nc->id, i, name, len);
       if (status != NC_NOERR)
 	{
 	  stokes_nc_error
@@ -163,32 +163,32 @@ stokes_nc_open_ (const char * filename, int omode)
       if (strcmp ("p", name) == 0)
 	{
 	  nc->p_dim = i;
-	  nc->np = len;
+	  nc->np = len[0];
 	}
       else if (strcmp ("pf", name) == 0)
 	{
 	  nc->pf_dim = i;
-	  nc->npf = len;
+	  nc->npf = len[0];
 	}
       else if (strcmp ("vec", name) == 0)
 	{
 	  nc->vec_dim = i;
-	  nc->nvec = len;
+	  nc->nvec = len[0];
 	}
       else if (strcmp ("stt", name) == 0)
 	{
 	  nc->stt_dim = i;
-	  nc->nstt = len;
+	  nc->nstt = len[0];
 	}
       else if (strcmp ("quat", name) == 0)
 	{
 	  nc->quat_dim = i;
-	  nc->nquat = len;
+	  nc->nquat = len[0];
 	}
       else if (strcmp ("time", name) == 0)
 	{
 	  nc->time_dim = i;
-	  nc->ntime = len;
+	  nc->ntime = len[0];
 	}
     }
   /*
