@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.37 2007/08/17 04:36:30 kichiki Exp $
+ * $Id: libstokes.h,v 1.38 2007/10/06 18:10:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -950,7 +950,7 @@ struct ode_params
 
 /* set the parameters to struct ode_params
  * INPUT
- *  (struct stokes *)sys
+ *  (struct stokes *)sys -- initialize before calling!
  *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
@@ -980,6 +980,9 @@ ode_params_init (struct stokes *sys,
 		 double st,
 		 struct bonds *bonds,
 		 double gamma);
+
+void 
+ode_params_free (struct ode_params *params);
 
 
 /* calc dydt for gsl_odeiv ONLY with bond interactions for relaxation

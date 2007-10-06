@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.3 2007/05/14 00:16:48 kichiki Exp $
+ * $Id: ode.c,v 1.4 2007/10/06 18:08:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -193,8 +193,8 @@ ode_params_init (struct stokes *sys,
 		 struct bonds *bonds,
 		 double gamma)
 {
-  struct ode_params *params = NULL;
-  params = (struct ode_params *)malloc (sizeof (struct ode_params));
+  struct ode_params *params
+    = (struct ode_params *)malloc (sizeof (struct ode_params));
   CHECK_MALLOC (params, "ode_params_init");
 
   params->sys       = sys;
@@ -212,6 +212,13 @@ ode_params_init (struct stokes *sys,
   params->gamma     = gamma;
 
   return (params);
+}
+
+
+void 
+ode_params_free (struct ode_params *params)
+{
+  if (params != NULL) free (params);
 }
 
 
