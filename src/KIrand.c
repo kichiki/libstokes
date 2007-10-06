@@ -1,5 +1,5 @@
 /* KIrand -- wrapper of random number generator MT19937
- * $Id: KIrand.c,v 1.1 2007/09/29 20:41:49 kichiki Exp $
+ * $Id: KIrand.c,v 1.2 2007/10/06 19:03:26 kichiki Exp $
  */
 
 /* 
@@ -69,7 +69,7 @@ KIrand_init (void)
 void
 KIrand_free (struct KIrand *r)
 {
-  free (r);
+  if (r != NULL) free (r);
 }
 
 
