@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.4 2007/05/31 05:51:22 kichiki Exp $
+ * $Id: bonds.c,v 1.5 2007/10/25 05:53:24 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,15 +65,22 @@ bond_pairs_add (struct bond_pairs *pairs,
 }
 
 
+/* initialize struct bonds
+ * INPUT
+ * OUTPUT
+ *  returned value : struct bonds
+ */
 struct bonds *
 bonds_init (void)
 {
   struct bonds *bonds = NULL;
   bonds = (struct bonds *)malloc (sizeof (struct bonds));
 
-  bonds->ntypes = 0;
-  bonds->k  = NULL;
-  bonds->r0 = NULL;
+  bonds->n = 0;
+  bonds->type  = NULL;
+  bonds->fene  = NULL;
+  bonds->p1    = NULL;
+  bonds->p2    = NULL;
   bonds->pairs = NULL;
 
   return (bonds);
@@ -83,12 +90,14 @@ void
 bonds_free (struct bonds *bonds)
 {
   if (bonds == NULL) return;
-  if (bonds->k  != NULL) free (bonds->k);
-  if (bonds->r0 != NULL) free (bonds->r0);
+  if (bonds->type  != NULL) free (bonds->type);
+  if (bonds->fene  != NULL) free (bonds->fene);
+  if (bonds->p1    != NULL) free (bonds->p1);
+  if (bonds->p2    != NULL) free (bonds->p2);
   if (bonds->pairs != NULL)
     {
       int i;
-      for (i = 0; i < bonds->ntypes; i ++)
+      for (i = 0; i < bonds->n; i ++)
 	{
 	  bond_pairs_free (bonds->pairs [i]);
 	}
@@ -97,31 +106,191 @@ bonds_free (struct bonds *bonds)
   free (bonds);
 }
 
+/* add a spring into bonds
+ * INPUT
+ *  bonds  : struct bonds
+ *  type   : type of the spring
+ *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
+ *           1 == (p1, p2) = (N_{K,s}, b_{K})
+ *  p1, p2 : spring parameters
+ * OUTPUT
+ *  bonds  :
+ */
 void
 bonds_add_type (struct bonds *bonds,
-		double k, double r0)
+		int type, int fene, double p1, double p2)
 {
-  bonds->ntypes ++;
+  bonds->n ++;
 
   int n;
-  n = bonds->ntypes;
-  bonds->k  = (double *)realloc (bonds->k,  sizeof (double) * n);
-  bonds->r0 = (double *)realloc (bonds->r0, sizeof (double) * n);
+  n = bonds->n;
+  bonds->type = (int *)realloc (bonds->type,  sizeof (int) * n);
+  bonds->fene = (int *)realloc (bonds->fene,  sizeof (int) * n);
+  bonds->p1   = (double *)realloc (bonds->p1, sizeof (double) * n);
+  bonds->p2   = (double *)realloc (bonds->p2, sizeof (double) * n);
   bonds->pairs
     = (struct bond_pairs **)realloc (bonds->pairs,
 				     sizeof (struct bond_pairs *) * n);
 
   // set n as the newly added element
   n--;
-  bonds->k  [n] = k;
-  bonds->r0 [n] = r0;
+  bonds->type [n] = type;
+  bonds->fene [n] = fene;
+  bonds->p1   [n] = p1;
+  bonds->p2   [n] = p2;
 
   bonds->pairs [n] = bond_pairs_init ();
 }
 
+/* set FENE spring parameters for run
+ * INPUT
+ *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used.
+ *  a     : length scale in the simulation
+ *  pe    : peclet number
+ * OUTPUT
+ *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
+ *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
+ */
+void
+bonds_set_FENE (struct bonds *bonds,
+		double a, double pe)
+{
+  int i;
+  for (i = 0; i < bonds->n; i ++)
+    {
+      if (bonds->fene[i] == 1)
+	{
+	  // bond i is FENE spring
+	  double N_Ks = bonds->p1[i];
+	  double b_K  = bonds->p2[i];
+	  bonds->p1[i] = 3.0 * a / (pe * b_K);
+	  bonds->p2[i] = N_Ks * b_K / a;
+
+	  // now, (p1, p2) = (A^{sp}, L_{s}).
+	  bonds->fene[i] = 0;
+	}
+    }
+}
+
+
+static double 
+bonds_ILC (double x)
+{
+  // coth (x) = cosh (x) / sinh (x)
+  return (cosh (x) / sinh (x) - 1.0 / x);
+}
+
+static void
+bonds_set_force_ij (struct bonds *bonds,
+		    struct stokes *sys,
+		    int bond_type,
+		    int ia, int ib, 
+		    double x, double y, double z,
+		    double *f)
+{
+  double r2 = x*x + y*y + z*z;
+  double r = sqrt (r2);
+  double ex = x / r;
+  double ey = y / r;
+  double ez = z / r;
+
+  double Asp = bonds->p1[bond_type];
+  double Ls  = bonds->p2[bond_type];
+
+  double fr;
+  double rLs = r / Ls;
+  double rLs2;
+
+  if ((bond_type != 0 && bond_type != 5) // FENE chain
+      && rLs >= 1.0)
+    {
+      fprintf (stderr, "bonds: extension %e exceeds the max %e for (%d,%d)\n",
+	       r, Ls, ia, ib);
+      exit (1);
+    }
+
+  switch (bond_type)
+    {
+    case 1: // Wormlike chain (WLC)
+      rLs2 = (1.0 - rLs) * (1.0 - rLs);
+      fr = (2.0/3.0) * Asp * (0.25 / rLs2 - 0.25 + rLs);
+      break;
+
+    case 2: // inverse Langevin chain (ILC)
+      fr = Asp / 3.0 * bonds_ILC (rLs);
+      break;
+
+    case 3: // Cohen's Pade approximation for ILC
+      rLs2 = rLs * rLs;
+      fr = Asp * rLs * (1.0 - rLs2 / 3.0) / (1.0 - rLs2);
+      break;
+
+    case 4: // Werner spring
+      rLs2 = rLs * rLs;
+      fr = Asp * rLs / (1.0 - rLs2);
+      break;
+
+    case 5: // Hookean
+      fr = Asp * rLs;
+      break;
+
+    case 0: // Hookean
+    default:
+      fr = Asp * (r - Ls);
+      break;
+    }
+
+  /* F_a = - fr (R_a - R_b)/|R_a - R_b|
+   * where fr > 0 corresponds to the attractive
+   *   and fr < 0 corresponds to the repulsive
+   */
+  if (ia < sys->nm)
+    {
+      int ia3 = ia * 3;
+      f[ia3+0] += - fr * ex;
+      f[ia3+1] += - fr * ey;
+      f[ia3+2] += - fr * ez;
+    }
+  if (ib < sys->nm)
+    {
+      int ib3 = ib * 3;
+      f[ib3+0] += fr * ex;
+      f[ib3+1] += fr * ey;
+      f[ib3+2] += fr * ez;
+    }
+}
+ 
+/* search the closest image in 27 periodic images
+ * INPUT
+ *  sys : struct stokes
+ *  x, y, z : relative distance for the pair
+ * OUTPUT
+ *  k : image index in [0, 27)
+ */
+static int
+search_close_image (struct stokes *sys,
+		    double x, double y, double z)
+{
+  int k0 = 0;
+  double r2 = x*x + y*y + z*z;
+
+  int k;
+  for (k = 1; k < 27; k ++)
+    {
+      double xx = x - sys->llx[k];
+      double yy = y - sys->lly[k];
+      double zz = z - sys->llz[k];
+      double rr2 = xx*xx + yy*yy + zz*zz;
+      if (rr2 < r2) k0 = k;
+    }
+
+  return (k0);
+}
+
+
 /*
  * INPUT
- *  b          : struct bond
+ *  bonds      : struct bond
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -145,12 +314,9 @@ bonds_calc_force (struct bonds *bonds,
 	}
     }
 
-  for (i = 0; i < bonds->ntypes; i ++)
+  for (i = 0; i < bonds->n; i ++)
     {
-      double k  = bonds->k  [i];
-      double r0 = bonds->r0 [i];
       struct bond_pairs *pairs = bonds->pairs [i];
-
       int j;
       for (j = 0; j < pairs->n; j ++)
 	{
@@ -164,39 +330,25 @@ bonds_calc_force (struct bonds *bonds,
 	  double x = sys->pos [ia3+0] - sys->pos [ib3+0];
 	  double y = sys->pos [ia3+1] - sys->pos [ib3+1];
 	  double z = sys->pos [ia3+2] - sys->pos [ib3+2];
-	  if (sys->periodic != 0)
+
+	  if (sys->periodic == 0)
 	    {
-	      // periodic system
-	      // search the nearest image
-	      if      (x > 0.5 * sys->lx) x -= sys->lx;
-	      else if (x <-0.5 * sys->lx) x += sys->lx;
-
-	      if      (y > 0.5 * sys->ly) y -= sys->ly;
-	      else if (y <-0.5 * sys->ly) y += sys->ly;
-
-	      if      (z > 0.5 * sys->lz) z -= sys->lz;
-	      else if (z <-0.5 * sys->lz) z += sys->lz;
+	      bonds_set_force_ij (bonds, sys,
+				  bonds->type[i],
+				  ia, ib, x, y, z,
+				  f);
 	    }
-	  double r = sqrt (x*x + y*y + z*z);
-	  double ex = x / r;
-	  double ey = y / r;
-	  double ez = z / r;
-
-	  double fac = k * (r - r0);
-
-	  // F_a = - k (r-r0) (R_a - R_b)/|R_a - R_b|
-	  if (ia < sys->nm)
+	  else
 	    {
-	      f[ia3+0] += - fac * ex;
-	      f[ia3+1] += - fac * ey;
-	      f[ia3+2] += - fac * ez;
-	    }
+	      int k = search_close_image (sys, x, y, z);
+	      double xx = x - sys->llx[k];
+	      double yy = y - sys->lly[k];
+	      double zz = z - sys->llz[k];
 
-	  if (ib < sys->nm)
-	    {
-	      f[ib3+0] += fac * ex;
-	      f[ib3+1] += fac * ey;
-	      f[ib3+2] += fac * ez;
+	      bonds_set_force_ij (bonds, sys,
+				  bonds->type[i],
+				  ia, ib, xx, yy, zz,
+				  f);
 	    }
 	}
     }
@@ -207,10 +359,12 @@ void
 fprint_bonds (FILE *out, struct bonds *bonds)
 {
   int i;
-  for (i = 0; i < bonds->ntypes; i ++)
+  for (i = 0; i < bonds->n; i ++)
     {
-      fprintf (out, "bond-type %d: k = %f, r0 = %f, number of pairs = %d\n",
-	       i, bonds->k[i], bonds->r0[i], bonds->pairs[i]->n);
+      fprintf (out, "bond-index %d: type = %d, k = %f, r0 = %f,"
+	       " number of pairs = %d\n",
+	       i, bonds->type[i], bonds->p1[i], bonds->p2[i], 
+	       bonds->pairs[i]->n);
       int j;
       for (j = 0; j < bonds->pairs[i]->n; j ++)
 	{
