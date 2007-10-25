@@ -1,6 +1,6 @@
 /* ODE utility routines for angle by quaternion
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.c,v 1.1 2007/05/14 00:15:51 kichiki Exp $
+ * $Id: ode-quaternion.c,v 1.2 2007/10/25 05:56:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -193,7 +193,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
-  if (ode->bonds->ntypes > 0)
+  if (ode->bonds->n > 0)
     {
       // calc force on the mobile particles
       bonds_calc_force (ode->bonds, ode->sys,
@@ -305,7 +305,7 @@ dydt_Q_hydro_st (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
-  if (ode->bonds->ntypes > 0)
+  if (ode->bonds->n > 0)
     {
       // calc force on the mobile particles
       bonds_calc_force (ode->bonds, ode->sys,
