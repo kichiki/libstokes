@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.1 2007/03/27 00:53:57 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.2 2007/10/25 05:54:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,15 +31,21 @@
  * in SCM, bonds are something like
  *  (define bonds '(
  *    (; bond 1
- *     1.0 ; spring const
- *     2.1 ; natural distance
- *     ((0 1) ; list of pairs
+ *     0         ; 1) spring type
+ *     (         ; 2) spring parameters (list with 3 elements)
+ *      0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
+ *      1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)
+ *      2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
+ *     ((0 1)    ; 3) list of pairs
  *      (1 2)
  *      (2 3)))
  *    (; bond 2
- *     1.0 ; spring const
- *     2.5 ; natural distance
- *     ((4 5) ; list of pairs
+ *     2         ; 1) spring type
+ *     (         ; 2) spring parameters (list with 3 elements)
+ *      1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})
+ *      19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)
+ *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)
+ *     ((4 5)    ; 3) list of pairs
  *      (5 6)
  *      (6 7)))
  *   ))
@@ -96,25 +102,50 @@ guile_get_bonds (const char * var)
       if (bond_len != 3)
 	{
 	  fprintf (stderr, "guile_get_bonds:"
-		   " length of %d-th bond of %s is not 3\n",
+		   " length of %d-th bond of %s is not 4\n",
 		   i, var);
 	  bonds_free (bonds);
 	  return (NULL); // failed
 	}
 
-      double k, r0;
-      k  = scm_num2dbl (scm_list_ref (scm_bond,
-				      scm_int2num (0)),
-			"guile_get_bonds");
-      r0 = scm_num2dbl (scm_list_ref (scm_bond,
-				      scm_int2num (1)),
-			"guile_get_bonds");
-      bonds_add_type (bonds, k, r0);
+      // 1st element (0) of the list scm_bond
+      int type = scm_num2int (scm_list_ref (scm_bond, scm_int2num (0)),
+			      0,
+			      "guile_get_bonds");
+
+      // 2nd element (1) of the list scm_bond
+      SCM scm_params = scm_list_ref (scm_bond, scm_int2num (1));
+      if (!SCM_NFALSEP (scm_list_p (scm_params)))
+	{
+	  // scm_params is not a list
+	  fprintf (stderr, "guile_get_bonds:"
+		   " params of %d-th bond in %s is not a list\n",
+		   i, var);
+	  bonds_free (bonds);
+	  return (NULL); // failed
+	}
+      unsigned long params_len
+	= scm_num2ulong (scm_length (scm_params), 0, "guile_get_bonds");
+      if (params_len != 3)
+	{
+	  fprintf (stderr, "guile_get_bonds:"
+		   " params has wrong length %d != 3\n",
+		   params_len);
+	  bonds_free (bonds);
+	  return (NULL); // failed
+	}
+      int fene = scm_num2int (scm_list_ref (scm_params, scm_int2num (0)),
+			      0,
+			      "guile_get_bonds");
+      double p1 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (1)),
+			       "guile_get_bonds");
+      double p2 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (2)),
+			       "guile_get_bonds");
+      bonds_add_type (bonds, type, fene, p1, p2);
 
 
-      SCM scm_pairs;
-      scm_pairs = scm_list_ref (scm_bond,
-				scm_int2num (2));
+      // 3rd element (2) of the list scm_bond
+      SCM scm_pairs = scm_list_ref (scm_bond, scm_int2num (2));
       if (!SCM_NFALSEP (scm_list_p (scm_pairs)))
 	{
 	  // scm_pairs is not a list
