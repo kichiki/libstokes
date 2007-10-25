@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.38 2007/10/06 18:10:55 kichiki Exp $
+ * $Id: libstokes.h,v 1.39 2007/10/25 05:58:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -853,15 +853,32 @@ struct bond_pairs {
 };
 
 struct bonds {
-  int ntypes;                // number of bond-types
-  double *k;                 // spring constant for the bond-type
-  double *r0;                // equilibrium distance for the bond-type
-  struct bond_pairs **pairs; // pairs for the bond-type
+  double r2; // square of the max distance for F^{sp}
+
+  /* table for bond type */
+  int n;      // number of bond types
+  int *type;  /* type of the spring
+	       * 0 : Hookean (p1 = k, spring constant,
+	       *              p2 = r0, natural length)
+	       * 1 : Wormlike chain (WLC)
+	       * 2 : inverse Langevin chain (ILC)
+	       * 3 : Cohen's Pade approx for ILC
+	       * 4 : Werner spring (approx for ILC)
+	       * 5 : another Hookean
+	       *     where for these FENE chains,
+	       *     p1 = N_{K,s} the Kuhn steps for a spring
+	       *     p2 = b_{K}   the Kuhn length [nm]
+	       */
+  int *fene;   /* flag for the parameters p1 and p2
+		* 0 : (p1, p2) = (A^{sp}, L_{s})
+		* 1 : (p1, p2) = (N_{K,s}, b_{K})
+		*/
+  double *p1;  // the first parameter (k or N_{K,s})
+  double *p2;  // the second parameter (r0 or b_{K})
+
+  struct bond_pairs **pairs; // pairs for the bond
 };
 
-
-struct bond_pairs *
-bond_pairs_init (void);
 
 void
 bond_pairs_free (struct bond_pairs *pairs);
@@ -871,20 +888,48 @@ bond_pairs_add (struct bond_pairs *pairs,
 		int ia, int ib);
 
 
+/* initialize struct bonds
+ * INPUT
+ * OUTPUT
+ *  returned value : struct bonds
+ */
 struct bonds *
 bonds_init (void);
 
 void
 bonds_free (struct bonds *bonds);
 
+/* add a spring into bonds
+ * INPUT
+ *  bonds  : struct bonds
+ *  type   : type of the spring
+ *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
+ *           1 == (p1, p2) = (N_{K,s}, b_{K})
+ *  p1, p2 : spring parameters
+ * OUTPUT
+ *  bonds  :
+ */
 void
 bonds_add_type (struct bonds *bonds,
-		double k, double r0);
+		int type, int fene, double p1, double p2);
+
+/* set FENE spring parameters for run
+ * INPUT
+ *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used.
+ *  a     : length scale in the simulation
+ *  pe    : peclet number
+ * OUTPUT
+ *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
+ *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
+ */
+void
+bonds_set_FENE (struct bonds *bonds,
+		double a, double pe);
 
 /*
  * INPUT
- *  b          : struct bond
- *  sys        : struct stokes
+ *  bonds      : struct bond
+ *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
  *               otherwise, add the bond force into f[]
@@ -905,15 +950,21 @@ fprint_bonds (FILE *out, struct bonds *bonds);
  * in SCM, bonds are something like
  *  (define bonds '(
  *    (; bond 1
- *     1.0 ; spring const
- *     2.1 ; natural distance
- *     ((0 1) ; list of pairs
+ *     0         ; 1) spring type
+ *     (         ; 2) spring parameters (list with 3 elements)
+ *      0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
+ *      1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)
+ *      2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
+ *     ((0 1)    ; 3) list of pairs
  *      (1 2)
  *      (2 3)))
  *    (; bond 2
- *     1.0 ; spring const
- *     2.5 ; natural distance
- *     ((4 5) ; list of pairs
+ *     2         ; 1) spring type
+ *     (         ; 2) spring parameters (list with 3 elements)
+ *      1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})
+ *      19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)
+ *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)
+ *     ((4 5)    ; 3) list of pairs
  *      (5 6)
  *      (6 7)))
  *   ))
@@ -924,6 +975,82 @@ fprint_bonds (FILE *out, struct bonds *bonds);
 struct bonds *
 guile_get_bonds (const char * var);
 
+
+/* from excluded-volume.h */
+struct EV {
+  /* table for chain type */
+  int n;     // number of chain types
+  double *l; // characteristic distance = (1/3) N_{K,s} b_{K}^2
+  double *A; /* prefactor = (9/2) A^{sp} z', where
+	      *   A^{sp} = 3 a / Pe b_{K},
+	      *   z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
+	      *      = (3 / 2 pi b_{K}^2)^{3/2} v
+	      */
+
+  /* table for particles */
+  int *ch;   /* chain type for each particle
+	      * negative value == no assignement to the chain
+	      */
+};
+
+
+/* initialize struct EV
+ * INPUT
+ *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
+ *  a, pe  : parameters for bonds parameters
+ *  r2     : square of the max distance for F^{EV}
+ *  v[n]   : EV parameters for each spring.
+ *           the index should correspond to that in bonds.
+ *  np     : number of particles
+ * OUTPUT
+ *  returned value : struct EV, where l and A are defined by 
+ *      ev->l[i] characteristic distance = (1/3) N_{K,s} b_{K}^2,
+ *      ev->A[i] prefactor = (9/2) A^{sp} z',
+ *    and
+ *      A^{sp} = 3 a / Pe b_{K},
+ *      z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
+ *         = (3 / 2 pi b_{K}^2)^{3/2} v.
+ */
+struct EV *
+EV_init (const struct bonds *bonds, double a, double pe,
+	 double r2, const double *v,
+	 int np);
+
+void
+EV_free (struct EV *ev);
+
+
+/* retrieve the EV parameters for particles i and j
+ * with the combination rules 
+ *   l(12) = (l1 + l2) / 2
+ *   A(12) = (A1 * A2)^{1/2}
+ * INPUT
+ *  ev   : struct EV
+ *  i, j : particle index (0 ~ np-1)
+ * OUTPUT
+ *  *l : 
+ *  *A : 
+ */
+void
+EV_get_coefficients (struct EV *ev,
+		     int i, int j,
+		     double *l, double *A);
+
+
+/*
+ * INPUT
+ *  sys        : struct stokes (only nm and pos are used)
+ *  ev         : struct EV
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+EV_calc_force (struct stokes *sys,
+	       struct EV *ev,
+	       double *f,
+	       int flag_add);
 
 
 /************************************
