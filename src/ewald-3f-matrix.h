@@ -1,7 +1,7 @@
 /* header file for ewald-3f-matrix.c --
  * Solvers for 3 dimensional F version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.h,v 2.6 2007/03/07 22:07:10 kichiki Exp $
+ * $Id: ewald-3f-matrix.h,v 2.7 2007/10/27 03:49:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
+ *   u [np * 3] : in the labo frame.
  * OUTPUT
  *   f [np * 3] :
  */
@@ -35,18 +35,46 @@ solve_res_3f_matrix (struct stokes * sys,
 		     const double *u,
 		     double *f);
 
+/* solve natural resistance problem in F version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ */
+void
+solve_res_3f_matrix_0 (struct stokes * sys,
+		       const double *u,
+		       double *f);
+
+
 /* solve natural resistance problem in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
+ *  u [np * 3] : in the labo frame.
  * OUTPUT
- *   f [np * 3] :
+ *  f [np * 3] :
  */
 void
 solve_res_lub_3f_matrix (struct stokes * sys,
 			 const double *u,
 			 double *f);
+
+/* solve natural resistance problem in F version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ */
+void
+solve_res_lub_3f_matrix_0 (struct stokes * sys,
+			   const double *u,
+			   double *f);
+
 
 /** natural mobility problem **/
 /* solve natural mobility problem in F version
@@ -74,6 +102,7 @@ void
 solve_mob_lub_3f_matrix (struct stokes * sys,
 			 const double *f,
 			 double *u);
+
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with lubrication
