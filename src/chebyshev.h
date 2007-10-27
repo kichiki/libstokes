@@ -1,7 +1,7 @@
 /* header file for chebyshev.c --
  * Chebyshev polynomial routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: chebyshev.h,v 1.1 2007/09/29 20:20:47 kichiki Exp $
+ * $Id: chebyshev.h,v 1.2 2007/10/27 03:56:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,7 +81,7 @@ chebyshev_eval_atimes (int ncheb, const double *a,
 		       void (*atimes)(int, const double *, double *, void *),
 		       void *user_data);
 
-/* estimate the error of Chebyshev approximation
+/* estimate the error of Chebyshev approximation of sqrt of Minv
  * INPUT
  *  n             : dimension of the vector
  *  y[n]          : vector given to chebyshev_eval_atimes()
@@ -96,6 +96,22 @@ double
 chebyshev_error_minvsqrt (int n, const double *y, const double *z,
 			  void (*atimes)(int, const double *, double *, void *),
 			  void *user_data);
+
+/* estimate the error of Chebyshev approximation of sqrt() of R
+ * INPUT
+ *  n             : dimension of the vector
+ *  y[n]          : vector given to chebyshev_eval_atimes()
+ *  z[n]          : vector obtained by chebyshev_eval_atimes()
+ *  atimes(n,b,x) : routine to calculate b = R.x
+ *  user_data     : pointer for atimes()
+ * OUTPUT
+ *  (returned value) : error^2 := |zz - yy| / zz,
+ *                     where zz = z . M . z, and yy = y . y.
+ */
+double
+chebyshev_error_Rsqrt (int n, const double *y, const double *z,
+		       void (*atimes)(int, const double *, double *, void *),
+		       void *user_data);
 
 
 #endif /* !_CHEBYSHEV_H_ */

@@ -1,6 +1,6 @@
 /* Chebyshev polynomial routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: chebyshev.c,v 1.1 2007/09/29 20:20:47 kichiki Exp $
+ * $Id: chebyshev.c,v 1.2 2007/10/27 03:55:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -227,7 +227,7 @@ chebyshev_eval_atimes (int ncheb, const double *a,
   free (x);
 }
 
-/* estimate the error of Chebyshev approximation
+/* estimate the error of Chebyshev approximation of sqrt of Minv
  * INPUT
  *  n             : dimension of the vector
  *  y[n]          : vector given to chebyshev_eval_atimes()
@@ -245,7 +245,7 @@ chebyshev_error_minvsqrt (int n, const double *y, const double *z,
 {
   // x := M . z
   double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "chebyshev_eval_atimes");
+  CHECK_MALLOC (x, "chebyshev_error_minvsqrt");
   atimes (n, z, x, user_data); // x = M.z
 
   int k;
@@ -268,3 +268,43 @@ chebyshev_error_minvsqrt (int n, const double *y, const double *z,
   return (fabs (zz - yy) / zz);
 }
 
+/* estimate the error of Chebyshev approximation of sqrt() of R
+ * INPUT
+ *  n             : dimension of the vector
+ *  y[n]          : vector given to chebyshev_eval_atimes()
+ *  z[n]          : vector obtained by chebyshev_eval_atimes()
+ *  atimes(n,b,x) : routine to calculate b = R.x
+ *  user_data     : pointer for atimes()
+ * OUTPUT
+ *  (returned value) : error^2 := |zz - yy| / zz,
+ *                     where zz = z . M . z, and yy = y . y.
+ */
+double
+chebyshev_error_Rsqrt (int n, const double *y, const double *z,
+		       void (*atimes)(int, const double *, double *, void *),
+		       void *user_data)
+{
+  double *x = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (x, "chebyshev_error_Rsqrt");
+  atimes (n, y, x, user_data); // x = R.y
+
+  int k;
+  double yy = 0.0;
+  double zz = 0.0;
+  for (k = 0; k < n; k ++)
+    {
+      yy += y[k] * x[k]; // yy = y . R . y
+      zz += z[k] * z[k]; // zz = z . z = (R^{1/2}.y).(R^{1/2}.y)
+    }
+  // house-keeping
+  free (x);
+  //fprintf (stderr, "# yy = %e, zz = %e\n", yy, zz);
+
+  if (yy <= 0.0)
+    {
+      fprintf (stderr, "negative norm! %e\n", yy);
+      exit (1);
+    }
+
+  return (fabs (yy - zz) / yy);
+}
