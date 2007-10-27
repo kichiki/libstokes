@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.40 2007/10/27 03:20:46 kichiki Exp $
+ * $Id: libstokes.h,v 1.41 2007/10/27 15:56:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,15 +24,28 @@
 
 /***********************************
  ** system parameters             **
+ ** from stokes.h                 **
  ***********************************/
 struct stokes {
+  int version; /* 0 = F, 1 = FT, 2 = FTS  */
+
   int np;      /* number of all particles  */
   int nm;      /* number of mobile particles  */
   double *pos; /* position of particles  */
+
+  /**
+   * parameters for the polydisperse system
+   */
   double *a;   /* radius of particles
 		* Note : NULL (default) is for monodisperse system  */
+  int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
+  int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
+  int *poly_table; // for (i,j), [i*np+j] gives the index of "twobody_f_list"
+  struct twobody_f_list *twobody_f_list;
 
-  // slip parameters
+  /**
+   * slip parameters
+   */
   /* Note: if slip == NULL, the system is treated as the no-slip */
   double *slip;     // slip length
   double *slip_a;   // effective radius for the laplacian terms
@@ -44,22 +57,20 @@ struct stokes {
 		    * of "twobody_slip_f_list" */
   struct twobody_slip_f_list *twobody_slip_f_list;
 
-  int version; /* 0 = F, 1 = FT, 2 = FTS  */
-
-  // parameters for the polydisperse system
-  int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
-  int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
-  int *poly_table; // for (i,j), [i*np+j] gives the index of "twobody_f_list"
-  struct twobody_f_list *twobody_f_list;
-
-  /* imposed flow */
+  /**
+   * imposed flow
+   */
   double Ui[3];
   double Oi[3];
   double Ei[5];
 
+  /**
+   * periodic parameters
+   */
   int periodic; // 0 = non periodic, 1 = periodic
 
   /* for ewald codes */
+  double ewald_eps;
   double rmax2;
   int rmaxx, rmaxy, rmaxz; /* # of cell in real space */
   double kmax;
@@ -99,7 +110,9 @@ struct stokes {
   double * yh;
   double * ym;
 
-  /* for lubrication */
+  /**
+   * for lubrication
+   */
   double lubmin2;/* square of min distance for lub
 		  * (distance is replaced by its root-square)
 		  */
@@ -109,10 +122,14 @@ struct stokes {
 		  * all particles within +/-1 cells in x,y,z for the periodic
 		  */
 
-  /* for zeta program */
+  /**
+   * for zeta program
+   */
   double cpu1, cpu2, cpu3;
 
-  /* for iterative solvers */
+  /**
+   * for iterative solvers
+   */
   struct iter * it;
 };
 
@@ -154,6 +171,7 @@ double
 xi_by_tratio (struct stokes * sys,
 	      double tratio);
 
+
 /* set iter param
  * INPUT
  *   solver : string indicating the solver
@@ -165,13 +183,13 @@ xi_by_tratio (struct stokes * sys,
  *   out   : FILE * to output debug info.
  */
 void
-stokes_set_iter (struct stokes * sys,
-		 const char * solver,
+stokes_set_iter (struct stokes *sys,
+		 const char *solver,
 		 int max,
 		 int restart,
 		 double eps,
 		 int debug,
-		 FILE * out);
+		 FILE *out);
 
 /* set pos for all particles safely by another array
  * INPUT
@@ -262,6 +280,12 @@ stokes_set_slip (struct stokes *sys,
  */
 void
 stokes_unset_slip (struct stokes *sys);
+
+
+/* make a copy of struct stokes s0
+ */
+struct stokes *
+stokes_copy (struct stokes *s0);
 
 
 /************************************
