@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.13 2007/05/04 01:54:59 kichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.14 2007/10/27 03:50:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -153,20 +153,26 @@ trans_ext (int np, double *r)
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ *  e [np * 5] : strain tensor     in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
  */
 void
 solve_res_3fts_matrix (struct stokes * sys,
 		       const double *u, const double *o, const double *e,
 		       double *f, double *t, double *s)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int n11 = np * 11;
 
@@ -218,18 +224,74 @@ solve_res_3fts_matrix (struct stokes * sys,
   // here, no velocity in output, we do nothing
 }
 
+/* solve natural resistance problem in FTS version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
+ */
+void
+solve_res_3fts_matrix_0 (struct stokes * sys,
+			 const double *u, const double *o, const double *e,
+			 double *f, double *t, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_3fts_matrix_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int n11 = np * 11;
+
+  double *mat = (double *)malloc (sizeof (double) * n11 * n11);
+  double *b = (double *)malloc (sizeof (double) * n11);
+  double *x = (double *)malloc (sizeof (double) * n11);
+  CHECK_MALLOC (mat, "solve_res_3fts_matrix");
+  CHECK_MALLOC (b,   "solve_res_3fts_matrix");
+  CHECK_MALLOC (x,   "solve_res_3fts_matrix");
+
+  /* b := (UOE) */
+  set_fts_by_FTS (np, b, u, o, e);
+
+  // mobility matrix in EXTRACTED form
+  make_matrix_mob_3all (sys, mat); // sys->version is 2 (FTS)
+  /* for test
+  test_symmetric (n11, mat, 1.0e-12);
+  */
+
+  /* resistance matrix in INVERSED form */
+  lapack_inv_ (n11, mat);
+  trans_ext (np, mat); // resistance matrix in EXTRACTED form
+
+  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (mat);
+  free (b);
+  free (x);
+}
+
 
 /* solve natural resistance problem in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ *  e [np * 5] : strain tensor     in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
  */
 void
 solve_res_lub_3fts_matrix (struct stokes * sys,
@@ -237,7 +299,13 @@ solve_res_lub_3fts_matrix (struct stokes * sys,
 			   const double *e,
 			   double *f, double *t, double *s)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int n11 = np * 11;
 
@@ -300,6 +368,76 @@ solve_res_lub_3fts_matrix (struct stokes * sys,
    * u(x) is given by the imposed flow field as |x|-> infty */
   // here, no velocity in output, we do nothing
 }
+
+/* solve natural resistance problem in FTS version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
+ */
+void
+solve_res_lub_3fts_matrix_0 (struct stokes * sys,
+			     const double *u, const double *o,
+			     const double *e,
+			     double *f, double *t, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3fts_matrix_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int n11 = np * 11;
+
+  double *mat = (double *)malloc(sizeof (double) * n11 * n11);
+  double *b = (double *)malloc(sizeof (double) * n11);
+  double *x = (double *)malloc(sizeof (double) * n11);
+  double *y = (double *)malloc(sizeof (double) * n11);
+  CHECK_MALLOC (mat, "solve_res_lub_3fts_matrix");
+  CHECK_MALLOC (b, "solve_res_lub_3fts_matrix");
+  CHECK_MALLOC (x, "solve_res_lub_3fts_matrix");
+  CHECK_MALLOC (y, "solve_res_lub_3fts_matrix");
+
+  /* b := (UOE) */
+  set_fts_by_FTS (np, b, u, o, e);
+
+  make_matrix_lub_3fts (sys, mat); // lub matrix in EXTRACTED form
+  multiply_extmat_with_extvec_3fts (np, mat, b, x); // x := L.(UOE)
+
+  // mobility matrix in EXTRACTED form
+  make_matrix_mob_3all (sys, mat); // sys->version is 2 (FTS)
+  multiply_extmat_with_extvec_3fts (np, mat, x, y); // y := M.L.(UOE)
+
+  /* y := (I + M.L).(UOE) */
+  int i;
+  for (i = 0; i < n11; ++i)
+    {
+      b [i] += y [i];
+    }
+
+  /* resistance matrix in INVERSED form */
+  lapack_inv_ (n11, mat);
+  trans_ext (np, mat); // resistance matrix in EXTRACTED form
+
+  /* x := (M^-1).(I + M.L).(UOE) */
+  multiply_extmat_with_extvec_3fts (np, mat, b, x);
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (mat);
+  free (b);
+  free (x);
+  free (y);
+}
+
 
 /** natural mobility problem **/
 /* multiply transformation matrix from right-hand-side,
@@ -510,7 +648,13 @@ solve_mob_3fts_matrix (struct stokes * sys,
 		       const double *f, const double *t, const double *e,
 		       double *u, double *o, double *s)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mob_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int n11 = np * 11;
   int n6 = np * 6;
@@ -632,7 +776,13 @@ solve_mob_lub_3fts_matrix (struct stokes * sys,
 			   const double *e,
 			   double *u, double *o, double *s)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mob_lub_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int n11 = np * 11;
   int n6 = np * 6;
@@ -1057,7 +1207,13 @@ solve_mix_3fts_matrix (struct stokes * sys,
 		       double *u, double *o, double *s,
 		       double *ff, double *tf, double *sf)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mix_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
@@ -1185,7 +1341,13 @@ solve_mix_lub_3fts_matrix (struct stokes * sys,
 			   double *u, double *o, double *s,
 			   double *ff, double *tf, double *sf)
 {
-  sys->version = 2; // FTS version
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mix_lub_3fts_matrix :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
