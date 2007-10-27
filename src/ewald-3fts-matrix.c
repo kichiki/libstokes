@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.14 2007/10/27 03:50:39 kichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.15 2007/10/27 23:19:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -86,18 +86,10 @@ trans_ext (int np, double *r)
   int i, ii, i11, i0;
   int j, jj, j11, j0;
   int k;
-  int n;
 
-  double * tmp;
-
-  n = np * 11;
-
-  tmp = malloc (sizeof (double) * n * n);
-  if (tmp == NULL)
-    {
-      fprintf (stderr, "allocation error in trans_ext().\n");
-      exit (1);
-    }
+  int n = np * 11;
+  double *tmp = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (tmp, "trans_ext");
 
   for (i = 0; i < np; ++i)
     {
@@ -468,18 +460,10 @@ trans_mat_ext2ext (int np, double * mat)
   int i, ii, i11, i0;
   int j, jj, j11, j0;
   int k;
-  int n;
 
-  double * tmp;
-
-  n = np * 11;
-
-  tmp = malloc (sizeof (double) * n * n);
-  if (tmp == NULL)
-    {
-      fprintf (stderr, "allocation error in trans_ext().\n");
-      exit (1);
-    }
+  int n = np * 11;
+  double *tmp = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (tmp, "trans_mat_ext2ext");
 
   for (i = 0; i < np; ++i)
     {
@@ -738,7 +722,8 @@ solve_mob_3fts_matrix (struct stokes * sys,
 static void
 multiply_matrices (int n, double *a, const double *b)
 {
-  double *tmp= (double *)malloc (sizeof (double) * n * n);
+  double *tmp = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (tmp, "multiply_matrices");
 
   int i, j, k;
   for (i = 0; i < n; ++i)
