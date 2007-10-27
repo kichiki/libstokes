@@ -1,7 +1,7 @@
 /* header file for ewald-3ft-matrix.c --
  * Solvers for 3 dimensional FT version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.h,v 2.6 2007/03/07 22:08:18 kichiki Exp $
+ * $Id: ewald-3ft-matrix.h,v 2.7 2007/10/27 03:50:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,31 +26,63 @@
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : in the labo frame.
+ *  o [np * 3] : in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_3ft_matrix (struct stokes * sys,
 		      const double *u, const double *o,
 		      double *f, double *t);
 
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_3ft_matrix_0 (struct stokes * sys,
+			const double *u, const double *o,
+			double *f, double *t);
+
+
 /* solve natural resistance problem in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : in the labo frame.
+ *  o [np * 3] : in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_lub_3ft_matrix (struct stokes * sys,
 			  const double *u, const double *o,
 			  double *f, double *t);
+
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_lub_3ft_matrix_0 (struct stokes * sys,
+			    const double *u, const double *o,
+			    double *f, double *t);
+
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FT version

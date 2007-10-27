@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FT version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.13 2007/05/04 02:05:06 kichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.14 2007/10/27 03:49:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,18 +39,24 @@
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : in the labo frame.
+ *  o [np * 3] : in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_3ft_matrix (struct stokes * sys,
 		      const double *u, const double *o,
 		      double *f, double *t)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -93,23 +99,78 @@ solve_res_3ft_matrix (struct stokes * sys,
   // here, no velocity in output, we do nothing
 }
 
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_3ft_matrix_0 (struct stokes * sys,
+			const double *u, const double *o,
+			double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_3ft_matrix_0 :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  int n6 = np * 6;
+
+  double *mat = (double *) malloc (sizeof (double) * n6 * n6);
+  double *b = (double *) malloc (sizeof (double) * n6);
+  double *x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (mat, "solve_res_3ft_matrix");
+  CHECK_MALLOC (b, "solve_res_3ft_matrix");
+  CHECK_MALLOC (x, "solve_res_3ft_matrix");
+
+  /* b := (UO) */
+  set_ft_by_FT (np, b, u, o);
+
+  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
+  lapack_inv_ (n6, mat);
+
+  // x := M^-1.b
+  dot_prod_matrix (mat, n6, n6, b, x);
+
+  /* x := (FT) */
+  set_FT_by_ft (np, f, t, x);
+
+  free (mat);
+  free (b);
+  free (x);
+}
+
 
 /* solve natural resistance problem in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : in the labo frame.
+ *  o [np * 3] : in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_lub_3ft_matrix (struct stokes * sys,
 			  const double *u, const double *o,
 			  double *f, double *t)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -167,6 +228,71 @@ solve_res_lub_3ft_matrix (struct stokes * sys,
   // here, no velocity in output, we do nothing
 }
 
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_lub_3ft_matrix_0 (struct stokes * sys,
+			    const double *u, const double *o,
+			    double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3ft_matrix_0 :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  int n6 = np * 6;
+
+  double *mob = (double *) malloc (sizeof (double) * n6 * n6);
+  double *lub = (double *) malloc (sizeof (double) * n6 * n6);
+  double *b = (double *) malloc (sizeof (double) * n6);
+  double *x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (mob, "solve_res_lub_3ft_matrix");
+  CHECK_MALLOC (lub, "solve_res_lub_3ft_matrix");
+  CHECK_MALLOC (b, "solve_res_lub_3ft_matrix");
+  CHECK_MALLOC (x, "solve_res_lub_3ft_matrix");
+
+  // M matrix
+  make_matrix_mob_3all (sys, mob); // sys->version is 1 (FT)
+  // M^-1
+  lapack_inv_ (n6, mob);
+
+  // L matrix
+  make_matrix_lub_3ft (sys, lub);
+
+  // M^-1 + L
+  int i;
+  for (i = 0; i < n6 * n6; i ++)
+    {
+      lub [i] += mob [i];
+    }
+  free (mob);
+
+  /* b := (UO) */
+  set_ft_by_FT (np, b, u, o);
+
+  // x := (M^-1 + L).(UO)
+  dot_prod_matrix (lub, n6, n6, b, x);
+
+  // (FT) = x
+  set_FT_by_ft (np, f, t, x);
+
+  free (lub);
+  free (b);
+  free (x);
+}
+
+
 /** natural mobility problem **/
 /* solve natural mobility problem in FT version
  * for both periodic and non-periodic boundary conditions
@@ -183,7 +309,13 @@ solve_mob_3ft_matrix (struct stokes * sys,
 		      const double *f, const double *t,
 		      double *u, double *o)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mob_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -232,7 +364,13 @@ solve_mob_lub_3ft_matrix (struct stokes * sys,
 			  const double *f, const double *t,
 			  double *u, double *o)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mob_lub_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -514,7 +652,13 @@ solve_mix_3ft_matrix (struct stokes * sys,
 		      double *u, double *o,
 		      double *ff, double *tf)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mix_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
@@ -625,7 +769,13 @@ solve_mix_lub_3ft_matrix (struct stokes * sys,
 			  double *u, double *o,
 			  double *ff, double *tf)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mix_lub_3ft_matrix :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
