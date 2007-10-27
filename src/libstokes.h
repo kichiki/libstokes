@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.39 2007/10/25 05:58:35 kichiki Exp $
+ * $Id: libstokes.h,v 1.40 2007/10/27 03:20:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1039,16 +1039,16 @@ EV_get_coefficients (struct EV *ev,
 
 /*
  * INPUT
- *  sys        : struct stokes (only nm and pos are used)
  *  ev         : struct EV
+ *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
  *               otherwise, add the bond force into f[]
  * OUTPUT
  */
 void
-EV_calc_force (struct stokes *sys,
-	       struct EV *ev,
+EV_calc_force (struct EV *ev,
+	       struct stokes *sys,
 	       double *f,
 	       int flag_add);
 
