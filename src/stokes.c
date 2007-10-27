@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.21 2007/10/27 03:58:29 kichiki Exp $
+ * $Id: stokes.c,v 2.22 2007/10/27 15:55:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -586,6 +586,8 @@ void
 stokes_set_xi (struct stokes * sys,
 	       double xi, double ewald_eps)
 {
+  sys->ewald_eps = ewald_eps;
+
   sys->xi  = xi;
   sys->xi2 = xi * xi;
   sys->xia2   = sys->xi2;
@@ -1090,3 +1092,64 @@ stokes_unset_slip (struct stokes *sys)
     }
 }
 
+
+/* make a copy of struct stokes s0
+ */
+struct stokes *
+stokes_copy (struct stokes *s0)
+{
+  struct stokes *s = stokes_init ();
+  CHECK_MALLOC (s, "stokes_copy");
+
+  s->version = s0->version;
+
+  stokes_set_np (s, s0->np, s0->nm);
+  stokes_set_pos (s, s0->pos);
+
+  /**
+   * parameters for the polydisperse system
+   */
+  stokes_set_radius (s, s0->a);
+  /* this also set poly_table and twobody_f_list */
+  s->twobody_nmax = s0->twobody_nmax;
+  s->twobody_lub  = s0->twobody_lub;
+
+  /**
+   * slip parameters
+   */
+  stokes_set_slip (s, s0->slip);
+
+  /**
+   * imposed flow
+   */
+  stokes_set_Ui (s, s0->Ui[0], s0->Ui[1], s0->Ui[2]);
+  stokes_set_Oi (s, s0->Oi[0], s0->Oi[1], s0->Oi[2]);
+  stokes_set_Ei (s, s0->Ei[0], s0->Ei[1], s0->Ei[2], s0->Ei[3], s0->Ei[4]);
+
+  /**
+   * periodic parameters
+   */
+  s->periodic = s0->periodic;
+
+  stokes_set_l (s, s0->lx, s0->ly, s0->lz);
+  /* this also set llx, lly, llz and pivol */
+
+  stokes_set_xi (s, s0->xi, s0->ewald_eps);
+  /* this set ewald_eps, xi (and others), self_[acm], rmax*, kmax*, 
+   * and ewald_table -- nr, rl*[], ex,ey,ez[], k*[], ya,yb,...[], flag_table */
+
+  /**
+   * for lubrication
+   */
+  s->lubmin2 = s0->lubmin2;
+  s->lubmax  = s0->lubmax;
+
+  /**
+   * for iterative solvers
+   */
+  stokes_set_iter (s,
+		   s0->it->solver, s0->it->max, s0->it->restart,
+		   s0->it->eps, s0->it->debug, s0->it->out);
+
+  return (s0);
+}
