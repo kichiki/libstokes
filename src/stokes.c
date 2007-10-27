@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.20 2007/08/17 04:34:52 kichiki Exp $
+ * $Id: stokes.c,v 2.21 2007/10/27 03:58:29 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -668,16 +668,28 @@ xi_by_tratio (struct stokes * sys,
  *   out   : FILE * to output debug info.
  */
 void
-stokes_set_iter (struct stokes * sys,
-		 const char * solver,
+stokes_set_iter (struct stokes *sys,
+		 const char *solver,
 		 int max,
 		 int restart,
 		 double eps,
 		 int debug,
-		 FILE * out)
+		 FILE *out)
 {
+  int n;
+  if      (sys->version == 0) n = sys->np * 3;
+  else if (sys->version == 1) n = sys->np * 6;
+  else if (sys->version == 2) n = sys->np * 11;
+  else
+    {
+      fprintf (stderr, "libstokes stokes_set_iter : invalid version %d\n",
+	       sys->version);
+      exit (1);
+    }
+
   sys->it = iter_init (solver,
 		       max, restart, eps,
+		       n, NULL, 1, // guess
 		       debug, out);
 }
 

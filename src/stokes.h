@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.20 2007/08/17 04:35:26 kichiki Exp $
+ * $Id: stokes.h,v 1.21 2007/10/27 03:58:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -165,13 +165,13 @@ xi_by_tratio (struct stokes * sys,
  *   out   : FILE * to output debug info.
  */
 void
-stokes_set_iter (struct stokes * sys,
-		 const char * solver,
+stokes_set_iter (struct stokes *sys,
+		 const char *solver,
 		 int max,
 		 int restart,
 		 double eps,
 		 int debug,
-		 FILE * out);
+		 FILE *out);
 
 /* set pos for all particles safely by another array
  * INPUT
