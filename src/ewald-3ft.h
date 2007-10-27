@@ -1,7 +1,7 @@
 /* header file for 'ewald-3ft.c' --
  * Solvers for 3 dimensional FT version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.h,v 4.6 2007/03/18 23:47:41 kichiki Exp $
+ * $Id: ewald-3ft.h,v 4.7 2007/10/27 03:47:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,16 +26,32 @@
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_3ft (struct stokes * sys,
 	       const double *u, const double *o,
 	       double *f, double *t);
+
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_3ft_0 (struct stokes * sys,
+		 const double *u, const double *o,
+		 double *f, double *t);
+
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FT version
@@ -52,6 +68,7 @@ void
 solve_mob_3ft (struct stokes * sys,
 	       const double *f, const double *t,
 	       double *u, double *o);
+
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FT version
@@ -75,6 +92,7 @@ solve_mix_3ft (struct stokes * sys,
 	       double *u, double *o,
 	       double *ff, double *tf);
 
+
 /** natural resistance problem with lubrication **/
 /* solve natural resistance problem with lubrication in FT version
  * for both periodic and non-periodic boundary conditions
@@ -91,6 +109,24 @@ solve_res_lub_3ft (struct stokes * sys,
 		   const double *u, const double *o,
 		   double *f, double *t);
 
+/* solve natural resistance problem with lubrication in FT version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_3ft_0 (struct stokes * sys,
+		     const double *u, const double *o,
+		     double *f, double *t);
+
+
+/** mob_lub_3ft **/
 /* solve natural mobility problem with lubrication in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -105,6 +141,7 @@ void
 solve_mob_lub_3ft (struct stokes * sys,
 		   const double *f, const double *t,
 		   double *u, double *o);
+
 
 /** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication

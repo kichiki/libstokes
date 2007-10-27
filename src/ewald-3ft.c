@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FT version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.14 2007/05/04 02:12:05 kichiki Exp $
+ * $Id: ewald-3ft.c,v 4.15 2007/10/27 03:47:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,18 +37,24 @@
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
  * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
  */
 void
 solve_res_3ft (struct stokes * sys,
 	       const double *u, const double *o,
 	       double *f, double *t)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -70,15 +76,8 @@ solve_res_3ft (struct stokes * sys,
   free (u0);
   free (o0);
 
-  /* first guess */
-  int i;
-  for (i = 0; i < n6; ++i)
-    {
-      x [i] = 0.0;
-    }
-
   solve_iter (n6, b, x,
-	      atimes_3all, (void *) sys,
+	      atimes_3all, (void *)sys,
 	      sys->it);
   // for atimes_3all(), sys->version is 1 (FT)
 
@@ -90,6 +89,49 @@ solve_res_3ft (struct stokes * sys,
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
   // here, no velocity in output, we do nothing
+}
+
+/* solve natural resistance problem in FT version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_3ft_0 (struct stokes * sys,
+		 const double *u, const double *o,
+		 double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_3ft_0 :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  int n6 = np * 6;
+
+  double *b = (double *) malloc (sizeof (double) * n6);
+  double *x = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_res_3ft_0");
+  CHECK_MALLOC (x, "solve_res_3ft_0");
+
+  set_ft_by_FT (np, b, u, o);
+
+  solve_iter (n6, b, x,
+	      atimes_3all, (void *)sys,
+	      sys->it);
+  // for atimes_3all(), sys->version is 1 (FT)
+
+  set_FT_by_ft (np, f, t, x);
+
+  free (b);
+  free (x);
 }
 
 /** natural mobility problem **/
@@ -108,7 +150,13 @@ solve_mob_3ft (struct stokes * sys,
 	       const double *f, const double *t,
 	       double *u, double *o)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mob_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -292,7 +340,13 @@ solve_mix_3ft (struct stokes * sys,
 	       double *u, double *o,
 	       double *ff, double *tf)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mix_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
@@ -324,15 +378,8 @@ solve_mix_3ft (struct stokes * sys,
   free (uf0);
   free (of0);
 
-  /* first guess */
-  int i;
-  for (i = 0; i < n6; ++i)
-    {
-      x [i] = 0.0;
-    }
-
   solve_iter (n6, b, x,
-	      atimes_mix_3ft, (void *) sys,
+	      atimes_mix_3ft, (void *)sys,
 	      sys->it);
 
   set_FT_by_ft (nm, u, o, x);
@@ -363,7 +410,13 @@ solve_res_lub_3ft (struct stokes * sys,
 		   const double *u, const double *o,
 		   double *f, double *t)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int n6 = np * 6;
 
@@ -397,14 +450,8 @@ solve_res_lub_3ft (struct stokes * sys,
       b [i] += x [i];
     }
 
-  /* first guess */
-  for (i = 0; i < n6; ++i)
-    {
-      x [i] = 0.0;
-    }
-
   solve_iter (n6, b, x,
-	      atimes_3all, (void *) sys,
+	      atimes_3all, (void *)sys,
 	      sys->it);
   // for atimes_3all(), sys->version is 1 (FT)
 
@@ -417,6 +464,63 @@ solve_res_lub_3ft (struct stokes * sys,
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
   // here, no velocity in output, we do nothing
+}
+
+/* solve natural resistance problem with lubrication in FT version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_3ft_0 (struct stokes * sys,
+		     const double *u, const double *o,
+		     double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3ft_0 :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  int n6 = np * 6;
+
+  double *b = (double *) malloc (sizeof (double) * n6);
+  double *x = (double *) malloc (sizeof (double) * n6);
+  double *lub = (double *) malloc (sizeof (double) * n6);
+  CHECK_MALLOC (b, "solve_res_lub_3ft_0");
+  CHECK_MALLOC (x, "solve_res_lub_3ft_0");
+  CHECK_MALLOC (lub, "solve_res_lub_3ft_0");
+
+  set_ft_by_FT (np, b, u, o);
+
+  calc_lub_3ft (sys, b, lub);
+  atimes_3all (n6, lub, x, (void *) sys);
+  // sys->version is 1 (FT)
+  // x[] is used temporarily
+  int i;
+  for (i = 0; i < n6; ++i)
+    {
+      b [i] += x [i];
+    }
+
+  solve_iter (n6, b, x,
+	      atimes_3all, (void *)sys,
+	      sys->it);
+  // for atimes_3all(), sys->version is 1 (FT)
+
+  set_FT_by_ft (np, f, t, x);
+
+  free (b);
+  free (x);
+  free (lub);
 }
 
 
@@ -464,7 +568,12 @@ solve_mob_lub_3ft (struct stokes * sys,
 		   const double *f, const double *t,
 		   double *u, double *o)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mob_lub_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
 
   int np = sys->np;
   int n6 = np * 6;
@@ -482,15 +591,8 @@ solve_mob_lub_3ft (struct stokes * sys,
   atimes_3all (n6, x, b, (void *) sys); // sys->version is 1 (FT)
   // b = M.(FT)
 
-  /* first guess */
-  int i;
-  for (i = 0; i < n6; ++i)
-    {
-      x [i] = 0.0;
-    }
-
   solve_iter (n6, b, x,
-	      atimes_mob_lub_3ft, (void *) sys,
+	      atimes_mob_lub_3ft, (void *)sys,
 	      sys->it);
   // x = (I + M.L)^-1 . b
 
@@ -688,7 +790,13 @@ solve_mix_lub_3ft (struct stokes * sys,
 		   double *u, double *o,
 		   double *ff, double *tf)
 {
-  sys->version = 1; // FT version
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_mix_lub_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
   int np = sys->np;
   int nm = sys->nm;
   if (np == nm)
@@ -719,15 +827,8 @@ solve_mix_lub_3ft (struct stokes * sys,
   free (uf0);
   free (of0);
 
-  /* first guess */
-  int i;
-  for (i = 0; i < n6; ++i)
-    {
-      x [i] = 0.0;
-    }
-
   solve_iter (n6, b, x,
-	       atimes_mix_lub_3ft, (void *) sys,
+	       atimes_mix_lub_3ft, (void *)sys,
 	       sys->it);
 
   set_FT_by_ft (nm, u, o, x);
