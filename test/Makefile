@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.8 2007/09/30 04:02:56 kichiki Exp $
+# $Id: Makefile,v 1.9 2007/10/27 23:12:13 kichiki Exp $
 
 CC           = cc
 LD           = libtool --mode=link $(CC)
@@ -19,7 +19,7 @@ CFLAGS	     = -Wall\
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.2 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 
@@ -57,7 +57,9 @@ test-all-OBJ =\
 	check-dnaupd_c.o	\
 	check-chebyshev.o	\
 	check-bd.o		\
-	check-dgeev_c.o
+	check-dgeev_c.o		\
+	check-dpotrf_c.o	\
+	check-brownian.o
 
 
 test-all:	$(test-all-OBJ)
