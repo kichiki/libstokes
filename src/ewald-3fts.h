@@ -1,7 +1,7 @@
 /* header file for 'ewald-3fts.c' --
  * Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.h,v 5.8 2007/10/27 03:48:33 kichiki Exp $
+ * $Id: ewald-3fts.h,v 5.9 2007/10/30 04:32:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -75,6 +75,24 @@ solve_mob_3fts (struct stokes * sys,
 		const double *f, const double *t, const double *e,
 		double *u, double *o, double *s);
 
+/* solve natural mobility problem in FTS version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys  : system parameters
+ *  iter : struct iter (if NULL is given, use sys->it for the solver)
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [np * 5] :
+ */
+void
+solve_mob_3fts_0 (struct stokes *sys, struct iter *iter,
+		  const double *f, const double *t, const double *e,
+		  double *u, double *o, double *s);
+
 
 /** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FTS version
@@ -101,6 +119,33 @@ solve_mix_3fts (struct stokes * sys,
 		const double *uf, const double *of, const double *ef,
 		double *u, double *o, double *s,
 		double *ff, double *tf, double *sf);
+
+/* solve natural mobility problem with fixed particles in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  iter : struct iter (if NULL is given, use sys->it for the solver)
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ *  uf [nf * 3] : in the fluid-rest frame
+ *  of [nf * 3] : in the fluid-rest frame
+ *  ef [nf * 5] : in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [nm * 5] :
+ *  ff [nf * 3] :
+ *  tf [nf * 3] :
+ *  sf [nf * 5] :
+ */
+void
+solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
+		  const double *f, const double *t, const double *e,
+		  const double *uf, const double *of, const double *ef,
+		  double *u, double *o, double *s,
+		  double *ff, double *tf, double *sf);
 
 
 /** natural resistance problem with lubrication **/
