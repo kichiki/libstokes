@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.1 2007/10/29 03:56:21 kichiki Exp $
+ * $Id: brownian.h,v 1.2 2007/10/30 04:33:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -145,9 +145,7 @@ BD_params_free (struct BD_params *BD);
 
 /* calculate y = A.x for Brownian force, where A = M^inf
  * so that give 1/sqrt(x) for chebyshev.
- * note that UF part (for mobile particles) are just extracted
- * (in other words, F for the fixed particles is set by zero,
- *  and S is also set by zero for FTS case).
+ * Note that for FTS version, A = M_{UF} - M_{US}.(M_{ES})^{-1}.M_{EF}.
  * INPUT
  *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
  *         S component is not included (because it is not random variable.)
@@ -157,7 +155,7 @@ BD_params_free (struct BD_params *BD);
  *  y[n] : F (and T)
  */
 void
-BD_atimes_minv_FU (int n, const double *x, double *y, void *user_data);
+BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data);
 
 /* calculate y = A.x for Brownian force, where A = L (lubrication)
  * so that give sqrt(x) for chebyshev.
@@ -193,15 +191,12 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU);
  * (in other words, F for the fixed particles is set by zero,
  *  and S is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
- *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
- *  user_data : (struct BD_params) *BD
+ *  BD   : struct BD_params
  * OUTPUT
- *  y[n] : F (and T)
+ *  minv : (M^inf)^{-1} in UF part
  */
 void
-BD_matrix_minv_FU (struct BD_params *BD, double *mob);
+BD_matrix_minv_FU (struct BD_params *BD, double *minv);
 
 /* make lubrication matrix L in UF part (for mobile particles)
  * (in other words, F for the fixed particles is set by zero,

@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.1 2007/10/29 03:55:46 kichiki Exp $
+ * $Id: brownian.c,v 1.2 2007/10/30 04:32:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -272,9 +272,7 @@ check_overlap (struct stokes *sys, const double *pos,
 
 /* calculate y = A.x for Brownian force, where A = M^inf
  * so that give 1/sqrt(x) for chebyshev.
- * note that UF part (for mobile particles) are just extracted
- * (in other words, F for the fixed particles is set by zero,
- *  and S is also set by zero for FTS case).
+ * Note that for FTS version, A = M_{UF} - M_{US}.(M_{ES})^{-1}.M_{EF}.
  * INPUT
  *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
  *         S component is not included (because it is not random variable.)
@@ -284,7 +282,7 @@ check_overlap (struct stokes *sys, const double *pos,
  *  y[n] : F (and T)
  */
 void
-BD_atimes_minv_FU (int n, const double *x, double *y, void *user_data)
+BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 {
   struct BD_params *BD = (struct BD_params *)user_data;
 
@@ -313,8 +311,8 @@ BD_atimes_minv_FU (int n, const double *x, double *y, void *user_data)
 	  // with fixed particles
 	  double *f = (double *)malloc (sizeof (double) * np3);
 	  double *u = (double *)malloc (sizeof (double) * np3);
-	  CHECK_MALLOC (f, "BD_atimes_minv_FU");
-	  CHECK_MALLOC (u, "BD_atimes_minv_FU");
+	  CHECK_MALLOC (f, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = x[i];
@@ -353,8 +351,8 @@ BD_atimes_minv_FU (int n, const double *x, double *y, void *user_data)
 	  // with fixed particles
 	  double *ft = (double *)malloc (sizeof (double) * np6);
 	  double *uo = (double *)malloc (sizeof (double) * np6);
-	  CHECK_MALLOC (ft, "BD_atimes_minv_FU");
-	  CHECK_MALLOC (uo, "BD_atimes_minv_FU");
+	  CHECK_MALLOC (ft, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (uo, "BD_atimes_mob_FU");
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      ft[i]       = x[i];
@@ -379,54 +377,123 @@ BD_atimes_minv_FU (int n, const double *x, double *y, void *user_data)
     }
   else if (BD->sys->version == 2)
     {
-      // FTS version
-      // make struct stokes in FT version
-      struct stokes *sys_ft = stokes_copy(BD->sys);
-      CHECK_MALLOC (sys_ft, "");
-      sys_ft->version = 1; // FT
-
-      if (n != 2 * nm3)
+      static struct iter *iter = NULL;
+      if (iter == NULL)
 	{
-	  fprintf (stderr, "invalid n = %d != 6 * %d\n",
-		   n, BD->sys->nm);
-	  exit (1);
+	  iter = iter_init ("gmres", 2000, 20, 1.0e-6,
+			    BD->sys->np * 11, NULL, 1, // guess
+			    0, stderr);
 	}
-      // resistance problem in FTS version with E = 0
-      // and extract F and T
+
+      int nm5 = BD->sys->nm * 5;
+      // FTS version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  atimes_3all (n, x, y, (void *)sys_ft);
+	  double *f = (double *)malloc (sizeof (double) * nm3);
+	  double *t = (double *)malloc (sizeof (double) * nm3);
+	  double *e = (double *)malloc (sizeof (double) * nm5);
+	  double *u = (double *)malloc (sizeof (double) * nm3);
+	  double *o = (double *)malloc (sizeof (double) * nm3);
+	  double *s = (double *)malloc (sizeof (double) * nm5);
+	  CHECK_MALLOC (f, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (t, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (e, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (o, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (s, "BD_atimes_mob_FU");
+	  for (i = 0; i < nm3; i ++)
+	    {
+	      f[i] = x[i];
+	      t[i] = x[i + nm3];
+	    }
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      e[i] = 0.0;
+	    }
+
+	  solve_mob_3fts_0 (BD->sys, iter, f, t, e,
+			    u, o, s);
+	  for (i = 0; i < nm3; i ++)
+	    {
+	      y[i      ] = u[i];
+	      y[i + nm3] = o[i];
+	    }
+	  free (f);
+	  free (t);
+	  free (e);
+	  free (u);
+	  free (o);
+	  free (s);
 	}
       else
 	{
-	  // with fixed particles
-	  double *ft = (double *)malloc (sizeof (double) * np6);
-	  double *uo = (double *)malloc (sizeof (double) * np6);
-	  CHECK_MALLOC (ft, "BD_atimes_minv_FU");
-	  CHECK_MALLOC (uo, "BD_atimes_minv_FU");
+	  int nf = BD->sys->np - BD->sys->nm;
+	  int nf3 = nf * 3;
+	  int nf5 = nf * 5;
+	  double *f = (double *)malloc (sizeof (double) * nm3);
+	  double *t = (double *)malloc (sizeof (double) * nm3);
+	  double *e = (double *)malloc (sizeof (double) * nm5);
+	  double *u = (double *)malloc (sizeof (double) * nm3);
+	  double *o = (double *)malloc (sizeof (double) * nm3);
+	  double *s = (double *)malloc (sizeof (double) * nm5);
+	  double *uf = (double *)malloc (sizeof (double) * nf3);
+	  double *of = (double *)malloc (sizeof (double) * nf3);
+	  double *ef = (double *)malloc (sizeof (double) * nf5);
+	  double *ff = (double *)malloc (sizeof (double) * nf3);
+	  double *tf = (double *)malloc (sizeof (double) * nf3);
+	  double *sf = (double *)malloc (sizeof (double) * nf5);
+	  CHECK_MALLOC (f, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (t, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (e, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (o, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (s, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (uf, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (of, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (ef, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
+	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      ft[i]       = x[i];
-	      ft[i + np3] = x[i + nm3];
+	      f[i] = x[i];
+	      t[i] = x[i + nm3];
 	    }
-	  for (; i < np3; i ++)
+	  for (i = 0; i < nm5; i ++)
 	    {
-	      ft[i]       = 0.0;
-	      ft[i + np3] = 0.0;
+	      e[i] = 0.0;
+	    }
+	  for (i = 0; i < nf3; i ++)
+	    {
+	      uf[i] = 0.0;
+	      of[i] = 0.0;
+	    }
+	  for (i = 0; i < nf5; i ++)
+	    {
+	      ef[i] = 0.0;
 	    }
 
-	  atimes_3all (n, ft, uo, (void *)sys_ft);
+	  solve_mix_3fts_0 (BD->sys, iter, f, t, e, uf, of, ef,
+			    u, o, s, ff, tf, sf);
 
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      y[i]       = uo[i];
-	      y[i + nm3] = uo[i + np3];
+	      y[i      ] = u[i];
+	      y[i + nm3] = o[i];
 	    }
-	  free (ft);
-	  free (uo);
+	  free (f);
+	  free (t);
+	  free (e);
+	  free (u);
+	  free (o);
+	  free (s);
+	  free (uf);
+	  free (of);
+	  free (ef);
+	  free (ff);
+	  free (tf);
+	  free (sf);
 	}
-
-      stokes_free (sys_ft);
     }
   else
     {
@@ -547,7 +614,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
       // FTS version
       // make struct stokes in FT version
       struct stokes *sys_ft = stokes_copy(BD->sys);
-      CHECK_MALLOC (sys_ft, "BD_atimes_minv_FU");
+      CHECK_MALLOC (sys_ft, "BD_atimes_mob_FU");
       sys_ft->version = 1; // FT
 
       if (n != 2 * nm3)
@@ -567,8 +634,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  // with fixed particles
 	  double *uo = (double *)malloc (sizeof (double) * np6);
 	  double *ft = (double *)malloc (sizeof (double) * np6);
-	  CHECK_MALLOC (uo, "BD_atimes_minv_FU");
-	  CHECK_MALLOC (ft, "BD_atimes_minv_FU");
+	  CHECK_MALLOC (uo, "BD_atimes_lub_FU");
+	  CHECK_MALLOC (ft, "BD_atimes_lub_FU");
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      uo[i]       = x[i];
@@ -727,15 +794,12 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
  * (in other words, F for the fixed particles is set by zero,
  *  and S is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
- *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
- *  user_data : (struct BD_params) *BD
+ *  BD   : struct BD_params
  * OUTPUT
- *  y[n] : F (and T)
+ *  minv : (M^inf)^{-1} in UF part
  */
 void
-BD_matrix_minv_FU (struct BD_params *BD, double *mob)
+BD_matrix_minv_FU (struct BD_params *BD, double *minv)
 {
   int nm = BD->sys->nm;
   int nm3 = nm * 3;
@@ -758,8 +822,8 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
       // resistance problem in F version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_mob_3all (BD->sys, mob);
-	  lapack_inv_ (n, mob);
+	  make_matrix_mob_3all (BD->sys, minv);
+	  lapack_inv_ (n, minv);
 	}
       else
 	{
@@ -779,7 +843,7 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
 		    {
 		      for (jj = 0; jj < 3; jj ++)
 			{
-			  mob [(i*3+ii)*n+(j*3+jj)]
+			  minv [(i*3+ii)*n+(j*3+jj)]
 			    = m[(i*3+ii)*np3+(j*3+jj)];
 			}
 		    }
@@ -796,8 +860,8 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
       // resistance problem in FT version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_mob_3all (BD->sys, mob);
-	  lapack_inv_ (n, mob);
+	  make_matrix_mob_3all (BD->sys, minv);
+	  lapack_inv_ (n, minv);
 	}
       else
 	{
@@ -816,7 +880,7 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
 		    {
 		      for (jj = 0; jj < 6; jj ++)
 			{
-			  mob [(i*6+ii)*n+(j*6+jj)]
+			  minv [(i*6+ii)*n+(j*6+jj)]
 			    = m[(i*6+ii)*np6+(j*6+jj)];
 			}
 		    }
@@ -831,13 +895,13 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
       n = 2 * nm3;
 
       // resistance problem in FTS version with E = 0
-      double *m    = (double *)malloc (sizeof (double) * np121);
-      double *minv = (double *)malloc (sizeof (double) * np36);
-      CHECK_MALLOC (m,    "BD_matrix_minv_FU");
-      CHECK_MALLOC (minv, "BD_matrix_minv_FU");
+      double *m  = (double *)malloc (sizeof (double) * np121);
+      double *mi = (double *)malloc (sizeof (double) * np36);
+      CHECK_MALLOC (m,  "BD_matrix_minv_FU");
+      CHECK_MALLOC (mi, "BD_matrix_minv_FU");
 
       make_matrix_mob_3all (BD->sys, m);
-      BD_minv_FU_in_FTS (BD->sys->np, m, minv);
+      BD_minv_FU_in_FTS (BD->sys->np, m, mi);
 
       // extract mobile part
       for (i = 0; i < nm; i ++)
@@ -848,14 +912,14 @@ BD_matrix_minv_FU (struct BD_params *BD, double *mob)
 		{
 		  for (jj = 0; jj < 6; jj ++)
 		    {
-		      mob [(i*6+ii)*n+(j*6+jj)]
-			= minv[(i*6+ii)*np6+(j*6+jj)];
+		      minv [(i*6+ii)*n+(j*6+jj)]
+			= mi[(i*6+ii)*np6+(j*6+jj)];
 		    }
 		}
 	    }
 	}
       free (m);
-      free (minv);
+      free (mi);
     }
   else
     {
@@ -1139,7 +1203,7 @@ calc_brownian_force (struct BD_params *BD,
 	{
 	  // a_minv[] is not defined.
 	  dnaupd_wrap_min_max (n, BD->eig_minv,
-			       BD_atimes_minv_FU, (void *)BD, BD->eps);
+			       BD_atimes_mob_FU, (void *)BD, BD->eps);
 	  fprintf (stderr, "# eig_minv = %e, %e\n",
 		   BD->eig_minv[0], BD->eig_minv[1]);
 	  chebyshev_coef (BD->n_minv, BD_inv_sqrt,
@@ -1151,16 +1215,16 @@ calc_brownian_force (struct BD_params *BD,
       chebyshev_eval_atimes (BD->n_minv, BD->a_minv,
 			     n, y_minv, z,
 			     BD->eig_minv[0], BD->eig_minv[1],
-			     BD_atimes_minv_FU, (void *)BD);
+			     BD_atimes_mob_FU, (void *)BD);
       err_minv = chebyshev_error_minvsqrt (n, y_minv, z,
-					   BD_atimes_minv_FU, (void *)BD);
+					   BD_atimes_mob_FU, (void *)BD);
       // check the accuracy
       if (err_minv > BD->eps)
 	{
 	  fprintf (stderr, "# re-calculate a_minv (err_cheb = %e)", err_minv);
 	  // re-estimate a_minv[]
 	  dnaupd_wrap_min_max (n, BD->eig_minv,
-			       BD_atimes_minv_FU, (void *)BD, BD->eps);
+			       BD_atimes_mob_FU, (void *)BD, BD->eps);
 	  chebyshev_coef (BD->n_minv, BD_inv_sqrt,
 			  BD->eig_minv[0], BD->eig_minv[1], BD->a_minv);
 
@@ -1168,9 +1232,9 @@ calc_brownian_force (struct BD_params *BD,
 	  chebyshev_eval_atimes (BD->n_minv, BD->a_minv,
 				 n, y_minv, z, 
 				 BD->eig_minv[0], BD->eig_minv[1],
-				 BD_atimes_minv_FU, (void *)BD);
+				 BD_atimes_mob_FU, (void *)BD);
 	  err_minv = chebyshev_error_minvsqrt (n, y_minv, z,
-					       BD_atimes_minv_FU, (void *)BD);
+					       BD_atimes_mob_FU, (void *)BD);
 	  fprintf (stderr, " => err = %e\n", err_minv);
 	}
       free (y_minv);
@@ -1201,7 +1265,7 @@ calc_brownian_force (struct BD_params *BD,
 
 	  for (i = 0; i < n; i ++)
 	    {
-	      z[i] = 0.0;
+	      z_lub[i] = 0.0;
 	      for (j = 0; j < n; j ++)
 		{
 		  z_lub[i] += l[i*n+j] * y_lub[j];
@@ -1649,7 +1713,7 @@ BD_evolve_mid (struct BD_params *BD,
 
   int i;
 
- BD_evolve_mid_REDO:
+  //BD_evolve_mid_REDO:
   // set configuration for calc_brownian_force()
   stokes_set_pos (BD->sys, x);
   calc_brownian_force (BD, n, z);
@@ -1892,7 +1956,7 @@ BD_evolve_BB03 (struct BD_params *BD,
 
   int i;
 
- BD_evolve_BB03_REDO:
+  //BD_evolve_BB03_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
   calc_brownian_force (BD, n, z);
@@ -2156,7 +2220,7 @@ BD_evolve_BM97 (struct BD_params *BD,
   int i;
 
 
- BD_evolve_BM97_REDO:
+  //BD_evolve_BM97_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
   calc_brownian_force (BD, n, z);
