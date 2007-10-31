@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.2 2007/10/30 04:32:47 kichiki Exp $
+ * $Id: brownian.c,v 1.3 2007/10/31 03:32:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1154,16 +1154,15 @@ dgeev_min_max (int n,
  * INPUT
  *  BD             : struct BD_params
  *                   (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
- *  n              : dimension of the linear set of equation
- *                   (3*np for F, 6*np for FT, 11*np for FTS)
  * OUTPUT
  *  z[n]           : random vector, with which F^B = z * sqrt(2/(peclet * dt))
  */
 void
 calc_brownian_force (struct BD_params *BD,
-		     int n,
 		     double *z)
 {
+  int n = BD_get_n (BD->sys);
+
   /**
    * M^{-1} part
    */
@@ -1505,32 +1504,14 @@ FTS_free (struct FTS *FTS)
 }
 
 
+/* dimension for BD scheme:
+ * n = nm * 3 for F version -- velocity of mobile particles
+ *   = nm * 6 for FT and FTS versions
+ *                -- translational and angular velocities of mobile particles
+ */
 int
-stokes_get_n (struct stokes *sys)
+BD_get_n (struct stokes *sys)
 {
-  /*
-  int n = 0;
-  if (sys->version == 0)
-    {
-      // F version
-      n = sys->np * 3;
-    }
-  else if (sys->version == 1)
-    {
-      // FT version
-      n = sys->np * 6;
-    }
-  else if (sys->version == 2)
-    {
-      // FTS version
-      n = sys->np * 11;
-    }
-  else
-    {
-      fprintf (stderr, "invalid version %d\n", sys->version);
-      exit (1);
-    }
-  */
   int n = 0;
   if (sys->version == 0)
     {
@@ -1661,12 +1642,11 @@ reset_dt_by_ol (struct stokes *sys,
 /* evolve position of particles -- the mid-point scheme
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
@@ -1686,7 +1666,7 @@ BD_evolve_mid (struct BD_params *BD,
   /**
    * memory allocation for working area
    */
-  int n = stokes_get_n (BD->sys);
+  int n = BD_get_n (BD->sys);
   double *z = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (z, "BD_evolve_mid");
 
@@ -1716,7 +1696,7 @@ BD_evolve_mid (struct BD_params *BD,
   //BD_evolve_mid_REDO:
   // set configuration for calc_brownian_force()
   stokes_set_pos (BD->sys, x);
-  calc_brownian_force (BD, n, z);
+  calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
  BD_evolve_mid_REDO_scale:
@@ -1898,12 +1878,11 @@ BD_evolve_mid (struct BD_params *BD,
  * reference : Banchio and Brady (2003) Phys. Fluids
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
@@ -1919,7 +1898,7 @@ BD_evolve_BB03 (struct BD_params *BD,
   /**
    * memory allocation for working area
    */
-  int n = stokes_get_n (BD->sys);
+  int n = BD_get_n (BD->sys);
   double *z = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (z, "BD_evolve_BB03");
 
@@ -1959,7 +1938,7 @@ BD_evolve_BB03 (struct BD_params *BD,
   //BD_evolve_BB03_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
-  calc_brownian_force (BD, n, z);
+  calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
  BD_evolve_BB03_REDO_scale:
@@ -2165,12 +2144,11 @@ BD_evolve_BB03 (struct BD_params *BD,
  * reference : Ball and Melrose (1997)
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
@@ -2186,7 +2164,7 @@ BD_evolve_BM97 (struct BD_params *BD,
   /**
    * memory allocation for working area
    */
-  int n = stokes_get_n (BD->sys);
+  int n = BD_get_n (BD->sys);
   double *z = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (z, "BD_evolve_BM97");
 
@@ -2223,7 +2201,7 @@ BD_evolve_BM97 (struct BD_params *BD,
   //BD_evolve_BM97_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
-  calc_brownian_force (BD, n, z);
+  calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
 
@@ -2296,7 +2274,7 @@ BD_evolve_BM97 (struct BD_params *BD,
       //goto BD_evolve_BM97_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
       fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BM97: overlap in 1st step. dt = %f\n", dt);
+      fprintf (stderr, "# BM97: overlap in 1st step. dt = %e\n", dt);
       goto BD_evolve_BM97_REDO_scale;
     }
 
@@ -2359,7 +2337,7 @@ BD_evolve_BM97 (struct BD_params *BD,
       //goto BD_evolve_BM97_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
       fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BM97: overlap in 2nd step. dt = %f\n", dt);
+      fprintf (stderr, "# BM97: overlap in 2nd step. dt = %e\n", dt);
       goto BD_evolve_BM97_REDO_scale;
     }
 

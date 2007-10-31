@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.2 2007/10/30 04:33:16 kichiki Exp $
+ * $Id: brownian.h,v 1.3 2007/10/31 03:33:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -217,14 +217,11 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub);
  * INPUT
  *  BD             : struct BD_params
  *                   (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
- *  n              : dimension of the linear set of equation
- *                   (3*np for F, 6*np for FT, 11*np for FTS)
  * OUTPUT
  *  z[n]           : random vector, with which F^B = z * sqrt(2/(peclet * dt))
  */
 void
 calc_brownian_force (struct BD_params *BD,
-		     int n,
 		     double *z);
 
 
@@ -246,6 +243,7 @@ evolve_Euler_3all (struct stokes *sys,
 		   double dt,
 		   double *x, double *q);
 
+
 /*
  * INPUT
  *  sys : struct stokes
@@ -258,8 +256,13 @@ void
 FTS_free (struct FTS *FTS);
 
 
+/* dimension for BD scheme:
+ * n = nm * 3 for F version -- velocity of mobile particles
+ *   = nm * 6 for FT and FTS versions
+ *                -- translational and angular velocities of mobile particles
+ */
 int
-stokes_get_n (struct stokes *sys);
+BD_get_n (struct stokes *sys);
 
 
 /* wrapper for BD_evolve()
@@ -283,15 +286,15 @@ BD_ode_evolve (struct BD_params *BD,
 	       double *t, double t_out, double *dt,
 	       double *y);
 
+
 /* evolve position of particles -- the mid-point scheme
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
@@ -306,12 +309,11 @@ BD_evolve_mid (struct BD_params *BD,
  * reference : Banchio and Brady (2003) Phys. Fluids
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
@@ -322,17 +324,15 @@ BD_evolve_BB03 (struct BD_params *BD,
 		double *x, double *q,
 		double dt);
 
-
 /* evolve position of particles -- Ball-Melrose scheme
  * reference : Ball and Melrose (1997)
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E are used.)
+ *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
  *  dt      : time step (scaled by a/U)
- *  peclet  : peclet number
  * OUTPUT
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
