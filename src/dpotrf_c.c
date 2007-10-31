@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dpotf2_()
- * Copyright (C) 2007 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dpotrf_c.c,v 1.2 2007/10/29 03:57:29 kichiki Exp $
+ * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: dpotrf_c.c,v 1.3 2007/10/31 06:04:55 kichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -146,8 +146,10 @@ void dpotf2_(char *uplo, int *n, double *a, int *lda, int *info);
  *  v[n*n] : eigenvectors
  *           k-th eigen vector (corresponding to l[k])
  *           is v[k*n+i] with i = 0 ~ n-1.
+ *  returned value : info
  */
-void dpotrf_wrap (int n, const double *a, double *l)
+int
+dpotrf_wrap (int n, const double *a, double *l)
 {
   char uplo = 'L';
 
@@ -177,6 +179,8 @@ void dpotrf_wrap (int n, const double *a, double *l)
 	  l[i*n+j] = 0.0;
 	}
     }
+
+  return (info);
 }
 
 /*
@@ -187,8 +191,10 @@ void dpotrf_wrap (int n, const double *a, double *l)
  *  v[n*n] : eigenvectors
  *           k-th eigen vector (corresponding to l[k])
  *           is v[k*n+i] with i = 0 ~ n-1.
+ *  returned value : info
  */
-void dpotf2_wrap (int n, const double *a, double *l)
+int
+dpotf2_wrap (int n, const double *a, double *l)
 {
   char uplo = 'L';
 
@@ -218,4 +224,6 @@ void dpotf2_wrap (int n, const double *a, double *l)
 	  l[i*n+j] = 0.0;
 	}
     }
+
+  return (info);
 }
