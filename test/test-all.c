@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.11 2007/10/27 23:10:47 kichiki Exp $
+ * $Id: test-all.c,v 1.12 2007/11/01 04:59:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,6 +41,7 @@
 
 #include "check-dpotrf_c.h"
 #include "check-brownian.h"
+#include "check-sqrt-dgeev.h"
 
 
 /* main program */
@@ -172,6 +173,9 @@ main (int argc, char** argv)
   // check-brownian.c
   check += check_cheb_minv (10, 1, 1.9e-14);
   check += check_cheb_lub  (10, 1, 6.1e-15);
+
+  // check-sqrt-dgeev.c
+  check += check_BD_sqrt_by_dgeev (100, 1, 2.2e-13);
 
 
   fprintf (stdout,
