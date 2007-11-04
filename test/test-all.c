@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.12 2007/11/01 04:59:05 kichiki Exp $
+ * $Id: test-all.c,v 1.13 2007/11/04 00:18:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,6 +43,8 @@
 #include "check-brownian.h"
 #include "check-sqrt-dgeev.h"
 
+#include "check-matrix.h"
+
 
 /* main program */
 int
@@ -59,9 +61,12 @@ main (int argc, char** argv)
   check += check_bd (100, 100, 2.005, 1, 2.0e-15);
   check += check_dgeev_c (1, 2.4e-15);
 
-
   // check-mul-matrices.c
   check += check_mul_matrices (200, 1, 0.0);
+
+  // check-matrix.c
+  check += benchmark_dgemm (200, 1, 1.8e-15);
+  check += benchmark_mul_matrices (200, 1, 0.0);
 
   // check-solve-gen-linear.c
   check += check_split_merge (200, 200, 1, 0.0);
@@ -173,6 +178,12 @@ main (int argc, char** argv)
   // check-brownian.c
   check += check_cheb_minv (10, 1, 1.9e-14);
   check += check_cheb_lub  (10, 1, 6.1e-15);
+
+  // check-brownian.c -- serious tests for calc_brownian_force()
+  check += check_minv_FU (1, 1.5e-10);
+  check += check_lub_FU (1, 1.9e-13);
+  check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
+  check += check_inv_by_submatrices (50, 50, 1, 1.2e-10);
 
   // check-sqrt-dgeev.c
   check += check_BD_sqrt_by_dgeev (100, 1, 2.2e-13);
