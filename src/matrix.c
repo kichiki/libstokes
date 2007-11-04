@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.9 2007/11/04 01:12:37 kichiki Exp $
+ * $Id: matrix.c,v 1.10 2007/11/04 03:27:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -127,7 +127,7 @@ mul_left_sq (double * A, int na1, int na2,
   free (tmp);
 }
 
-/*
+/* D = a * A + b * B . C
  * INPUT
  *  A [na1, na2]
  *  B [nb1, nb2]
@@ -138,7 +138,7 @@ mul_left_sq (double * A, int na1, int na2,
  * OUTPUT
  *  D [na1, na2] = a * A [na1, na2] + b * B [nb1, nb2] . C [nc1, nc2]
  */
-static void
+void
 add_and_mul (const double *A, int na1, int na2,
 	     const double *B, int nb1, int nb2,
 	     const double *C, int nc1, int nc2,
