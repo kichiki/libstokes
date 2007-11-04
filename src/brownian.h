@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.3 2007/10/31 03:33:10 kichiki Exp $
+ * $Id: brownian.h,v 1.4 2007/11/04 03:26:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -157,6 +157,7 @@ BD_params_free (struct BD_params *BD);
 void
 BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data);
 
+
 /* calculate y = A.x for Brownian force, where A = L (lubrication)
  * so that give sqrt(x) for chebyshev.
  * note that FU part (for mobile particles) are just extracted
@@ -187,6 +188,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data);
 void
 BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU);
 
+
 /* make mobility matrix (M^inf)^{-1} in UF part (for mobile particles)
  * (in other words, F for the fixed particles is set by zero,
  *  and S is also set by zero for FTS case).
@@ -197,6 +199,7 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU);
  */
 void
 BD_matrix_minv_FU (struct BD_params *BD, double *minv);
+
 
 /* make lubrication matrix L in UF part (for mobile particles)
  * (in other words, F for the fixed particles is set by zero,
@@ -213,12 +216,20 @@ void
 BD_matrix_lub_FU (struct BD_params *BD, double *lub);
 
 
+/* calculate sqrt of the matrix a[n*n] by dgeev()
+ */
+int
+BD_sqrt_by_dgeev (int n, const double *a, double *s);
+
+
 /*
  * INPUT
- *  BD             : struct BD_params
- *                   (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
+ *  BD   : struct BD_params
+ *         (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
  * OUTPUT
- *  z[n]           : random vector, with which F^B = z * sqrt(2/(peclet * dt))
+ *  z[n] : random vector, with which F^B = z * sqrt(2/(peclet * dt))
+ *         in FT and FTS, first nm3 are the force, the next nm3 are the torque
+ *         (different strage from FTS where f,t,s are ordered particle-wise).
  */
 void
 calc_brownian_force (struct BD_params *BD,
