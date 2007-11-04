@@ -1,7 +1,7 @@
 /* header file for matrix.c --
  * matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.h,v 1.3 2007/03/18 22:58:13 kichiki Exp $
+ * $Id: matrix.h,v 1.4 2007/11/04 01:13:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ void
 solve_linear (int n1, int n2,
 	      double * A, double * B, double * C, double * D,
 	      double * I, double * J, double * K, double * L);
-/*
+/* multiply two matrices (a wrapper to BLAS routine)
  * INPUT
  *  A [na1, na2]
  *  B [nb1, nb2]

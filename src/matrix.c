@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.8 2007/05/04 01:16:53 kichiki Exp $
+ * $Id: matrix.c,v 1.9 2007/11/04 01:12:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,6 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+#include "../config.h" // for HAVE_*_H
+
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 #include "dgetri_c.h" /* lapack_inv_() */
@@ -300,7 +302,7 @@ solve_linear (int n1, int n2,
     }
 }
 
-/*
+/* multiply two matrices (a wrapper to BLAS routine)
  * INPUT
  *  A [na1, na2]
  *  B [nb1, nb2]
