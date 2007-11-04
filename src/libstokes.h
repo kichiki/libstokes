@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.41 2007/10/27 15:56:37 kichiki Exp $
+ * $Id: libstokes.h,v 1.42 2007/11/04 17:03:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -877,8 +877,6 @@ struct bond_pairs {
 };
 
 struct bonds {
-  double r2; // square of the max distance for F^{sp}
-
   /* table for bond type */
   int n;      // number of bond types
   int *type;  /* type of the spring
@@ -1002,6 +1000,8 @@ guile_get_bonds (const char * var);
 
 /* from excluded-volume.h */
 struct EV {
+  double r2; // square of the max distance for F^{EV}
+
   /* table for chain type */
   int n;     // number of chain types
   double *l; // characteristic distance = (1/3) N_{K,s} b_{K}^2
@@ -1016,7 +1016,6 @@ struct EV {
 	      * negative value == no assignement to the chain
 	      */
 };
-
 
 /* initialize struct EV
  * INPUT
