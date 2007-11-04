@@ -1,7 +1,7 @@
 /* header file for ewald-3fts-matrix.h --
  * Solvers for 3 dimensional FTS version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.h,v 2.7 2007/10/27 03:50:59 kichiki Exp $
+ * $Id: ewald-3fts-matrix.h,v 2.8 2007/11/04 03:09:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,14 @@
 
 
 /** natural resistance problem **/
+/*
+ * INPUT
+ *  r [np * 11 * np * 11] : this is INVERSED form
+ * OUTPUT
+ *  r [np * 11 * np * 11] : this is EXTRACTED form
+ */
+void
+trans_ext (int np, double *r);
 /* solve natural resistance problem in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -95,6 +103,10 @@ solve_res_lub_3fts_matrix_0 (struct stokes * sys,
 
 
 /** natural mobility problem **/
+void
+split_matrix_3fts (int np, const double *mat,
+		   double * mat_ll, double * mat_lh,
+		   double * mat_hl, double * mat_hh);
 /* solve natural mobility problem in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT

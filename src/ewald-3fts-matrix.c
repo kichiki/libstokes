@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.15 2007/10/27 23:19:39 kichiki Exp $
+ * $Id: ewald-3fts-matrix.c,v 2.16 2007/11/04 03:08:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,7 +66,7 @@ test_symmetric (int n, const double * mat, double tiny)
  * OUTPUT
  *  r [np * 11 * np * 11] : this is EXTRACTED form
  */
-static void
+void
 trans_ext (int np, double *r)
 {
   static double
@@ -496,7 +496,7 @@ trans_mat_ext2ext (int np, double * mat)
 
   free (tmp);
 }
-static void
+void
 split_matrix_3fts (int np, const double *mat,
 		   double * mat_ll, double * mat_lh,
 		   double * mat_hl, double * mat_hh)
