@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.3 2007/10/31 03:32:48 kichiki Exp $
+ * $Id: brownian.c,v 1.4 2007/11/04 03:21:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,6 +42,7 @@
 #include <dgetri_c.h> // lapack_inv_()
 #include <lub-matrix.h> // make_matrix_lub_3f()
 #include <dpotrf_c.h> // dpotrf_wrap()
+#include <matrix.h> // mul_matrices()
 // check
 #include <dgeev_c.h>
 #include <libiter.h>
@@ -181,9 +182,13 @@ BD_inv_sqrt (double x)
 /* return numbers of overlapping pairs
  */
 struct overlap {
-  double r2, a2;
-  int i, j, k;
+  double r2; // square of distance for the overlapping pair
+  double a2; // (a_i + a_j)^2 for the overlapping pair
+  int i; // particle index
+  int j; // particle index
+  int k; // lattice index
 };
+
 static int
 check_overlap (struct stokes *sys, const double *pos,
 	       struct overlap *ol)
@@ -286,8 +291,11 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 {
   struct BD_params *BD = (struct BD_params *)user_data;
 
+  int nm  = BD->sys->nm;
+  int nm3 = nm * 3;
+  int nm6 = nm * 6;
+
   int np3 = BD->sys->np * 3;
-  int nm3 = BD->sys->nm * 3;
   int np6 = BD->sys->np * 6;
 
   int i;
@@ -298,11 +306,11 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
       if (n != nm3)
 	{
 	  fprintf (stderr, "invalid n = %d != 3 * %d\n",
-		   n, BD->sys->nm);
+		   n, nm);
 	  exit (1);
 	}
       // resistance problem in F version
-      if (BD->sys->np == BD->sys->nm)
+      if (BD->sys->np == nm)
 	{
 	  atimes_3all (n, x, y, (void *)BD->sys);
 	}
@@ -338,11 +346,11 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
       if (n != 2 * nm3)
 	{
 	  fprintf (stderr, "invalid n = %d != 6 * %d\n",
-		   n, BD->sys->nm);
+		   n, nm);
 	  exit (1);
 	}
       // resistance problem in FT version
-      if (BD->sys->np == BD->sys->nm)
+      if (BD->sys->np == nm)
 	{
 	  atimes_3all (n, x, y, (void *)BD->sys);
 	}
@@ -353,6 +361,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  double *uo = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (ft, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (uo, "BD_atimes_mob_FU");
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      ft[i]       = x[i];
@@ -363,13 +372,28 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	      ft[i]       = 0.0;
 	      ft[i + np3] = 0.0;
 	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      ft[i] = x[i];
+	    }
+	  for (; i < np6; i ++)
+	    {
+	      ft[i] = 0.0;
+	    }
 
 	  atimes_3all (n, ft, uo, (void *)BD->sys);
 
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      y[i]       = uo[i];
 	      y[i + nm3] = uo[i + np3];
+	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      y[i] = uo[i];
 	    }
 	  free (ft);
 	  free (uo);
@@ -385,9 +409,10 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 			    0, stderr);
 	}
 
-      int nm5 = BD->sys->nm * 5;
+      int ii;
+      int nm5 = nm * 5;
       // FTS version
-      if (BD->sys->np == BD->sys->nm)
+      if (BD->sys->np == nm)
 	{
 	  double *f = (double *)malloc (sizeof (double) * nm3);
 	  double *t = (double *)malloc (sizeof (double) * nm3);
@@ -401,6 +426,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (o, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (s, "BD_atimes_mob_FU");
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = x[i];
@@ -410,13 +436,36 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	    {
 	      e[i] = 0.0;
 	    }
+	  */
+	  for (i = 0; i < nm; i ++)
+	    {
+	      for (ii = 0; ii < 3; ii ++)
+		{
+		  f[i*3+ii] = x[i*6+  ii];
+		  t[i*3+ii] = x[i*6+3+ii];
+		}
+	      for (ii = 0; ii < 5; ii ++)
+		{
+		  e[i*5+ii] = 0.0;
+		}
+	    }
 
 	  solve_mob_3fts_0 (BD->sys, iter, f, t, e,
 			    u, o, s);
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      y[i      ] = u[i];
 	      y[i + nm3] = o[i];
+	    }
+	  */
+	  for (i = 0; i < nm; i ++)
+	    {
+	      for (ii = 0; ii < 3; ii ++)
+		{
+		  y[i*6+  ii] = u[i*3+ii];
+		  y[i*6+3+ii] = o[i*3+ii];
+		}
 	    }
 	  free (f);
 	  free (t);
@@ -427,7 +476,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	}
       else
 	{
-	  int nf = BD->sys->np - BD->sys->nm;
+	  int nf = BD->sys->np - nm;
 	  int nf3 = nf * 3;
 	  int nf5 = nf * 5;
 	  double *f = (double *)malloc (sizeof (double) * nm3);
@@ -454,10 +503,20 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = x[i];
 	      t[i] = x[i + nm3];
+	    }
+	  */
+	  for (i = 0; i < nm; i ++)
+	    {
+	      for (ii = 0; ii < 3; ii ++)
+		{
+		  f[i*3+ii] = x[i*6+  ii];
+		  t[i*3+ii] = x[i*6+3+ii];
+		}
 	    }
 	  for (i = 0; i < nm5; i ++)
 	    {
@@ -475,11 +534,20 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  solve_mix_3fts_0 (BD->sys, iter, f, t, e, uf, of, ef,
 			    u, o, s, ff, tf, sf);
-
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      y[i      ] = u[i];
 	      y[i + nm3] = o[i];
+	    }
+	  */
+	  for (i = 0; i < nm; i ++)
+	    {
+	      for (ii = 0; ii < 3; ii ++)
+		{
+		  y[i*6+  ii] = u[i*3+ii];
+		  y[i*6+3+ii] = o[i*3+ii];
+		}
 	    }
 	  free (f);
 	  free (t);
@@ -520,8 +588,9 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 {
   struct BD_params *BD = (struct BD_params *)user_data;
 
-  int np3 = BD->sys->np * 3;
   int nm3 = BD->sys->nm * 3;
+  int nm6 = BD->sys->nm * 6;
+  int np3 = BD->sys->np * 3;
   int np6 = BD->sys->np * 6;
 
   int i;
@@ -587,6 +656,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  double *ft = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (ft, "BD_atimes_lub_FU");
 	  CHECK_MALLOC (uo, "BD_atimes_lub_FU");
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      uo[i]       = x[i];
@@ -597,13 +667,28 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	      uo[i]       = 0.0;
 	      uo[i + np3] = 0.0;
 	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      uo[i] = x[i];
+	    }
+	  for (; i < np6; i ++)
+	    {
+	      uo[i] = 0.0;
+	    }
 
 	  calc_lub_3ft (BD->sys, uo, ft);
 
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      y[i]       = ft[i];
 	      y[i + nm3] = ft[i + np3];
+	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      y[i] = ft[i];
 	    }
 	  free (uo);
 	  free (ft);
@@ -636,6 +721,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  double *ft = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (uo, "BD_atimes_lub_FU");
 	  CHECK_MALLOC (ft, "BD_atimes_lub_FU");
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      uo[i]       = x[i];
@@ -646,13 +732,28 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	      uo[i]       = 0.0;
 	      uo[i + np3] = 0.0;
 	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      uo[i]       = x[i];
+	    }
+	  for (; i < np6; i ++)
+	    {
+	      uo[i]       = 0.0;
+	    }
+
 
 	  calc_lub_3ft (sys_ft, uo, ft);
-
+	  /*
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      y[i]       = ft[i];
 	      y[i + nm3] = ft[i + np3];
+	    }
+	  */
+	  for (i = 0; i < nm6; i ++)
+	    {
+	      y[i]       = ft[i];
 	    }
 	  free (uo);
 	  free (ft);
@@ -701,85 +802,49 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
 {
   int np5  = np * 5;
   int np6  = np * 6;
-  int np11 = np * 11;
   double *a = (double *)malloc (sizeof (double) * np6 * np6);
   double *b = (double *)malloc (sizeof (double) * np6 * np5);
   double *c = (double *)malloc (sizeof (double) * np5 * np6);
   double *d = (double *)malloc (sizeof (double) * np6 * np6);
   double *x = (double *)malloc (sizeof (double) * np5 * np6);
-  double *y = (double *)malloc (sizeof (double) * np6 * np6);
   CHECK_MALLOC (a, "BD_minv_FU_in_FTS");
   CHECK_MALLOC (b, "BD_minv_FU_in_FTS");
   CHECK_MALLOC (c, "BD_minv_FU_in_FTS");
-  CHECK_MALLOC (c, "BD_minv_FU_in_FTS");
+  CHECK_MALLOC (d, "BD_minv_FU_in_FTS");
   CHECK_MALLOC (x, "BD_minv_FU_in_FTS");
-  CHECK_MALLOC (y, "BD_minv_FU_in_FTS");
 
   // decompose m into a,b,c,d
-  int i, j;
-  for (i = 0; i < np; i ++)
-    {
-      for (j = 0; j < np; j ++)
-	{
-	  int ii, jj;
-	  for (ii = 0; ii < 6; ii ++)
-	    {
-	      for (jj = 0; jj < 6; jj ++)
-		{
-		  a[(i*6+ii)*np6+(j*6+jj)] = m[(i*11+ii)*np11+(j*11+jj)];
-		}
-	      for (jj = 6; jj < 11; jj ++)
-		{
-		  b[(i*6+ii)*np5+(j*5+jj-6)] = m[(i*11+ii)*np11+(j*11+jj)];
-		}
-	    }
-	  for (ii = 6; ii < 11; ii ++)
-	    {
-	      for (jj = 0; jj < 6; jj ++)
-		{
-		  c[(i*5+ii-6)*np6+(j*6+jj)] = m[(i*11+ii)*np11+(j*11+jj)];
-		}
-	      for (jj = 6; jj < 11; jj ++)
-		{
-		  d[(i*5+ii-6)*np5+(j*5+jj-6)] = m[(i*11+ii)*np11+(j*11+jj)];
-		}
-	    }
-	}
-    }
+  split_matrix_3fts (np, m, a, b, c, d);
 
   // d = d^{-1}
   lapack_inv_ (np5, d);
 
-  int k;
   // x[np5,np6] = d[np5,np5] * c[np5,np6]
-  for (i = 0; i < np5; i ++)
-    {
-      for (j = 0; j < np6; j ++)
-	{
-	  x[i*np6+j] = 0.0;
-	  for (k = 0; k < np5; k ++)
-	    {
-	      x[i*np6+j] = d[i*np5+k] * c[k*np6+j];
-	    }
-	}
-    }
+  mul_matrices (d, np5, np5,
+		c, np5, np6,
+		x);
+  // minv_FU[] = a[] - b[] * x[]
+  // D[] = a * A[] + b * B[] . C[]
+  add_and_mul (a, np6, np6,
+	       b, np6, np5,
+	       x, np5, np6,
+	       1.0, -1.0,
+	       minv_FU);
+  /*
+  double *y = (double *)malloc (sizeof (double) * np6 * np6);
+  CHECK_MALLOC (y, "BD_minv_FU_in_FTS");
   // y[np6,np6] = b[np6,np5] * x[np5,np6]
-  for (i = 0; i < np6; i ++)
-    {
-      for (j = 0; j < np6; j ++)
-	{
-	  y[i*np6+j] = 0.0;
-	  for (k = 0; k < np5; k ++)
-	    {
-	      y[i*np6+j] = b[i*np5+k] * x[k*np6+j];
-	    }
-	}
-    }
+  mul_matrices (b, np6, np5,
+		x, np5, np6,
+		y);
   // a = a - b.d^{-1}.c
+  int i;
   for (i = 0; i < np6 * np6; i ++)
     {
       minv_FU [i] = a[i] - y[i];
     }
+  free (y);
+  */
   lapack_inv_ (np6, minv_FU);
 
   free (a);
@@ -787,7 +852,6 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
   free (c);
   free (d);
   free (x);
-  free (y);
 }
 
 /* make mobility matrix (M^inf)^{-1} in UF part (for mobile particles)
@@ -807,9 +871,6 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
   int np3 = BD->sys->np * 3;
   int np6 = BD->sys->np * 6;
   int np11 = BD->sys->np * 11;
-  int np9 = np3 * np3;
-  int np36 = np6 * np6;
-  int np121 = np11 * np11;
 
   int n;
   int i, j;
@@ -828,7 +889,7 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
       else
 	{
 	  // with fixed particles
-	  double *m = (double *)malloc (sizeof (double) * np9);
+	  double *m = (double *)malloc (sizeof (double) * np3 * np3);
 	  CHECK_MALLOC (m, "BD_matrix_minv_FU");
 
 	  make_matrix_mob_3all (BD->sys, m);
@@ -865,7 +926,7 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
 	}
       else
 	{
-	  double *m = (double *)malloc (sizeof (double) * np36);
+	  double *m = (double *)malloc (sizeof (double) * np6 * np6);
 	  CHECK_MALLOC (m, "BD_matrix_minv_FU");
 
 	  make_matrix_mob_3all (BD->sys, m);
@@ -895,15 +956,15 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
       n = 2 * nm3;
 
       // resistance problem in FTS version with E = 0
-      double *m  = (double *)malloc (sizeof (double) * np121);
-      double *mi = (double *)malloc (sizeof (double) * np36);
+      double *m  = (double *)malloc (sizeof (double) * np11 * np11);
+      double *mi = (double *)malloc (sizeof (double) * np6 * np6);
       CHECK_MALLOC (m,  "BD_matrix_minv_FU");
       CHECK_MALLOC (mi, "BD_matrix_minv_FU");
 
       make_matrix_mob_3all (BD->sys, m);
       BD_minv_FU_in_FTS (BD->sys->np, m, mi);
 
-      // extract mobile part
+      // extract FT mobile part
       for (i = 0; i < nm; i ++)
 	{
 	  for (j = 0; j < nm; j ++)
@@ -1031,7 +1092,7 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
 
       // make struct stokes in FT version
       struct stokes *sys_ft = stokes_copy(BD->sys);
-      CHECK_MALLOC (sys_ft, "");
+      CHECK_MALLOC (sys_ft, "BD_matrix_lub_FU");
       sys_ft->version = 1; // FT
 
       // resistance problem in FTS version with E = 0
@@ -1150,12 +1211,82 @@ dgeev_min_max (int n,
 }
 
 
+static void
+transpose (int n, const double *a, double *at)
+{
+  int i, j;
+  for (i = 0; i < n; i ++)
+    {
+      for (j = 0; j < n; j ++)
+	{
+	  at[i*n+j] = a[j*n+i];
+	}
+    }
+}
+
+/* calculate sqrt of the matrix a[n*n] by dgeev()
+ */
+int
+BD_sqrt_by_dgeev (int n, const double *a, double *s)
+{
+  double tiny = 1.0e-15;
+
+  double *wr = (double *)malloc (sizeof (double) * n);
+  double *wi = (double *)malloc (sizeof (double) * n);
+  double *v  = (double *)malloc (sizeof (double) * n * n);
+  double *vi = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (wr, "BD_sqrt_by_dgeev");
+  CHECK_MALLOC (wi, "BD_sqrt_by_dgeev");
+  CHECK_MALLOC (v,  "BD_sqrt_by_dgeev");
+  CHECK_MALLOC (vi, "BD_sqrt_by_dgeev");
+
+  dgeev_wrap (n, a, wr, wi, v);
+
+
+  // vi = (v^t)^{-1}
+  transpose (n, v, vi);
+  lapack_inv_ (n, vi);
+
+  int i, j, k;
+  // s = A^(1/2)
+  for (i = 0; i < n; i ++)
+    {
+      if (fabs (wi[i]) > tiny || wr[i] < 0.0)
+	{
+	  free (wr);
+	  free (wi);
+	  free (v);
+	  free (vi);
+
+	  return (-1);
+	} 
+      for (j = 0; j < n; j ++)
+	{
+	  s[i*n+j] = 0.0;
+	  for (k = 0; k < n; k ++)
+	    {
+	      s[i*n+j] += v[k*n+i] * vi[k*n+j] * sqrt (wr[k]);
+	    }
+	}
+    }
+
+  free (wr);
+  free (wi);
+  free (v);
+  free (vi);
+
+  return (0);
+}
+
+
 /*
  * INPUT
- *  BD             : struct BD_params
- *                   (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
+ *  BD   : struct BD_params
+ *         (sys, rng, eig, n_minv, a_minv, n_lub, a_lub, eps are used)
  * OUTPUT
- *  z[n]           : random vector, with which F^B = z * sqrt(2/(peclet * dt))
+ *  z[n] : random vector, with which F^B = z * sqrt(2/(peclet * dt))
+ *         in FT and FTS, first nm3 are the force, the next nm3 are the torque
+ *         (different strage from FTS where f,t,s are ordered particle-wise).
  */
 void
 calc_brownian_force (struct BD_params *BD,
@@ -1163,33 +1294,57 @@ calc_brownian_force (struct BD_params *BD,
 {
   int n = BD_get_n (BD->sys);
 
+  // this is ordered particle-wise
+  double *zp = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (zp, "calc_brownian_force");
+
   /**
    * M^{-1} part
    */
   double *y_minv = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y_minv, "calc_brownian_force");
-  int i, j;
+  int i;
+  //int j;
   for (i = 0; i < n; i ++)
     {
       y_minv[i] = KIrand_Gaussian (BD->rng);
     }
 
+  int status;
   if (BD->n_minv <= 0)
     {
       // matrix version
       double *minv = (double *)malloc (sizeof (double) * n * n);
       double *l    = (double *)malloc (sizeof (double) * n * n);
       BD_matrix_minv_FU (BD, minv);
-      dpotrf_wrap (n, minv, l);
-
-      for (i = 0; i < n; i ++)
+      // check
+      //check_symmetric (n, minv, 1.0e-12);
+      status = dpotrf_wrap (n, minv, l);
+      if (status != 0)
 	{
-	  z[i] = 0.0;
-	  for (j = 0; j < n; j ++)
+	  fprintf (stderr, "minv : failed in dpotrf() : %d\n", status);
+	  status = dpotf2_wrap (n, minv, l);
+	  fprintf (stderr, "minv : how about in dpotf2() : %d\n", status);
+	  if (status != 0)
 	    {
-	      z[i] += l[i*n+j] * y_minv[j];
+	      status = BD_sqrt_by_dgeev (n, minv, l);
+	      fprintf (stderr,
+		       "minv : how about in sqrt_by_dgeev() : %d\n",
+		       status);
 	    }
 	}
+
+      /*
+      for (i = 0; i < n; i ++)
+	{
+	  zp[i] = 0.0;
+	  for (j = 0; j < n; j ++)
+	    {
+	      zp[i] += l[i*n+j] * y_minv[j];
+	    }
+	}
+      */
+      dot_prod_matrix (l, n, n, y_minv, zp);
 
       free (minv);
       free (l);
@@ -1212,10 +1367,10 @@ calc_brownian_force (struct BD_params *BD,
       double err_minv;
       // first try (without updating a_minv[])
       chebyshev_eval_atimes (BD->n_minv, BD->a_minv,
-			     n, y_minv, z,
+			     n, y_minv, zp,
 			     BD->eig_minv[0], BD->eig_minv[1],
 			     BD_atimes_mob_FU, (void *)BD);
-      err_minv = chebyshev_error_minvsqrt (n, y_minv, z,
+      err_minv = chebyshev_error_minvsqrt (n, y_minv, zp,
 					   BD_atimes_mob_FU, (void *)BD);
       // check the accuracy
       if (err_minv > BD->eps)
@@ -1227,12 +1382,12 @@ calc_brownian_force (struct BD_params *BD,
 	  chebyshev_coef (BD->n_minv, BD_inv_sqrt,
 			  BD->eig_minv[0], BD->eig_minv[1], BD->a_minv);
 
-	  // then, re-evaluate the random vector z[]
+	  // then, re-evaluate the random vector zp[]
 	  chebyshev_eval_atimes (BD->n_minv, BD->a_minv,
-				 n, y_minv, z, 
+				 n, y_minv, zp, 
 				 BD->eig_minv[0], BD->eig_minv[1],
 				 BD_atimes_mob_FU, (void *)BD);
-	  err_minv = chebyshev_error_minvsqrt (n, y_minv, z,
+	  err_minv = chebyshev_error_minvsqrt (n, y_minv, zp,
 					       BD_atimes_mob_FU, (void *)BD);
 	  fprintf (stderr, " => err = %e\n", err_minv);
 	}
@@ -1260,8 +1415,24 @@ calc_brownian_force (struct BD_params *BD,
 	  double *lub = (double *)malloc (sizeof (double) * n * n);
 	  double *l   = (double *)malloc (sizeof (double) * n * n);
 	  BD_matrix_lub_FU (BD, lub);
-	  dpotrf_wrap (n, lub, l);
+	  // check
+	  //check_symmetric (n, lub, 1.0e-12);
+	  status = dpotrf_wrap (n, lub, l);
+	  if (status != 0)
+	    {
+	      fprintf (stderr, "lub : failed in dpotrf() : %d\n", status);
+	      status = dpotf2_wrap (n, lub, l);
+	      fprintf (stderr, "lub : how about in dpotf2() : %d\n", status);
+	      if (status != 0)
+		{
+		  status = BD_sqrt_by_dgeev (n, lub, l);
+		  fprintf (stderr,
+			   "lub : how about in sqrt_by_dgeev() : %d\n",
+			   status);
+		}
+	    }
 
+	  /*
 	  for (i = 0; i < n; i ++)
 	    {
 	      z_lub[i] = 0.0;
@@ -1270,6 +1441,8 @@ calc_brownian_force (struct BD_params *BD,
 		  z_lub[i] += l[i*n+j] * y_lub[j];
 		}
 	    }
+	  */
+	  dot_prod_matrix (l, n, n, y_lub, z_lub);
 
 	  free (lub);
 	  free (l);
@@ -1320,12 +1493,34 @@ calc_brownian_force (struct BD_params *BD,
       // add z_lub[] into z[], total random force
       for (i = 0; i < n; i ++)
 	{
-	  z[i] += z_lub[i];
+	  zp[i] += z_lub[i];
 	}
       free (y_lub);
       free (z_lub);
     }
 
+  // re-order zp[] to z[]
+  if (BD->sys->version == 0)
+    {
+      for (i = 0; i < n; i ++)
+	{
+	  z[i] = zp[i];
+	}
+    }
+  else
+    {
+      int nm3 = BD->sys->nm * 3;
+      for (i = 0; i < BD->sys->nm; i ++)
+	{
+	  int ii;
+	  for (ii = 0; ii < 3; ii ++)
+	    {
+	      z[      i*3 + ii] = zp[i*6 +     ii];
+	      z[nm3 + i*3 + ii] = zp[i*6 + 3 + ii];
+	    }
+	}
+    }
+  free (zp);
   // now, z[i] * sqrt(2/(peclet * dt)) is F^B_n
 }
 
@@ -1604,6 +1799,7 @@ BD_ode_evolve (struct BD_params *BD,
  * INPUT
  *  sys : struct stokes
  *        (llx, lly, llz) are used.
+ *  x0[] : initial configuration
  */
 static double
 reset_dt_by_ol (struct stokes *sys,
@@ -1733,10 +1929,6 @@ BD_evolve_mid (struct BD_params *BD,
 	}
       for (i = 0; i < nm3; i ++)
 	{
-	  /*
-	  FTS->t[i] = BD->T[i] + fact * z[BD->sys->np*3 + i];
-	  // here, z is z[n] and therefore should be np3, I guess...
-	  */
 	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
 	}
       if (BD->sys->version == 2)
@@ -1806,10 +1998,6 @@ BD_evolve_mid (struct BD_params *BD,
 	}
       for (i = 0; i < nm3; i ++)
 	{
-	  /*
-	  FTS->t[i] = BD->T[i] + fact * z[BD->sys->np*3 + i];
-	  // here, z is z[n] and therefore should be np3, I guess...
-	  */
 	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
 	}
       if (BD->sys->version == 2)
@@ -1841,7 +2029,22 @@ BD_evolve_mid (struct BD_params *BD,
 		  BD->uf, BD->of, BD->ef,
 		  FTS->u, FTS->o, FTS->s,
 		  FTS->ff, FTS->tf, FTS->sf);
-  // evolve by Euler for dt from the intermediate configuration
+
+  /*************************************************************
+   * 3 : evolve by Euler for dt with the velocity from x and q *
+   *************************************************************/
+  // (re-)set the configuration by the initial one
+  for (i = 0; i < nm3; i ++)
+    {
+      xmid[i] = x[i];
+    }
+  if (BD->sys->version > 0 && q != NULL)
+    {
+      for (i = 0; i < nm4; i ++)
+	{
+	  qmid[i] = q[i];
+	}
+    }
   evolve_Euler_3all (BD->sys, FTS->u, FTS->o, dt,
 		     xmid, qmid);
   if (check_overlap (BD->sys, xmid, &ol) > 0)
@@ -1976,10 +2179,6 @@ BD_evolve_BB03 (struct BD_params *BD,
       for (i = 0; i < nm3; i ++)
 	{
 	  FTS->f[i] = fact * z[i];
-	  /*
-	  FTS->t[i] = fact * z[BD->sys->np*3 + i];
-	  // here, z is z[n] and therefore should be np3, I guess...
-	  */
 	  FTS->t[i] = fact * z[nm3 + i];
 	}
       for (i = 0; i < nf3; i ++)
@@ -2091,7 +2290,7 @@ BD_evolve_BB03 (struct BD_params *BD,
    *     to obtain the final configuration              *
    ******************************************************/
   /* reset the configuration by x[] and q[]
-   * (because this step is for the x[] and q[]
+   * (because this step is from the x[] and q[])
    */
   for (i = 0; i < nm3; i ++)
     {
@@ -2239,10 +2438,6 @@ BD_evolve_BM97 (struct BD_params *BD,
 	}
       for (i = 0; i < nm3; i ++)
 	{
-	  /*
-	  FTS->t[i] = BD->T[i] + fact * z[BD->sys->np*3 + i];
-	  // here, z is z[n] and therefore should be np3, I guess...
-	  */
 	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
 	}
       if (BD->sys->version == 2)
