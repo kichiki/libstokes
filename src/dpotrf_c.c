@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dpotf2_()
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dpotrf_c.c,v 1.3 2007/10/31 06:04:55 kichiki Exp $
+ * $Id: dpotrf_c.c,v 1.4 2007/11/04 02:57:09 kichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -162,11 +162,13 @@ dpotrf_wrap (int n, const double *a, double *l)
   int info;
   dpotrf_(&uplo, &n, l, &n, &info);
 
+  /*
   if (info != 0)
     {
       fprintf (stderr, "dpotrf : info = %d\n", info);
       exit (1);
     }
+  */
 
   for (i = 0; i < n; i ++)
     {
@@ -207,11 +209,13 @@ dpotf2_wrap (int n, const double *a, double *l)
   int info;
   dpotf2_(&uplo, &n, l, &n, &info);
 
+  /*
   if (info != 0)
     {
       fprintf (stderr, "dpotf2 : info = %d\n", info);
       exit (1);
     }
+  */
 
   for (i = 0; i < n; i ++)
     {
