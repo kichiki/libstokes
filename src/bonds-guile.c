@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.2 2007/10/25 05:54:56 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.3 2007/11/07 04:51:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,13 @@
  *      (5 6)
  *      (6 7)))
  *   ))
+ * where spring types are
+ *   0 : Hookean spring (Asp * (r - Ls)
+ *   1 : wormlike chain (WLC)
+ *   2 : inverse Langevin chain (ILC)
+ *   3 : Cohen's Pade approximation
+ *   4 : Warner spring
+ *   5 : Hookean spring (Asp * r / Ls)
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
@@ -129,7 +136,7 @@ guile_get_bonds (const char * var)
       if (params_len != 3)
 	{
 	  fprintf (stderr, "guile_get_bonds:"
-		   " params has wrong length %d != 3\n",
+		   " params has wrong length %ld != 3\n",
 		   params_len);
 	  bonds_free (bonds);
 	  return (NULL); // failed
