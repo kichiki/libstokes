@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.9 2007/08/13 00:30:48 kichiki Exp $
+ * $Id: ewald.c,v 1.10 2007/11/07 04:40:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
+#include "memory-check.h" // CHECK_MALLOC
 
 #include "stokes.h"
 #include "bench.h"
@@ -380,7 +381,7 @@ scalars_ewald_real_poly (int version,
  */
 void
 scalars_mob_poly_scale_SD_ (int version,
-			   double a1,
+			    double a1,
 			    double *xa, double *ya,
 			    double *yb,
 			    double *xc, double *yc,
@@ -431,9 +432,7 @@ scalars_mob_poly_scale_SD_ (int version,
 void
 atimes_3all (int n, const double *x, double *y, void * user_data)
 {
-  struct stokes * sys;
-
-  sys = (struct stokes *) user_data;
+  struct stokes *sys = (struct stokes *)user_data;
 
   if (sys->periodic == 0)
     {
@@ -486,20 +485,10 @@ void
 atimes_3all_matrix (int n, const double *x,
 		    double *y, void * user_data)
 {
-  struct stokes * sys;
-  int np;
-  double * mat;
+  struct stokes *sys = (struct stokes *)user_data;
 
-
-  sys = (struct stokes *) user_data;
-
-  np = sys->np;
-  mat = (double *) malloc (sizeof (double) * n * n);
-  if (mat == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_3all_matrix ().\n");
-      exit (1);
-    }
+  double *mat = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat, "atimes_3all_matrix");
 
   make_matrix_mob_3all (sys, mat);
   if (sys->version == 0 // F version
@@ -530,7 +519,7 @@ atimes_3all_matrix (int n, const double *x,
 void
 atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 {
-  struct stokes * sys;
+  struct stokes *sys = (struct stokes *)user_data;
 
   double cpu0, cpu; /* for ptime_ms_d() */
 
@@ -541,22 +530,7 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
   double yh;
   double xm, ym, zm;
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-
   int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m;
-
-  double k1, k2, k3;
-  double cf, sf;
-
-
-  sys = (struct stokes *) user_data;
-
   /* clear result */
   for (i = 0; i < n; i ++)
     {
@@ -675,9 +649,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
   /* first Ewald part ( real space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
 
       // used in the slip case
       double ai;
@@ -686,24 +660,32 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
 
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
+
+	  int m;
 	  for (m = 0; m < sys->nr; m ++)
 	    {
-	      xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
-	      yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
-	      zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
-	      rr = xx * xx + yy * yy + zz * zz;
+	      double xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
+	      double yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
+	      double zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
+	      double rr = xx * xx + yy * yy + zz * zz;
 
 	      if (rr == 0.0) continue; // to exclude the self part
 	      if (rr > sys->rmax2) continue;
 
-	      r = sqrt (rr);
-	      ex = xx / r;
-	      ey = yy / r;
-	      ez = zz / r;
+	      double r = sqrt (rr);
+	      double rmin = (ai + aj) * sys->rmin;
+	      if (r < rmin) r = rmin;
+
+	      double ex = xx / r;
+	      double ey = yy / r;
+	      double ez = zz / r;
 
 	      if (sys->slip == NULL // no-slip
 		  && sys->a == NULL) // monodisperse
@@ -803,29 +785,29 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
   /* Second Ewald part ( reciprocal space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
 
-	  xx = sys->pos [jx] - sys->pos [ix];
-	  yy = sys->pos [jy] - sys->pos [iy];
-	  zz = sys->pos [jz] - sys->pos [iz];
+	  double xx = sys->pos [jx] - sys->pos [ix];
+	  double yy = sys->pos [jy] - sys->pos [iy];
+	  double zz = sys->pos [jz] - sys->pos [iz];
 
-
+	  int m;
 	  for (m = 0; m < sys->nk; m ++)
 	    {
-	      ex = sys->ex[m];
-	      ey = sys->ey[m];
-	      ez = sys->ez[m];
+	      double ex = sys->ex[m];
+	      double ey = sys->ey[m];
+	      double ez = sys->ez[m];
 
-	      k1 = sys->k1[m];
-	      k2 = sys->k2[m];
-	      k3 = sys->k3[m];
+	      double k1 = sys->k1[m];
+	      double k2 = sys->k2[m];
+	      double k3 = sys->k3[m];
 
 	      if (sys->slip == NULL // no-slip
 		  && sys->a == NULL) // monodisperse
@@ -883,9 +865,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		  // in SD scaling
 		}
 
-	      cf = cos (+ k1 * xx
-			+ k2 * yy
-			+ k3 * zz);
+	      double cf = cos (+ k1 * xx
+			       + k2 * yy
+			       + k3 * zz);
 
 	      // note that interaction (i,j) should be for (U[i], F[j])
 	      if (sys->version == 0) // F version
@@ -896,9 +878,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		}
 	      else if (sys->version == 1) // FT version
 		{
-		  sf = - sin (+ k1 * xx
-			      + k2 * yy
-			      + k3 * zz);
+		  double sf = - sin (+ k1 * xx
+				     + k2 * yy
+				     + k3 * zz);
 
 		  matrix_ft_atimes (x + j*6, y + i*6,
 				    ex, ey, ez,
@@ -908,9 +890,9 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 		}
 	      else // FTS version
 		{
-		  sf = - sin (+ k1 * xx
-			      + k2 * yy
-			      + k3 * zz);
+		  double sf = - sin (+ k1 * xx
+				     + k2 * yy
+				     + k3 * zz);
 
 		  matrix_fts_atimes (x + j*11, y + i*11,
 				     ex, ey, ez,
@@ -952,21 +934,7 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
   double yh;
   double xm, ym, zm;
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-
   int n;
-  int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m;
-
-  double k1, k2, k3;
-  double cf, sf;
-
-
   if (sys->version == 0) // F version
     {
       n = sys->np * 3;
@@ -980,6 +948,7 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
       n = sys->np * 11;
     }
 
+  int i, j;
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -1104,9 +1073,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
   /* first Ewald part ( real space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
 
       // used in the slip case
       double ai;
@@ -1115,24 +1084,32 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
 
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
+
+	  int m;
 	  for (m = 0; m < sys->nr; m ++)
 	    {
-	      xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
-	      yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
-	      zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
-	      rr = xx * xx + yy * yy + zz * zz;
+	      double xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
+	      double yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
+	      double zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
+	      double rr = xx * xx + yy * yy + zz * zz;
 
 	      if (rr == 0.0) continue; // to exclude the self part
 	      if (rr > sys->rmax2) continue;
 
-	      r = sqrt (rr);
-	      ex = xx / r;
-	      ey = yy / r;
-	      ez = zz / r;
+	      double r = sqrt (rr);
+	      double rmin = (ai + aj) * sys->rmin;
+	      if (r < rmin) r = rmin;
+
+	      double ex = xx / r;
+	      double ey = yy / r;
+	      double ez = zz / r;
 
 	      if (sys->slip == NULL // no-slip
 		  && sys->a == NULL) // monodisperse
@@ -1234,28 +1211,29 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
   /* Second Ewald part ( reciprocal space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
 
-	  xx = sys->pos [jx] - sys->pos [ix];
-	  yy = sys->pos [jy] - sys->pos [iy];
-	  zz = sys->pos [jz] - sys->pos [iz];
+	  double xx = sys->pos [jx] - sys->pos [ix];
+	  double yy = sys->pos [jy] - sys->pos [iy];
+	  double zz = sys->pos [jz] - sys->pos [iz];
 
+	  int m;
 	  for (m = 0; m < sys->nk; m ++)
 	    {
-	      ex = sys->ex[m];
-	      ey = sys->ey[m];
-	      ez = sys->ez[m];
+	      double ex = sys->ex[m];
+	      double ey = sys->ey[m];
+	      double ez = sys->ez[m];
 
-	      k1 = sys->k1[m];
-	      k2 = sys->k2[m];
-	      k3 = sys->k3[m];
+	      double k1 = sys->k1[m];
+	      double k2 = sys->k2[m];
+	      double k3 = sys->k3[m];
 
 	      if (sys->slip == NULL // no-slip
 		  && sys->a == NULL) // monodisperse
@@ -1313,9 +1291,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 		  // in SD scaling
 		}
 
-	      cf = cos (+ k1 * xx
-			+ k2 * yy
-			+ k3 * zz);
+	      double cf = cos (+ k1 * xx
+			       + k2 * yy
+			       + k3 * zz);
 
 	      if (sys->version == 0) // F version
 		{
@@ -1326,9 +1304,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 		}
 	      else if (sys->version == 1) // FT version
 		{
-		  sf = - sin (+ k1 * xx
-			      + k2 * yy
-			      + k3 * zz);
+		  double sf = - sin (+ k1 * xx
+				     + k2 * yy
+				     + k3 * zz);
 
 		  matrix_ft_ij (i, j,
 				ex, ey, ez,
@@ -1339,9 +1317,9 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 		}
 	      else // FTS version
 		{
-		  sf = - sin (+ k1 * xx
-			      + k2 * yy
-			      + k3 * zz);
+		  double sf = - sin (+ k1 * xx
+				     + k2 * yy
+				     + k3 * zz);
 
 		  matrix_fts_ij (i, j,
 				 ex, ey, ez,
@@ -1378,7 +1356,7 @@ void
 atimes_ewald_3all_notbl (int n, const double *x,
 			 double *y, void * user_data)
 {
-  struct stokes * sys;
+  struct stokes *sys = (struct stokes *)user_data;
 
   double cpu0, cpu; /* for ptime_ms_d() */
 
@@ -1389,25 +1367,7 @@ atimes_ewald_3all_notbl (int n, const double *x,
   double yh;
   double xm, ym, zm;
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-  double rlx, rly, rlz;
-
   int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m1, m2, m3;
-
-  double k1, k2, k3, kk, k4z;
-  double k;
-  double cf, sf;
-  double kexp;
-
-
-  sys = (struct stokes *) user_data;
-
   /* clear result */
   for (i = 0; i < n; i ++)
     {
@@ -1415,91 +1375,237 @@ atimes_ewald_3all_notbl (int n, const double *x,
     }
 
   /* diagonal part ( self part ) */
-  for (i = 0; i < sys->np; i++)
+  if (sys->slip == NULL // no-slip
+      && sys->a == NULL) // monodisperse
     {
-      if (sys->version == 0) // F version
+      for (i = 0; i < sys->np; i++)
 	{
-	  matrix_f_atimes (x + i*3, y + i*3,
-			   0.0, 0.0, 0.0,
-			   sys->self_a, sys->self_a);
-	}
-      else if (sys->version == 1) // FT version
-	{
-	  matrix_ft_atimes (x + i*6, y + i*6,
-			    0.0, 0.0, 0.0,
-			    sys->self_a, sys->self_a,
-			    0.0,
-			    sys->self_c, sys->self_c);
-	}
-      else // FTS version
-	{
-	  matrix_fts_atimes (x + i*11, y + i*11,
-			     0.0, 0.0, 0.0,
-			     sys->self_a, sys->self_a,
-			     0.0,
-			     sys->self_c, sys->self_c,
-			     0.0, 0.0,
-			     0.0,
-			     sys->self_m, sys->self_m, sys->self_m);
+	  if (sys->version == 0) // F version
+	    {
+	      matrix_f_atimes (x + i*3, y + i*3,
+			       0.0, 0.0, 0.0,
+			       sys->self_a, sys->self_a);
+	    }
+	  else if (sys->version == 1) // FT version
+	    {
+	      matrix_ft_atimes (x + i*6, y + i*6,
+				0.0, 0.0, 0.0,
+				sys->self_a, sys->self_a,
+				0.0,
+				sys->self_c, sys->self_c);
+	    }
+	  else // FTS version
+	    {
+	      matrix_fts_atimes (x + i*11, y + i*11,
+				 0.0, 0.0, 0.0,
+				 sys->self_a, sys->self_a,
+				 0.0,
+				 sys->self_c, sys->self_c,
+				 0.0, 0.0,
+				 0.0,
+				 sys->self_m, sys->self_m, sys->self_m);
+	    }
 	}
     }
+  else // slip or no-slip polydisperse
+    {
+      double self_a;
+      double self_c;
+      double self_m;
+
+      for (i = 0; i < sys->np; i++)
+	{
+	  double a;
+	  double a2;
+	  double a3;
+
+	  if (sys->slip == NULL) // no-slip
+	    {
+	      a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      if (sys->a == NULL) a = 1.0;
+	      else                a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0  * sys->slip_G32 [i] // Lambda(3,2) = 1/Lambda(2,3)
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75 * sys->slip_G30 [i] // Lambda(3,0) = 1/Lambda(0,3)
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9  * sys->slip_G52 [i] // Lambda(5,2) = 1/Lambda(2,5)
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+
+	  if (sys->version == 0) // F version
+	    {
+	      matrix_f_atimes (x + i*3, y + i*3,
+			       0.0, 0.0, 0.0,
+			       self_a, self_a);
+	    }
+	  else if (sys->version == 1) // FT version
+	    {
+	      matrix_ft_atimes (x + i*6, y + i*6,
+				0.0, 0.0, 0.0,
+				self_a, self_a,
+				0.0,
+				self_c, self_c);
+	    }
+	  else // FTS version
+	    {
+	      matrix_fts_atimes (x + i*11, y + i*11,
+				 0.0, 0.0, 0.0,
+				 self_a, self_a,
+				 0.0,
+				 self_c, self_c,
+				 0.0, 0.0,
+				 0.0,
+				 self_m, self_m, self_m);
+	    }
+	}
+    }
+
 
   /* for xi code to measure CPU times */
   cpu0 = ptime_ms_d ();
 
+  int m1, m2, m3;
   /* first Ewald part ( real space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
+
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
 
 	  for (m1 = - sys->rmaxx; m1 <= sys->rmaxx; m1++)
 	    {
-	      rlx = sys->lx * (double) m1;
+	      double rlx = sys->lx * (double) m1;
 	      for (m2 = - sys->rmaxy; m2 <= sys->rmaxy; m2++)
 		{
-		  rly = sys->ly * (double) m2;
+		  double rly = sys->ly * (double) m2;
 		  for (m3 = - sys->rmaxz; m3 <= sys->rmaxz; m3++)
 		    {
-		      rlz = sys->lz * (double) m3;
+		      double rlz = sys->lz * (double) m3;
   
-		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
-		      yy = sys->pos [jy] - sys->pos [iy] + rly;
-		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
-		      rr = xx * xx + yy * yy + zz * zz;
+		      double xx = sys->pos [jx] - sys->pos [ix] + rlx;
+		      double yy = sys->pos [jy] - sys->pos [iy] + rly;
+		      double zz = sys->pos [jz] - sys->pos [iz] + rlz;
+		      double rr = xx * xx + yy * yy + zz * zz;
 
 		      if (rr == 0.0) continue; // to exclude the self part
 		      if (rr > sys->rmax2) continue;
 
-		      r = sqrt (rr);
-		      ex = xx / r;
-		      ey = yy / r;
-		      ez = zz / r;
+		      double r = sqrt (rr);
+		      double rmin = (ai + aj) * sys->rmin;
+		      if (r < rmin) r = rmin;
 
-		      scalars_ewald_real (sys->version,
-					  sys->xi, r,
-					  &xa, &ya,
-					  &yb,
-					  &xc, &yc,
-					  &xg, &yg,
-					  &yh,
-					  &xm, &ym, &zm);
+		      double ex = xx / r;
+		      double ey = yy / r;
+		      double ez = zz / r;
 
+		      if (sys->slip == NULL // no-slip
+			  && sys->a == NULL) // monodisperse
+			{
+			  scalars_ewald_real (sys->version,
+					      sys->xi, r,
+					      &xa, &ya,
+					      &yb,
+					      &xc, &yc,
+					      &xg, &yg,
+					      &yh,
+					      &xm, &ym, &zm);
+			}
+		      else if (sys->slip == NULL) // no-slip polydisperse
+			{
+			  scalars_ewald_real_poly (sys->version,
+						   sys->xi, r,
+						   sys->a[i], sys->a[j],
+						   &xa, &ya,
+						   &yb,
+						   &xc, &yc,
+						   &xg, &yg,
+						   &yh,
+						   &xm, &ym, &zm);
+			  scalars_mob_poly_scale_SD_ (sys->version,
+						      sys->a[i],
+						      &xa, &ya,
+						      &yb,
+						      &xc, &yc,
+						      &xg, &yg,
+						      &yh,
+						      &xm, &ym, &zm);
+			  // now scalars are in the SD form
+			}
+		      else // slip (for both mono- and poly-disperse systems)
+			{
+			  // use the effective radius in sys->slip_a[] 
+			  // defined by
+			  // sys->slip_a[i] := sys->a[i]
+			  //                   * sqrt (Lambda^(i)(0,2))
+			  // for both monodisperse and polydisperse.
+			  // (sys->slip_a[] is defined for both cases 
+			  // properly.)
+			  scalars_ewald_real_poly
+			    (sys->version,
+			     sys->xi, r,
+			     sys->slip_a[i], sys->slip_a[j],
+			     &xa, &ya,
+			     &yb,
+			     &xc, &yc,
+			     &xg, &yg,
+			     &yh,
+			     &xm, &ym, &zm);
+			  scalars_mob_poly_scale_SD_
+			    (sys->version,
+			     //sys->a[i],
+			     ai,
+			     &xa, &ya,
+			     &yb,
+			     &xc, &yc,
+			     &xg, &yg,
+			     &yh,
+			     &xm, &ym, &zm);
+			  // now scalars are in the SD form
+			}
+
+		      // note that interaction (i,j) should be for (U[i], F[j])
 		      if (sys->version == 0) // F version
 			{
-			  matrix_f_atimes (x + i*3, y + j*3,
+			  matrix_f_atimes (x + j*3, y + i*3,
 					   ex, ey, ez,
 					   xa, ya);
 			}
 		      else if (sys->version == 1) // FT version
 			{
-			  matrix_ft_atimes (x + i*6, y + j*6,
+			  matrix_ft_atimes (x + j*6, y + i*6,
 					    ex, ey, ez,
 					    xa, ya,
 					    yb,
@@ -1507,7 +1613,7 @@ atimes_ewald_3all_notbl (int n, const double *x,
 			}
 		      else // FTS version
 			{
-			  matrix_fts_atimes (x + i*11, y + j*11,
+			  matrix_fts_atimes (x + j*11, y + i*11,
 					     ex, ey, ez,
 					     xa, ya,
 					     yb,
@@ -1530,54 +1636,99 @@ atimes_ewald_3all_notbl (int n, const double *x,
   /* Second Ewald part ( reciprocal space ) */
   for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      double k1 = 2.0 * M_PI * (double) m1 / sys->lx;
       for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  double k2 = 2.0 * M_PI * (double) m2 / sys->ly;
 	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      k3 = 2.0 * M_PI * (double) m3 / sys->lz;
+	      double k3 = 2.0 * M_PI * (double) m3 / sys->lz;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
-		  kk = k1 * k1 + k2 * k2 + k3 * k3;
-		  k = sqrt (kk);
+		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
+		  double k = sqrt (kk);
 
 		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
 
-		  k4z = kk / 4.0 / sys->xi2;
-		  kexp = sys->pivol
+		  double k4z = kk / 4.0 / sys->xi2;
+		  double kexp = sys->pivol
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
-		  ex = k1 / k;
-		  ey = k2 / k;
-		  ez = k3 / k;
+		  double ex = k1 / k;
+		  double ey = k2 / k;
+		  double ez = k3 / k;
 
-		  ya = 6.0 * (1.0 - kk / 3.0) * kexp;
-		  yb = 3.0 * k * kexp;
-		  yc = 3.0 / 2.0 * kk * kexp;
-		  yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
-		  yh = 3.0 / 2.0 * kk * kexp;
-		  ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
-      
 		  for (i = 0; i < sys->np; i++)
 		    {
-		      ix = i * 3;
-		      iy = ix + 1;
-		      iz = ix + 2;
+		      int ix = i * 3;
+		      int iy = ix + 1;
+		      int iz = ix + 2;
 		      for (j = 0; j < sys->np; j++)
 			{
-			  jx = j * 3;
-			  jy = jx + 1;
-			  jz = jx + 2;
+			  int jx = j * 3;
+			  int jy = jx + 1;
+			  int jz = jx + 2;
 
-			  xx = sys->pos [jx] - sys->pos [ix];
-			  yy = sys->pos [jy] - sys->pos [iy];
-			  zz = sys->pos [jz] - sys->pos [iz];
+			  if (sys->slip == NULL // no-slip
+			      && sys->a == NULL) // monodisperse
+			    {
+			      ya = 6.0 * (1.0 - kk / 3.0) * kexp;
+			      yb = 3.0 * k * kexp;
+			      yc = 3.0 / 2.0 * kk * kexp;
+			      yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
+			      yh = 3.0 / 2.0 * kk * kexp;
+			      ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
+			    }
+			  else // slip or no-slip polydisperse
+			    {
+			      double aa;
+			      double aa3;
+			      double aa2;
+			      if (sys->a == NULL) aa = 1.0;
+			      else                aa = sys->a [i];
+			      aa2 = aa * aa;
+			      aa3 = aa2 * aa;
 
-			  cf = cos (+ k1 * xx
-				    + k2 * yy
-				    + k3 * zz);
+			      // a^2 in nabla^2 term
+			      double a2a;
+			      double a2b;
+			      if (sys->slip == NULL) // no-slip
+				{
+				  a2a = aa2;
+
+				  if (sys->a == NULL) a2b = 1.0;
+				  else                a2b = sys->a [j];
+				  a2b *= a2b;
+				}
+			      else // slip
+				{
+				  a2a = sys->slip_a [i];
+				  a2a *= a2a;
+
+				  a2b = sys->slip_a [j];
+				  a2b *= a2b;
+				}
+
+			      ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0)
+				* kexp;
+			      yb = aa2 * 3.0 * k * kexp;
+			      yc = aa3 * 3.0 / 2.0 * kk * kexp;
+			      yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0))
+				* k * kexp;
+			      yh = aa3 * 3.0 / 2.0 * kk * kexp;
+			      ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0)
+				* kk * kexp;
+			      // in SD scaling
+			    }
+      
+			  double xx = sys->pos [jx] - sys->pos [ix];
+			  double yy = sys->pos [jy] - sys->pos [iy];
+			  double zz = sys->pos [jz] - sys->pos [iz];
+
+			  double cf = cos (+ k1 * xx
+					   + k2 * yy
+					   + k3 * zz);
 
 			  if (sys->version == 0) // F version
 			    {
@@ -1587,9 +1738,9 @@ atimes_ewald_3all_notbl (int n, const double *x,
 			    }
 			  else if (sys->version == 1) // FT version
 			    {
-			      sf = - sin (+ k1 * xx
-					  + k2 * yy
-					  + k3 * zz);
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
 
 			      matrix_ft_atimes (x + i*6, y + j*6,
 						ex, ey, ez,
@@ -1599,9 +1750,9 @@ atimes_ewald_3all_notbl (int n, const double *x,
 			    }
 			  else // FTS version
 			    {
-			      sf = - sin (+ k1 * xx
-					  + k2 * yy
-					  + k3 * zz);
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
 
 			      matrix_fts_atimes (x + i*11, y + j*11,
 						 ex, ey, ez,
@@ -1645,24 +1796,7 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
   double yh;
   double xm, ym, zm;
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-  double rlx, rly, rlz;
-
   int n;
-  int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-  int m1, m2, m3;
-
-  double k1, k2, k3, kk, k4z;
-  double k;
-  double cf, sf;
-  double kexp;
-
-
   if (sys->version == 0) // F version
     {
       n = sys->np * 3;
@@ -1676,6 +1810,7 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
       n = sys->np * 11;
     }
 
+  int i, j;
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -1683,84 +1818,232 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
     }
 
   /* diagonal part ( self part ) */
-  for (i = 0; i < sys->np; i++)
+  if (sys->slip == NULL // no-slip
+      && sys->a == NULL) // monodisperse
     {
-      if (sys->version == 0) // F version
+      for (i = 0; i < sys->np; i++)
 	{
-	  matrix_f_ij (i, i,
-		       0.0, 0.0, 0.0,
-		       sys->self_a, sys->self_a,
-		       n, mat);
-	}
-      else if (sys->version == 1) // FT version
-	{
-	  matrix_ft_ij (i, i,
-			0.0, 0.0, 0.0,
-			sys->self_a, sys->self_a,
-			0.0,
-			sys->self_c, sys->self_c,
-			n, mat);
-	}
-      else // FTS version
-	{
-	  matrix_fts_ij (i, i,
-			 0.0, 0.0, 0.0,
-			 sys->self_a, sys->self_a,
-			 0.0,
-			 sys->self_c, sys->self_c,
-			 0.0, 0.0,
-			 0.0,
-			 sys->self_m, sys->self_m, sys->self_m,
-			 n, mat);
+	  if (sys->version == 0) // F version
+	    {
+	      matrix_f_ij (i, i,
+			   0.0, 0.0, 0.0,
+			   sys->self_a, sys->self_a,
+			   n, mat);
+	    }
+	  else if (sys->version == 1) // FT version
+	    {
+	      matrix_ft_ij (i, i,
+			    0.0, 0.0, 0.0,
+			    sys->self_a, sys->self_a,
+			    0.0,
+			    sys->self_c, sys->self_c,
+			    n, mat);
+	    }
+	  else // FTS version
+	    {
+	      matrix_fts_ij (i, i,
+			     0.0, 0.0, 0.0,
+			     sys->self_a, sys->self_a,
+			     0.0,
+			     sys->self_c, sys->self_c,
+			     0.0, 0.0,
+			     0.0,
+			     sys->self_m, sys->self_m, sys->self_m,
+			     n, mat);
+	    }
 	}
     }
+  else // slip or no-slip polydisperse
+    {
+      double self_a;
+      double self_c;
+      double self_m;
+
+      for (i = 0; i < sys->np; i++)
+	{
+	  double a;
+	  double a2;
+	  double a3;
+
+	  if (sys->slip == NULL) // no-slip
+	    {
+	      a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+	  else // slip (for both mono- and poly-disperse systems)
+	    {
+	      if (sys->a == NULL) a = 1.0;
+	      else                a = sys->a [i];
+	      a2 = a*a;
+	      a3 = a2*a;
+
+	      self_a = 1.0  * sys->slip_G32 [i] // Lambda(3,2) = 1/Lambda(2,3)
+		- a * sys->xiaspi * (6.0 - 40.0 / 3.0 * sys->xia2 * a2);
+	      self_c = 0.75 * sys->slip_G30 [i] // Lambda(3,0) = 1/Lambda(0,3)
+		- a3 * sys->xiaspi * sys->xia2 * 10.0;
+	      self_m = 0.9  * sys->slip_G52 [i] // Lambda(5,2) = 1/Lambda(2,5)
+		- a3 * sys->xiaspi * sys->xia2
+		* (12.0 - 30.24 * sys->xia2 * a2);
+	      // in SD scaling
+	    }
+
+	  if (sys->version == 0) // F version
+	    {
+	      matrix_f_ij (i, i,
+			   0.0, 0.0, 0.0,
+			   self_a, self_a,
+			   n, mat);
+	    }
+	  else if (sys->version == 1) // FT version
+	    {
+	      matrix_ft_ij (i, i,
+			    0.0, 0.0, 0.0,
+			    self_a, self_a,
+			    0.0,
+			    self_c, self_c,
+			    n, mat);
+	    }
+	  else // FTS version
+	    {
+	      matrix_fts_ij (i, i,
+			     0.0, 0.0, 0.0,
+			     self_a, self_a,
+			     0.0,
+			     self_c, self_c,
+			     0.0, 0.0,
+			     0.0,
+			     self_m, self_m, self_m,
+			     n, mat);
+	    }
+	}
+    }
+
 
   /* for xi code to measure CPU times */
   cpu0 = ptime_ms_d ();
 
+  int m1, m2, m3;
   /* first Ewald part ( real space ) */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
+
+      // used in the slip case
+      double ai;
+      if (sys->a == NULL) ai = 1.0;
+      else                ai = sys->a [i];
+
       for (j = 0; j < sys->np; j++)
 	{
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
+
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
 
 	  for (m1 = - sys->rmaxx; m1 <= sys->rmaxx; m1++)
 	    {
-	      rlx = sys->lx * (double) m1;
+	      double rlx = sys->lx * (double) m1;
 	      for (m2 = - sys->rmaxy; m2 <= sys->rmaxy; m2++)
 		{
-		  rly = sys->ly * (double) m2;
+		  double rly = sys->ly * (double) m2;
 		  for (m3 = - sys->rmaxz; m3 <= sys->rmaxz; m3++)
 		    {
-		      rlz = sys->lz * (double) m3;
+		      double rlz = sys->lz * (double) m3;
   
-		      xx = sys->pos [jx] - sys->pos [ix] + rlx;
-		      yy = sys->pos [jy] - sys->pos [iy] + rly;
-		      zz = sys->pos [jz] - sys->pos [iz] + rlz;
-		      rr = xx * xx + yy * yy + zz * zz;
+		      double xx = sys->pos [jx] - sys->pos [ix] + rlx;
+		      double yy = sys->pos [jy] - sys->pos [iy] + rly;
+		      double zz = sys->pos [jz] - sys->pos [iz] + rlz;
+		      double rr = xx * xx + yy * yy + zz * zz;
 
 		      if (rr == 0.0) continue; // to exclude the self part
 		      if (rr > sys->rmax2) continue;
 
-		      r = sqrt (rr);
-		      ex = xx / r;
-		      ey = yy / r;
-		      ez = zz / r;
+		      double r = sqrt (rr);
+		      double rmin = (ai + aj) * sys->rmin;
+		      if (r < rmin) r = rmin;
 
-		      scalars_ewald_real (sys->version,
-					  sys->xi, r,
-					  &xa, &ya,
-					  &yb,
-					  &xc, &yc,
-					  &xg, &yg,
-					  &yh,
-					  &xm, &ym, &zm);
+		      double ex = xx / r;
+		      double ey = yy / r;
+		      double ez = zz / r;
+
+		      if (sys->slip == NULL // no-slip
+			  && sys->a == NULL) // monodisperse
+			{
+			  scalars_ewald_real (sys->version,
+					      sys->xi, r,
+					      &xa, &ya,
+					      &yb,
+					      &xc, &yc,
+					      &xg, &yg,
+					      &yh,
+					      &xm, &ym, &zm);
+			}
+		      else if (sys->slip == NULL) // no-slip polydisperse
+			{
+			  scalars_ewald_real_poly (sys->version,
+						   sys->xi, r,
+						   sys->a[i], sys->a[j],
+						   &xa, &ya,
+						   &yb,
+						   &xc, &yc,
+						   &xg, &yg,
+						   &yh,
+						   &xm, &ym, &zm);
+			  scalars_mob_poly_scale_SD_ (sys->version,
+						      sys->a[i],
+						      &xa, &ya,
+						      &yb,
+						      &xc, &yc,
+						      &xg, &yg,
+						      &yh,
+						      &xm, &ym, &zm);
+			  // now scalars are in the SD form
+			}
+		      else // slip (for both mono- and poly-disperse systems)
+			{
+			  // use the effective radius in sys->slip_a[]
+			  // defined by sys->slip_a[i] := sys->a[i]
+			  //              * sqrt (Lambda^(i)(0,2))
+			  // for both monodisperse and polydisperse.
+			  // (sys->slip_a[] is defined for both cases 
+			  // properly.)
+			  scalars_ewald_real_poly
+			    (sys->version,
+			     sys->xi, r,
+			     sys->slip_a[i], sys->slip_a[j],
+			     &xa, &ya,
+			     &yb,
+			     &xc, &yc,
+			     &xg, &yg,
+			     &yh,
+			     &xm, &ym, &zm);
+			  scalars_mob_poly_scale_SD_
+			    (sys->version,
+			     //sys->a[i],
+			     ai,
+			     &xa, &ya,
+			     &yb,
+			     &xc, &yc,
+			     &xg, &yg,
+			     &yh,
+			     &xm, &ym, &zm);
+			  // now scalars are in the SD form
+			}
 
 		      if (sys->version == 0) // F version
 			{
@@ -1804,54 +2087,99 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
   /* Second Ewald part ( reciprocal space ) */
   for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      double k1 = 2.0 * M_PI * (double) m1 / sys->lx;
       for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  double k2 = 2.0 * M_PI * (double) m2 / sys->ly;
 	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      k3 = 2.0 * M_PI * (double) m3 / sys->lz;
+	      double k3 = 2.0 * M_PI * (double) m3 / sys->lz;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
-		  kk = k1 * k1 + k2 * k2 + k3 * k3;
-		  k = sqrt (kk);
+		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
+		  double k = sqrt (kk);
 
 		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
 
-		  k4z = kk / 4.0 / sys->xi2;
-		  kexp = sys->pivol
+		  double k4z = kk / 4.0 / sys->xi2;
+		  double kexp = sys->pivol
 		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
 		    / kk * exp (- k4z);
 
-		  ex = k1 / k;
-		  ey = k2 / k;
-		  ez = k3 / k;
+		  double ex = k1 / k;
+		  double ey = k2 / k;
+		  double ez = k3 / k;
 
-		  ya = 6.0 * (1.0 - kk / 3.0) * kexp;
-		  yb = 3.0 * k * kexp;
-		  yc = 3.0 / 2.0 * kk * kexp;
-		  yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
-		  yh = 3.0 / 2.0 * kk * kexp;
-		  ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
-      
 		  for (i = 0; i < sys->np; i++)
 		    {
-		      ix = i * 3;
-		      iy = ix + 1;
-		      iz = ix + 2;
+		      int ix = i * 3;
+		      int iy = ix + 1;
+		      int iz = ix + 2;
 		      for (j = 0; j < sys->np; j++)
 			{
-			  jx = j * 3;
-			  jy = jx + 1;
-			  jz = jx + 2;
+			  int jx = j * 3;
+			  int jy = jx + 1;
+			  int jz = jx + 2;
 
-			  xx = sys->pos [jx] - sys->pos [ix];
-			  yy = sys->pos [jy] - sys->pos [iy];
-			  zz = sys->pos [jz] - sys->pos [iz];
+			  if (sys->slip == NULL // no-slip
+			      && sys->a == NULL) // monodisperse
+			    {
+			      ya = 6.0 * (1.0 - kk / 3.0) * kexp;
+			      yb = 3.0 * k * kexp;
+			      yc = 3.0 / 2.0 * kk * kexp;
+			      yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
+			      yh = 3.0 / 2.0 * kk * kexp;
+			      ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
+			    }
+			  else // slip or no-slip polydisperse
+			    {
+			      double aa;
+			      double aa3;
+			      double aa2;
+			      if (sys->a == NULL) aa = 1.0;
+			      else                aa = sys->a [i];
+			      aa2 = aa * aa;
+			      aa3 = aa2 * aa;
 
-			  cf = cos (+ k1 * xx
-				    + k2 * yy
-				    + k3 * zz);
+			      // a^2 in nabla^2 term
+			      double a2a;
+			      double a2b;
+			      if (sys->slip == NULL) // no-slip
+				{
+				  a2a = aa2;
+
+				  if (sys->a == NULL) a2b = 1.0;
+				  else                a2b = sys->a [j];
+				  a2b *= a2b;
+				}
+			      else // slip
+				{
+				  a2a = sys->slip_a [i];
+				  a2a *= a2a;
+
+				  a2b = sys->slip_a [j];
+				  a2b *= a2b;
+				}
+
+			      ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0)
+				* kexp;
+			      yb = aa2 * 3.0 * k * kexp;
+			      yc = aa3 * 3.0 / 2.0 * kk * kexp;
+			      yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0))
+				* k * kexp;
+			      yh = aa3 * 3.0 / 2.0 * kk * kexp;
+			      ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0)
+				* kk * kexp;
+			      // in SD scaling
+			    }
+      
+			  double xx = sys->pos [jx] - sys->pos [ix];
+			  double yy = sys->pos [jy] - sys->pos [iy];
+			  double zz = sys->pos [jz] - sys->pos [iz];
+
+			  double cf = cos (+ k1 * xx
+					   + k2 * yy
+					   + k3 * zz);
 
 			  if (sys->version == 0) // F version
 			    {
@@ -1862,9 +2190,9 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
 			    }
 			  else if (sys->version == 1) // FT version
 			    {
-			      sf = - sin (+ k1 * xx
-					  + k2 * yy
-					  + k3 * zz);
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
 
 			      matrix_ft_ij (i, j,
 					    ex, ey, ez,
@@ -1875,9 +2203,9 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
 			    }
 			  else // FTS version
 			    {
-			      sf = - sin (+ k1 * xx
-					  + k2 * yy
-					  + k3 * zz);
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
 
 			      matrix_fts_ij (i, j,
 					     ex, ey, ez,
@@ -1915,20 +2243,10 @@ void
 atimes_ewald_3all_matrix_notbl (int n, const double *x,
 				double *y, void * user_data)
 {
-  struct stokes * sys;
-  int np;
-  double * mat;
+  struct stokes *sys = (struct stokes *)user_data;
 
-
-  sys = (struct stokes *) user_data;
-
-  np = sys->np;
-  mat = (double *) malloc (sizeof (double) * n * n);
-  if (mat == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_ewald_3fts_matrix ().\n");
-      exit (1);
-    }
+  double *mat = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat, "atimes_ewald_3all_matrix_notbl");
 
   // non-table version!
   make_matrix_mob_ewald_3all_notbl (sys, mat);
