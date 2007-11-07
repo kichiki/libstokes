@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.22 2007/10/27 15:56:11 kichiki Exp $
+ * $Id: stokes.h,v 1.23 2007/11/07 04:39:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,6 +36,10 @@ struct stokes {
    */
   double *a;   /* radius of particles
 		* Note : NULL (default) is for monodisperse system  */
+  double rmin; /* minimum distance for HI calculation 
+		* as in Rotne-Prager for r < 2a.
+		* if (r < rmin*(ai+aj)), r = rmin*(ai+aj)
+		* (default is 0.0) */
   int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
   int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
   int *poly_table; // for (i,j), [i*np+j] gives the index of "twobody_f_list"

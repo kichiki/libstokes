@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.23 2007/10/27 16:32:39 kichiki Exp $
+ * $Id: stokes.c,v 2.24 2007/11/07 04:39:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -301,6 +301,7 @@ stokes_init (void)
   sys->nm = 0;
   sys->pos = NULL;
   sys->a   = NULL;
+  sys->rmin = 0.0;
 
   sys->slip     = NULL;
   sys->slip_a   = NULL;
