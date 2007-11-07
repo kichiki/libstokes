@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.5 2007/10/25 05:53:24 kichiki Exp $
+ * $Id: bonds.c,v 1.6 2007/11/07 04:38:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -183,7 +183,7 @@ bonds_ILC (double x)
 static void
 bonds_set_force_ij (struct bonds *bonds,
 		    struct stokes *sys,
-		    int bond_type,
+		    int bond_index,
 		    int ia, int ib, 
 		    double x, double y, double z,
 		    double *f)
@@ -194,18 +194,20 @@ bonds_set_force_ij (struct bonds *bonds,
   double ey = y / r;
   double ez = z / r;
 
-  double Asp = bonds->p1[bond_type];
-  double Ls  = bonds->p2[bond_type];
+  double Asp = bonds->p1[bond_index];
+  double Ls  = bonds->p2[bond_index];
 
   double fr;
   double rLs = r / Ls;
   double rLs2;
 
+  int bond_type = bonds->type[bond_index];
   if ((bond_type != 0 && bond_type != 5) // FENE chain
       && rLs >= 1.0)
     {
       fprintf (stderr, "bonds: extension %e exceeds the max %e for (%d,%d)\n",
 	       r, Ls, ia, ib);
+      fprintf (stderr, "bond_type = %d\n", bond_type);
       exit (1);
     }
 
@@ -225,7 +227,7 @@ bonds_set_force_ij (struct bonds *bonds,
       fr = Asp * rLs * (1.0 - rLs2 / 3.0) / (1.0 - rLs2);
       break;
 
-    case 4: // Werner spring
+    case 4: // Warner spring
       rLs2 = rLs * rLs;
       fr = Asp * rLs / (1.0 - rLs2);
       break;
@@ -334,7 +336,7 @@ bonds_calc_force (struct bonds *bonds,
 	  if (sys->periodic == 0)
 	    {
 	      bonds_set_force_ij (bonds, sys,
-				  bonds->type[i],
+				  i,
 				  ia, ib, x, y, z,
 				  f);
 	    }
@@ -346,7 +348,7 @@ bonds_calc_force (struct bonds *bonds,
 	      double zz = z - sys->llz[k];
 
 	      bonds_set_force_ij (bonds, sys,
-				  bonds->type[i],
+				  i,
 				  ia, ib, xx, yy, zz,
 				  f);
 	    }
