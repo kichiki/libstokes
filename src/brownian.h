@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.4 2007/11/04 03:26:51 kichiki Exp $
+ * $Id: brownian.h,v 1.5 2007/11/07 04:42:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,31 +67,13 @@ struct BD_params
   double BB_n; // step parameter for BB03 algorithm
 };
 
-struct FTS
-{
-  int nm;
-  int nf;
-  double *f;
-  double *t;
-  double *s;
-  double *ff;
-  double *tf;
-  double *sf;
-  double *u;
-  double *o;
-  double *e;
-  double *uf;
-  double *of;
-  double *ef;
-};
-
 
 /* set the parameters to struct BD_params
  * INPUT
  *  ** NOTE ** the following pointers are just pointers.
  *             you have to take care of them! (free, for example.)
  *  (struct stokes *)sys -- initialize before calling!
- *  (struct KIrand *)rng -- initialize before calling!
+ *  seed : for random number generator
  *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
@@ -117,7 +99,7 @@ struct FTS
  */
 struct BD_params *
 BD_params_init (struct stokes *sys,
-		struct KIrand *rng,
+		unsigned long seed,
 		double *pos_fixed,
 		double *F,
 		double *T,
@@ -254,6 +236,24 @@ evolve_Euler_3all (struct stokes *sys,
 		   double dt,
 		   double *x, double *q);
 
+
+struct FTS
+{
+  int nm;
+  int nf;
+  double *f;
+  double *t;
+  double *s;
+  double *ff;
+  double *tf;
+  double *sf;
+  double *u;
+  double *o;
+  double *e;
+  double *uf;
+  double *of;
+  double *ef;
+};
 
 /*
  * INPUT

@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.4 2007/11/04 03:21:32 kichiki Exp $
+ * $Id: brownian.c,v 1.5 2007/11/07 04:42:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,7 +59,7 @@
  *  ** NOTE ** the following pointers are just pointers.
  *             you have to take care of them! (free, for example.)
  *  (struct stokes *)sys -- initialize before calling!
- *  (struct KIrand *)rng -- initialize before calling!
+ *  seed : for random number generator
  *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
@@ -85,7 +85,7 @@
  */
 struct BD_params *
 BD_params_init (struct stokes *sys,
-		struct KIrand *rng,
+		unsigned long seed,
 		double *pos_fixed,
 		double *F,
 		double *T,
@@ -112,7 +112,10 @@ BD_params_init (struct stokes *sys,
   CHECK_MALLOC (BD, "BD_params_init");
 
   BD->sys = sys;
-  BD->rng = rng;
+
+  BD->rng = KIrand_init ();
+  KIrand_init_genrand (BD->rng, seed);
+
   BD->pos_fixed = pos_fixed;
   BD->F = F;
   BD->T = T;
@@ -166,6 +169,7 @@ BD_params_free (struct BD_params *BD)
 {
   if (BD == NULL) return;
 
+  KIrand_free (BD->rng);
   if (BD->a_minv != NULL) free (BD->a_minv);
   if (BD->a_lub  != NULL) free (BD->a_lub);
   free (BD);
@@ -1258,6 +1262,8 @@ BD_sqrt_by_dgeev (int n, const double *a, double *s)
 	  free (v);
 	  free (vi);
 
+	  fprintf (stderr, "BD_sqrt_by_dgeev : %e %e\n",
+		   fabs (wi[i]), wr[i]);
 	  return (-1);
 	} 
       for (j = 0; j < n; j ++)
@@ -1318,10 +1324,17 @@ calc_brownian_force (struct BD_params *BD,
       double *l    = (double *)malloc (sizeof (double) * n * n);
       BD_matrix_minv_FU (BD, minv);
       // check
-      //check_symmetric (n, minv, 1.0e-12);
       status = dpotrf_wrap (n, minv, l);
       if (status != 0)
 	{
+	  check_symmetric (n, minv, 1.0e-12);
+	  struct overlap ol;
+	  if (check_overlap (BD->sys, BD->sys->pos, &ol) > 0)
+	    {
+	      fprintf (stderr, "overlap : [%d %d] %e < %e\n",
+		       ol.i, ol.j,
+		       ol.r2, ol.a2);
+	    }
 	  fprintf (stderr, "minv : failed in dpotrf() : %d\n", status);
 	  status = dpotf2_wrap (n, minv, l);
 	  fprintf (stderr, "minv : how about in dpotf2() : %d\n", status);
@@ -1331,6 +1344,10 @@ calc_brownian_force (struct BD_params *BD,
 	      fprintf (stderr,
 		       "minv : how about in sqrt_by_dgeev() : %d\n",
 		       status);
+	      if (status != 0)
+		{
+		  exit (1);
+		}
 	    }
 	}
 
@@ -1416,10 +1433,10 @@ calc_brownian_force (struct BD_params *BD,
 	  double *l   = (double *)malloc (sizeof (double) * n * n);
 	  BD_matrix_lub_FU (BD, lub);
 	  // check
-	  //check_symmetric (n, lub, 1.0e-12);
 	  status = dpotrf_wrap (n, lub, l);
 	  if (status != 0)
 	    {
+	      check_symmetric (n, lub, 1.0e-12);
 	      fprintf (stderr, "lub : failed in dpotrf() : %d\n", status);
 	      status = dpotf2_wrap (n, lub, l);
 	      fprintf (stderr, "lub : how about in dpotf2() : %d\n", status);
@@ -1429,6 +1446,10 @@ calc_brownian_force (struct BD_params *BD,
 		  fprintf (stderr,
 			   "lub : how about in sqrt_by_dgeev() : %d\n",
 			   status);
+		  if (status != 0)
+		    {
+		      exit (1);
+		    }
 		}
 	    }
 
