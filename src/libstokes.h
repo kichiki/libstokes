@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.42 2007/11/04 17:03:49 kichiki Exp $
+ * $Id: libstokes.h,v 1.43 2007/11/07 04:55:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,6 +38,10 @@ struct stokes {
    */
   double *a;   /* radius of particles
 		* Note : NULL (default) is for monodisperse system  */
+  double rmin; /* minimum distance for HI calculation 
+		* as in Rotne-Prager for r < 2a.
+		* if (r < rmin*(ai+aj)), r = rmin*(ai+aj)
+		* (default is 0.0) */
   int twobody_nmax;// max order for the coefficient for twobody_scalars_res()
   int twobody_lub; // 0 (far form) or 1 (lub form) for twobody_scalars_res()
   int *poly_table; // for (i,j), [i*np+j] gives the index of "twobody_f_list"
@@ -990,6 +994,13 @@ fprint_bonds (FILE *out, struct bonds *bonds);
  *      (5 6)
  *      (6 7)))
  *   ))
+ * where spring types are
+ *   0 : Hookean spring (Asp * (r - Ls)
+ *   1 : wormlike chain (WLC)
+ *   2 : inverse Langevin chain (ILC)
+ *   3 : Cohen's Pade approximation
+ *   4 : Warner spring
+ *   5 : Hookean spring (Asp * r / Ls)
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
@@ -1265,6 +1276,156 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
 int
 dydt_Q_hydro_st (double t, const double *y, double *dydt,
 		 void *params);
+
+
+/************************************
+ ** routines for Brownian dynamics **
+ ************************************/
+/* from brownian.h */
+struct BD_params
+{
+  /* note that the following pointers are just pointers, therefore, 
+   * you have to take care of them (to free, for example).
+   */
+  struct stokes *sys;
+  struct KIrand *rng;
+  double *pos_fixed;
+  double *F;
+  double *T;
+  double *E;
+  double *uf;
+  double *of;
+  double *ef;
+
+  int flag_mat;
+  int flag_lub;
+
+  // currently the following parameters are just place holders
+  double st;
+  struct bonds *bonds;
+  double gamma;
+  struct EV *ev;
+
+  int flag_Q;
+
+  // parameters for Brownian dynamics
+  double peclet;
+  double eps;
+
+  int n_minv;
+  double eig_minv[2];
+  double *a_minv;
+  int n_lub;
+  double eig_lub[2];
+  double *a_lub;
+
+  int scheme;  /* 0 : the mid-point algorithm
+		* 1 : Banchio-Brady (2003)
+		* 2 : Ball-Melrose (1997)
+		*/
+  double BB_n; // step parameter for BB03 algorithm
+};
+
+/* set the parameters to struct BD_params
+ * INPUT
+ *  ** NOTE ** the following pointers are just pointers.
+ *             you have to take care of them! (free, for example.)
+ *  (struct stokes *)sys -- initialize before calling!
+ *  seed : for random number generator
+ *  (double *)pos_fix (the position of fixed particles)
+ *  F [np*3]
+ *  T [np*3]
+ *  E [np*5]
+ *  uf [np*3]
+ *  of [np*3]
+ *  ef [np*5]
+ *  (int) flag_mat
+ *  (int) flag_lub
+ *  (double) stokes -- currently this is just a place holder
+ *  (struct bonds *)bonds
+ *  (double) gamma
+ *  (struct EV *)ev
+ *  (int) flag_Q
+ *  (double) peclet
+ *  (double) eps
+ *  (int) n_minv
+ *  (int) n_lub
+ *  (int) scheme
+ *  (double) BB_n
+ * OUTPUT :
+ *  (struct ode_params) params
+ */
+struct BD_params *
+BD_params_init (struct stokes *sys,
+		unsigned long seed,
+		double *pos_fixed,
+		double *F,
+		double *T,
+		double *E,
+		double *uf,
+		double *of,
+		double *ef,
+		int flag_lub,
+		int flag_mat,
+		double st,
+		struct bonds *bonds,
+		double gamma,
+		struct EV *ev,
+		int flag_Q,
+		double peclet,
+		double eps,
+		int    n_minv,
+		int    n_lub,
+		int    scheme,
+		double BB_n);
+
+void
+BD_params_free (struct BD_params *BD);
+
+
+/* wrapper for BD_evolve()
+ * INPUT
+ *  *t    : (input) current time
+ *  t_out : output time
+ *  *dt   : (input) current inner time-step
+ *  y[n]  : (input) current configuration at (*t),
+ *          where n = nm*3 for F version
+ *                    (y[] in the first (nm*3) elements = velocity),
+ *                n = nm*3 + nm*4 with quaternion
+ *                    (y[] in the first (nm*3) elements = velocity,
+ *                     y[] in the next (nm*4) elements = quaternion).
+ * OUTPUT
+ *  *t    : (output) output time (= t_out)
+ *  *dt   : (output) current (updated, if necessary) inner time-step
+ *  y[n]  : (output) updated configuration at t_out
+ */
+void
+BD_ode_evolve (struct BD_params *BD,
+	       double *t, double t_out, double *dt,
+	       double *y);
+
+
+/* from bd-imp.h */
+/* wrapper for BD_imp_evolve()
+ * INPUT
+ *  *t    : (input) current time
+ *  t_out : output time
+ *  *dt   : (input) current inner time-step
+ *  y[n]  : (input) current configuration at (*t),
+ *          where n = nm*3 for F version
+ *                    (y[] in the first (nm*3) elements = velocity),
+ *                n = nm*3 + nm*4 with quaternion
+ *                    (y[] in the first (nm*3) elements = velocity,
+ *                     y[] in the next (nm*4) elements = quaternion).
+ * OUTPUT
+ *  *t    : (output) output time (= t_out)
+ *  *dt   : (output) current (updated, if necessary) inner time-step
+ *  y[n]  : (output) updated configuration at t_out
+ */
+void
+BD_imp_ode_evolve (struct BD_params *BD,
+		   double *t, double t_out, double *dt,
+		   double *y);
 
 
 /************************************
