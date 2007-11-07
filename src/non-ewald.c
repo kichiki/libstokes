@@ -1,6 +1,6 @@
 /* utility for non-Ewald routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.c,v 1.7 2007/08/13 00:31:11 kichiki Exp $
+ * $Id: non-ewald.c,v 1.8 2007/11/07 04:40:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <math.h>
 #include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
+#include "memory-check.h" // CHECK_MALLOC
 
 #include "stokes.h"
 #include "f.h"      // matrix_f_ij() matrix_f_atimes()
@@ -328,22 +329,11 @@ scalars_nonewald_poly_full (int version,
 void
 atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 {
-  struct stokes * sys;
+  struct stokes *sys = (struct stokes *)user_data;
 
   double mob [22];
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-
   int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-
-
-  sys = (struct stokes *) user_data;
-
   /* clear result */
   for (i = 0; i < n; i ++)
     {
@@ -355,7 +345,6 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
   double self_a = 1.0;
   double self_c = 0.75;
   double self_m = 0.9;
-
   for (i = 0; i < sys->np; i++)
     {
       if (sys->slip != NULL) // slip
@@ -395,9 +384,9 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
   /* loop for all particle-particle pairs without the self */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
 
       // used in the slip case
       double ai;
@@ -409,19 +398,26 @@ atimes_nonewald_3all (int n, const double *x, double *y, void *user_data)
 	  // exclude the self part
 	  if (i == j) continue;
 
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
 
-	  xx = sys->pos [jx] - sys->pos [ix];
-	  yy = sys->pos [jy] - sys->pos [iy];
-	  zz = sys->pos [jz] - sys->pos [iz];
-	  rr = xx * xx + yy * yy + zz * zz;
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
 
-	  r = sqrt (rr);
-	  ex = xx / r;
-	  ey = yy / r;
-	  ez = zz / r;
+	  double xx = sys->pos [jx] - sys->pos [ix];
+	  double yy = sys->pos [jy] - sys->pos [iy];
+	  double zz = sys->pos [jz] - sys->pos [iz];
+	  double rr = xx * xx + yy * yy + zz * zz;
+
+	  double r = sqrt (rr);
+	  double rmin = (ai + aj) * sys->rmin;
+	  if (r < rmin) r = rmin;
+
+	  double ex = xx / r;
+	  double ey = yy / r;
+	  double ez = zz / r;
 
 	  if (sys->slip == NULL // no-slip
 	      && sys->a == NULL) // monodisperse
@@ -499,17 +495,7 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 {
   double mob [22];
 
-  double ex, ey, ez;
-
-  double xx, yy, zz, rr;
-  double r;
-
   int n;
-  int i, j;
-  int ix, iy, iz;
-  int jx, jy, jz;
-
-
   if (sys->version == 0) // F version
     {
       n = sys->np * 3;
@@ -523,6 +509,7 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
       n = sys->np * 11;
     }
 
+  int i, j;
   /* clear result */
   for (i = 0; i < n * n; ++i)
     {
@@ -577,9 +564,9 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
   /* loop for all particle-particle pairs without the self */
   for (i = 0; i < sys->np; i++)
     {
-      ix = i * 3;
-      iy = ix + 1;
-      iz = ix + 2;
+      int ix = i * 3;
+      int iy = ix + 1;
+      int iz = ix + 2;
 
       // used in the slip case
       double ai;
@@ -591,19 +578,26 @@ make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat)
 	  // exclude the self part
 	  if (i == j) continue;
 
-	  jx = j * 3;
-	  jy = jx + 1;
-	  jz = jx + 2;
+	  double aj;
+	  if (sys->a == NULL) aj = 1.0;
+	  else                aj = sys->a [j];
 
-	  xx = sys->pos [jx] - sys->pos [ix];
-	  yy = sys->pos [jy] - sys->pos [iy];
-	  zz = sys->pos [jz] - sys->pos [iz];
-	  rr = xx * xx + yy * yy + zz * zz;
+	  int jx = j * 3;
+	  int jy = jx + 1;
+	  int jz = jx + 2;
 
-	  r = sqrt (rr);
-	  ex = xx / r;
-	  ey = yy / r;
-	  ez = zz / r;
+	  double xx = sys->pos [jx] - sys->pos [ix];
+	  double yy = sys->pos [jy] - sys->pos [iy];
+	  double zz = sys->pos [jz] - sys->pos [iz];
+	  double rr = xx * xx + yy * yy + zz * zz;
+
+	  double r = sqrt (rr);
+	  double rmin = (ai + aj) * sys->rmin;
+	  if (r < rmin) r = rmin;
+
+	  double ex = xx / r;
+	  double ey = yy / r;
+	  double ez = zz / r;
 
 	  if (sys->slip == NULL // no-slip
 	      && sys->a == NULL) // monodisperse
@@ -683,20 +677,10 @@ void
 atimes_nonewald_3all_matrix (int n, const double *x,
 			     double *y, void *user_data)
 {
-  struct stokes * sys;
-  int np;
-  double * mat;
+  struct stokes *sys = (struct stokes *)user_data;
 
-
-  sys = (struct stokes *) user_data;
-
-  np = sys->np;
-  mat = (double *) malloc (sizeof (double) * n * n);
-  if (mat == NULL)
-    {
-      fprintf (stderr, "allocation error in atimes_nonewald_3fts_matrix ().\n");
-      exit (1);
-    }
+  double *mat = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat, "atimes_nonewald_3all_matrix");
 
   make_matrix_mob_nonewald_3all (sys, mat);
   if (sys->version == 0 // F version
