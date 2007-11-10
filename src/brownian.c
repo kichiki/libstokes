@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.5 2007/11/07 04:42:26 kichiki Exp $
+ * $Id: brownian.c,v 1.6 2007/11/10 23:28:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1351,16 +1351,6 @@ calc_brownian_force (struct BD_params *BD,
 	    }
 	}
 
-      /*
-      for (i = 0; i < n; i ++)
-	{
-	  zp[i] = 0.0;
-	  for (j = 0; j < n; j ++)
-	    {
-	      zp[i] += l[i*n+j] * y_minv[j];
-	    }
-	}
-      */
       dot_prod_matrix (l, n, n, y_minv, zp);
 
       free (minv);
@@ -1453,16 +1443,6 @@ calc_brownian_force (struct BD_params *BD,
 		}
 	    }
 
-	  /*
-	  for (i = 0; i < n; i ++)
-	    {
-	      z_lub[i] = 0.0;
-	      for (j = 0; j < n; j ++)
-		{
-		  z_lub[i] += l[i*n+j] * y_lub[j];
-		}
-	    }
-	  */
 	  dot_prod_matrix (l, n, n, y_lub, z_lub);
 
 	  free (lub);
@@ -1875,10 +1855,6 @@ BD_evolve_mid (struct BD_params *BD,
 	       double dt)
 {
   struct overlap ol;
-  if (check_overlap (BD->sys, x, &ol) > 0)
-    {
-      fprintf (stderr, "# mid-point: overlap in the initial step\n");
-    }
 
   /**
    * memory allocation for working area
@@ -1986,7 +1962,8 @@ BD_evolve_mid (struct BD_params *BD,
   // evolve by Euler for dt/2 from the initial configuration
   evolve_Euler_3all (BD->sys, FTS->u, FTS->o, dt * 0.5,
 		     xmid, qmid);
-  if (check_overlap (BD->sys, xmid, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xmid, &ol) > 0)
     {
       //fprintf (stderr, "# mid-point: overlap in 1st step\n");
       // just reject the random force z[]
@@ -2068,7 +2045,8 @@ BD_evolve_mid (struct BD_params *BD,
     }
   evolve_Euler_3all (BD->sys, FTS->u, FTS->o, dt,
 		     xmid, qmid);
-  if (check_overlap (BD->sys, xmid, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xmid, &ol) > 0)
     {
       //fprintf (stderr, "# mid-point: overlap in 2nd step\n");
       // just reject the random force z[]
@@ -2236,7 +2214,8 @@ BD_evolve_BB03 (struct BD_params *BD,
    */
   evolve_Euler_3all (BD->sys, uBB, oBB, dt / BD->BB_n,
 		     xBB, qBB);
-  if (check_overlap (BD->sys, xBB, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xBB, &ol) > 0)
     {
       //fprintf (stderr, "# BB03 : overlap in the intermediate step\n");
       // just reject the random force z[]
@@ -2326,7 +2305,8 @@ BD_evolve_BB03 (struct BD_params *BD,
     }
   evolve_Euler_3all (BD->sys, FTS->u, FTS->o, dt,
 		     xBB, qBB);
-  if (check_overlap (BD->sys, xBB, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xBB, &ol) > 0)
     {
       //fprintf (stderr, "# BB03 : overlap in the final step\n");
       // just reject the random force z[]
@@ -2483,7 +2463,8 @@ BD_evolve_BM97 (struct BD_params *BD,
   // evolve by Euler for dt from the initial configuration
   evolve_Euler_3all (BD->sys, uBM, oBM, dt,
 		     xBM, qBM);
-  if (check_overlap (BD->sys, xBM, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xBM, &ol) > 0)
     {
       //fprintf (stderr, "# BM97: overlap in 1st step\n");
       // just reject the random force z[]
@@ -2546,7 +2527,8 @@ BD_evolve_BM97 (struct BD_params *BD,
     }
   evolve_Euler_3all (BD->sys, FTS->u, FTS->o, dt,
 		     xBM, qBM);
-  if (check_overlap (BD->sys, xBM, &ol) > 0)
+  if (BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BD->sys, xBM, &ol) > 0)
     {
       //fprintf (stderr, "# BM97: overlap in 2nd step\n");
       // just reject the random force z[]
