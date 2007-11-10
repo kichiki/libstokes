@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.2 2007/11/04 00:17:08 kichiki Exp $
+ * $Id: check-brownian.c,v 1.3 2007/11/10 23:06:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -133,7 +133,7 @@ check_cheb_minv (int n,
 				    atimes_by_matrix, (void *)ainv);
   if (verbose != 0)
     {
-      fprintf (stderr, "# matrix : err_minv = %e\n", err_minv);
+      fprintf (stdout, "# matrix : err_minv = %e\n", err_minv);
     }
 
   /**
@@ -159,7 +159,7 @@ check_cheb_minv (int n,
 				       atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stderr, "# atimes : err_minv = %e\n", err_minv);
+      fprintf (stdout, "# atimes : err_minv = %e\n", err_minv);
     }
 
   double zz_mat = 0.0;
@@ -258,7 +258,7 @@ check_cheb_lub (int n,
 				   atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stderr, "# matrix : err_lub = %e\n", err_lub);
+      fprintf (stdout, "# matrix : err_lub = %e\n", err_lub);
     }
 
   /**
@@ -284,7 +284,7 @@ check_cheb_lub (int n,
 				   atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stderr, "# atimes : err_lub = %e\n", err_lub);
+      fprintf (stdout, "# atimes : err_lub = %e\n", err_lub);
     }
 
   double zz_mat = 0.0;
@@ -376,7 +376,7 @@ check_minv_FU (int verbose, double tiny)
 
   struct BD_params *BD = BD_params_init
     (sys,
-     NULL, // struct KIrand *rng,
+     0,    // unsigned long seed,
      NULL, // double *pos_fixed,
      NULL, // double *F,
      NULL, // double *T,
@@ -726,7 +726,7 @@ check_lub_FU (int verbose, double tiny)
 
   struct BD_params *BD = BD_params_init
     (sys,
-     NULL, // struct KIrand *rng,
+     0,    // unsigned long seed,
      NULL, // double *pos_fixed,
      NULL, // double *F,
      NULL, // double *T,
