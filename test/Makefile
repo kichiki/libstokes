@@ -1,19 +1,24 @@
-# $Id: Makefile,v 1.11 2007/11/04 00:19:02 kichiki Exp $
+# $Id: Makefile,v 1.12 2007/11/10 23:12:43 kichiki Exp $
 
 CC           = cc
-LD           = libtool --mode=link $(CC)
+#LD           = libtool --mode=link $(CC)
+LD           = libtool --mode=link --tag=CC $(CC)
 
 SRC_DIR = ../src
+
+GSL_INC = `pkg-config --cflags gsl`
+GSL_LIB = `pkg-config --libs gsl`
 
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
 
-#CFLAGS	     = -Wall -I/usr/local/include -O3 -mtune=pentium
-CFLAGS	     = -Wall\
-		-I$(SRC_DIR)\
-		-pipe -O3 -march=prescott -fomit-frame-pointer\
-		-mfpmath=sse -ffast-math\
-		$(GUILE_INC)
+CFLAGS	     = \
+	-Wall		\
+	-I$(SRC_DIR)	\
+	-pipe -O3 -march=prescott -fomit-frame-pointer\
+	-mfpmath=sse -ffast-math\
+	$(GUILE_INC)	\
+	$(GSL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
@@ -24,12 +29,14 @@ ATLAS_LIBS	= \
 	-larpack
 
 LDFLAGS      =
-LIBS         = ../src/libstokes.la\
-		-lm\
-		-L/usr/local/lib -liter\
-		$(ATLAS_LIBS)\
-		-lnetcdf\
-		$(GUILE_LIB)
+LIBS         = \
+	../src/libstokes.la	\
+	-lm			\
+	-L/usr/local/lib -liter	\
+	$(ATLAS_LIBS)		\
+	-lnetcdf		\
+	$(GUILE_LIB)		\
+	$(GSL_LIB)
 
 all:	test-all	\
 	test-twobody	\
