@@ -1,6 +1,6 @@
 /* test code for solve_gen_linear() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-solve-gen-linear.c,v 1.3 2007/09/30 04:00:21 kichiki Exp $
+ * $Id: check-solve-gen-linear.c,v 1.4 2007/11/10 23:10:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -260,45 +260,6 @@ solve_gen_linear_ (int n1, int n2,
 }
 
 
-/* D [na1, na2] = a * A [na1, na2] + b * B [nb1, nb2] . C [nc1, nc2]
- * I put a plain inplementation here because now add_and_mul() in matrix.c
- * is local function there.
- */
-static void
-add_and_mul (const double *A, int na1, int na2,
-	     const double *B, int nb1, int nb2,
-	     const double *C, int nc1, int nc2,
-	     double a, double b,
-	     double *D)
-{
-  if (nb2 != nc1
-      || na1 != nb1
-      || na2 != nc2)
-    {
-      fprintf (stderr, "illeagal multiplication in add_and_mul().\n");
-      exit (1);
-    }
-  if (A == D)
-    {
-      fprintf (stderr, "illeagal pointer D in add_and_mul().\n");
-      exit (1);
-    }
-
-  int i, j, k;
-  for (i = 0; i < na1; i ++)
-    {
-      for (j = 0; j < na2; j ++)
-	{
-	  D[i*na2+j] = a * A[i*na2+j];
-	  for (k = 0; k < nb2; k ++)
-	    {
-	      D[i*na2+j] += b * B[i*nb2+k] * C[k*nc2+j];
-	    }
-	}
-    }
-}
-
-
 static void
 inverse_by_sub (int n1, int n2,
 		const double *A, const double *B, const double *C, double *D,
@@ -463,33 +424,6 @@ check_inverse_by_sub (int n1, int n2,
 
   return (check);
 }
-
-/* A = B . A
- * I put a plain inplementation here because now mul_left_sq() in matrix.c
- * is local function there.
-static void
-mul_left_sq (double * A, int na1, int na2,
-	     const double * B)
-{
-  int i;
-  int nb = na1;
-
-  double *tmp = NULL;
-  tmp = (double *) malloc (sizeof (double) * na1 * na2);
-  CHECK_MALLOC (tmp, "mul_left_sq");
-
-  mul_matrices (B, nb, nb,
-		A, na1, na2,
-		tmp);
-
-  for (i = 0; i < na1 * na2; ++i)
-    {
-      A [i] = tmp [i];
-    }
-
-  free (tmp);
-}
- */
 
 
 /* 
