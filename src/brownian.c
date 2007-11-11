@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.6 2007/11/10 23:28:16 kichiki Exp $
+ * $Id: brownian.c,v 1.7 2007/11/11 20:39:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -136,25 +136,39 @@ BD_params_init (struct stokes *sys,
   BD->peclet = peclet;
   BD->eps = eps;
 
+  int i;
   BD->n_minv = n_minv;
   BD->eig_minv[0] = 0.0;
   BD->eig_minv[1] = 0.0;
-  BD->a_minv = (double *)malloc (sizeof (double) * n_minv);
-  CHECK_MALLOC (BD->a_minv, "BD_params_init");
-  int i;
-  for (i = 0; i < n_minv; i ++)
+  if (n_minv == 0)
     {
-      BD->a_minv [i] = 0.0;
+      BD->a_minv = NULL;
+    }
+  else
+    {
+      BD->a_minv = (double *)malloc (sizeof (double) * n_minv);
+      CHECK_MALLOC (BD->a_minv, "BD_params_init");
+      for (i = 0; i < n_minv; i ++)
+	{
+	  BD->a_minv [i] = 0.0;
+	}
     }
 
   BD->n_lub = n_lub;
   BD->eig_lub[0] = 0.0;
   BD->eig_lub[1] = 0.0;
-  BD->a_lub = (double *)malloc (sizeof (double) * n_lub);
-  CHECK_MALLOC (BD->a_lub, "BD_params_init");
-  for (i = 0; i < n_lub; i ++)
+  if (n_lub == 0)
     {
-      BD->a_lub [i] = 0.0;
+      BD->a_lub = NULL;
+    }
+  else
+    {
+      BD->a_lub = (double *)malloc (sizeof (double) * n_lub);
+      CHECK_MALLOC (BD->a_lub, "BD_params_init");
+      for (i = 0; i < n_lub; i ++)
+	{
+	  BD->a_lub [i] = 0.0;
+	}
     }
 
 
@@ -325,6 +339,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  double *u = (double *)malloc (sizeof (double) * np3);
 	  CHECK_MALLOC (f, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
+
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      f[i] = x[i];
@@ -365,18 +380,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  double *uo = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (ft, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (uo, "BD_atimes_mob_FU");
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      ft[i]       = x[i];
-	      ft[i + np3] = x[i + nm3];
-	    }
-	  for (; i < np3; i ++)
-	    {
-	      ft[i]       = 0.0;
-	      ft[i + np3] = 0.0;
-	    }
-	  */
+
 	  for (i = 0; i < nm6; i ++)
 	    {
 	      ft[i] = x[i];
@@ -388,13 +392,6 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  atimes_3all (n, ft, uo, (void *)BD->sys);
 
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      y[i]       = uo[i];
-	      y[i + nm3] = uo[i + np3];
-	    }
-	  */
 	  for (i = 0; i < nm6; i ++)
 	    {
 	      y[i] = uo[i];
@@ -430,17 +427,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  CHECK_MALLOC (u, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (o, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (s, "BD_atimes_mob_FU");
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      f[i] = x[i];
-	      t[i] = x[i + nm3];
-	    }
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      e[i] = 0.0;
-	    }
-	  */
+
 	  for (i = 0; i < nm; i ++)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
@@ -456,13 +443,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  solve_mob_3fts_0 (BD->sys, iter, f, t, e,
 			    u, o, s);
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      y[i      ] = u[i];
-	      y[i + nm3] = o[i];
-	    }
-	  */
+
 	  for (i = 0; i < nm; i ++)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
@@ -507,13 +488,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
 	  CHECK_MALLOC (ff, "BD_atimes_mob_FU");
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      f[i] = x[i];
-	      t[i] = x[i + nm3];
-	    }
-	  */
+
 	  for (i = 0; i < nm; i ++)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
@@ -538,13 +513,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  solve_mix_3fts_0 (BD->sys, iter, f, t, e, uf, of, ef,
 			    u, o, s, ff, tf, sf);
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      y[i      ] = u[i];
-	      y[i + nm3] = o[i];
-	    }
-	  */
+
 	  for (i = 0; i < nm; i ++)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
@@ -620,6 +589,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  double *f = (double *)malloc (sizeof (double) * np3);
 	  CHECK_MALLOC (u, "BD_atimes_lub_FU");
 	  CHECK_MALLOC (f, "BD_atimes_lub_FU");
+
 	  for (i = 0; i < nm3; i ++)
 	    {
 	      u[i] = x[i];
@@ -660,18 +630,7 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  double *ft = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (ft, "BD_atimes_lub_FU");
 	  CHECK_MALLOC (uo, "BD_atimes_lub_FU");
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      uo[i]       = x[i];
-	      uo[i + np3] = x[i + nm3];
-	    }
-	  for (; i < np3; i ++)
-	    {
-	      uo[i]       = 0.0;
-	      uo[i + np3] = 0.0;
-	    }
-	  */
+
 	  for (i = 0; i < nm6; i ++)
 	    {
 	      uo[i] = x[i];
@@ -683,13 +642,6 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  calc_lub_3ft (BD->sys, uo, ft);
 
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      y[i]       = ft[i];
-	      y[i + nm3] = ft[i + np3];
-	    }
-	  */
 	  for (i = 0; i < nm6; i ++)
 	    {
 	      y[i] = ft[i];
@@ -725,39 +677,22 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 	  double *ft = (double *)malloc (sizeof (double) * np6);
 	  CHECK_MALLOC (uo, "BD_atimes_lub_FU");
 	  CHECK_MALLOC (ft, "BD_atimes_lub_FU");
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      uo[i]       = x[i];
-	      uo[i + np3] = x[i + nm3];
-	    }
-	  for (; i < np3; i ++)
-	    {
-	      uo[i]       = 0.0;
-	      uo[i + np3] = 0.0;
-	    }
-	  */
+
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      uo[i]       = x[i];
+	      uo[i] = x[i];
 	    }
 	  for (; i < np6; i ++)
 	    {
-	      uo[i]       = 0.0;
+	      uo[i] = 0.0;
 	    }
 
 
 	  calc_lub_3ft (sys_ft, uo, ft);
-	  /*
-	  for (i = 0; i < nm3; i ++)
-	    {
-	      y[i]       = ft[i];
-	      y[i + nm3] = ft[i + np3];
-	    }
-	  */
+
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      y[i]       = ft[i];
+	      y[i] = ft[i];
 	    }
 	  free (uo);
 	  free (ft);
@@ -834,21 +769,7 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
 	       x, np5, np6,
 	       1.0, -1.0,
 	       minv_FU);
-  /*
-  double *y = (double *)malloc (sizeof (double) * np6 * np6);
-  CHECK_MALLOC (y, "BD_minv_FU_in_FTS");
-  // y[np6,np6] = b[np6,np5] * x[np5,np6]
-  mul_matrices (b, np6, np5,
-		x, np5, np6,
-		y);
-  // a = a - b.d^{-1}.c
-  int i;
-  for (i = 0; i < np6 * np6; i ++)
-    {
-      minv_FU [i] = a[i] - y[i];
-    }
-  free (y);
-  */
+
   lapack_inv_ (np6, minv_FU);
 
   free (a);
@@ -1310,7 +1231,6 @@ calc_brownian_force (struct BD_params *BD,
   double *y_minv = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y_minv, "calc_brownian_force");
   int i;
-  //int j;
   for (i = 0; i < n; i ++)
     {
       y_minv[i] = KIrand_Gaussian (BD->rng);
@@ -1398,8 +1318,8 @@ calc_brownian_force (struct BD_params *BD,
 					       BD_atimes_mob_FU, (void *)BD);
 	  fprintf (stderr, " => err = %e\n", err_minv);
 	}
-      free (y_minv);
     }
+  free (y_minv);
 
   /**
    * lubrication part
