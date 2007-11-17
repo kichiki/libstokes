@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FT version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.14 2007/10/27 03:49:57 kichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.15 2007/11/17 23:28:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,41 +58,22 @@ solve_res_3ft_matrix (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n6 = np * 6;
-
   double *u0 = (double *) malloc (sizeof (double) * np * 3);
   double *o0 = (double *) malloc (sizeof (double) * np * 3);
-  double *mat = (double *) malloc (sizeof (double) * n6 * n6);
-  double *b = (double *) malloc (sizeof (double) * n6);
-  double *x = (double *) malloc (sizeof (double) * n6);
   CHECK_MALLOC (u0, "solve_res_3ft_matrix");
   CHECK_MALLOC (o0, "solve_res_3ft_matrix");
-  CHECK_MALLOC (mat, "solve_res_3ft_matrix");
-  CHECK_MALLOC (b, "solve_res_3ft_matrix");
-  CHECK_MALLOC (x, "solve_res_3ft_matrix");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  /* b := (UO) */
-  set_ft_by_FT (np, b, u0, o0);
+  solve_res_3ft_matrix_0 (sys,
+			  u0, o0, 
+			  f, t);
+
   free (u0);
   free (o0);
-
-  make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
-  lapack_inv_ (n6, mat);
-
-  // x := M^-1.b
-  dot_prod_matrix (mat, n6, n6, b, x);
-
-  /* x := (FT) */
-  set_FT_by_ft (np, f, t, x);
-
-  free (mat);
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -172,56 +153,21 @@ solve_res_lub_3ft_matrix (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n6 = np * 6;
-
   double *u0 = (double *) malloc (sizeof (double) * np * 3);
   double *o0 = (double *) malloc (sizeof (double) * np * 3);
-  double *mob = (double *) malloc (sizeof (double) * n6 * n6);
-  double *lub = (double *) malloc (sizeof (double) * n6 * n6);
-  double *b = (double *) malloc (sizeof (double) * n6);
-  double *x = (double *) malloc (sizeof (double) * n6);
   CHECK_MALLOC (u0, "solve_res_lub_3ft_matrix");
   CHECK_MALLOC (o0, "solve_res_lub_3ft_matrix");
-  CHECK_MALLOC (mob, "solve_res_lub_3ft_matrix");
-  CHECK_MALLOC (lub, "solve_res_lub_3ft_matrix");
-  CHECK_MALLOC (b, "solve_res_lub_3ft_matrix");
-  CHECK_MALLOC (x, "solve_res_lub_3ft_matrix");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  // M matrix
-  make_matrix_mob_3all (sys, mob); // sys->version is 1 (FT)
-  // M^-1
-  lapack_inv_ (n6, mob);
+  solve_res_lub_3ft_matrix_0 (sys, u0, o0,
+			      f, t);
 
-  // L matrix
-  make_matrix_lub_3ft (sys, lub);
-
-  // M^-1 + L
-  int i;
-  for (i = 0; i < n6 * n6; i ++)
-    {
-      lub [i] += mob [i];
-    }
-  free (mob);
-
-  /* b := (UO) */
-  set_ft_by_FT (np, b, u0, o0);
   free (u0);
   free (o0);
-
-  // x := (M^-1 + L).(UO)
-  dot_prod_matrix (lub, n6, n6, b, x);
-
-  // (FT) = x
-  set_FT_by_ft (np, f, t, x);
-
-  free (lub);
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -827,15 +773,8 @@ solve_mix_lub_3ft_matrix (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  /* used at lub [] */
-  double *I_ll = lub;
-  double *I_lh = I_ll + nl * nl;
-  double *I_hl = I_lh + nl * nh;
-  double *I_hh = I_hl + nh * nl;
-
   /* b := (FT,UfOf) */
   set_ft_by_FT (nm, b, f, t);
-  //set_ft_by_FT (nf, b + nm6, uf, of);
   set_ft_by_FT (nf, b + nm6, uf0, of0);
   free (uf0);
   free (of0);
@@ -848,22 +787,28 @@ solve_mix_lub_3ft_matrix (struct stokes * sys,
   make_matrix_lub_3ft (sys, lub);
   /* tmp := M.L */
   mul_matrices (mat, n6, n6, lub, n6, n6, tmp);
-  /* note: at this point, lub[] is free to use. */
-  free (lub);
-  /* lub := I + (M.T).(L.T) */
+  /* note: at this point, lub[] is free to use.
+   * so that I_?? use lub [] */
+  double *I_ll = lub;
+  double *I_lh = I_ll + nl * nl;
+  double *I_hl = I_lh + nl * nh;
+  double *I_hh = I_hl + nh * nl;
+
+  /* tmp := I + (M.T).(L.T) */
   int i;
   for (i = 0; i < n6; ++i)
     {
       tmp [i * n6 + i] += 1.0;
     }
   split_matrix_fix_3ft (np, nm, tmp, I_ll, I_lh, I_hl, I_hh);
-  /* note: at this point, tmp[] is free to use. */
   free (tmp);
 
   solve_gen_linear (nl, nh,
 		    I_ll, I_lh, I_hl, I_hh,
 		    mat_ll, mat_lh, mat_hl, mat_hh,
 		    mob_ll, mob_lh, mob_hl, mob_hh);
+  /* note: at this point, I_??, therefore lub[], is free to use. */
+  free (lub);
 
   merge_matrix_fix_3ft (np, nm, mob_ll, mob_lh, mob_hl, mob_hh, mat);
   dot_prod_matrix (mat, n6, n6,
