@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.15 2007/10/27 03:49:10 kichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.16 2007/11/17 23:29:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,24 +55,16 @@ solve_res_3f_matrix (struct stokes * sys,
     }
 
   int n3 = sys->np * 3;
-
   double *u0 = (double *) malloc (sizeof (double) * n3);
-  double *mat = (double *) malloc (sizeof (double) * n3 * n3);
   CHECK_MALLOC (u0, "solve_res_3f_matrix");
-  CHECK_MALLOC (mat, "solve_res_3f_matrix");
 
   shift_labo_to_rest_U (sys, sys->np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  make_matrix_mob_3all (sys, mat); // sys->version is 0 (F)
-  lapack_inv_ (n3, mat);
+  solve_res_3f_matrix_0 (sys, u0, f);
 
-  // f := M^-1.u
-  dot_prod_matrix (mat, n3, n3, u0, f);
   free (u0);
-
-  free (mat);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -134,41 +126,16 @@ solve_res_lub_3f_matrix (struct stokes * sys,
       sys->version = 0;
     }
 
-  int np = sys->np;
-  int n3 = np * 3;
-
-  double *u0 = (double *) malloc (sizeof (double) * n3);
-  double *mob = (double *) malloc (sizeof (double) * n3 * n3);
-  double *lub = (double *) malloc (sizeof (double) * n3 * n3);
+  double *u0 = (double *) malloc (sizeof (double) * sys->np * 3);
   CHECK_MALLOC (u0, "solve_res_lub_3f_matrix");
-  CHECK_MALLOC (mob, "solve_res_lub_3f_matrix");
-  CHECK_MALLOC (lub, "solve_res_lub_3f_matrix");
 
   shift_labo_to_rest_U (sys, sys->np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  // M matrix
-  make_matrix_mob_3all (sys, mob); // sys->version is 0 (F)
-  // M^-1
-  lapack_inv_ (n3, mob);
+  solve_res_lub_3f_matrix_0 (sys, u0, f);
 
-  // L matrix
-  make_matrix_lub_3f (sys, lub);
-
-  // M^-1 + L
-  int i;
-  for (i = 0; i < n3 * n3; i ++)
-    {
-      lub [i] += mob [i];
-    }
-  free (mob);
-
-  // x := (M^-1 + L).(UO)
-  dot_prod_matrix (lub, n3, n3, u0, f);
   free (u0);
-
-  free (lub);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
