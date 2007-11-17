@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.43 2007/11/07 04:55:49 kichiki Exp $
+ * $Id: libstokes.h,v 1.44 2007/11/17 23:27:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1324,7 +1324,11 @@ struct BD_params
 		* 2 : Ball-Melrose (1997)
 		*/
   double BB_n; // step parameter for BB03 algorithm
+  double dt_lim; /* lower bound to shrink dt to prevent overlaps
+		  * set "dt" if you don't want to adjust dt but just reject
+		  */
 };
+
 
 /* set the parameters to struct BD_params
  * INPUT
@@ -1352,6 +1356,7 @@ struct BD_params
  *  (int) n_lub
  *  (int) scheme
  *  (double) BB_n
+ *  (double) dt_lim
  * OUTPUT :
  *  (struct ode_params) params
  */
@@ -1377,7 +1382,8 @@ BD_params_init (struct stokes *sys,
 		int    n_minv,
 		int    n_lub,
 		int    scheme,
-		double BB_n);
+		double BB_n,
+		double dt_lim);
 
 void
 BD_params_free (struct BD_params *BD);
