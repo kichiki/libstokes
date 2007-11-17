@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.16 2007/10/30 04:31:36 kichiki Exp $
+ * $Id: ewald-3fts.c,v 5.17 2007/11/17 23:31:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,18 +59,12 @@ solve_res_3fts (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n11 = np * 11;
-
   double *u0 = (double *) malloc (sizeof (double) * np * 3);
   double *o0 = (double *) malloc (sizeof (double) * np * 3);
   double *e0 = (double *) malloc (sizeof (double) * np * 5);
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (u0, "solve_res_3fts");
   CHECK_MALLOC (o0, "solve_res_3fts");
   CHECK_MALLOC (e0, "solve_res_3fts");
-  CHECK_MALLOC (b, "solve_res_3fts");
-  CHECK_MALLOC (x, "solve_res_3fts");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -78,20 +72,13 @@ solve_res_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  set_fts_by_FTS (np, b, u0, o0, e0);
+  solve_res_3fts_0 (sys,
+		    u0, o0, e0,
+		    f, t, s);
+
   free (u0);
   free (o0);
   free (e0);
-
-  solve_iter (n11, b, x,
-	      atimes_3all, (void *)sys,
-	      sys->it);
-  // for atimes_3all(), sys->version is 2 (FTS)
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -282,30 +269,18 @@ solve_mob_3fts (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n11 = np * 11;
-
   double *e0 = (double *) malloc (sizeof (double) * np * 5);
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (e0, "solve_mob_3fts");
-  CHECK_MALLOC (b, "solve_mob_3fts");
-  CHECK_MALLOC (x, "solve_mob_3fts");
 
   shift_labo_to_rest_E (sys, np, e, e0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  calc_b_mob_3fts (sys, f, t, e0, b);
+  solve_mob_3fts_0 (sys, sys->it,
+		    f, t, e0,
+		    u, o, s);
+
   free (e0);
-
-  solve_iter (n11, b, x,
-	      atimes_mob_3fts, (void *)sys,
-	      sys->it);
-
-  set_FTS_by_fts (np, u, o, s, x);
-
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -573,21 +548,14 @@ solve_mix_3fts (struct stokes * sys,
     }
 
   int nf = np - nm;
-  int n11 = np * 11;
-  int nm11 = nm * 11;
-
   double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
   double *of0 = (double *) malloc (sizeof (double) * nf * 3);
   double *ef0 = (double *) malloc (sizeof (double) * nf * 5);
   double *e0 = (double *) malloc (sizeof (double) * nm * 5);
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (uf0, "solve_mix_3fts");
   CHECK_MALLOC (of0, "solve_mix_3fts");
   CHECK_MALLOC (ef0, "solve_mix_3fts");
   CHECK_MALLOC (e0, "solve_mix_3fts");
-  CHECK_MALLOC (b, "solve_mix_3fts");
-  CHECK_MALLOC (x, "solve_mix_3fts");
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
@@ -596,21 +564,16 @@ solve_mix_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  calc_b_mix_3fts (sys, f, t, e0, uf0, of0, ef0, b);
+  solve_mix_3fts_0 (sys, sys->it,
+		    f, t, e0,
+		    uf0, of0, ef0,
+		    u, o, s,
+		    ff, tf, sf);
+
   free (uf0);
   free (of0);
   free (ef0);
   free (e0);
-
-  solve_iter (n11, b, x,
-	      atimes_mix_3fts, (void *)sys,
-	      sys->it);
-
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
-
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -719,20 +682,12 @@ solve_res_lub_3fts (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n11 = np * 11;
-
   double *u0 = (double *) malloc (sizeof (double) * np * 3);
   double *o0 = (double *) malloc (sizeof (double) * np * 3);
   double *e0 = (double *) malloc (sizeof (double) * np * 5);
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
-  double *lub = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (u0, "solve_res_lub_3fts");
   CHECK_MALLOC (o0, "solve_res_lub_3fts");
   CHECK_MALLOC (e0, "solve_res_lub_3fts");
-  CHECK_MALLOC (b, "solve_res_lub_3fts");
-  CHECK_MALLOC (x, "solve_res_lub_3fts");
-  CHECK_MALLOC (lub, "solve_res_lub_3fts");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   shift_labo_to_rest_O (sys, np, o, o0);
@@ -740,31 +695,13 @@ solve_res_lub_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  set_fts_by_FTS (np, b, u0, o0, e0);
+  solve_res_lub_3fts_0 (sys,
+			u0, o0, e0,
+			f, t, s);
+
   free (u0);
   free (o0);
   free (e0);
-
-  calc_lub_3fts (sys, b, lub);
-  atimes_3all (n11, lub, x, (void *) sys);
-  // sys->version is 2 (FTS)
-  // x[] is used temporarily
-  int i;
-  for (i = 0; i < n11; ++i)
-    {
-      b [i] += x [i];
-    }
-
-  solve_iter (n11, b, x,
-	      atimes_3all, (void *)sys,
-	      sys->it);
-  // for atimes_3all(), sys->version is 2 (FTS)
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (b);
-  free (x);
-  free (lub);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
