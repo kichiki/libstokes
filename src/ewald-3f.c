@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.c,v 4.14 2007/10/27 03:46:20 kichiki Exp $
+ * $Id: ewald-3f.c,v 4.15 2007/11/17 23:32:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,7 +54,6 @@ solve_res_3f (struct stokes *sys,
 
   int np = sys->np;
   int n3 = np * 3;
-
   double *u0 = (double *)malloc (sizeof (double) * n3);
   CHECK_MALLOC (u0, "solve_res_3f");
 
@@ -62,10 +61,8 @@ solve_res_3f (struct stokes *sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_iter (n3, u0, f,
-	      atimes_3all, (void *)sys,
-	      sys->it);
-  // for atimes_3all(), sys->version is 0 (F)
+  solve_res_3f_0 (sys, u0, f);
+
   free (u0);
 
   /* for the interface, we are in the labo frame, that is
@@ -348,33 +345,16 @@ solve_res_lub_3f (struct stokes * sys,
 
   int np = sys->np;
   int n3 = np * 3;
-
   double *u0 = (double *)malloc (sizeof (double) * n3);
-  double *lub = (double *)malloc (sizeof (double) * n3);
   CHECK_MALLOC (u0, "solve_res_lub_3f");
-  CHECK_MALLOC (lub, "solve_res_lub_3f");
 
   shift_labo_to_rest_U (sys, np, u, u0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  calc_lub_3f (sys, u0, lub);
-  atimes_3all (n3, lub, f, (void *) sys);
-  // sys->version is 0 (F)
-  // lub[] is used temporarily
-  int i;
-  for (i = 0; i < n3; ++i)
-    {
-      lub [i] = u0 [i] + f [i];
-    }
+  solve_res_lub_3f_0 (sys, u0, f);
+
   free (u0);
-
-  solve_iter (n3, lub, f,
-	      atimes_3all, (void *)sys,
-	      sys->it);
-  // for atimes_3all(), sys->version is 0 (F)
-
-  free (lub);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
