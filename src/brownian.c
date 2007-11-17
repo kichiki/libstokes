@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.7 2007/11/11 20:39:03 kichiki Exp $
+ * $Id: brownian.c,v 1.8 2007/11/17 23:26:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -80,6 +80,7 @@
  *  (int) n_lub
  *  (int) scheme
  *  (double) BB_n
+ *  (double) dt_lim
  * OUTPUT :
  *  (struct ode_params) params
  */
@@ -105,7 +106,8 @@ BD_params_init (struct stokes *sys,
 		int    n_minv,
 		int    n_lub,
 		int    scheme,
-		double BB_n)
+		double BB_n,
+		double dt_lim)
 {
   struct BD_params *BD
     = (struct BD_params *)malloc (sizeof (struct BD_params));
@@ -174,6 +176,7 @@ BD_params_init (struct stokes *sys,
 
   BD->scheme = scheme;
   BD->BB_n = BB_n;
+  BD->dt_lim = dt_lim;
 
   return (BD);
 }
@@ -1695,23 +1698,25 @@ BD_ode_evolve (struct BD_params *BD,
 	  dt_local = t_out - (*t);
 	}
 
+      double dt_done;
       switch (BD->scheme)
 	{
 	case 1: // Banchio-Brady (2003)
-	  BD_evolve_BB03 (BD, x, q, dt_local);
+	  dt_done = BD_evolve_BB03 (BD, x, q, dt_local);
 	  break;
 
 	case 2: // Ball-Melrose (1997)
-	  BD_evolve_BM97 (BD, x, q, dt_local);
+	  dt_done = BD_evolve_BM97 (BD, x, q, dt_local);
 	  break;
 
 	case 0: // the mid-point algorithm
 	default:
-	  BD_evolve_mid (BD, x, q, dt_local);
+	  dt_done = BD_evolve_mid (BD, x, q, dt_local);
 	  break;
 	}
 
-      (*t) += dt_local;
+      //(*t) += dt_local;
+      (*t) += dt_done;
     }
   while ((*t) < t_out);
 }
@@ -1768,8 +1773,9 @@ reset_dt_by_ol (struct stokes *sys,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_mid (struct BD_params *BD,
 	       double *x, double *q,
 	       double dt)
@@ -1806,9 +1812,10 @@ BD_evolve_mid (struct BD_params *BD,
 
   int i;
 
-  //BD_evolve_mid_REDO:
+ BD_evolve_mid_REDO:
   // set configuration for calc_brownian_force()
   stokes_set_pos (BD->sys, x);
+ BD_evolve_mid_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
@@ -1886,12 +1893,22 @@ BD_evolve_mid (struct BD_params *BD,
       && check_overlap (BD->sys, xmid, &ol) > 0)
     {
       //fprintf (stderr, "# mid-point: overlap in 1st step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_mid_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# mid-point: overlap in 1st step. dt = %e\n", dt);
-      goto BD_evolve_mid_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  fprintf (stderr, "# mid-point: overlap in 1st step. "
+		   "dt = %e < %e => reconstruct FB\n", dt, BD->dt_lim);
+	  goto BD_evolve_mid_REDO_FB;
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# mid-point: overlap in 1st step. "
+		   "dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_mid_REDO_scale;
+	}
     }
 
 
@@ -1969,12 +1986,22 @@ BD_evolve_mid (struct BD_params *BD,
       && check_overlap (BD->sys, xmid, &ol) > 0)
     {
       //fprintf (stderr, "# mid-point: overlap in 2nd step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_mid_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# mid-point: overlap in 2nd step. dt = %e\n", dt);
-      goto BD_evolve_mid_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos should be reset by the initial config x[] */
+	  fprintf (stderr, "# mid-point: overlap in 2nd step. "
+		   "dt = %e < %e => reconstruct FB\n", dt, BD->dt_lim);
+	  goto BD_evolve_mid_REDO;
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# mid-point: overlap in 2nd step. "
+		   "dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_mid_REDO_scale;
+	}
     }
 
   // final accepted configuration
@@ -1991,9 +2018,11 @@ BD_evolve_mid (struct BD_params *BD,
     }
 
   free (z);
-  FTS_free (FTS);
   free (xmid);
   if (qmid != NULL) free (qmid);
+  FTS_free (FTS);
+
+  return (dt);
 }
 
 /* evolve position of particles -- Banchio-Brady scheme
@@ -2009,8 +2038,9 @@ BD_evolve_mid (struct BD_params *BD,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_BB03 (struct BD_params *BD,
 		double *x, double *q,
 		double dt)
@@ -2057,9 +2087,10 @@ BD_evolve_BB03 (struct BD_params *BD,
 
   int i;
 
-  //BD_evolve_BB03_REDO:
+ BD_evolve_BB03_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
+ BD_evolve_BB03_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
@@ -2138,13 +2169,22 @@ BD_evolve_BB03 (struct BD_params *BD,
       && check_overlap (BD->sys, xBB, &ol) > 0)
     {
       //fprintf (stderr, "# BB03 : overlap in the intermediate step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_BB03_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BB03 : overlap in the intermediate step."
-	       " dt = %e\n", dt);
-      goto BD_evolve_BB03_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  goto BD_evolve_BB03_REDO_FB;
+	  fprintf (stderr, "# BB03 : overlap in the intermediate step."
+		   " dt = %e < %e => reconstruct FB\n", dt, BD->dt_lim);
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# BB03 : overlap in the intermediate step."
+		   " dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_BB03_REDO_scale;
+	}
     }
 
   /* 1-3 : solve the Brownian velocity for the intermediate configuration
@@ -2229,13 +2269,22 @@ BD_evolve_BB03 (struct BD_params *BD,
       && check_overlap (BD->sys, xBB, &ol) > 0)
     {
       //fprintf (stderr, "# BB03 : overlap in the final step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_BB03_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BB03 : overlap in the final step."
-	       " dt = %e\n", dt);
-      goto BD_evolve_BB03_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos should be reset by the initial config x[] */
+	  fprintf (stderr, "# BB03 : overlap in the final step."
+		   " dt = %e > %e => reconstruct FB\n", dt, BD->dt_lim);
+	  goto BD_evolve_BB03_REDO;
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# BB03 : overlap in the final step."
+		   " dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_BB03_REDO_scale;
+	}
     }
 
   // final accepted configuration
@@ -2256,8 +2305,9 @@ BD_evolve_BB03 (struct BD_params *BD,
   free (uBB);
   if (qBB != NULL) free (qBB);
   if (oBB != NULL) free (oBB);
-
   FTS_free (FTS);
+
+  return (dt);
 }
 
 /* evolve position of particles -- Ball-Melrose scheme
@@ -2273,8 +2323,9 @@ BD_evolve_BB03 (struct BD_params *BD,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_BM97 (struct BD_params *BD,
 		double *x, double *q,
 		double dt)
@@ -2318,9 +2369,10 @@ BD_evolve_BM97 (struct BD_params *BD,
   int i;
 
 
-  //BD_evolve_BM97_REDO:
+ BD_evolve_BM97_REDO:
   // (re-)set brownian force
   stokes_set_pos (BD->sys, x);
+ BD_evolve_BM97_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
 
@@ -2387,12 +2439,22 @@ BD_evolve_BM97 (struct BD_params *BD,
       && check_overlap (BD->sys, xBM, &ol) > 0)
     {
       //fprintf (stderr, "# BM97: overlap in 1st step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_BM97_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BM97: overlap in 1st step. dt = %e\n", dt);
-      goto BD_evolve_BM97_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  fprintf (stderr, "# BM97: overlap in 1st step. "
+		   "dt = %e > %e => reconstruct FB\n", dt, BD->dt_lim);
+	  goto BD_evolve_BM97_REDO_FB;
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# BM97: overlap in 1st step. "
+		   "dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_BM97_REDO_scale;
+	}
     }
 
   /************************************************************
@@ -2451,12 +2513,22 @@ BD_evolve_BM97 (struct BD_params *BD,
       && check_overlap (BD->sys, xBM, &ol) > 0)
     {
       //fprintf (stderr, "# BM97: overlap in 2nd step\n");
-      // just reject the random force z[]
-      //goto BD_evolve_BM97_REDO;
       dt = reset_dt_by_ol (BD->sys, dt, x, &ol);
-      fact = sqrt(2.0 / (BD->peclet * dt));
-      fprintf (stderr, "# BM97: overlap in 2nd step. dt = %e\n", dt);
-      goto BD_evolve_BM97_REDO_scale;
+      if (dt < BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos should be reset by the initial config x[] */
+	  fprintf (stderr, "# BM97: overlap in 2nd step. "
+		   "dt = %e < %e => reconstruct FB\n", dt, BD->dt_lim);
+	  goto BD_evolve_BM97_REDO;
+	}
+      else
+	{
+	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fprintf (stderr, "# BM97: overlap in 2nd step. "
+		   "dt = %e > %e\n", dt, BD->dt_lim);
+	  goto BD_evolve_BM97_REDO_scale;
+	}
     }
 
   // final accepted configuration
@@ -2477,6 +2549,7 @@ BD_evolve_BM97 (struct BD_params *BD,
   free (uBM);
   if (qBM != NULL) free (qBM);
   if (oBM != NULL) free (oBM);
-
   FTS_free (FTS);
+
+  return (dt);
 }

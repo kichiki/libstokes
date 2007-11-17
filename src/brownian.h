@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.5 2007/11/07 04:42:49 kichiki Exp $
+ * $Id: brownian.h,v 1.6 2007/11/17 23:26:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,6 +65,9 @@ struct BD_params
 		* 2 : Ball-Melrose (1997)
 		*/
   double BB_n; // step parameter for BB03 algorithm
+  double dt_lim; /* lower bound to shrink dt to prevent overlaps
+		  * set "dt" if you don't want to adjust dt but just reject
+		  */
 };
 
 
@@ -94,6 +97,7 @@ struct BD_params
  *  (int) n_lub
  *  (int) scheme
  *  (double) BB_n
+ *  (double) dt_lim
  * OUTPUT :
  *  (struct ode_params) params
  */
@@ -119,7 +123,8 @@ BD_params_init (struct stokes *sys,
 		int    n_minv,
 		int    n_lub,
 		int    scheme,
-		double BB_n);
+		double BB_n,
+		double dt_lim);
 
 void
 BD_params_free (struct BD_params *BD);
@@ -310,8 +315,9 @@ BD_ode_evolve (struct BD_params *BD,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_mid (struct BD_params *BD,
 	       double *x, double *q,
 	       double dt);
@@ -329,8 +335,9 @@ BD_evolve_mid (struct BD_params *BD,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_BB03 (struct BD_params *BD,
 		double *x, double *q,
 		double dt);
@@ -348,8 +355,9 @@ BD_evolve_BB03 (struct BD_params *BD,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
+double
 BD_evolve_BM97 (struct BD_params *BD,
 		double *x, double *q,
 		double dt);
