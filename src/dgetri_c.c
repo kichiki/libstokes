@@ -1,10 +1,13 @@
 /* C wrappers for LAPACK's dgetri_() and dgetrt_()
  * Copyright (C) 2005-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: dgetri_c.c,v 1.6 2007/09/30 04:12:46 kichiki Exp $
+ * $Id: dgetri_c.c,v 1.7 2007/11/28 03:32:43 kichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include "memory-check.h" // CHECK_MALLOC
+
+
+void dcopy_ (int *, double *, int *, double *, int *);
 
 /*
 DGETRI(l)                              )                             DGETRI(l)
@@ -143,17 +146,16 @@ void dgetrf_ (int *m, int *n, double *a, int *lda, int *ipiv,
 void lapack_inv (int n, const double *a,
 		 double *ai)
 {
-  int info;
   int *ipvt = (int *)malloc (sizeof (int) * n);
   double *work = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (ipvt, "lapack_inv");
   CHECK_MALLOC (work, "lapack_inv");
 
-  int i;
-  for (i = 0; i < n*n; i ++)
-    {
-      ai[i] = a[i];
-    }
+  int i_1 = 1;
+  int nn = n * n;
+  dcopy_ (&nn, a, &i_1, ai, &i_1);
+
+  int info;
   dgetrf_ (&n, &n, ai, &n, ipvt, &info);
   if (info != 0)
     {
