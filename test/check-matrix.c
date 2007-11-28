@@ -1,6 +1,6 @@
 /* test code for matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-matrix.c,v 1.1 2007/11/03 22:54:17 kichiki Exp $
+ * $Id: check-matrix.c,v 1.2 2007/11/28 03:42:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -262,7 +262,7 @@ benchmark_dgemm (int n, int verbose, double tiny)
 
 
 #ifndef HAVE_CBLAS_H
-  fprintf (stdout, "%d %f %f\n", n, t1, t2, t3);
+  fprintf (stdout, "%d %f %f %f\n", n, t1, t2, t3);
 #else // HAVE_CBLAS_H
   /**
    * cblas_dgemm (ATLAS dgemm)
