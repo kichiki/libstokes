@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.13 2007/05/26 06:08:38 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.14 2007/11/28 03:15:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,96 +26,9 @@
 #include "fts.h"
 
 #include "matrix.h"
+#include "lub.h" // cond_lub(), cond_lub_poly()
 #include "lub-matrix.h"
 
-
-/* condition for lubrication
- * INPUT
- *  x1 [3], x2 [3] : position
- *  lubmax2 : square of the max distance (0 means no limit)
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub (const double *x1, const double *x2, double lubmax2)
-{
-  double x = x1 [0] - x2 [0];
-  double y = x1 [1] - x2 [1];
-  double z = x1 [2] - x2 [2];
-
-  double r2 = x*x + y*y + z*z;
-
-  if (r2 == 0.0)
-    {
-      // self part
-      return 1; // false
-    }
-  else if (lubmax2 <= 0.0)
-    {
-      // no limit
-      return 0; // true
-    }
-  else if (r2 < lubmax2)
-    {
-      // within the limit
-      return 0; // true
-    }
-  else
-    {
-      // out of the limit
-      return 1; // false
-    }
-}
-
-/* condition for lubrication for polydisperse system
- * INPUT
- *  x1 [3], x2 [3] : position
- *  a1, a2         : radii for particles 1 and 2
- *  lubmax2        : square of the max distance (0 means no limit)
- * OUTPUT (return value)
- *  0 : r != 0 and r < 3.0
- *  1 : otherwise
- */
-static int
-cond_lub_poly (const double *x1, const double *x2,
-	       double a1, double a2,
-	       double lubmax2)
-{
-  double x = x1 [0] - x2 [0];
-  double y = x1 [1] - x2 [1];
-  double z = x1 [2] - x2 [2];
-
-  double r2 = x*x + y*y + z*z;
-
-  if (r2 == 0.0)
-    {
-      // self part
-      return 1; // false
-    }
-  else if (lubmax2 <= 0.0)
-    {
-      // no limit
-      return 0; // true
-    }
-  else
-    {
-      // max2 should be compared with r2 = (2 r / (a1 + a2))^2
-      //double fac = 2.0 / (a1 + a2);
-      //double s2 = fac * fac * r2;
-      double s2 = r2 * 4.0 / (a1 + a2) / (a1 + a2);
-      if (s2 < lubmax2)
-	{
-	  // within the limit
-	  return 0; // true
-	}
-      else
-	{
-	  // out of the limit
-	  return 1; // false
-	}
-    }
-}
 
 /*
  * INPUT
