@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.11 2007/08/21 05:45:21 kichiki Exp $
+ * $Id: lub.c,v 5.12 2007/11/28 03:14:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,7 +37,7 @@
  *  0 : r != 0 and r < 3.0
  *  1 : otherwise
  */
-static int
+int
 cond_lub (const double *x1, const double *x2, double lubmax2)
 {
   double x = x1 [0] - x2 [0];
@@ -77,7 +77,7 @@ cond_lub (const double *x1, const double *x2, double lubmax2)
  *  0 : r != 0 and r < 3.0
  *  1 : otherwise
  */
-static int
+int
 cond_lub_poly (const double *x1, const double *x2,
 	       double a1, double a2,
 	       double lubmax2)

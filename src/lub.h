@@ -1,7 +1,7 @@
 /* header file for lub.c --
  * lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.h,v 5.4 2007/08/21 05:46:26 kichiki Exp $
+ * $Id: lub.h,v 5.5 2007/11/28 03:14:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,31 @@
 #ifndef	_LUB_H_
 #define	_LUB_H_
 
+
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ *  lubmax2 : square of the max distance (0 means no limit)
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+int
+cond_lub (const double *x1, const double *x2, double lubmax2);
+
+/* condition for lubrication for polydisperse system
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ *  a1, a2         : radii for particles 1 and 2
+ *  lubmax2        : square of the max distance (0 means no limit)
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+int
+cond_lub_poly (const double *x1, const double *x2,
+	       double a1, double a2,
+	       double lubmax2);
 
 /* calculate lubrication f by u for all particles
  * for both under the periodic and non-periodic boundary conditions.
