@@ -1,6 +1,6 @@
 /* C wrappers for LAPACK's dgeev_()
- * Copyright (C) 2005 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dgeev_c.c,v 1.1 2007/09/29 20:38:32 kichiki Exp $
+ * Copyright (C) 2005 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: dgeev_c.c,v 1.2 2007/11/28 03:36:34 kichiki Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>

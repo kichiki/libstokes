@@ -1,7 +1,7 @@
 /* header file for dgeev.c --
  * C wrappers for LAPACK's dgeev_()
- * Copyright (C) 2005 Kengo Ichiki <kichiki@uwo.ca>
- * $Id: dgeev_c.h,v 1.1 2007/09/29 20:38:32 kichiki Exp $
+ * Copyright (C) 2005 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: dgeev_c.h,v 1.2 2007/11/28 03:37:25 kichiki Exp $
  */
 #ifndef	_DGEEV_C_H_
 #define	_DGEEV_C_H_
