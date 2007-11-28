@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.24 2007/11/07 04:39:08 kichiki Exp $
+ * $Id: stokes.c,v 2.25 2007/11/28 03:27:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1013,22 +1013,25 @@ stokes_set_slip (struct stokes *sys,
     {
       sys->slip[i] = gamma[i];
 
+      double ai;
       double l2;
       double l3;
       double l5;
       if (sys->a == NULL)
 	{
+	  ai = 1.0;
 	  l2 = 1.0 + 2.0 * gamma[i];
 	  l3 = 1.0 + 3.0 * gamma[i];
 	  l5 = 1.0 + 5.0 * gamma[i];
 	}
       else
 	{
-	  l2 = 1.0 + 2.0 * gamma[i] / sys->a[i];
-	  l3 = 1.0 + 3.0 * gamma[i] / sys->a[i];
-	  l5 = 1.0 + 5.0 * gamma[i] / sys->a[i];
+	  ai = sys->a[i];
+	  l2 = 1.0 + 2.0 * gamma[i] / ai;
+	  l3 = 1.0 + 3.0 * gamma[i] / ai;
+	  l5 = 1.0 + 5.0 * gamma[i] / ai;
 	}
-      sys->slip_a[i]   = sqrt (1.0 / l2);
+      sys->slip_a[i]   = ai * sqrt (1.0 / l2);
       sys->slip_G32[i] = l3 / l2;
       sys->slip_G30[i] = l3;
       sys->slip_G52[i] = l5 / l2;
@@ -1052,6 +1055,10 @@ stokes_set_slip (struct stokes *sys,
 			     sys->twobody_nmax,
 			     sys->slip_table,
 			     sys->twobody_slip_f_list);
+  if (sys->a == NULL)
+    {
+      free (a);
+    }
 }
 
 /* unset slip params (slip[], slip_a[], slip_G32[], slip_G30[], slip_G52[])
@@ -1131,13 +1138,16 @@ stokes_copy (struct stokes *s0)
    * periodic parameters
    */
   s->periodic = s0->periodic;
+  if (s->periodic == 1)
+    {
+      stokes_set_l (s, s0->lx, s0->ly, s0->lz);
+      /* this also set llx, lly, llz and pivol */
 
-  stokes_set_l (s, s0->lx, s0->ly, s0->lz);
-  /* this also set llx, lly, llz and pivol */
-
-  stokes_set_xi (s, s0->xi, s0->ewald_eps);
-  /* this set ewald_eps, xi (and others), self_[acm], rmax*, kmax*, 
-   * and ewald_table -- nr, rl*[], ex,ey,ez[], k*[], ya,yb,...[], flag_table */
+      stokes_set_xi (s, s0->xi, s0->ewald_eps);
+      /* this set ewald_eps, xi (and others), self_[acm], rmax*, kmax*, 
+       * and ewald_table -- nr, rl*[], ex,ey,ez[], k*[], ya,yb,...[],
+       * flag_table */
+    }
 
   /**
    * for lubrication
