@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.3 2007/11/10 23:06:49 kichiki Exp $
+ * $Id: check-brownian.c,v 1.4 2007/11/28 03:42:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -396,7 +396,8 @@ check_minv_FU (int verbose, double tiny)
      0,    // int    n_minv,
      0,    // int    n_lub,
      0,    // int    scheme,
-     0.0   // double BB_n
+     0.0,  // double BB_n
+     1.0   // double dt_lim
      );
   CHECK_MALLOC (BD, "check_minv_FU");
 
@@ -746,7 +747,8 @@ check_lub_FU (int verbose, double tiny)
      0,    // int    n_minv,
      0,    // int    n_lub,
      0,    // int    scheme,
-     0.0   // double BB_n
+     0.0,  // double BB_n
+     1.0   // double dt_lim
      );
   CHECK_MALLOC (BD, "check_lub_FU");
 
