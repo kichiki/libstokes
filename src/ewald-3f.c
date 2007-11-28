@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.c,v 4.15 2007/11/17 23:32:27 kichiki Exp $
+ * $Id: ewald-3f.c,v 4.16 2007/11/28 03:16:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -407,7 +407,7 @@ solve_res_lub_3f_0 (struct stokes * sys,
 
 
 /** mob_lub_3f **/
-static void
+void
 atimes_mob_lub_3f (int n, const double *x,
 		   double *y, void *user_data)
 {

@@ -1,7 +1,7 @@
 /* header file for 'ewald-3f.c' --
  * Solvers for 3 dimensional F version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.h,v 4.7 2007/10/27 03:46:44 kichiki Exp $
+ * $Id: ewald-3f.h,v 4.8 2007/11/28 03:21:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -112,6 +112,9 @@ solve_res_lub_3f_0 (struct stokes * sys,
 
 
 /** mob_lub_3f **/
+void
+atimes_mob_lub_3f (int n, const double *x,
+		   double *y, void *user_data);
 /* solve natural mobility problem with lubrication in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
