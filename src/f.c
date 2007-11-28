@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.11 2007/05/04 01:12:14 kichiki Exp $
+ * $Id: f.c,v 2.12 2007/11/28 03:13:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -287,11 +287,17 @@ calc_lub_f_2b (struct stokes * sys,
 }
 
 /* calculate lub-matrix in F version for pair of particles 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
  * INPUT
- *   sys : system parameters
- *         sys->lubmin2 is used.
- *   i : particle index for '1'
- *   j : particle index for '2'
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubmin2      : square of min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *            (i,j) are used to assign the results in mat[].
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
  *   n : dimension of matrix 'mat' (must be np*3)
@@ -460,9 +466,11 @@ calc_lub_f_2b_poly (struct stokes *sys,
  *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
  *   i      : particle index for '1'
  *   j      : particle index for '2'
+ *            (i,j) are used to assign the results in mat[].
  *   x1 [3] : position of particle 1
  *   x2 [3] : position of particle 2
  *   i1, i2 : particle index for particles 1 and 2
+ *            used to access sys->a[] and sys->poly_table[]
  *   n      : dimension of matrix 'mat' (must be np*3)
  * OUTPUT
  *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
