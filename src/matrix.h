@@ -1,7 +1,7 @@
 /* header file for matrix.c --
  * matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.h,v 1.5 2007/11/04 03:27:52 kichiki Exp $
+ * $Id: matrix.h,v 1.6 2007/11/28 03:26:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -117,6 +117,19 @@ void
 dot_prod_matrix (const double * mat, int n1, int n2,
 		 const double * x,
 		 double * y);
+/* 
+ * INPUT
+ *  alpha
+ *  mat [n1, n2]
+ *  x [n2]
+ *  beta
+ * OUTPUT
+ *  y [n1] = alpha * mat [n1, n2] . x [n2] + beta * y[]
+ */
+void
+dot_prod_matrix_ (double alpha, const double *mat, int n1, int n2,
+		  const double *x,
+		  double beta, double *y);
 
 /* utility routine for matrix in the extracted form
  * INPUT

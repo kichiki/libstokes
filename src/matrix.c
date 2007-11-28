@@ -1,6 +1,6 @@
 /* matrix-manipulating routines
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: matrix.c,v 1.10 2007/11/04 03:27:28 kichiki Exp $
+ * $Id: matrix.c,v 1.11 2007/11/28 03:26:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -388,6 +388,47 @@ dot_prod_matrix (const double * mat, int n1, int n2,
 	    1.0, mat, n2,
 	    x, 1,
 	    0.0, y, 1);
+
+# endif // !HAVE_BLAS_H
+#endif // !HAVE_CBLAS_H
+}
+
+/* 
+ * INPUT
+ *  alpha
+ *  mat [n1, n2]
+ *  x [n2]
+ *  beta
+ * OUTPUT
+ *  y [n1] = alpha * mat [n1, n2] . x [n2] + beta * y[]
+ */
+void
+dot_prod_matrix_ (double alpha, const double *mat, int n1, int n2,
+		  const double *x,
+		  double beta, double *y)
+{
+#ifdef HAVE_CBLAS_H
+  /* use ATLAS' CBLAS routines */
+  cblas_dgemv (CblasRowMajor, CblasNoTrans,
+	       n1, n2,
+	       alpha, mat, n2,
+	       x, 1,
+	       beta, y, 1);
+
+#else // !HAVE_CBLAS_H
+# ifdef HAVE_BLAS_H
+  /* use Fortran BLAS routines */
+  dgemv_wrap (n1, n2,
+	      alpha, mat,
+	      x,
+	      beta, y);
+
+# else // !HAVE_BLAS_H
+  /* use local BLAS routines */
+  my_dgemv (n1, n2,
+	    alpha, mat, n2,
+	    x, 1,
+	    beta, y, 1);
 
 # endif // !HAVE_BLAS_H
 #endif // !HAVE_CBLAS_H
