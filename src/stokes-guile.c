@@ -1,6 +1,6 @@
 /* guile interface for libstokes
  * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-guile.c,v 5.2 2006/10/22 04:17:51 kichiki Exp $
+ * $Id: stokes-guile.c,v 5.3 2007/11/30 06:39:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -319,4 +319,14 @@ guile_open_file (const char * var, const char * mode)
   free (filename);
 
   return f;
+}
+
+
+/* load scm script file into the libstokes C system
+ */
+void
+guile_load (const char *file)
+{
+  scm_init_guile ();
+  scm_c_primitive_load (file);
 }
