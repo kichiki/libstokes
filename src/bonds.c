@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.6 2007/11/07 04:38:38 kichiki Exp $
+ * $Id: bonds.c,v 1.7 2007/11/30 06:39:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -375,5 +375,47 @@ fprint_bonds (FILE *out, struct bonds *bonds)
 		   bonds->pairs[i]->ia[j],
 		   bonds->pairs[i]->ib[j]);
 	}
+    }
+}
+
+
+/**
+ * SWIG utility routine
+ * For examplean, expected usage in python by SWIG:
+ *   n = stokes.bonds_get_pairs_n(bonds, i)
+ *   ia = stokes.iarray(n)
+ *   ib = stokes.iarray(n)
+ *   stokes.bonds_get_pairs(bonds, i, ia, ib)
+ * then, you have arrays ia[n] and ib[n].
+ */
+
+/* to get the number of pairs for the bond "i"
+ */
+int
+bonds_get_pairs_n (struct bonds *b, int i)
+{
+  return (b->pairs[i]->n);
+}
+/* 
+ * INPUT
+ *  b : struct bonds
+ *  i : index of the bond
+ *  ia[n] : "a" particle index of j-th pair for the bond "i",
+ *  ib[n] : "b" particle index of j-th pair for the bond "i",
+ *          where j runs from 0 to (n-1) and
+ *          n = b->pairs[i]->n is the number of pairs for the bond "i".
+ *          before calling, allocate ia and ib with (sizeof(int) * n).
+ * OUTPUT
+ *  ia[n], ib[n] : 
+ */
+void
+bonds_get_pairs (struct bonds *b, int i,
+		 int *ia, int *ib)
+{
+  int j;
+  for (j = 0; j < b->pairs[i]->n; j ++)
+    {
+      ia[j] = b->pairs[i]->ia[j];
+      ib[j] = b->pairs[i]->ib[j];
     }
 }
