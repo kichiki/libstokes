@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.44 2007/11/17 23:27:00 kichiki Exp $
+ * $Id: libstokes.h,v 1.45 2007/11/30 06:40:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -804,6 +804,7 @@ stokes_nc_get_time_step (const struct stokes_nc * nc,
 /************************************
  ** Guile interface for libstokes  **
  ************************************/
+/* from stokes-guile.h */
 /* this utility function (original name is does_scm_symbol_exist)
  * written by Michael Gran is taken from
  * http://www.lonelycactus.com/guilebook/c319.html
@@ -868,6 +869,12 @@ guile_get_string (const char * var);
  */
 FILE *
 guile_open_file (const char * var, const char * mode);
+
+
+/* load scm script file into the libstokes C system
+ */
+void
+guile_load (const char *file);
 
 
 /************************************
@@ -969,6 +976,36 @@ bonds_calc_force (struct bonds *bonds,
 
 void
 fprint_bonds (FILE *out, struct bonds *bonds);
+
+/**
+ * SWIG utility routine
+ * For examplean, expected usage in python by SWIG:
+ *   n = stokes.bonds_get_pairs_n(bonds, i)
+ *   ia = stokes.iarray(n)
+ *   ib = stokes.iarray(n)
+ *   stokes.bonds_get_pairs(bonds, i, ia, ib)
+ * then, you have arrays ia[n] and ib[n].
+ */
+
+/* to get the number of pairs for the bond "i"
+ */
+int
+bonds_get_pairs_n (struct bonds *b, int i);
+/* 
+ * INPUT
+ *  b : struct bonds
+ *  i : index of the bond
+ *  ia[n] : "a" particle index of j-th pair for the bond "i",
+ *  ib[n] : "b" particle index of j-th pair for the bond "i",
+ *          where j runs from 0 to (n-1) and
+ *          n = b->pairs[i]->n is the number of pairs for the bond "i".
+ *          before calling, allocate ia and ib with (sizeof(int) * n).
+ * OUTPUT
+ *  ia[n], ib[n] : 
+ */
+void
+bonds_get_pairs (struct bonds *b, int i,
+		 int *ia, int *ib);
 
 
 /* from bonds-guile.h */
