@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.13 2007/11/04 00:18:25 kichiki Exp $
+ * $Id: test-all.c,v 1.14 2007/12/01 18:34:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h>
 
 #include "check-lapack-inv.h" // check_lapack_inv_()
+#include "check-lapack-solve-lin.h" // check_lapack_solve_lin()
 #include "check-mul-matrices.h" // check_mul_matrices()
 #include "check-solve-gen-linear.h" // check_solve_gen_linear()
 
@@ -54,12 +55,12 @@ main (int argc, char** argv)
 
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
-  check += check_dsaupd_c (100, 1, 2.3e-15);
+  check += check_dsaupd_c (100, 1, 3.1e-15);
   check += check_dnaupd_c (10, 1, 1.2e-15);
   check += check_dnaupd_c (100, 1, 1.2e-15);
   check += check_bd (50, 100, 2.005, 1, 8.0e-10);
   check += check_bd (100, 100, 2.005, 1, 2.0e-15);
-  check += check_dgeev_c (1, 2.4e-15);
+  check += check_dgeev_c (1, 3.0e-15);
 
   // check-mul-matrices.c
   check += check_mul_matrices (200, 1, 0.0);
@@ -71,12 +72,13 @@ main (int argc, char** argv)
   // check-solve-gen-linear.c
   check += check_split_merge (200, 200, 1, 0.0);
   check += check_inverse_by_sub (100, 100, 1, 2.9e-13);
-  //check += check_solve_gen_linear (200, 200, 1, 1.8e-8);
   check += check_solve_gen_linear (200, 200, 1, 1.8e-7);
 
   // check-lapack-inv.c
-  //check += check_lapack_inv_ (100, 1, 4.2e-14);
   check += check_lapack_inv_ (100, 1, 7.1e-14);
+  // check-lapack-solve-lin.c
+  check += check_lapack_solve_lin (100, 1, 1.3e-12);
+  check += check_lapack_solve_lin (1000, 1, 5.0e-10);
 
 
   double r = 2.5;
@@ -123,13 +125,13 @@ main (int argc, char** argv)
   // check-ewald-poly.c
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      4.0, // ewald_tr
-					      ewald_eps, 1, 7.0e-15);
+					      ewald_eps, 1, 8.5e-15);
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      1.0, // ewald_tr
 					      ewald_eps, 1, 4.0e-15);
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      10.0, // ewald_tr
-					      ewald_eps, 1, 9.0e-15);
+					      ewald_eps, 1, 2.0e-14);
 
   check += check_make_matrix_mob_ewald_3all_poly_SC_1
     (version, phi, 4.0, // ewald_tr
@@ -172,21 +174,21 @@ main (int argc, char** argv)
   check += check_twobody_slip_with_noslip (2.5, 10.0, 1, 2.0e-16);
 
   // check-dpotrf_c.c
-  check += check_dpotrf_c (1000, 1, 4.2e-15);
-  check += check_dpotf2_c (1000, 1, 4.8e-15);
+  check += check_dpotrf_c (1000, 1, 5.2e-15);
+  check += check_dpotf2_c (1000, 1, 5.0e-15);
 
   // check-brownian.c
-  check += check_cheb_minv (10, 1, 1.9e-14);
-  check += check_cheb_lub  (10, 1, 6.1e-15);
+  check += check_cheb_minv (10, 1, 2.0e-14);
+  check += check_cheb_lub  (10, 1, 6.2e-15);
 
   // check-brownian.c -- serious tests for calc_brownian_force()
   check += check_minv_FU (1, 1.5e-10);
-  check += check_lub_FU (1, 1.9e-13);
+  check += check_lub_FU (1, 2.6e-13);
   check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
   check += check_inv_by_submatrices (50, 50, 1, 1.2e-10);
 
   // check-sqrt-dgeev.c
-  check += check_BD_sqrt_by_dgeev (100, 1, 2.2e-13);
+  check += check_BD_sqrt_by_dgeev (100, 1, 4.1e-13);
 
 
   fprintf (stdout,
