@@ -1,6 +1,6 @@
 /* test code for polydisperse code in ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald-poly.c,v 1.3 2007/05/04 02:26:16 kichiki Exp $
+ * $Id: check-ewald-poly.c,v 1.4 2007/12/01 18:30:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,13 +50,17 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_atimes_ewald_3all_poly_SC_1"
-	       " Tr=%f: start\n", ewald_tr);
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_atimes_ewald_3all_poly_SC_1\n"
+	       "(%d,phi=%f,tr=%f,eps=%f)"
+	       ": start\n",
+	       version, phi, ewald_tr, ewald_eps);
     }
 
   // initialize struct stokes *sys
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_atimes_ewald_3all_poly_SC_1");
   sys->version = version;
 
   int np = 1;
@@ -67,7 +71,6 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   sys->pos [2] = 0.0;
 
 
-  //sys->lubmin = 2.0000000001;
   sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
@@ -85,8 +88,7 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   else if (version == 1) n =  6 * np;
   else                   n = 11 * np;
 
-  double *x = NULL;
-  x = (double *)malloc (sizeof (double) * n);
+  double *x = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (x, "check_atimes_ewald_3all_poly_SC_1");
   int i;
   for (i = 0; i < n; i ++)
@@ -121,33 +123,29 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
 
   // compare
   int check = 0;
+  double max = 0.0;
   char label [80];
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "check_atimes_ewald_3all_poly_SC_1"
-	       " Tr=%f: (%d) ", ewald_tr, i);
-      check += compare (y1[i], y2[i], label, verbose, tiny);
-    }
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, "check_atimes_ewald_3all_poly_SC_1 Tr=%f:"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
-	       ewald_tr,
-	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
-
-      if (check == 0)
-	fprintf (stdout, "check_atimes_ewald_3all_poly_SC_1"
-		 " Tr=%f: PASSED\n\n", ewald_tr);
-      else
-	fprintf (stdout, "check_atimes_ewald_3all_poly_SC_1"
-		 " Tr=%f: FAILED\n\n", ewald_tr);
+      sprintf (label, " (%d) ", i);
+      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
     }
 
   free (x);
   free (y1);
   free (y2);
   stokes_free (sys);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }
@@ -174,13 +172,16 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_atimes_ewald_3all_poly_SC_2"
-	       "-%d Tr=%f: start\n", dir, ewald_tr);
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_atimes_ewald_3all_poly_SC_2\n"
+	       "(%d,dir=%d,phi=%f,tr=%f,eps=%f): start\n",
+	       version, dir, phi, ewald_tr, ewald_eps);
     }
 
   // initialize struct stokes *sys
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_atimes_ewald_3all_poly_SC_2");
   sys->version = version;
 
   int np = 2;
@@ -276,33 +277,29 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
 
   // compare
   int check = 0;
+  double max = 0.0;
   char label [80];
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "check_atimes_ewald_3all_poly_SC_2"
-	       "-%d Tr=%f: (%d) ", dir, ewald_tr, i);
-      check += compare (y1[i], y2[i], label, verbose, tiny);
-    }
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, "check_atimes_ewald_3all_poly_SC_2-%d Tr=%f"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
-	       dir, ewald_tr,
-	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
-
-      if (check == 0)
-	fprintf (stdout, "check_atimes_ewald_3all_poly_SC_2"
-		 "-%d Tr=%f: PASSED\n\n", dir, ewald_tr);
-      else
-	fprintf (stdout, "check_atimes_ewald_3all_poly_SC_2"
-		 "-%d Tr=%f: FAILED\n\n", dir, ewald_tr);
+      sprintf (label, " (%d) ", i);
+      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
     }
 
   free (x);
   free (y1);
   free (y2);
   stokes_free (sys);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }
@@ -330,13 +327,17 @@ check_make_matrix_mob_ewald_3all_poly_SC_1
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_1"
-	       " Tr=%f: start\n", ewald_tr);
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_make_matrix_mob_ewald_3all_poly_SC_1\n"
+	       "(%d,phi=%f,tr=%f,eps=%f)"
+	       ": start\n",
+	       version, phi, ewald_tr, ewald_eps);
     }
 
   // initialize struct stokes *sys
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_make_matrix_mob_ewald_3all_poly_SC_1");
   sys->version = version;
 
   int np = 1;
@@ -392,37 +393,33 @@ check_make_matrix_mob_ewald_3all_poly_SC_1
 
   // compare
   int check = 0;
+  double max = 0.0;
   char label [80];
   int i, j;
   for (i = 0; i < n; i ++)
     {
       for (j = 0; j < n; j ++)
 	{
-	  sprintf (label,
-		   "check_make_matrix_mob_ewald_3all_poly_SC_1"
-		   " Tr=%f: (%d, %d) ", ewald_tr, i, j);
-	  check += compare (mat1[i*n+j], mat2[i*n+j], label, verbose, tiny);
+	  sprintf (label, " (%d, %d) ", i, j);
+	  check += compare_max (mat1[i*n+j], mat2[i*n+j],
+				label, verbose, tiny, &max);
 	}
-    }
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_1 Tr=%f"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
-	       ewald_tr,
-	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
-
-      if (check == 0)
-	fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_1"
-		 " Tr=%f: PASSED\n\n", ewald_tr);
-      else
-	fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_1"
-		 " Tr=%f: FAILED\n\n", ewald_tr);
     }
 
   free (mat1);
   free (mat2);
   stokes_free (sys);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }
@@ -451,13 +448,16 @@ check_make_matrix_mob_ewald_3all_poly_SC_2
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_2"
-	       "-%d Tr=%f: start\n", dir, ewald_tr);
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_make_matrix_mob_ewald_3all_poly_SC_2\n"
+	       "(%d,dir=%d,phi=%f,tr=%f,eps=%f): start\n",
+	       version, dir, phi, ewald_tr, ewald_eps);
     }
 
   // initialize struct stokes *sys
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_make_matrix_mob_ewald_3all_poly_SC_2");
   sys->version = version;
 
   int np = 2;
@@ -545,37 +545,33 @@ check_make_matrix_mob_ewald_3all_poly_SC_2
 
   // compare
   int check = 0;
+  double max = 0.0;
   char label [80];
   int i, j;
   for (i = 0; i < n; i ++)
     {
       for (j = 0; j < n; j ++)
 	{
-	  sprintf (label,
-		   "check_make_matrix_mob_ewald_3all_poly_SC_2"
-		   "-%d Tr=%f: (%d, %d) ", dir, ewald_tr, i, j);
-	  check += compare (mat1[i*n+j], mat2[i*n+j], label, verbose, tiny);
+	  sprintf (label, " (%d, %d) ", i, j);
+	  check += compare_max (mat1[i*n+j], mat2[i*n+j],
+				label, verbose, tiny, &max);
 	}
-    }
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_2-%d Tr=%f"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
-	       dir, ewald_tr,
-	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
-
-      if (check == 0)
-	fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_2"
-		 "-%d Tr=%f: PASSED\n\n", dir, ewald_tr);
-      else
-	fprintf (stdout, "check_make_matrix_mob_ewald_3all_poly_SC_2"
-		 "-%d Tr=%f: FAILED\n\n", dir, ewald_tr);
     }
 
   free (mat1);
   free (mat2);
   stokes_free (sys);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
+
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }

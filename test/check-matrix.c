@@ -1,6 +1,6 @@
 /* test code for matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-matrix.c,v 1.2 2007/11/28 03:42:14 kichiki Exp $
+ * $Id: check-matrix.c,v 1.3 2007/12/01 18:28:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -146,7 +146,7 @@ benchmark_dgemm (int n, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "benchmark_dgemm : start\n");
+	       "benchmark_dgemm(n=%d) : start\n", n);
 #ifndef HAVE_CBLAS_H
       fprintf (stdout, "# n, t1, t2, t3, where\n"
 	       "# t1 : by mul_matrices_ -- double for loop\n"
@@ -162,7 +162,7 @@ benchmark_dgemm (int n, int verbose, double tiny)
     }
 
   int check = 0;
-
+  double max = 0.0;
 
   /**
    * initialization
@@ -300,7 +300,8 @@ benchmark_dgemm (int n, int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "# c1,c2 [%d %d]", i, j);
-	  check += compare (c1[i*n+j], c2[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c2[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
   for (i = 0; i < n; i ++)
@@ -308,7 +309,8 @@ benchmark_dgemm (int n, int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "# c1,c3 [%d %d]", i, j);
-	  check += compare (c1[i*n+j], c3[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c3[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
   for (i = 0; i < n; i ++)
@@ -316,7 +318,8 @@ benchmark_dgemm (int n, int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "# c1,c3 [%d %d]", i, j);
-	  check += compare (c1[i*n+j], c3[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c3[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 #ifdef HAVE_CBLAS_H
@@ -325,7 +328,8 @@ benchmark_dgemm (int n, int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "# c1,c4 [%d %d]", i, j);
-	  check += compare (c1[i*n+j], c4[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c4[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 #endif // HAVE_CBLAS_H
@@ -339,10 +343,9 @@ benchmark_dgemm (int n, int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -358,7 +361,7 @@ benchmark_mul_matrices (int n, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "benchmark_mul_matrices : start\n");
+	       "benchmark_mul_matrices(n=%d) : start\n", n);
 #ifndef HAVE_CBLAS_H
       fprintf (stdout, "# n, t1, t2, t3, where\n"
 	       "# t1 : by mul_matrices in libstokes\n"
@@ -374,6 +377,7 @@ benchmark_mul_matrices (int n, int verbose, double tiny)
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   /**
@@ -484,7 +488,8 @@ benchmark_mul_matrices (int n, int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "# c[%d %d]", i, j);
-	  check += compare (c1[i*n+j], c2[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c2[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 
@@ -496,10 +501,9 @@ benchmark_mul_matrices (int n, int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

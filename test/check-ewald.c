@@ -1,6 +1,6 @@
 /* test code for ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald.c,v 1.2 2007/05/04 02:25:49 kichiki Exp $
+ * $Id: check-ewald.c,v 1.3 2007/12/01 18:30:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,8 +50,12 @@ check_ewald_3all_atimes_matrix_SC (int version,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_ewald_3all_atimes_matrix_SC"
-	       " Tr=%f: start\n", ewald_tr);
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_ewald_3all_atimes_matrix_SC\n"
+	       "(%d,phi=%f,tr=%f,eps=%f)"
+	       ": start\n",
+	       version, phi, ewald_tr, ewald_eps);
     }
 
   double l;
@@ -170,25 +174,14 @@ check_ewald_3all_atimes_matrix_SC (int version,
 
   // compare
   int check = 0;
+  double max = 0.0;
 
   char label [80];
   // between y1 and y2
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "check_ewald_3all_atimes_matrix_SC"
-	       " Tr=%f: (%d) ", ewald_tr, i);
-      check += compare (y1[i], y2[i], label, verbose, tiny);
-    }
-
-
-  if (verbose != 0)
-    {
-      if (check == 0)
-	fprintf (stdout, "check_ewald_3all_atimes_matrix_SC"
-		 " Tr=%f: PASSED\n\n", ewald_tr);
-      else
-	fprintf (stdout, "check_ewald_3all_atimes_matrix_SC"
-		 " Tr=%f: FAILED\n\n", ewald_tr);
+      sprintf (label, " (%d) ", i);
+      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
     }
 
   free (y1);
@@ -196,6 +189,14 @@ check_ewald_3all_atimes_matrix_SC (int version,
   free (mat);
   free (x);
   stokes_free (sys);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }

@@ -1,6 +1,6 @@
 /* test code for BD_sqrt_by_dgeev() in brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-sqrt-dgeev.c,v 1.1 2007/11/01 04:57:14 kichiki Exp $
+ * $Id: check-sqrt-dgeev.c,v 1.2 2007/12/01 18:32:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,11 +33,12 @@ check_BD_sqrt_by_dgeev (int n,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_BD_sqrt_by_dgeev : start\n");
-      fprintf (stdout, "# sqrt(A)^2 =? A\n");
+	       "check_BD_sqrt_by_dgeev(n=%d) : start\n", n);
+      fprintf (stdout, " to check sqrt(A)^2 =? A\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a = (double *)malloc (sizeof (double) * n * n);
@@ -75,8 +76,8 @@ check_BD_sqrt_by_dgeev (int n,
 	    {
 	      a2[i*n+j] += s[i*n+k] * s[k*n+j];
 	    }
-	  check += compare (a[i*n+j], a2[i*n+j],
-			    label, verbose, tiny);
+	  check += compare_max (a[i*n+j], a2[i*n+j],
+				label, verbose, tiny, &max);
 	}
     }
   free (a2);
@@ -87,10 +88,9 @@ check_BD_sqrt_by_dgeev (int n,
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

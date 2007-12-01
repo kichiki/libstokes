@@ -1,6 +1,6 @@
 /* test code for dgeev_c.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-dgeev_c.c,v 1.1 2007/09/30 03:50:57 kichiki Exp $
+ * $Id: check-dgeev_c.c,v 1.2 2007/12/01 18:27:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,6 +43,7 @@ check_dgeev_c (int verbose, double tiny)
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   int n = 3;
@@ -105,10 +106,10 @@ check_dgeev_c (int verbose, double tiny)
   for (i = 0; i < n; i ++)
     {
       sprintf (label, "wr[%d]", i);
-      check += compare (wr[i], wr0[i], label, verbose, tiny);
+      check += compare_max (wr[i], wr0[i], label, verbose, tiny, &max);
 
       sprintf (label, "wi[%d]", i);
-      check += compare (wi[i]+1.0, wi0[i]+1.0, label, verbose, tiny);
+      check += compare_max (wi[i]+1.0, wi0[i]+1.0, label, verbose, tiny, &max);
     }
 
   int j;
@@ -117,7 +118,8 @@ check_dgeev_c (int verbose, double tiny)
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "v%d[%d]", i, j);
-	  check += compare (v[i*n+j], v0[i*n+j], label, verbose, tiny);
+	  check += compare_max (v[i*n+j], v0[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 
@@ -131,10 +133,9 @@ check_dgeev_c (int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

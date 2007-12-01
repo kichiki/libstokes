@@ -1,6 +1,6 @@
 /* test code for the calculation of minv
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-minv.c,v 1.1 2007/04/12 05:28:16 kichiki Exp $
+ * $Id: check-minv.c,v 1.2 2007/12/01 18:33:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
  *                  0,0,0,2,0,
  *                  1,0,0,0,2).
  */
-int
+static int
 check_matrix_fts_with_ez_alphabeta (int n11, double *mat,
 				    int flag_sym,
 				    double xa, double ya,
@@ -51,156 +51,156 @@ check_matrix_fts_with_ez_alphabeta (int n11, double *mat,
 				    double xg, double yg,
 				    double yh,
 				    double xm, double ym, double zm,
-				    int verbose, double tiny)
+				    int verbose, double tiny, double *max)
 {
   int check = 0;
 
   // A_{alpha,beta}
-  check += compare (mat[ 0*n11+ 0], ya,  "A (Ux,Fx) ya", verbose, tiny);
-  check += compare (mat[ 0*n11+ 1], 0.0, "A (Ux,Fy) 0", verbose, tiny);
-  check += compare (mat[ 0*n11+ 2], 0.0, "A (Ux,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 0*n11+ 0], ya,  "A (Ux,Fx) ya", verbose, tiny, max);
+  check += compare_max (mat[ 0*n11+ 1], 0.0, "A (Ux,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 0*n11+ 2], 0.0, "A (Ux,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 1*n11+ 0], 0.0, "A (Uy,Fx) 0", verbose, tiny);
-  check += compare (mat[ 1*n11+ 1], ya,  "A (Uy,Fy) ya", verbose, tiny);
-  check += compare (mat[ 1*n11+ 2], 0.0, "A (Uy,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 1*n11+ 0], 0.0, "A (Uy,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 1*n11+ 1], ya,  "A (Uy,Fy) ya", verbose, tiny, max);
+  check += compare_max (mat[ 1*n11+ 2], 0.0, "A (Uy,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 2*n11+ 0], 0.0, "A (Uz,Fx) 0", verbose, tiny);
-  check += compare (mat[ 2*n11+ 1], 0.0, "A (Uz,Fy) 0", verbose, tiny);
-  check += compare (mat[ 2*n11+ 2], xa,  "A (Uz,Fz) xa", verbose, tiny);
+  check += compare_max (mat[ 2*n11+ 0], 0.0, "A (Uz,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 2*n11+ 1], 0.0, "A (Uz,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 2*n11+ 2], xa,  "A (Uz,Fz) xa", verbose, tiny, max);
 
   // B_{alpha,beta}
-  check += compare (mat[ 3*n11+ 0], 0.0, "B (Ox,Fx) 0", verbose, tiny);
-  check += compare (mat[ 3*n11+ 1], yb,  "B (Ox,Fy) yb", verbose, tiny);
-  check += compare (mat[ 3*n11+ 2], 0.0, "B (Ox,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 3*n11+ 0], 0.0, "B (Ox,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 3*n11+ 1], yb,  "B (Ox,Fy) yb", verbose, tiny, max);
+  check += compare_max (mat[ 3*n11+ 2], 0.0, "B (Ox,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 4*n11+ 0], -yb, "B (Oy,Fx) -yb", verbose, tiny);
-  check += compare (mat[ 4*n11+ 1], 0.0, "B (Oy,Fy) 0", verbose, tiny);
-  check += compare (mat[ 4*n11+ 2], 0.0, "B (Oy,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 4*n11+ 0], -yb, "B (Oy,Fx) -yb", verbose, tiny, max);
+  check += compare_max (mat[ 4*n11+ 1], 0.0, "B (Oy,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 4*n11+ 2], 0.0, "B (Oy,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 5*n11+ 0], 0.0, "B (Oz,Fx) 0", verbose, tiny);
-  check += compare (mat[ 5*n11+ 1], 0.0, "B (Oz,Fy) 0", verbose, tiny);
-  check += compare (mat[ 5*n11+ 2], 0.0, "B (Oz,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 5*n11+ 0], 0.0, "B (Oz,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 5*n11+ 1], 0.0, "B (Oz,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 5*n11+ 2], 0.0, "B (Oz,Fz) 0", verbose, tiny, max);
 
   // C_{alpha,beta}
-  check += compare (mat[ 3*n11+ 3], yc,  "C (Ox,Ox) yc", verbose, tiny);
-  check += compare (mat[ 3*n11+ 4], 0.0, "C (Ox,Oy) 0", verbose, tiny);
-  check += compare (mat[ 3*n11+ 5], 0.0, "C (Ox,Oz) 0", verbose, tiny);
+  check += compare_max (mat[ 3*n11+ 3], yc,  "C (Ox,Ox) yc", verbose, tiny, max);
+  check += compare_max (mat[ 3*n11+ 4], 0.0, "C (Ox,Oy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 3*n11+ 5], 0.0, "C (Ox,Oz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 4*n11+ 3], 0.0, "C (Oy,Ox) 0", verbose, tiny);
-  check += compare (mat[ 4*n11+ 4], yc,  "C (Oy,Oy) yc", verbose, tiny);
-  check += compare (mat[ 4*n11+ 5], 0.0, "C (Oy,Oz) 0", verbose, tiny);
+  check += compare_max (mat[ 4*n11+ 3], 0.0, "C (Oy,Ox) 0", verbose, tiny, max);
+  check += compare_max (mat[ 4*n11+ 4], yc,  "C (Oy,Oy) yc", verbose, tiny, max);
+  check += compare_max (mat[ 4*n11+ 5], 0.0, "C (Oy,Oz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 5*n11+ 3], 0.0, "C (Oz,Ox) 0", verbose, tiny);
-  check += compare (mat[ 5*n11+ 4], 0.0, "C (Oz,Oy) 0", verbose, tiny);
-  check += compare (mat[ 5*n11+ 5], xc,  "C (Oz,Oz) xc", verbose, tiny);
+  check += compare_max (mat[ 5*n11+ 3], 0.0, "C (Oz,Ox) 0", verbose, tiny, max);
+  check += compare_max (mat[ 5*n11+ 4], 0.0, "C (Oz,Oy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 5*n11+ 5], xc,  "C (Oz,Oz) xc", verbose, tiny, max);
 
   // G_{alpha,beta}
-  check += compare (mat[ 6*n11+ 0], 0.0, "G (Exx,Fx) 0", verbose, tiny);
-  check += compare (mat[ 6*n11+ 1], 0.0, "G (Exx,Fy) 0", verbose, tiny);
-  check += compare (mat[ 6*n11+ 2], -xg/3.0, "G (Exx,Fz) -xg/3", verbose, tiny);
+  check += compare_max (mat[ 6*n11+ 0], 0.0, "G (Exx,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 6*n11+ 1], 0.0, "G (Exx,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 6*n11+ 2], -xg/3.0, "G (Exx,Fz) -xg/3", verbose, tiny, max);
 
-  check += compare (mat[ 7*n11+ 0], 0.0, "G (Exy,Fx) 0", verbose, tiny);
-  check += compare (mat[ 7*n11+ 1], 0.0, "G (Exy,Fy) 0", verbose, tiny);
-  check += compare (mat[ 7*n11+ 2], 0.0, "G (Exy,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 7*n11+ 0], 0.0, "G (Exy,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 7*n11+ 1], 0.0, "G (Exy,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 7*n11+ 2], 0.0, "G (Exy,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 8*n11+ 0], yg,  "G (Exz,Fx) yg", verbose, tiny);
-  check += compare (mat[ 8*n11+ 1], 0.0, "G (Exz,Fy) 0", verbose, tiny);
-  check += compare (mat[ 8*n11+ 2], 0.0, "G (Exz,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 8*n11+ 0], yg,  "G (Exz,Fx) yg", verbose, tiny, max);
+  check += compare_max (mat[ 8*n11+ 1], 0.0, "G (Exz,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[ 8*n11+ 2], 0.0, "G (Exz,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 9*n11+ 0], 0.0, "G (Eyz,Fx) 0", verbose, tiny);
-  check += compare (mat[ 9*n11+ 1], yg,  "G (Eyz,Fy) yg", verbose, tiny);
-  check += compare (mat[ 9*n11+ 2], 0.0, "G (Eyz,Fz) 0", verbose, tiny);
+  check += compare_max (mat[ 9*n11+ 0], 0.0, "G (Eyz,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 9*n11+ 1], yg,  "G (Eyz,Fy) yg", verbose, tiny, max);
+  check += compare_max (mat[ 9*n11+ 2], 0.0, "G (Eyz,Fz) 0", verbose, tiny, max);
 
-  check += compare (mat[10*n11+ 0], 0.0, "G (Eyy,Fx) 0", verbose, tiny);
-  check += compare (mat[10*n11+ 1], 0.0, "G (Eyy,Fy) 0", verbose, tiny);
-  check += compare (mat[10*n11+ 2], -xg/3.0, "G (Eyy,Fz) -xg/3", verbose, tiny);
+  check += compare_max (mat[10*n11+ 0], 0.0, "G (Eyy,Fx) 0", verbose, tiny, max);
+  check += compare_max (mat[10*n11+ 1], 0.0, "G (Eyy,Fy) 0", verbose, tiny, max);
+  check += compare_max (mat[10*n11+ 2], -xg/3.0, "G (Eyy,Fz) -xg/3", verbose, tiny, max);
   // H_{alpha,beta}
-  check += compare (mat[ 6*n11+ 3], 0.0, "H (Exx,Tx) 0", verbose, tiny);
-  check += compare (mat[ 6*n11+ 4], 0.0, "H (Exx,Ty) 0", verbose, tiny);
-  check += compare (mat[ 6*n11+ 5], 0.0, "H (Exx,Tz) 0", verbose, tiny);
+  check += compare_max (mat[ 6*n11+ 3], 0.0, "H (Exx,Tx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 6*n11+ 4], 0.0, "H (Exx,Ty) 0", verbose, tiny, max);
+  check += compare_max (mat[ 6*n11+ 5], 0.0, "H (Exx,Tz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 7*n11+ 3], 0.0, "H (Exy,Tx) 0", verbose, tiny);
-  check += compare (mat[ 7*n11+ 4], 0.0, "H (Exy,Ty) 0", verbose, tiny);
-  check += compare (mat[ 7*n11+ 5], 0.0, "H (Exy,Tz) 0", verbose, tiny);
+  check += compare_max (mat[ 7*n11+ 3], 0.0, "H (Exy,Tx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 7*n11+ 4], 0.0, "H (Exy,Ty) 0", verbose, tiny, max);
+  check += compare_max (mat[ 7*n11+ 5], 0.0, "H (Exy,Tz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 8*n11+ 3], 0.0, "H (Exz,Tx) 0", verbose, tiny);
-  check += compare (mat[ 8*n11+ 4], yh,  "H (Exz,Ty) yh", verbose, tiny);
-  check += compare (mat[ 8*n11+ 5], 0.0, "H (Exz,Tz) 0", verbose, tiny);
+  check += compare_max (mat[ 8*n11+ 3], 0.0, "H (Exz,Tx) 0", verbose, tiny, max);
+  check += compare_max (mat[ 8*n11+ 4], yh,  "H (Exz,Ty) yh", verbose, tiny, max);
+  check += compare_max (mat[ 8*n11+ 5], 0.0, "H (Exz,Tz) 0", verbose, tiny, max);
 
-  check += compare (mat[ 9*n11+ 3], -yh, "H (Eyz,Tx) -yh", verbose, tiny);
-  check += compare (mat[ 9*n11+ 4], 0.0, "H (Eyz,Ty) 0", verbose, tiny);
-  check += compare (mat[ 9*n11+ 5], 0.0, "H (Eyz,Tz) 0", verbose, tiny);
+  check += compare_max (mat[ 9*n11+ 3], -yh, "H (Eyz,Tx) -yh", verbose, tiny, max);
+  check += compare_max (mat[ 9*n11+ 4], 0.0, "H (Eyz,Ty) 0", verbose, tiny, max);
+  check += compare_max (mat[ 9*n11+ 5], 0.0, "H (Eyz,Tz) 0", verbose, tiny, max);
 
-  check += compare (mat[10*n11+ 3], 0.0, "H12 (Eyy,Tx) 0", verbose, tiny);
-  check += compare (mat[10*n11+ 4], 0.0, "H12 (Eyy,Ty) 0", verbose, tiny);
-  check += compare (mat[10*n11+ 5], 0.0, "H12 (Eyy,Tz) 0", verbose, tiny);
+  check += compare_max (mat[10*n11+ 3], 0.0, "H12 (Eyy,Tx) 0", verbose, tiny, max);
+  check += compare_max (mat[10*n11+ 4], 0.0, "H12 (Eyy,Ty) 0", verbose, tiny, max);
+  check += compare_max (mat[10*n11+ 5], 0.0, "H12 (Eyy,Tz) 0", verbose, tiny, max);
 
   // M_{alpha,beta}
   if (flag_sym == 0)
     {
       // extracted form
-      check += compare (mat[ 6*n11+ 6], xm/6.0+zm/2.0, "M (Exx,Sxx) xm/6+zm/2", verbose, tiny);
-      check += compare (mat[ 6*n11+ 7], 0.0, "M (Exx,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+ 8], 0.0, "M (Exx,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+ 9], 0.0, "M (Exx,Syz) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+10], xm/6.0-zm/2.0, "M (Exx,Syy) xm/6-zm/2", verbose, tiny);
+      check += compare_max (mat[ 6*n11+ 6], xm/6.0+zm/2.0, "M (Exx,Sxx) xm/6+zm/2", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 7], 0.0, "M (Exx,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 8], 0.0, "M (Exx,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 9], 0.0, "M (Exx,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+10], xm/6.0-zm/2.0, "M (Exx,Syy) xm/6-zm/2", verbose, tiny, max);
 
-      check += compare (mat[ 7*n11+ 6], 0.0, "M (Exy,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+ 7], zm/2.0, "M (Exy,Sxy) zm/2", verbose, tiny);
-      check += compare (mat[ 7*n11+ 8], 0.0, "M (Exy,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+ 9], 0.0, "M (Exy,Syz) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+10], 0.0, "M (Exy,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 7*n11+ 6], 0.0, "M (Exy,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 7], zm/2.0, "M (Exy,Sxy) zm/2", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 8], 0.0, "M (Exy,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 9], 0.0, "M (Exy,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+10], 0.0, "M (Exy,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[ 8*n11+ 6], 0.0, "M (Exz,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+ 7], 0.0, "M (Exz,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+ 8], ym/2.0, "M (Exz,Sxz) ym/2", verbose, tiny);
-      check += compare (mat[ 8*n11+ 9], 0.0, "M (Exz,Syz) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+10], 0.0, "M (Exz,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 8*n11+ 6], 0.0, "M (Exz,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 7], 0.0, "M (Exz,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 8], ym/2.0, "M (Exz,Sxz) ym/2", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 9], 0.0, "M (Exz,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+10], 0.0, "M (Exz,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[ 9*n11+ 6], 0.0, "M (Eyz,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 7], 0.0, "M (Eyz,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 8], 0.0, "M (Eyz,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 9], ym/2.0, "M (Eyz,Syz) ym/2", verbose, tiny);
-      check += compare (mat[ 9*n11+10], 0.0, "M (Eyz,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 9*n11+ 6], 0.0, "M (Eyz,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 7], 0.0, "M (Eyz,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 8], 0.0, "M (Eyz,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 9], ym/2.0, "M (Eyz,Syz) ym/2", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+10], 0.0, "M (Eyz,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[10*n11+ 6], xm/6.0-zm/2.0, "M (Eyy,Sxx) xm/6-zm/2", verbose, tiny);
-      check += compare (mat[10*n11+ 7], 0.0, "M (Eyy,Sxy) 0", verbose, tiny);
-      check += compare (mat[10*n11+ 8], 0.0, "M (Eyy,Sxz) 0", verbose, tiny);
-      check += compare (mat[10*n11+ 9], 0.0, "M (Eyy,Syz) 0", verbose, tiny);
-      check += compare (mat[10*n11+10], xm/6.0+zm/2.0, "M (Eyy,Syy) xm/6+zm/2", verbose, tiny);
+      check += compare_max (mat[10*n11+ 6], xm/6.0-zm/2.0, "M (Eyy,Sxx) xm/6-zm/2", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 7], 0.0, "M (Eyy,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 8], 0.0, "M (Eyy,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 9], 0.0, "M (Eyy,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+10], xm/6.0+zm/2.0, "M (Eyy,Syy) xm/6+zm/2", verbose, tiny, max);
     }
   else
     {
       // symmetric form
-      check += compare (mat[ 6*n11+ 6], xm/2.0+zm/2.0, "M (Exx,Sxx) xm/2+zm/2", verbose, tiny);
-      check += compare (mat[ 6*n11+ 7], 0.0, "M (Exx,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+ 8], 0.0, "M (Exx,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+ 9], 0.0, "M (Exx,Syz) 0", verbose, tiny);
-      check += compare (mat[ 6*n11+10], xm/2.0-zm/2.0, "M (Exx,Syy) xm/2-zm/2", verbose, tiny);
+      check += compare_max (mat[ 6*n11+ 6], xm/2.0+zm/2.0, "M (Exx,Sxx) xm/2+zm/2", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 7], 0.0, "M (Exx,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 8], 0.0, "M (Exx,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+ 9], 0.0, "M (Exx,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 6*n11+10], xm/2.0-zm/2.0, "M (Exx,Syy) xm/2-zm/2", verbose, tiny, max);
 
-      check += compare (mat[ 7*n11+ 6], 0.0, "M (Exy,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+ 7], zm,  "M (Exy,Sxy) zm", verbose, tiny);
-      check += compare (mat[ 7*n11+ 8], 0.0, "M (Exy,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+ 9], 0.0, "M (Exy,Syz) 0", verbose, tiny);
-      check += compare (mat[ 7*n11+10], 0.0, "M (Exy,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 7*n11+ 6], 0.0, "M (Exy,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 7], zm,  "M (Exy,Sxy) zm", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 8], 0.0, "M (Exy,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+ 9], 0.0, "M (Exy,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 7*n11+10], 0.0, "M (Exy,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[ 8*n11+ 6], 0.0, "M (Exz,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+ 7], 0.0, "M (Exz,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+ 8], ym,  "M (Exz,Sxz) ym", verbose, tiny);
-      check += compare (mat[ 8*n11+ 9], 0.0, "M (Exz,Syz) 0", verbose, tiny);
-      check += compare (mat[ 8*n11+10], 0.0, "M (Exz,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 8*n11+ 6], 0.0, "M (Exz,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 7], 0.0, "M (Exz,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 8], ym,  "M (Exz,Sxz) ym", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+ 9], 0.0, "M (Exz,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 8*n11+10], 0.0, "M (Exz,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[ 9*n11+ 6], 0.0, "M (Eyz,Sxx) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 7], 0.0, "M (Eyz,Sxy) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 8], 0.0, "M (Eyz,Sxz) 0", verbose, tiny);
-      check += compare (mat[ 9*n11+ 9], ym,  "M (Eyz,Syz) ym", verbose, tiny);
-      check += compare (mat[ 9*n11+10], 0.0, "M (Eyz,Syy) 0", verbose, tiny);
+      check += compare_max (mat[ 9*n11+ 6], 0.0, "M (Eyz,Sxx) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 7], 0.0, "M (Eyz,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 8], 0.0, "M (Eyz,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+ 9], ym,  "M (Eyz,Syz) ym", verbose, tiny, max);
+      check += compare_max (mat[ 9*n11+10], 0.0, "M (Eyz,Syy) 0", verbose, tiny, max);
 
-      check += compare (mat[10*n11+ 6], xm/2.0-zm/2.0, "M (Eyy,Sxx) xm/2-zm/2", verbose, tiny);
-      check += compare (mat[10*n11+ 7], 0.0, "M (Eyy,Sxy) 0", verbose, tiny);
-      check += compare (mat[10*n11+ 8], 0.0, "M (Eyy,Sxz) 0", verbose, tiny);
-      check += compare (mat[10*n11+ 9], 0.0, "M (Eyy,Syz) 0", verbose, tiny);
-      check += compare (mat[10*n11+10], xm/2.0+zm/2.0, "M (Eyy,Syy) xm/2+zm/2", verbose, tiny);
+      check += compare_max (mat[10*n11+ 6], xm/2.0-zm/2.0, "M (Eyy,Sxx) xm/2-zm/2", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 7], 0.0, "M (Eyy,Sxy) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 8], 0.0, "M (Eyy,Sxz) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+ 9], 0.0, "M (Eyy,Syz) 0", verbose, tiny, max);
+      check += compare_max (mat[10*n11+10], xm/2.0+zm/2.0, "M (Eyy,Syy) xm/2+zm/2", verbose, tiny, max);
     }
 
   return (check);
@@ -217,7 +217,7 @@ check_matrix_fts_with_ez_alphabeta (int n11, double *mat,
  *                  0,0,0,2,0,
  *                  1,0,0,0,2).
  */
-void
+static int
 get_scalars_from_matrix_fts_with_ez_alphabeta
 (int n11, double *mat,
  int flag_sym,
@@ -226,8 +226,12 @@ get_scalars_from_matrix_fts_with_ez_alphabeta
  double *xc, double *yc,
  double *xg, double *yg,
  double *yh,
- double *xm, double *ym, double *zm)
+ double *xm, double *ym, double *zm,
+ int verbose, double tiny, double *max)
 {
+  int check = 0;
+
+
   // A_{alpha,beta}
   *ya = mat[ 0*n11+ 0];
   *xa = mat[ 2*n11+ 2];
@@ -269,27 +273,33 @@ get_scalars_from_matrix_fts_with_ez_alphabeta
     }
 
   // check the whole matrix
-  if (check_matrix_fts_with_ez_alphabeta (n11, mat,
-					  flag_sym,
-					  *xa, *ya,
-					  *yb,
-					  *xc, *yc,
-					  *xg, *yg,
-					  *yh,
-					  *xm, *ym, *zm,
-					  1, 1.0e-10)
-      > 0)
+  check = check_matrix_fts_with_ez_alphabeta (n11, mat,
+					      flag_sym,
+					      *xa, *ya,
+					      *yb,
+					      *xc, *yc,
+					      *xg, *yg,
+					      *yh,
+					      *xm, *ym, *zm,
+					      verbose, tiny, max);
+  if (verbose != 0)
     {
-      fprintf (stderr, "get_scalars_from_matrix_fts_with_ez_alphabeta: "
-	       "inconsistent!!\n");
+      if (check > 0)
+	{
+	  fprintf (stdout,
+		   "get_scalars_from_matrix_fts_with_ez_alphabeta: "
+		   "inconsistent!!\n");
+	}
     }
+
+  return (check);
 }
 
 
-int
+static int
 check_matrix_2B_fts_with_ez (double *mat,
 			     double *scalars,
-			     int verbose, double tiny)
+			     int verbose, double tiny, double *max)
 {
   int check = 0;
 
@@ -349,7 +359,7 @@ check_matrix_2B_fts_with_ez (double *mat,
 					       xg11, yg11,
 					       yh11,
 					       xm11, ym11, zm11,
-					       verbose, tiny);
+					       verbose, tiny, max);
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+11, // 22
 					       0, // extracted form
 					       xa22, ya22,
@@ -358,7 +368,7 @@ check_matrix_2B_fts_with_ez (double *mat,
 					       xg22, yg22,
 					       yh22,
 					       xm22, ym22, zm22,
-					       verbose, tiny);
+					       verbose, tiny, max);
 
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 0*n11+11, // 12
 					       0, // extracted form
@@ -368,7 +378,7 @@ check_matrix_2B_fts_with_ez (double *mat,
 					       xg12, yg12,
 					       yh12,
 					       xm12, ym12, zm12,
-					       verbose, tiny);
+					       verbose, tiny, max);
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+0, // 21
 					       0, // extracted form
 					       xa21, ya21,
@@ -377,7 +387,7 @@ check_matrix_2B_fts_with_ez (double *mat,
 					       xg21, yg21,
 					       yh21,
 					       xm21, ym21, zm21,
-					       verbose, tiny);
+					       verbose, tiny, max);
 
   // symmetry check for tilde parts
   int i, j;
@@ -387,7 +397,8 @@ check_matrix_2B_fts_with_ez (double *mat,
       for (j = i+1; j < n11; j ++)
 	{
 	  sprintf (label, "Symmetry Check (%d,%d)", i, j);
-	  check += compare (mat[i*n11+j], mat[j*n11+i], label, verbose, tiny);
+	  check += compare_max (mat[i*n11+j], mat[j*n11+i],
+				label, verbose, tiny, max);
 	}
     }
 
@@ -400,10 +411,19 @@ check_matrix_2B_fts_with_ez (double *mat,
 int
 check_matrix_mob_nonewald_fts (double r, int verbose, double tiny)
 {
-  int check = 0;
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_matrix_mob_nonewald_fts(r=%f) : start\n", r);
+    }
 
-  struct stokes *sys = NULL;
-  sys = stokes_init ();
+  int check = 0;
+  double max = 0.0;
+
+
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_matrix_mob_nonewald_fts");
   sys->version = 2; // FTS
 
   int np = 2;
@@ -482,15 +502,18 @@ check_matrix_mob_nonewald_fts (double r, int verbose, double tiny)
   scalars[20] = zm11;
   scalars[21] = zm12;
 
-  check += check_matrix_2B_fts_with_ez (mat, scalars, verbose, tiny);
-
-  if (check == 0 && verbose != 0)
-    {
-      fprintf (stdout, "check_matrix_mob_nonewald_fts : PASSED\n");
-    }
+  check += check_matrix_2B_fts_with_ez (mat, scalars, verbose, tiny, &max);
 
   stokes_free (sys);
   free (mat);
+
+
+  if (check == 0 && verbose != 0)
+    {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }
@@ -545,14 +568,25 @@ conv_mat_from_ext_to_e2e_alphabeta (int n, double *mat)
 int
 check_minv_fts (double r, int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_minv_fts(r=%f) : start\n", r);
+    }
+
+  int check = 0;
+  double max = 0.0;
+
+
   /* calculate the inverse of M^infty directly:
    * M^infty in FTS version is calculated by make_matrix_mob_nonewald_3all()
    * then, inserved by lapack_inv_()
    * then, the scalar functions are extracted based on the fact that e=(0,0,1).
    * the results, xa11, xa12, ..., are the reference to check.
    */
-  struct stokes *sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_minv_fts");
   sys->version = 2; // FTS
 
   int np = 2;
@@ -605,38 +639,46 @@ check_minv_fts (double r, int verbose, double tiny)
   double ym22, ym21;
   double zm22, zm21;
 
-  get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat +  0*n11+ 0, // 11
-						 1, // symmetric form
-						 &xa11, &ya11,
-						 &yb11,
-						 &xc11, &yc11,
-						 &xg11, &yg11,
-						 &yh11,
-						 &xm11, &ym11, &zm11);
-  get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat +  0*n11+11, // 12
-						 1, // symmetric form
-						 &xa12, &ya12,
-						 &yb12,
-						 &xc12, &yc12,
-						 &xg12, &yg12,
-						 &yh12,
-						 &xm12, &ym12, &zm12);
-  get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+ 0, // 21
-						 1, // symmetric form
-						 &xa21, &ya21,
-						 &yb21,
-						 &xc21, &yc21,
-						 &xg21, &yg21,
-						 &yh21,
-						 &xm21, &ym21, &zm21);
-  get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+11, // 22
-						 1, // symmetric form
-						 &xa22, &ya22,
-						 &yb22,
-						 &xc22, &yc22,
-						 &xg22, &yg22,
-						 &yh22,
-						 &xm22, &ym22, &zm22);
+  check +=
+    get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat +  0*n11+ 0, // 11
+						   1, // symmetric form
+						   &xa11, &ya11,
+						   &yb11,
+						   &xc11, &yc11,
+						   &xg11, &yg11,
+						   &yh11,
+						   &xm11, &ym11, &zm11,
+						   verbose, tiny, &max);
+  check +=
+    get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat +  0*n11+11, // 12
+						   1, // symmetric form
+						   &xa12, &ya12,
+						   &yb12,
+						   &xc12, &yc12,
+						   &xg12, &yg12,
+						   &yh12,
+						   &xm12, &ym12, &zm12,
+						   verbose, tiny, &max);
+  check +=
+    get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+ 0, // 21
+						   1, // symmetric form
+						   &xa21, &ya21,
+						   &yb21,
+						   &xc21, &yc21,
+						   &xg21, &yg21,
+						   &yh21,
+						   &xm21, &ym21, &zm21,
+						   verbose, tiny, &max);
+  check +=
+    get_scalars_from_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+11, // 22
+						   1, // symmetric form
+						   &xa22, &ya22,
+						   &yb22,
+						   &xc22, &yc22,
+						   &xg22, &yg22,
+						   &yh22,
+						   &xm22, &ym22, &zm22,
+						   verbose, tiny, &max);
   /* NOTE: the extraction routine get_scalar_from_matrix...() is for
    * e = (0,0,1), not e = (0,0,-1), that is, for (21)-interaction here.
    * that is why B and G parts for (21) are opposite sign to (12).
@@ -649,32 +691,30 @@ check_minv_fts (double r, int verbose, double tiny)
   yg22 *= -1.0;
 
 
-  int check = 0;
-
   // check the symmetry for the monodisperse system
-  check += compare (xa22, xa11, "XA22", verbose, tiny);
-  check += compare (ya22, ya11, "YA22", verbose, tiny);
-  check += compare (yb22, yb11, "YB22", verbose, tiny);
-  check += compare (xc22, xc11, "XC22", verbose, tiny);
-  check += compare (yc22, yc11, "YC22", verbose, tiny);
-  check += compare (xg22, xg11, "XG22", verbose, tiny);
-  check += compare (yg22, yg11, "YG22", verbose, tiny);
-  check += compare (yh22, yh11, "YH22", verbose, tiny);
-  check += compare (xm22, xm11, "XM22", verbose, tiny);
-  check += compare (ym22, ym11, "YM22", verbose, tiny);
-  check += compare (zm22, zm11, "ZM22", verbose, tiny);
+  check += compare_max (xa22, xa11, "XA22", verbose, tiny, &max);
+  check += compare_max (ya22, ya11, "YA22", verbose, tiny, &max);
+  check += compare_max (yb22, yb11, "YB22", verbose, tiny, &max);
+  check += compare_max (xc22, xc11, "XC22", verbose, tiny, &max);
+  check += compare_max (yc22, yc11, "YC22", verbose, tiny, &max);
+  check += compare_max (xg22, xg11, "XG22", verbose, tiny, &max);
+  check += compare_max (yg22, yg11, "YG22", verbose, tiny, &max);
+  check += compare_max (yh22, yh11, "YH22", verbose, tiny, &max);
+  check += compare_max (xm22, xm11, "XM22", verbose, tiny, &max);
+  check += compare_max (ym22, ym11, "YM22", verbose, tiny, &max);
+  check += compare_max (zm22, zm11, "ZM22", verbose, tiny, &max);
 
-  check += compare (xa21, xa12, "XA21", verbose, tiny);
-  check += compare (ya21, ya12, "YA21", verbose, tiny);
-  check += compare (yb21, yb12, "YB21", verbose, tiny);
-  check += compare (xc21, xc12, "XC21", verbose, tiny);
-  check += compare (yc21, yc12, "YC21", verbose, tiny);
-  check += compare (xg21, xg12, "XG21", verbose, tiny);
-  check += compare (yg21, yg12, "YG21", verbose, tiny);
-  check += compare (yh21, yh12, "YH21", verbose, tiny);
-  check += compare (xm21, xm12, "XM21", verbose, tiny);
-  check += compare (ym21, ym12, "YM21", verbose, tiny);
-  check += compare (zm21, zm12, "ZM21", verbose, tiny);
+  check += compare_max (xa21, xa12, "XA21", verbose, tiny, &max);
+  check += compare_max (ya21, ya12, "YA21", verbose, tiny, &max);
+  check += compare_max (yb21, yb12, "YB21", verbose, tiny, &max);
+  check += compare_max (xc21, xc12, "XC21", verbose, tiny, &max);
+  check += compare_max (yc21, yc12, "YC21", verbose, tiny, &max);
+  check += compare_max (xg21, xg12, "XG21", verbose, tiny, &max);
+  check += compare_max (yg21, yg12, "YG21", verbose, tiny, &max);
+  check += compare_max (yh21, yh12, "YH21", verbose, tiny, &max);
+  check += compare_max (xm21, xm12, "XM21", verbose, tiny, &max);
+  check += compare_max (ym21, ym12, "YM21", verbose, tiny, &max);
+  check += compare_max (zm21, zm12, "ZM21", verbose, tiny, &max);
 
 
   /* Again, here, check_matrix...() is for e = (0,0,1), not e = (0,0,-1),
@@ -689,7 +729,7 @@ check_minv_fts (double r, int verbose, double tiny)
 					       xg11, yg11,
 					       yh11,
 					       xm11, ym11, zm11,
-					       verbose, tiny);
+					       verbose, tiny, &max);
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+11, // 22
 					       1, // symmetric form
 					       xa22, ya22,
@@ -698,7 +738,7 @@ check_minv_fts (double r, int verbose, double tiny)
 					       -xg22, -yg22,
 					       yh22,
 					       xm22, ym22, zm22,
-					       verbose, tiny);
+					       verbose, tiny, &max);
 
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 0*n11+11, // 12
 					       1, // symmetric form
@@ -708,7 +748,7 @@ check_minv_fts (double r, int verbose, double tiny)
 					       xg12, yg12,
 					       yh12,
 					       xm12, ym12, zm12,
-					       verbose, tiny);
+					       verbose, tiny, &max);
   check += check_matrix_fts_with_ez_alphabeta (n11, mat + 11*n11+0, // 21
 					       1, // symmetric form
 					       xa21, ya21,
@@ -717,113 +757,116 @@ check_minv_fts (double r, int verbose, double tiny)
 					       -xg21, -yg21,
 					       yh21,
 					       xm21, ym21, zm21,
-					       verbose, tiny);
+					       verbose, tiny, &max);
 
   // compare it with scalar_minv_fts() in fts.c
   double mono[22];
   scalar_minv_fts (r, mono);
 
-  check += compare (mono [0], xa11, "minv_fts XA11", verbose, tiny);
-  check += compare (mono [1], xa12, "minv_fts XA12", verbose, tiny);
-  check += compare (mono [2], ya11, "minv_fts YA11", verbose, tiny);
-  check += compare (mono [3], ya12, "minv_fts YA12", verbose, tiny);
-  check += compare (mono [4], yb11, "minv_fts YB11", verbose, tiny);
-  check += compare (mono [5], yb12, "minv_fts YB12", verbose, tiny);
-  check += compare (mono [6], xc11, "minv_fts XC11", verbose, tiny);
-  check += compare (mono [7], xc12, "minv_fts XC12", verbose, tiny);
-  check += compare (mono [8], yc11, "minv_fts YC11", verbose, tiny);
-  check += compare (mono [9], yc12, "minv_fts YC12", verbose, tiny);
-  check += compare (mono[10], xg11, "minv_fts XG11", verbose, tiny);
-  check += compare (mono[11], xg12, "minv_fts XG12", verbose, tiny);
-  check += compare (mono[12], yg11, "minv_fts YG11", verbose, tiny);
-  check += compare (mono[13], yg12, "minv_fts YG12", verbose, tiny);
-  check += compare (mono[14], yh11, "minv_fts YH11", verbose, tiny);
-  check += compare (mono[15], yh12, "minv_fts YH12", verbose, tiny);
-  check += compare (mono[16], xm11, "minv_fts XM11", verbose, tiny);
-  check += compare (mono[17], xm12, "minv_fts XM12", verbose, tiny);
-  check += compare (mono[18], ym11, "minv_fts YM11", verbose, tiny);
-  check += compare (mono[19], ym12, "minv_fts YM12", verbose, tiny);
-  check += compare (mono[20], zm11, "minv_fts ZM11", verbose, tiny);
-  check += compare (mono[21], zm12, "minv_fts ZM12", verbose, tiny);
+  check += compare_max (mono [0], xa11, "minv_fts XA11", verbose, tiny, &max);
+  check += compare_max (mono [1], xa12, "minv_fts XA12", verbose, tiny, &max);
+  check += compare_max (mono [2], ya11, "minv_fts YA11", verbose, tiny, &max);
+  check += compare_max (mono [3], ya12, "minv_fts YA12", verbose, tiny, &max);
+  check += compare_max (mono [4], yb11, "minv_fts YB11", verbose, tiny, &max);
+  check += compare_max (mono [5], yb12, "minv_fts YB12", verbose, tiny, &max);
+  check += compare_max (mono [6], xc11, "minv_fts XC11", verbose, tiny, &max);
+  check += compare_max (mono [7], xc12, "minv_fts XC12", verbose, tiny, &max);
+  check += compare_max (mono [8], yc11, "minv_fts YC11", verbose, tiny, &max);
+  check += compare_max (mono [9], yc12, "minv_fts YC12", verbose, tiny, &max);
+  check += compare_max (mono[10], xg11, "minv_fts XG11", verbose, tiny, &max);
+  check += compare_max (mono[11], xg12, "minv_fts XG12", verbose, tiny, &max);
+  check += compare_max (mono[12], yg11, "minv_fts YG11", verbose, tiny, &max);
+  check += compare_max (mono[13], yg12, "minv_fts YG12", verbose, tiny, &max);
+  check += compare_max (mono[14], yh11, "minv_fts YH11", verbose, tiny, &max);
+  check += compare_max (mono[15], yh12, "minv_fts YH12", verbose, tiny, &max);
+  check += compare_max (mono[16], xm11, "minv_fts XM11", verbose, tiny, &max);
+  check += compare_max (mono[17], xm12, "minv_fts XM12", verbose, tiny, &max);
+  check += compare_max (mono[18], ym11, "minv_fts YM11", verbose, tiny, &max);
+  check += compare_max (mono[19], ym12, "minv_fts YM12", verbose, tiny, &max);
+  check += compare_max (mono[20], zm11, "minv_fts ZM11", verbose, tiny, &max);
+  check += compare_max (mono[21], zm12, "minv_fts ZM12", verbose, tiny, &max);
 
 
   double poly[44];
   scalars_minv_fts_poly (r, 1.0, 1.0, poly);
-  check += compare (poly [0], xa11, "minv_fts_poly XA11", verbose, tiny);
-  check += compare (poly [1], xa12, "minv_fts_poly XA12", verbose, tiny);
-  check += compare (poly [2], xa21, "minv_fts_poly XA21", verbose, tiny);
-  check += compare (poly [3], xa22, "minv_fts_poly XA22", verbose, tiny);
-  check += compare (poly [4], ya11, "minv_fts_poly YA11", verbose, tiny);
-  check += compare (poly [5], ya12, "minv_fts_poly YA12", verbose, tiny);
-  check += compare (poly [6], ya21, "minv_fts_poly YA21", verbose, tiny);
-  check += compare (poly [7], ya22, "minv_fts_poly YA22", verbose, tiny);
-  check += compare (poly [8], yb11, "minv_fts_poly YB11", verbose, tiny);
-  check += compare (poly [9], yb12, "minv_fts_poly YB12", verbose, tiny);
-  check += compare (poly[10], yb21, "minv_fts_poly YB21", verbose, tiny);
-  check += compare (poly[11], yb22, "minv_fts_poly YB22", verbose, tiny);
-  check += compare (poly[12], xc11, "minv_fts_poly XC11", verbose, tiny);
-  check += compare (poly[13], xc12, "minv_fts_poly XC12", verbose, tiny);
-  check += compare (poly[14], xc21, "minv_fts_poly XC21", verbose, tiny);
-  check += compare (poly[15], xc22, "minv_fts_poly XC22", verbose, tiny);
-  check += compare (poly[16], yc11, "minv_fts_poly YC11", verbose, tiny);
-  check += compare (poly[17], yc12, "minv_fts_poly YC12", verbose, tiny);
-  check += compare (poly[18], yc21, "minv_fts_poly YC21", verbose, tiny);
-  check += compare (poly[19], yc22, "minv_fts_poly YC22", verbose, tiny);
-  check += compare (poly[20], xg11, "minv_fts_poly XG11", verbose, tiny);
-  check += compare (poly[21], xg12, "minv_fts_poly XG12", verbose, tiny);
-  check += compare (poly[22], xg21, "minv_fts_poly XG21", verbose, tiny);
-  check += compare (poly[23], xg22, "minv_fts_poly XG22", verbose, tiny);
-  check += compare (poly[24], yg11, "minv_fts_poly YG11", verbose, tiny);
-  check += compare (poly[25], yg12, "minv_fts_poly YG12", verbose, tiny);
-  check += compare (poly[26], yg21, "minv_fts_poly YG21", verbose, tiny);
-  check += compare (poly[27], yg22, "minv_fts_poly YG22", verbose, tiny);
-  check += compare (poly[28], yh11, "minv_fts_poly YH11", verbose, tiny);
-  check += compare (poly[29], yh12, "minv_fts_poly YH12", verbose, tiny);
-  check += compare (poly[30], yh21, "minv_fts_poly YH21", verbose, tiny);
-  check += compare (poly[31], yh22, "minv_fts_poly YH22", verbose, tiny);
-  check += compare (poly[32], xm11, "minv_fts_poly XM11", verbose, tiny);
-  check += compare (poly[33], xm12, "minv_fts_poly XM12", verbose, tiny);
-  check += compare (poly[34], xm21, "minv_fts_poly XM21", verbose, tiny);
-  check += compare (poly[35], xm22, "minv_fts_poly XM22", verbose, tiny);
-  check += compare (poly[36], ym11, "minv_fts_poly YM11", verbose, tiny);
-  check += compare (poly[37], ym12, "minv_fts_poly YM12", verbose, tiny);
-  check += compare (poly[38], ym21, "minv_fts_poly YM21", verbose, tiny);
-  check += compare (poly[39], ym22, "minv_fts_poly YM22", verbose, tiny);
-  check += compare (poly[40], zm11, "minv_fts_poly ZM11", verbose, tiny);
-  check += compare (poly[41], zm12, "minv_fts_poly ZM12", verbose, tiny);
-  check += compare (poly[42], zm21, "minv_fts_poly ZM21", verbose, tiny);
-  check += compare (poly[43], zm22, "minv_fts_poly ZM22", verbose, tiny);
+  check += compare_max (poly [0], xa11, "minv_fts_poly XA11", verbose, tiny, &max);
+  check += compare_max (poly [1], xa12, "minv_fts_poly XA12", verbose, tiny, &max);
+  check += compare_max (poly [2], xa21, "minv_fts_poly XA21", verbose, tiny, &max);
+  check += compare_max (poly [3], xa22, "minv_fts_poly XA22", verbose, tiny, &max);
+  check += compare_max (poly [4], ya11, "minv_fts_poly YA11", verbose, tiny, &max);
+  check += compare_max (poly [5], ya12, "minv_fts_poly YA12", verbose, tiny, &max);
+  check += compare_max (poly [6], ya21, "minv_fts_poly YA21", verbose, tiny, &max);
+  check += compare_max (poly [7], ya22, "minv_fts_poly YA22", verbose, tiny, &max);
+  check += compare_max (poly [8], yb11, "minv_fts_poly YB11", verbose, tiny, &max);
+  check += compare_max (poly [9], yb12, "minv_fts_poly YB12", verbose, tiny, &max);
+  check += compare_max (poly[10], yb21, "minv_fts_poly YB21", verbose, tiny, &max);
+  check += compare_max (poly[11], yb22, "minv_fts_poly YB22", verbose, tiny, &max);
+  check += compare_max (poly[12], xc11, "minv_fts_poly XC11", verbose, tiny, &max);
+  check += compare_max (poly[13], xc12, "minv_fts_poly XC12", verbose, tiny, &max);
+  check += compare_max (poly[14], xc21, "minv_fts_poly XC21", verbose, tiny, &max);
+  check += compare_max (poly[15], xc22, "minv_fts_poly XC22", verbose, tiny, &max);
+  check += compare_max (poly[16], yc11, "minv_fts_poly YC11", verbose, tiny, &max);
+  check += compare_max (poly[17], yc12, "minv_fts_poly YC12", verbose, tiny, &max);
+  check += compare_max (poly[18], yc21, "minv_fts_poly YC21", verbose, tiny, &max);
+  check += compare_max (poly[19], yc22, "minv_fts_poly YC22", verbose, tiny, &max);
+  check += compare_max (poly[20], xg11, "minv_fts_poly XG11", verbose, tiny, &max);
+  check += compare_max (poly[21], xg12, "minv_fts_poly XG12", verbose, tiny, &max);
+  check += compare_max (poly[22], xg21, "minv_fts_poly XG21", verbose, tiny, &max);
+  check += compare_max (poly[23], xg22, "minv_fts_poly XG22", verbose, tiny, &max);
+  check += compare_max (poly[24], yg11, "minv_fts_poly YG11", verbose, tiny, &max);
+  check += compare_max (poly[25], yg12, "minv_fts_poly YG12", verbose, tiny, &max);
+  check += compare_max (poly[26], yg21, "minv_fts_poly YG21", verbose, tiny, &max);
+  check += compare_max (poly[27], yg22, "minv_fts_poly YG22", verbose, tiny, &max);
+  check += compare_max (poly[28], yh11, "minv_fts_poly YH11", verbose, tiny, &max);
+  check += compare_max (poly[29], yh12, "minv_fts_poly YH12", verbose, tiny, &max);
+  check += compare_max (poly[30], yh21, "minv_fts_poly YH21", verbose, tiny, &max);
+  check += compare_max (poly[31], yh22, "minv_fts_poly YH22", verbose, tiny, &max);
+  check += compare_max (poly[32], xm11, "minv_fts_poly XM11", verbose, tiny, &max);
+  check += compare_max (poly[33], xm12, "minv_fts_poly XM12", verbose, tiny, &max);
+  check += compare_max (poly[34], xm21, "minv_fts_poly XM21", verbose, tiny, &max);
+  check += compare_max (poly[35], xm22, "minv_fts_poly XM22", verbose, tiny, &max);
+  check += compare_max (poly[36], ym11, "minv_fts_poly YM11", verbose, tiny, &max);
+  check += compare_max (poly[37], ym12, "minv_fts_poly YM12", verbose, tiny, &max);
+  check += compare_max (poly[38], ym21, "minv_fts_poly YM21", verbose, tiny, &max);
+  check += compare_max (poly[39], ym22, "minv_fts_poly YM22", verbose, tiny, &max);
+  check += compare_max (poly[40], zm11, "minv_fts_poly ZM11", verbose, tiny, &max);
+  check += compare_max (poly[41], zm12, "minv_fts_poly ZM12", verbose, tiny, &max);
+  check += compare_max (poly[42], zm21, "minv_fts_poly ZM21", verbose, tiny, &max);
+  check += compare_max (poly[43], zm22, "minv_fts_poly ZM22", verbose, tiny, &max);
 
-  check += compare (poly [0], mono [0], "poly - mono XA11", verbose, tiny);
-  check += compare (poly [1], mono [1], "poly - mono XA12", verbose, tiny);
-  check += compare (poly [4], mono [2], "poly - mono YA11", verbose, tiny);
-  check += compare (poly [5], mono [3], "poly - mono YA12", verbose, tiny);
-  check += compare (poly [8], mono [4], "poly - mono YB11", verbose, tiny);
-  check += compare (poly [9], mono [5], "poly - mono YB12", verbose, tiny);
-  check += compare (poly[12], mono [6], "poly - mono XC11", verbose, tiny);
-  check += compare (poly[13], mono [7], "poly - mono XC12", verbose, tiny);
-  check += compare (poly[16], mono [8], "poly - mono YC11", verbose, tiny);
-  check += compare (poly[17], mono [9], "poly - mono YC12", verbose, tiny);
-  check += compare (poly[20], mono[10], "poly - mono XG11", verbose, tiny);
-  check += compare (poly[21], mono[11], "poly - mono XG12", verbose, tiny);
-  check += compare (poly[24], mono[12], "poly - mono YG11", verbose, tiny);
-  check += compare (poly[25], mono[13], "poly - mono YG12", verbose, tiny);
-  check += compare (poly[28], mono[14], "poly - mono YH11", verbose, tiny);
-  check += compare (poly[29], mono[15], "poly - mono YH12", verbose, tiny);
-  check += compare (poly[32], mono[16], "poly - mono XM11", verbose, tiny);
-  check += compare (poly[33], mono[17], "poly - mono XM12", verbose, tiny);
-  check += compare (poly[36], mono[18], "poly - mono YM11", verbose, tiny);
-  check += compare (poly[37], mono[19], "poly - mono YM12", verbose, tiny);
-  check += compare (poly[40], mono[20], "poly - mono ZM11", verbose, tiny);
-  check += compare (poly[41], mono[21], "poly - mono ZM12", verbose, tiny);
-
-  if (check == 0 && verbose != 0)
-    {
-      fprintf (stdout, "check_minv_fts : PASSED\n");
-    }
+  check += compare_max (poly [0], mono [0], "poly - mono XA11", verbose, tiny, &max);
+  check += compare_max (poly [1], mono [1], "poly - mono XA12", verbose, tiny, &max);
+  check += compare_max (poly [4], mono [2], "poly - mono YA11", verbose, tiny, &max);
+  check += compare_max (poly [5], mono [3], "poly - mono YA12", verbose, tiny, &max);
+  check += compare_max (poly [8], mono [4], "poly - mono YB11", verbose, tiny, &max);
+  check += compare_max (poly [9], mono [5], "poly - mono YB12", verbose, tiny, &max);
+  check += compare_max (poly[12], mono [6], "poly - mono XC11", verbose, tiny, &max);
+  check += compare_max (poly[13], mono [7], "poly - mono XC12", verbose, tiny, &max);
+  check += compare_max (poly[16], mono [8], "poly - mono YC11", verbose, tiny, &max);
+  check += compare_max (poly[17], mono [9], "poly - mono YC12", verbose, tiny, &max);
+  check += compare_max (poly[20], mono[10], "poly - mono XG11", verbose, tiny, &max);
+  check += compare_max (poly[21], mono[11], "poly - mono XG12", verbose, tiny, &max);
+  check += compare_max (poly[24], mono[12], "poly - mono YG11", verbose, tiny, &max);
+  check += compare_max (poly[25], mono[13], "poly - mono YG12", verbose, tiny, &max);
+  check += compare_max (poly[28], mono[14], "poly - mono YH11", verbose, tiny, &max);
+  check += compare_max (poly[29], mono[15], "poly - mono YH12", verbose, tiny, &max);
+  check += compare_max (poly[32], mono[16], "poly - mono XM11", verbose, tiny, &max);
+  check += compare_max (poly[33], mono[17], "poly - mono XM12", verbose, tiny, &max);
+  check += compare_max (poly[36], mono[18], "poly - mono YM11", verbose, tiny, &max);
+  check += compare_max (poly[37], mono[19], "poly - mono YM12", verbose, tiny, &max);
+  check += compare_max (poly[40], mono[20], "poly - mono ZM11", verbose, tiny, &max);
+  check += compare_max (poly[41], mono[21], "poly - mono ZM12", verbose, tiny, &max);
 
   stokes_free (sys);
   free (mat);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }

@@ -1,6 +1,6 @@
 /* test code for mul_matrices() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-mul-matrices.c,v 1.2 2007/09/30 03:59:37 kichiki Exp $
+ * $Id: check-mul-matrices.c,v 1.3 2007/12/01 18:28:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,6 +59,7 @@ check_mul_matrices (int n, int verbose, double tiny)
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a = (double *)malloc (sizeof (double) * n * n);
@@ -93,7 +94,8 @@ check_mul_matrices (int n, int verbose, double tiny)
       for (j = 0; j < n; j++)
 	{
 	  sprintf (label, "check_mul_matrices : c1-c2[%d,%d]", i, j);
-	  check += compare (c1[i*n+j], c2[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c2[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 
@@ -104,6 +106,7 @@ check_mul_matrices (int n, int verbose, double tiny)
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }

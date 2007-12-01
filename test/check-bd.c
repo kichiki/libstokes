@@ -1,6 +1,6 @@
 /* test code for Brownian dynamics scheme
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd.c,v 1.2 2007/09/30 03:54:47 kichiki Exp $
+ * $Id: check-bd.c,v 1.3 2007/12/01 18:27:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,6 +59,7 @@ check_bd (int ncheb, int np, double r,
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   struct KIrand *rng = KIrand_init ();
@@ -125,10 +126,11 @@ check_bd (int ncheb, int np, double r,
   KIrand_free (rng);
 
 
-  check += compare (err_cheb+1.0, 1.0, label, verbose, tiny);
+  check += compare_max (err_cheb+1.0, 1.0, label, verbose, tiny, &max);
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }

@@ -1,6 +1,6 @@
 /* test code for lubrication for polydisperse systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lub-poly.c,v 1.5 2007/05/04 02:25:22 kichiki Exp $
+ * $Id: check-lub-poly.c,v 1.6 2007/12/01 18:30:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,10 +49,15 @@ check_lub_scalars_poly (double r, int nmax,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_lub_scalars_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_lub_scalars_poly(r=%f,nmax=%d) : start\n",
+	       r, nmax);
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double poly[44];
   double t0, t;
@@ -74,61 +79,37 @@ check_lub_scalars_poly (double r, int nmax,
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
-  check += compare (poly [0], res [0]-minv [0], "check_lub_scalars_poly: xa11",
-		    verbose, tiny);	   ;   
-  check += compare (poly [1], res [1]-minv [1], "check_lub_scalars_poly: xa12",
-		    verbose, tiny);	   ;   
-  check += compare (poly [4], res [2]-minv [2], "check_lub_scalars_poly: ya11",
-		    verbose, tiny);	   ;   
-  check += compare (poly [5], res [3]-minv [3], "check_lub_scalars_poly: ya12",
-		    verbose, tiny);	   ;   
-  check += compare (poly [8], res [4]-minv [4], "check_lub_scalars_poly: yb11",
-		    verbose, tiny);	   ;   
-  check += compare (poly [9], res [5]-minv [5], "check_lub_scalars_poly: yb12",
-		    verbose, tiny);	   ;   
-  check += compare (poly[12], res [6]-minv [6], "check_lub_scalars_poly: xc11",
-		    verbose, tiny);	   ;   
-  check += compare (poly[13], res [7]-minv [7], "check_lub_scalars_poly: xc12",
-		    verbose, tiny);	   ;   
-  check += compare (poly[16], res [8]-minv [8], "check_lub_scalars_poly: yc11",
-		    verbose, tiny);	   ;   
-  check += compare (poly[17], res [9]-minv [9], "check_lub_scalars_poly: yc12",
-		    verbose, tiny);	   ;   
-  check += compare (poly[20], res[10]-minv[10], "check_lub_scalars_poly: xg11",
-		    verbose, tiny);
-  check += compare (poly[21], res[11]-minv[11], "check_lub_scalars_poly: xg12",
-		    verbose, tiny);
-  check += compare (poly[24], res[12]-minv[12], "check_lub_scalars_poly: yg11",
-		    verbose, tiny);
-  check += compare (poly[25], res[13]-minv[13], "check_lub_scalars_poly: yg12",
-		    verbose, tiny);
-  check += compare (poly[28], res[14]-minv[14], "check_lub_scalars_poly: yh11",
-		    verbose, tiny);
-  check += compare (poly[29], res[15]-minv[15], "check_lub_scalars_poly: yh12",
-		    verbose, tiny);
-  check += compare (poly[32], res[16]-minv[16], "check_lub_scalars_poly: xm11",
-		    verbose, tiny);
-  check += compare (poly[33], res[17]-minv[17], "check_lub_scalars_poly: xm12",
-		    verbose, tiny);
-  check += compare (poly[36], res[18]-minv[18], "check_lub_scalars_poly: ym11",
-		    verbose, tiny);
-  check += compare (poly[37], res[19]-minv[19], "check_lub_scalars_poly: ym12",
-		    verbose, tiny);
-  check += compare (poly[40], res[20]-minv[20], "check_lub_scalars_poly: zm11",
-		    verbose, tiny);
-  check += compare (poly[41], res[21]-minv[21], "check_lub_scalars_poly: zm12",
-		    verbose, tiny);
+  check += compare_max (poly [0], res [0]-minv [0], " xa11", verbose, tiny, &max);
+  check += compare_max (poly [1], res [1]-minv [1], " xa12", verbose, tiny, &max);
+  check += compare_max (poly [4], res [2]-minv [2], " ya11", verbose, tiny, &max);
+  check += compare_max (poly [5], res [3]-minv [3], " ya12", verbose, tiny, &max);
+  check += compare_max (poly [8], res [4]-minv [4], " yb11", verbose, tiny, &max);
+  check += compare_max (poly [9], res [5]-minv [5], " yb12", verbose, tiny, &max);
+  check += compare_max (poly[12], res [6]-minv [6], " xc11", verbose, tiny, &max);
+  check += compare_max (poly[13], res [7]-minv [7], " xc12", verbose, tiny, &max);
+  check += compare_max (poly[16], res [8]-minv [8], " yc11", verbose, tiny, &max);
+  check += compare_max (poly[17], res [9]-minv [9], " yc12", verbose, tiny, &max);
+  check += compare_max (poly[20], res[10]-minv[10], " xg11", verbose, tiny, &max);
+  check += compare_max (poly[21], res[11]-minv[11], " xg12", verbose, tiny, &max);
+  check += compare_max (poly[24], res[12]-minv[12], " yg11", verbose, tiny, &max);
+  check += compare_max (poly[25], res[13]-minv[13], " yg12", verbose, tiny, &max);
+  check += compare_max (poly[28], res[14]-minv[14], " yh11", verbose, tiny, &max);
+  check += compare_max (poly[29], res[15]-minv[15], " yh12", verbose, tiny, &max);
+  check += compare_max (poly[32], res[16]-minv[16], " xm11", verbose, tiny, &max);
+  check += compare_max (poly[33], res[17]-minv[17], " xm12", verbose, tiny, &max);
+  check += compare_max (poly[36], res[18]-minv[18], " ym11", verbose, tiny, &max);
+  check += compare_max (poly[37], res[19]-minv[19], " ym12", verbose, tiny, &max);
+  check += compare_max (poly[40], res[20]-minv[20], " zm11", verbose, tiny, &max);
+  check += compare_max (poly[41], res[21]-minv[21], " zm12", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_lub_scalars_poly :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_lub_scalars_poly : PASSED\n\n");
-      else
-	fprintf (stdout, "check_lub_scalars_poly : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -145,7 +126,8 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_lub_fts_2b_poly : start\n");
+	       "check_lub_fts_2b_poly(r=%f) : start\n",
+	       r);
     }
 
   struct stokes *sys = NULL;
@@ -204,44 +186,44 @@ check_lub_fts_2b_poly (double r, int verbose, double tiny)
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
 
-  int check = 0;
-  check += compare (fts_mono [0], fts_poly [0],  "check_lub_fts_2b_poly: Fx1", verbose, tiny);
-  check += compare (fts_mono [1], fts_poly [1],  "check_lub_fts_2b_poly: Fy1", verbose, tiny);
-  check += compare (fts_mono [2], fts_poly [2],  "check_lub_fts_2b_poly: Fz1", verbose, tiny);
-  check += compare (fts_mono [3], fts_poly [3],  "check_lub_fts_2b_poly: Tx1", verbose, tiny);
-  check += compare (fts_mono [4], fts_poly [4],  "check_lub_fts_2b_poly: Ty1", verbose, tiny);
-  check += compare (fts_mono [5], fts_poly [5],  "check_lub_fts_2b_poly: Tz1", verbose, tiny);
-  check += compare (fts_mono [6], fts_poly [6],  "check_lub_fts_2b_poly: Sxx1", verbose, tiny);
-  check += compare (fts_mono [7], fts_poly [7],  "check_lub_fts_2b_poly: Sxy1", verbose, tiny);
-  check += compare (fts_mono [8], fts_poly [8],  "check_lub_fts_2b_poly: Sxz1", verbose, tiny);
-  check += compare (fts_mono [9], fts_poly [9],  "check_lub_fts_2b_poly: Syz1", verbose, tiny);
-  check += compare (fts_mono[10], fts_poly[10],  "check_lub_fts_2b_poly: Syy1", verbose, tiny);
-  check += compare (fts_mono[11], fts_poly[11],  "check_lub_fts_2b_poly: Fx2", verbose, tiny);
-  check += compare (fts_mono[12], fts_poly[12],  "check_lub_fts_2b_poly: Fy2", verbose, tiny);
-  check += compare (fts_mono[13], fts_poly[13],  "check_lub_fts_2b_poly: Fz2", verbose, tiny);
-  check += compare (fts_mono[14], fts_poly[14],  "check_lub_fts_2b_poly: Tx2", verbose, tiny);
-  check += compare (fts_mono[15], fts_poly[15],  "check_lub_fts_2b_poly: Ty2", verbose, tiny);
-  check += compare (fts_mono[16], fts_poly[16],  "check_lub_fts_2b_poly: Tz2", verbose, tiny);
-  check += compare (fts_mono[17], fts_poly[17],  "check_lub_fts_2b_poly: Sxx2", verbose, tiny);
-  check += compare (fts_mono[18], fts_poly[18],  "check_lub_fts_2b_poly: Sxy2", verbose, tiny);
-  check += compare (fts_mono[19], fts_poly[19],  "check_lub_fts_2b_poly: Sxz2", verbose, tiny);
-  check += compare (fts_mono[20], fts_poly[20],  "check_lub_fts_2b_poly: Syz2", verbose, tiny);
-  check += compare (fts_mono[21], fts_poly[21],  "check_lub_fts_2b_poly: Syy2", verbose, tiny);
+  stokes_free (sys);
 
+
+  int check = 0;
+  double max = 0.0;
+
+  check += compare_max (fts_mono [0], fts_poly [0], " Fx1", verbose, tiny, &max);
+  check += compare_max (fts_mono [1], fts_poly [1], " Fy1", verbose, tiny, &max);
+  check += compare_max (fts_mono [2], fts_poly [2], " Fz1", verbose, tiny, &max);
+  check += compare_max (fts_mono [3], fts_poly [3], " Tx1", verbose, tiny, &max);
+  check += compare_max (fts_mono [4], fts_poly [4], " Ty1", verbose, tiny, &max);
+  check += compare_max (fts_mono [5], fts_poly [5], " Tz1", verbose, tiny, &max);
+  check += compare_max (fts_mono [6], fts_poly [6], " Sxx1", verbose, tiny, &max);
+  check += compare_max (fts_mono [7], fts_poly [7], " Sxy1", verbose, tiny, &max);
+  check += compare_max (fts_mono [8], fts_poly [8], " Sxz1", verbose, tiny, &max);
+  check += compare_max (fts_mono [9], fts_poly [9], " Syz1", verbose, tiny, &max);
+  check += compare_max (fts_mono[10], fts_poly[10], " Syy1", verbose, tiny, &max);
+  check += compare_max (fts_mono[11], fts_poly[11], " Fx2", verbose, tiny, &max);
+  check += compare_max (fts_mono[12], fts_poly[12], " Fy2", verbose, tiny, &max);
+  check += compare_max (fts_mono[13], fts_poly[13], " Fz2", verbose, tiny, &max);
+  check += compare_max (fts_mono[14], fts_poly[14], " Tx2", verbose, tiny, &max);
+  check += compare_max (fts_mono[15], fts_poly[15], " Ty2", verbose, tiny, &max);
+  check += compare_max (fts_mono[16], fts_poly[16], " Tz2", verbose, tiny, &max);
+  check += compare_max (fts_mono[17], fts_poly[17], " Sxx2", verbose, tiny, &max);
+  check += compare_max (fts_mono[18], fts_poly[18], " Sxy2", verbose, tiny, &max);
+  check += compare_max (fts_mono[19], fts_poly[19], " Sxz2", verbose, tiny, &max);
+  check += compare_max (fts_mono[20], fts_poly[20], " Syz2", verbose, tiny, &max);
+  check += compare_max (fts_mono[21], fts_poly[21], " Syy2", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_lub_fts_2b_poly :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_lub_fts_2b_poly : PASSED\n\n");
-      else
-	fprintf (stdout, "check_lub_fts_2b_poly : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
-
-  stokes_free (sys);
 
   return (check);
 }
@@ -256,7 +238,8 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_matrix_lub_fts_2b_poly : start\n");
+	       "check_matrix_lub_fts_2b_poly(r=%f) : start\n",
+	       r);
     }
 
   struct stokes *sys = NULL;
@@ -318,32 +301,33 @@ check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny)
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
 
+  stokes_free (sys);
+
+
   int check = 0;
+  double max = 0.0;
   char label [80];
   int j;
   for (i = 0; i < 22; i ++)
     {
       for (j = 0; j < 22; j ++)
 	{
-	  sprintf (label, "check_matrix_lub_fts_2b_poly: (%d, %d) ", i, j);
-	  check += compare (mat_mono [i*22+j], mat_poly [i*22+j], label, verbose, tiny);
+	  sprintf (label, " (%d, %d) ", i, j);
+	  check += compare_max (mat_mono [i*22+j], mat_poly [i*22+j],
+				label, verbose, tiny, &max);
 	}
     }
 
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_matrix_lub_fts_2b_poly :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_matrix_lub_fts_2b_poly : PASSED\n\n");
-      else
-	fprintf (stdout, "check_matrix_lub_fts_2b_poly : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
-
-  stokes_free (sys);
 
   return (check);
 }
@@ -358,7 +342,9 @@ check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_atimes_matrix_lub_fts_2b_poly : start\n");
+	       "check_atimes_matrix_lub_fts_2b_poly\n"
+	       "(r=%f,a1=%f,a2=%f) : start\n",
+	       r, a1, a2);
     }
 
   struct stokes *sys = NULL;
@@ -418,37 +404,41 @@ check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
   multiply_extmat_with_extvec_3fts (np, mat, uoe,
 				    fts_matrix);
 
-  int check = 0;
-  check += compare (fts_atimes [0], fts_matrix [0],  "check_atimes_matrix_lub_fts_2b_poly: Fx1", verbose, tiny);
-  check += compare (fts_atimes [1], fts_matrix [1],  "check_atimes_matrix_lub_fts_2b_poly: Fy1", verbose, tiny);
-  check += compare (fts_atimes [2], fts_matrix [2],  "check_atimes_matrix_lub_fts_2b_poly: Fz1", verbose, tiny);
-  check += compare (fts_atimes [3], fts_matrix [3],  "check_atimes_matrix_lub_fts_2b_poly: Tx1", verbose, tiny);
-  check += compare (fts_atimes [4], fts_matrix [4],  "check_atimes_matrix_lub_fts_2b_poly: Ty1", verbose, tiny);
-  check += compare (fts_atimes [5], fts_matrix [5],  "check_atimes_matrix_lub_fts_2b_poly: Tz1", verbose, tiny);
-  check += compare (fts_atimes [6], fts_matrix [6],  "check_atimes_matrix_lub_fts_2b_poly: Sxx1", verbose, tiny);
-  check += compare (fts_atimes [7], fts_matrix [7],  "check_atimes_matrix_lub_fts_2b_poly: Sxy1", verbose, tiny);
-  check += compare (fts_atimes [8], fts_matrix [8],  "check_atimes_matrix_lub_fts_2b_poly: Sxz1", verbose, tiny);
-  check += compare (fts_atimes [9], fts_matrix [9],  "check_atimes_matrix_lub_fts_2b_poly: Syz1", verbose, tiny);
-  check += compare (fts_atimes[10], fts_matrix[10],  "check_atimes_matrix_lub_fts_2b_poly: Syy1", verbose, tiny);
-  check += compare (fts_atimes[11], fts_matrix[11],  "check_atimes_matrix_lub_fts_2b_poly: Fx2", verbose, tiny);
-  check += compare (fts_atimes[12], fts_matrix[12],  "check_atimes_matrix_lub_fts_2b_poly: Fy2", verbose, tiny);
-  check += compare (fts_atimes[13], fts_matrix[13],  "check_atimes_matrix_lub_fts_2b_poly: Fz2", verbose, tiny);
-  check += compare (fts_atimes[14], fts_matrix[14],  "check_atimes_matrix_lub_fts_2b_poly: Tx2", verbose, tiny);
-  check += compare (fts_atimes[15], fts_matrix[15],  "check_atimes_matrix_lub_fts_2b_poly: Ty2", verbose, tiny);
-  check += compare (fts_atimes[16], fts_matrix[16],  "check_atimes_matrix_lub_fts_2b_poly: Tz2", verbose, tiny);
-  check += compare (fts_atimes[17], fts_matrix[17],  "check_atimes_matrix_lub_fts_2b_poly: Sxx2", verbose, tiny);
-  check += compare (fts_atimes[18], fts_matrix[18],  "check_atimes_matrix_lub_fts_2b_poly: Sxy2", verbose, tiny);
-  check += compare (fts_atimes[19], fts_matrix[19],  "check_atimes_matrix_lub_fts_2b_poly: Sxz2", verbose, tiny);
-  check += compare (fts_atimes[20], fts_matrix[20],  "check_atimes_matrix_lub_fts_2b_poly: Syz2", verbose, tiny);
-  check += compare (fts_atimes[21], fts_matrix[21],  "check_atimes_matrix_lub_fts_2b_poly: Syy2", verbose, tiny);
-
-
-  if (check == 0 && verbose != 0)
-    {
-      fprintf (stdout, "check_atimes_matrix_lub_fts_2b_poly : PASSED\n\n");
-    }
-
   stokes_free (sys);
+
+
+  int check = 0;
+  double max = 0.0;
+  check += compare_max (fts_atimes [0], fts_matrix [0], " Fx1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [1], fts_matrix [1], " Fy1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [2], fts_matrix [2], " Fz1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [3], fts_matrix [3], " Tx1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [4], fts_matrix [4], " Ty1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [5], fts_matrix [5], " Tz1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [6], fts_matrix [6], " Sxx1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [7], fts_matrix [7], " Sxy1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [8], fts_matrix [8], " Sxz1", verbose, tiny, &max);
+  check += compare_max (fts_atimes [9], fts_matrix [9], " Syz1", verbose, tiny, &max);
+  check += compare_max (fts_atimes[10], fts_matrix[10], " Syy1", verbose, tiny, &max);
+  check += compare_max (fts_atimes[11], fts_matrix[11], " Fx2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[12], fts_matrix[12], " Fy2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[13], fts_matrix[13], " Fz2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[14], fts_matrix[14], " Tx2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[15], fts_matrix[15], " Ty2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[16], fts_matrix[16], " Tz2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[17], fts_matrix[17], " Sxx2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[18], fts_matrix[18], " Sxy2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[19], fts_matrix[19], " Sxz2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[20], fts_matrix[20], " Syz2", verbose, tiny, &max);
+  check += compare_max (fts_atimes[21], fts_matrix[21], " Syy2", verbose, tiny, &max);
+
+
+  if (verbose != 0)
+    {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
+    }
 
   return (check);
 }

@@ -1,6 +1,6 @@
 /* test code for minv-poly.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-minv-poly.c,v 1.2 2007/04/25 05:46:00 kichiki Exp $
+ * $Id: check-minv-poly.c,v 1.3 2007/12/01 18:29:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -791,10 +791,15 @@ check_scalars_minv_f_poly_with_equal (double r, int verbose, double tiny)
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_f_poly_with_equal : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_f_poly_with_equal(r=%f): start\n",
+	       r);
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double mono[4];
   double poly[8];
@@ -811,21 +816,19 @@ check_scalars_minv_f_poly_with_equal (double r, int verbose, double tiny)
   double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
-  check += compare (mono [0], poly [0], "check_scalars_minv_f_poly_with_equal: XA11", verbose, tiny);
-  check += compare (mono [1], poly [1], "check_scalars_minv_f_poly_with_equal: XA12", verbose, tiny);
-  check += compare (mono [2], poly [4], "check_scalars_minv_f_poly_with_equal: YA11", verbose, tiny);
-  check += compare (mono [3], poly [5], "check_scalars_minv_f_poly_with_equal: YA12", verbose, tiny);
+  check += compare_max (mono [0], poly [0], " XA11", verbose, tiny, &max);
+  check += compare_max (mono [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (mono [2], poly [4], " YA11", verbose, tiny, &max);
+  check += compare_max (mono [3], poly [5], " YA12", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_f_poly_with_equal :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_scalars_minv_f_poly_with_equal : PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_minv_f_poly_with_equal : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -838,10 +841,15 @@ check_scalars_minv_ft_poly_with_equal (double r, int verbose, double tiny)
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_ft_poly_with_equal(r=%f) : start\n",
+	       r);
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double mono[10];
   double poly[20];
@@ -858,27 +866,25 @@ check_scalars_minv_ft_poly_with_equal (double r, int verbose, double tiny)
   double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
-  check += compare (mono [0], poly [0], "check_scalars_minv_ft_poly_with_equal: XA11", verbose, tiny);
-  check += compare (mono [1], poly [1], "check_scalars_minv_ft_poly_with_equal: XA12", verbose, tiny);
-  check += compare (mono [2], poly [4], "check_scalars_minv_ft_poly_with_equal: YA11", verbose, tiny);
-  check += compare (mono [3], poly [5], "check_scalars_minv_ft_poly_with_equal: YA12", verbose, tiny);
-  check += compare (mono [4], poly [8], "check_scalars_minv_ft_poly_with_equal: YB11", verbose, tiny);
-  check += compare (mono [5], poly [9], "check_scalars_minv_ft_poly_with_equal: YB12", verbose, tiny);
-  check += compare (mono [6], poly[12], "check_scalars_minv_ft_poly_with_equal: XC11", verbose, tiny);
-  check += compare (mono [7], poly[13], "check_scalars_minv_ft_poly_with_equal: XC12", verbose, tiny);
-  check += compare (mono [8], poly[16], "check_scalars_minv_ft_poly_with_equal: YC11", verbose, tiny);
-  check += compare (mono [9], poly[17], "check_scalars_minv_ft_poly_with_equal: YC12", verbose, tiny);
+  check += compare_max (mono [0], poly [0], " XA11", verbose, tiny, &max);
+  check += compare_max (mono [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (mono [2], poly [4], " YA11", verbose, tiny, &max);
+  check += compare_max (mono [3], poly [5], " YA12", verbose, tiny, &max);
+  check += compare_max (mono [4], poly [8], " YB11", verbose, tiny, &max);
+  check += compare_max (mono [5], poly [9], " YB12", verbose, tiny, &max);
+  check += compare_max (mono [6], poly[12], " XC11", verbose, tiny, &max);
+  check += compare_max (mono [7], poly[13], " XC12", verbose, tiny, &max);
+  check += compare_max (mono [8], poly[16], " YC11", verbose, tiny, &max);
+  check += compare_max (mono [9], poly[17], " YC12", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_ft_poly_with_equal :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_minv_ft_poly_with_equal : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -891,10 +897,15 @@ check_scalars_minv_fts_poly_with_equal (double r, int verbose, double tiny)
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_fts_poly_with_equal : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_fts_poly_with_equal(r=%f): start\n",
+	       r);
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double mono[22];
   double poly[44];
@@ -911,41 +922,37 @@ check_scalars_minv_fts_poly_with_equal (double r, int verbose, double tiny)
   double ptime_poly = t - t0;
   // poly gives the results in dimensional form but for a1=1, it's the same
 
-  check += compare (mono [0], poly [0], "check_scalars_minv_fts_poly_with_equal: XA11", verbose, tiny);
-  check += compare (mono [1], poly [1], "check_scalars_minv_fts_poly_with_equal: XA12", verbose, tiny);
-  check += compare (mono [2], poly [4], "check_scalars_minv_fts_poly_with_equal: YA11", verbose, tiny);
-  check += compare (mono [3], poly [5], "check_scalars_minv_fts_poly_with_equal: YA12", verbose, tiny);
-  check += compare (mono [4], poly [8], "check_scalars_minv_fts_poly_with_equal: YB11", verbose, tiny);
-  check += compare (mono [5], poly [9], "check_scalars_minv_fts_poly_with_equal: YB12", verbose, tiny);
-  check += compare (mono [6], poly[12], "check_scalars_minv_fts_poly_with_equal: XC11", verbose, tiny);
-  check += compare (mono [7], poly[13], "check_scalars_minv_fts_poly_with_equal: XC12", verbose, tiny);
-  check += compare (mono [8], poly[16], "check_scalars_minv_fts_poly_with_equal: YC11", verbose, tiny);
-  check += compare (mono [9], poly[17], "check_scalars_minv_fts_poly_with_equal: YC12", verbose, tiny);
-  check += compare (mono[10], poly[20], "check_scalars_minv_fts_poly_with_equal: XG11", verbose, tiny);
-  check += compare (mono[11], poly[21], "check_scalars_minv_fts_poly_with_equal: XG12", verbose, tiny);
-  check += compare (mono[12], poly[24], "check_scalars_minv_fts_poly_with_equal: YG11", verbose, tiny);
-  check += compare (mono[13], poly[25], "check_scalars_minv_fts_poly_with_equal: YG12", verbose, tiny);
-  check += compare (mono[14], poly[28], "check_scalars_minv_fts_poly_with_equal: YH11", verbose, tiny);
-  check += compare (mono[15], poly[29], "check_scalars_minv_fts_poly_with_equal: YH12", verbose, tiny);
-  check += compare (mono[16], poly[32], "check_scalars_minv_fts_poly_with_equal: XM11", verbose, tiny);
-  check += compare (mono[17], poly[33], "check_scalars_minv_fts_poly_with_equal: XM12", verbose, tiny);
-  check += compare (mono[18], poly[36], "check_scalars_minv_fts_poly_with_equal: YM11", verbose, tiny);
-  check += compare (mono[19], poly[37], "check_scalars_minv_fts_poly_with_equal: YM12", verbose, tiny);
-  check += compare (mono[20], poly[40], "check_scalars_minv_fts_poly_with_equal: ZM11", verbose, tiny);
-  check += compare (mono[21], poly[41], "check_scalars_minv_fts_poly_with_equal: ZM12", verbose, tiny);
+  check += compare_max (mono [0], poly [0], " XA11", verbose, tiny, &max);
+  check += compare_max (mono [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (mono [2], poly [4], " YA11", verbose, tiny, &max);
+  check += compare_max (mono [3], poly [5], " YA12", verbose, tiny, &max);
+  check += compare_max (mono [4], poly [8], " YB11", verbose, tiny, &max);
+  check += compare_max (mono [5], poly [9], " YB12", verbose, tiny, &max);
+  check += compare_max (mono [6], poly[12], " XC11", verbose, tiny, &max);
+  check += compare_max (mono [7], poly[13], " XC12", verbose, tiny, &max);
+  check += compare_max (mono [8], poly[16], " YC11", verbose, tiny, &max);
+  check += compare_max (mono [9], poly[17], " YC12", verbose, tiny, &max);
+  check += compare_max (mono[10], poly[20], " XG11", verbose, tiny, &max);
+  check += compare_max (mono[11], poly[21], " XG12", verbose, tiny, &max);
+  check += compare_max (mono[12], poly[24], " YG11", verbose, tiny, &max);
+  check += compare_max (mono[13], poly[25], " YG12", verbose, tiny, &max);
+  check += compare_max (mono[14], poly[28], " YH11", verbose, tiny, &max);
+  check += compare_max (mono[15], poly[29], " YH12", verbose, tiny, &max);
+  check += compare_max (mono[16], poly[32], " XM11", verbose, tiny, &max);
+  check += compare_max (mono[17], poly[33], " XM12", verbose, tiny, &max);
+  check += compare_max (mono[18], poly[36], " YM11", verbose, tiny, &max);
+  check += compare_max (mono[19], poly[37], " YM12", verbose, tiny, &max);
+  check += compare_max (mono[20], poly[40], " ZM11", verbose, tiny, &max);
+  check += compare_max (mono[21], poly[41], " ZM12", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
-		 " PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_minv_fts_poly_with_equal :"
-		 " FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -959,7 +966,17 @@ int
 check_scalars_minv_f_poly_ana (double r, double a1, double a2,
 			       int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_f_poly_ana(r=%f,a1=%f,a2=%f) : start\n",
+	       r, a1, a2);
+    }
+
   int check = 0;
+  double max = 0.0;
+
 
   double poly[8];
   double ana [8];
@@ -968,18 +985,20 @@ check_scalars_minv_f_poly_ana (double r, double a1, double a2,
   scalars_minv_f_poly_ana (r, a1, a2, ana);
   // poly's give the results in dimensional form
 
-  check += compare (ana [0], poly [0], "check_scalars_minv_f_poly_ana: XA11", verbose, tiny);
-  check += compare (ana [1], poly [1], "check_scalars_minv_f_poly_ana: XA12", verbose, tiny);
-  check += compare (ana [2], poly [2], "check_scalars_minv_f_poly_ana: XA21", verbose, tiny);
-  check += compare (ana [3], poly [3], "check_scalars_minv_f_poly_ana: XA22", verbose, tiny);
-  check += compare (ana [4], poly [4], "check_scalars_minv_f_poly_ana: YA11", verbose, tiny);
-  check += compare (ana [5], poly [5], "check_scalars_minv_f_poly_ana: YA12", verbose, tiny);
-  check += compare (ana [6], poly [6], "check_scalars_minv_f_poly_ana: YA21", verbose, tiny);
-  check += compare (ana [7], poly [7], "check_scalars_minv_f_poly_ana: YA22", verbose, tiny);
+  check += compare_max (ana [0], poly [0], " XA11", verbose, tiny, &max);
+  check += compare_max (ana [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (ana [2], poly [2], " XA21", verbose, tiny, &max);
+  check += compare_max (ana [3], poly [3], " XA22", verbose, tiny, &max);
+  check += compare_max (ana [4], poly [4], " YA11", verbose, tiny, &max);
+  check += compare_max (ana [5], poly [5], " YA12", verbose, tiny, &max);
+  check += compare_max (ana [6], poly [6], " YA21", verbose, tiny, &max);
+  check += compare_max (ana [7], poly [7], " YA22", verbose, tiny, &max);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_f_poly_ana : PASSED\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -992,7 +1011,17 @@ int
 check_scalars_minv_ft_poly_ana (double r, double a1, double a2,
 				int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_ft_poly_ana(r=%f,a1=%f,a2=%f) : start\n",
+	       r, a1, a2);
+    }
+
   int check = 0;
+  double max = 0.0;
+
 
   double poly[20];
   double ana [20];
@@ -1001,30 +1030,32 @@ check_scalars_minv_ft_poly_ana (double r, double a1, double a2,
   scalars_minv_ft_poly_ana (r, a1, a2, ana);
   // poly's give the results in dimensional form
 
-  check += compare (ana [0], poly [0], "check_scalars_minv_ft_poly_ana: XA11", verbose, tiny);
-  check += compare (ana [1], poly [1], "check_scalars_minv_ft_poly_ana: XA12", verbose, tiny);
-  check += compare (ana [2], poly [2], "check_scalars_minv_ft_poly_ana: XA21", verbose, tiny);
-  check += compare (ana [3], poly [3], "check_scalars_minv_ft_poly_ana: XA22", verbose, tiny);
-  check += compare (ana [4], poly [4], "check_scalars_minv_ft_poly_ana: YA11", verbose, tiny);
-  check += compare (ana [5], poly [5], "check_scalars_minv_ft_poly_ana: YA12", verbose, tiny);
-  check += compare (ana [6], poly [6], "check_scalars_minv_ft_poly_ana: YA21", verbose, tiny);
-  check += compare (ana [7], poly [7], "check_scalars_minv_ft_poly_ana: YA22", verbose, tiny);
-  check += compare (ana [8], poly [8], "check_scalars_minv_ft_poly_ana: YB11", verbose, tiny);
-  check += compare (ana [9], poly [9], "check_scalars_minv_ft_poly_ana: YB12", verbose, tiny);
-  check += compare (ana[10], poly[10], "check_scalars_minv_ft_poly_ana: YB21", verbose, tiny);
-  check += compare (ana[11], poly[11], "check_scalars_minv_ft_poly_ana: YB22", verbose, tiny);
-  check += compare (ana[12], poly[12], "check_scalars_minv_ft_poly_ana: XC11", verbose, tiny);
-  check += compare (ana[13], poly[13], "check_scalars_minv_ft_poly_ana: XC12", verbose, tiny);
-  check += compare (ana[14], poly[14], "check_scalars_minv_ft_poly_ana: XC21", verbose, tiny);
-  check += compare (ana[15], poly[15], "check_scalars_minv_ft_poly_ana: XC22", verbose, tiny);
-  check += compare (ana[16], poly[16], "check_scalars_minv_ft_poly_ana: YC11", verbose, tiny);
-  check += compare (ana[17], poly[17], "check_scalars_minv_ft_poly_ana: YC12", verbose, tiny);
-  check += compare (ana[18], poly[18], "check_scalars_minv_ft_poly_ana: YC21", verbose, tiny);
-  check += compare (ana[19], poly[19], "check_scalars_minv_ft_poly_ana: YC22", verbose, tiny);
+  check += compare_max (ana [0], poly [0], " XA11", verbose, tiny, &max);
+  check += compare_max (ana [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (ana [2], poly [2], " XA21", verbose, tiny, &max);
+  check += compare_max (ana [3], poly [3], " XA22", verbose, tiny, &max);
+  check += compare_max (ana [4], poly [4], " YA11", verbose, tiny, &max);
+  check += compare_max (ana [5], poly [5], " YA12", verbose, tiny, &max);
+  check += compare_max (ana [6], poly [6], " YA21", verbose, tiny, &max);
+  check += compare_max (ana [7], poly [7], " YA22", verbose, tiny, &max);
+  check += compare_max (ana [8], poly [8], " YB11", verbose, tiny, &max);
+  check += compare_max (ana [9], poly [9], " YB12", verbose, tiny, &max);
+  check += compare_max (ana[10], poly[10], " YB21", verbose, tiny, &max);
+  check += compare_max (ana[11], poly[11], " YB22", verbose, tiny, &max);
+  check += compare_max (ana[12], poly[12], " XC11", verbose, tiny, &max);
+  check += compare_max (ana[13], poly[13], " XC12", verbose, tiny, &max);
+  check += compare_max (ana[14], poly[14], " XC21", verbose, tiny, &max);
+  check += compare_max (ana[15], poly[15], " XC22", verbose, tiny, &max);
+  check += compare_max (ana[16], poly[16], " YC11", verbose, tiny, &max);
+  check += compare_max (ana[17], poly[17], " YC12", verbose, tiny, &max);
+  check += compare_max (ana[18], poly[18], " YC21", verbose, tiny, &max);
+  check += compare_max (ana[19], poly[19], " YC22", verbose, tiny, &max);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_ft_poly_ana : PASSED\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -1037,7 +1068,17 @@ int
 check_scalars_minv_fts_poly_ana (double r, double a1, double a2,
 				 int verbose, double tiny)
 {
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_minv_fts_poly_ana(r=%f,a1=%f,a2=%f) : start\n",
+	       r, a1, a2);
+    }
+
   int check = 0;
+  double max = 0.0;
+
 
   double poly[44];
   double ana [44];
@@ -1046,38 +1087,40 @@ check_scalars_minv_fts_poly_ana (double r, double a1, double a2,
   scalars_minv_fts_poly_ana (r, a1, a2, ana);
   // poly's give the results in dimensional form
 
-  //check += compare (ana [0], poly [0], "check_scalars_minv_fts_poly_ana: XA11", verbose, tiny);
-  //check += compare (ana [1], poly [1], "check_scalars_minv_fts_poly_ana: XA12", verbose, tiny);
-  check += compare (ana [4], poly [4], "check_scalars_minv_fts_poly_ana: YA11", verbose, tiny);
-  //check += compare (ana [5], poly [5], "check_scalars_minv_fts_poly_ana: YA12", verbose, tiny);
-  //check += compare (ana [6], poly [6], "check_scalars_minv_fts_poly_ana: YA21", verbose, tiny);
-  check += compare (ana [7], poly [7], "check_scalars_minv_fts_poly_ana: YA22", verbose, tiny);
-  //check += compare (ana [8], poly [8], "check_scalars_minv_fts_poly_ana: YB11", verbose, tiny);
-  //check += compare (ana [9], poly [9], "check_scalars_minv_fts_poly_ana: YB12", verbose, tiny);
-  check += compare (ana[12], poly[12], "check_scalars_minv_fts_poly_ana: XC11", verbose, tiny);
-  check += compare (ana[13], poly[13], "check_scalars_minv_fts_poly_ana: XC12", verbose, tiny);
-  check += compare (ana[14], poly[14], "check_scalars_minv_fts_poly_ana: XC21", verbose, tiny);
-  check += compare (ana[15], poly[15], "check_scalars_minv_fts_poly_ana: XC22", verbose, tiny);
-  //check += compare (ana[16], poly[16], "check_scalars_minv_fts_poly_ana: YC11", verbose, tiny);
-  //check += compare (ana[17], poly[17], "check_scalars_minv_fts_poly_ana: YC12", verbose, tiny);
-  //check += compare (ana[20], poly[20], "check_scalars_minv_fts_poly_ana: XG11", verbose, tiny);
-  //check += compare (ana[21], poly[21], "check_scalars_minv_fts_poly_ana: XG12", verbose, tiny);
-  //check += compare (ana[24], poly[24], "check_scalars_minv_fts_poly_ana: YG11", verbose, tiny);
-  //check += compare (ana[25], poly[25], "check_scalars_minv_fts_poly_ana: YG12", verbose, tiny);
-  //check += compare (ana[28], poly[28], "check_scalars_minv_fts_poly_ana: YH11", verbose, tiny);
-  //check += compare (ana[29], poly[29], "check_scalars_minv_fts_poly_ana: YH12", verbose, tiny);
-  //check += compare (ana[32], poly[32], "check_scalars_minv_fts_poly_ana: XM11", verbose, tiny);
-  //check += compare (ana[33], poly[33], "check_scalars_minv_fts_poly_ana: XM12", verbose, tiny);
-  //check += compare (ana[36], poly[36], "check_scalars_minv_fts_poly_ana: YM11", verbose, tiny);
-  //check += compare (ana[37], poly[37], "check_scalars_minv_fts_poly_ana: YM12", verbose, tiny);
-  check += compare (ana[40], poly[40], "check_scalars_minv_fts_poly_ana: ZM11", verbose, tiny);
-  check += compare (ana[41], poly[41], "check_scalars_minv_fts_poly_ana: ZM12", verbose, tiny);
-  check += compare (ana[42], poly[42], "check_scalars_minv_fts_poly_ana: ZM21", verbose, tiny);
-  check += compare (ana[43], poly[43], "check_scalars_minv_fts_poly_ana: ZM22", verbose, tiny);
+  //check += compare_max (ana [0], poly [0], " XA11", verbose, tiny, &max);
+  //check += compare_max (ana [1], poly [1], " XA12", verbose, tiny, &max);
+  check += compare_max (ana [4], poly [4], " YA11", verbose, tiny, &max);
+  //check += compare_max (ana [5], poly [5], " YA12", verbose, tiny, &max);
+  //check += compare_max (ana [6], poly [6], " YA21", verbose, tiny, &max);
+  check += compare_max (ana [7], poly [7], "check_scalars_minv_fts_poly_ana: YA22", verbose, tiny, &max);
+  //check += compare_max (ana [8], poly [8], " YB11", verbose, tiny, &max);
+  //check += compare_max (ana [9], poly [9], " YB12", verbose, tiny, &max);
+  check += compare_max (ana[12], poly[12], " XC11", verbose, tiny, &max);
+  check += compare_max (ana[13], poly[13], " XC12", verbose, tiny, &max);
+  check += compare_max (ana[14], poly[14], " XC21", verbose, tiny, &max);
+  check += compare_max (ana[15], poly[15], " XC22", verbose, tiny, &max);
+  //check += compare_max (ana[16], poly[16], " YC11", verbose, tiny, &max);
+  //check += compare_max (ana[17], poly[17], " YC12", verbose, tiny, &max);
+  //check += compare_max (ana[20], poly[20], " XG11", verbose, tiny, &max);
+  //check += compare_max (ana[21], poly[21], " XG12", verbose, tiny, &max);
+  //check += compare_max (ana[24], poly[24], " YG11", verbose, tiny, &max);
+  //check += compare_max (ana[25], poly[25], " YG12", verbose, tiny, &max);
+  //check += compare_max (ana[28], poly[28], " YH11", verbose, tiny, &max);
+  //check += compare_max (ana[29], poly[29], " YH12", verbose, tiny, &max);
+  //check += compare_max (ana[32], poly[32], " XM11", verbose, tiny, &max);
+  //check += compare_max (ana[33], poly[33], " XM12", verbose, tiny, &max);
+  //check += compare_max (ana[36], poly[36], " YM11", verbose, tiny, &max);
+  //check += compare_max (ana[37], poly[37], " YM12", verbose, tiny, &max);
+  check += compare_max (ana[40], poly[40], " ZM11", verbose, tiny, &max);
+  check += compare_max (ana[41], poly[41], " ZM12", verbose, tiny, &max);
+  check += compare_max (ana[42], poly[42], " ZM21", verbose, tiny, &max);
+  check += compare_max (ana[43], poly[43], " ZM22", verbose, tiny, &max);
 
-  if (check == 0 && verbose != 0)
+  if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_minv_fts_poly_ana : PASSED\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

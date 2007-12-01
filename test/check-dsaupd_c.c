@@ -1,6 +1,6 @@
 /* test code for dsaupd_c.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-dsaupd_c.c,v 1.2 2007/09/30 03:54:47 kichiki Exp $
+ * $Id: check-dsaupd_c.c,v 1.3 2007/12/01 18:26:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,6 +59,7 @@ check_dsaupd_c (int n, int verbose, double tiny)
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a  = (double *)malloc (sizeof (double) * n * n);
@@ -96,8 +97,8 @@ check_dsaupd_c (int n, int verbose, double tiny)
   double l[2];
   dsaupd_wrap_min_max (n, l, check_dsaupd_atimes, (void *)a, tiny);
 
-  check += compare (lmin, l[0], "lmin", verbose, tiny);
-  check += compare (lmax, l[1], "lmax", verbose, tiny);
+  check += compare_max (lmin, l[0], "lmin", verbose, tiny, &max);
+  check += compare_max (lmax, l[1], "lmax", verbose, tiny, &max);
 
   free (a);
   free (wr);
@@ -107,6 +108,7 @@ check_dsaupd_c (int n, int verbose, double tiny)
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }

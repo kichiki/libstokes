@@ -1,6 +1,6 @@
 /* test code for solve_gen_linear() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-solve-gen-linear.c,v 1.4 2007/11/10 23:10:21 kichiki Exp $
+ * $Id: check-solve-gen-linear.c,v 1.5 2007/12/01 18:28:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -107,6 +107,7 @@ check_split_merge (int n1, int n2,
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   int n = n1 + n2;
@@ -158,8 +159,8 @@ check_split_merge (int n1, int n2,
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "check_split_merge : A-B[%d,%d]", i,j);
-	  check += compare (a [i*n+j], b [i*n+j],
-			    label, verbose, tiny);
+	  check += compare_max (a [i*n+j], b [i*n+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -169,8 +170,8 @@ check_split_merge (int n1, int n2,
       for (j = 0; j < n1; j ++)
 	{
 	  sprintf (label, "check_split_merge : All-Bll[%d,%d]", i,j);
-	  check += compare (a_ll [i*n1+j], b_ll [i*n1+j],
-			    label, verbose, tiny);
+	  check += compare_max (a_ll [i*n1+j], b_ll [i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
   for (i = 0; i < n1; i ++)
@@ -178,8 +179,8 @@ check_split_merge (int n1, int n2,
       for (j = 0; j < n2; j ++)
 	{
 	  sprintf (label, "check_split_merge : Alh-Blh[%d,%d]", i,j);
-	  check += compare (a_lh [i*n2+j], b_lh [i*n2+j],
-			    label, verbose, tiny);
+	  check += compare_max (a_lh [i*n2+j], b_lh [i*n2+j],
+				label, verbose, tiny, &max);
 	}
     }
   for (i = 0; i < n2; i ++)
@@ -187,8 +188,8 @@ check_split_merge (int n1, int n2,
       for (j = 0; j < n1; j ++)
 	{
 	  sprintf (label, "check_split_merge : Ahl-Bhl[%d,%d]", i,j);
-	  check += compare (a_hl [i*n1+j], b_hl [i*n1+j],
-			    label, verbose, tiny);
+	  check += compare_max (a_hl [i*n1+j], b_hl [i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
   for (i = 0; i < n2; i ++)
@@ -196,8 +197,8 @@ check_split_merge (int n1, int n2,
       for (j = 0; j < n2; j ++)
 	{
 	  sprintf (label, "check_split_merge : Ahh-Bhh[%d,%d]", i,j);
-	  check += compare (a_hh [i*n2+j], b_hh [i*n2+j],
-			    label, verbose, tiny);
+	  check += compare_max (a_hh [i*n2+j], b_hh [i*n2+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -214,6 +215,7 @@ check_split_merge (int n1, int n2,
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }
@@ -323,6 +325,7 @@ check_inverse_by_sub (int n1, int n2,
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   int n = n1 + n2;
@@ -399,7 +402,7 @@ check_inverse_by_sub (int n1, int n2,
 	  else        d = fabs (I[i*n+j]);
 
 	  sprintf (label, "check_inverse_by_sub : [%d,%d]", i, j);
-	  check += compare (d+1.0, 1.0, label, verbose, tiny);
+	  check += compare_max (d+1.0, 1.0, label, verbose, tiny, &max);
 	}
     }
 
@@ -418,6 +421,7 @@ check_inverse_by_sub (int n1, int n2,
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }
@@ -445,6 +449,7 @@ check_solve_gen_linear (int n1, int n2,
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   int n = n1 + n2;
@@ -538,7 +543,8 @@ check_solve_gen_linear (int n1, int n2,
       for (j = 0; j < n; j ++)
 	{
 	  sprintf (label, "check_solve_gen_linear : c1-c2[%d,%d]", i, j);
-	  check += compare (c1[i*n+j], c2[i*n+j], label, verbose, tiny);
+	  check += compare_max (c1[i*n+j], c2[i*n+j], label, verbose, tiny,
+				&max);
 	}
     }
 
@@ -585,7 +591,7 @@ check_solve_gen_linear (int n1, int n2,
   for (i = 0; i < n; i ++)
     {
       sprintf (label, "check_solve_gen_linear : left-right[%d]", i);
-      check += compare (left[i], right[i], label, verbose, tiny);
+      check += compare_max (left[i], right[i], label, verbose, tiny, &max);
     }
 
   free (a);
@@ -613,6 +619,7 @@ check_solve_gen_linear (int n1, int n2,
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }

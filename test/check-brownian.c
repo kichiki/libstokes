@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.4 2007/11/28 03:42:38 kichiki Exp $
+ * $Id: check-brownian.c,v 1.5 2007/12/01 18:32:24 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -72,11 +72,12 @@ check_cheb_minv (int n,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_cheb_minv : start\n");
-      fprintf (stdout, "# z[i] satisfy z.z = y.(A^{-1}).y\n");
+	       "check_cheb_minv(n=%d) : start\n", n);
+      fprintf (stdout, " to check z[i] satisfy z.z = y.(A^{-1}).y\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double err_minv;
@@ -133,7 +134,7 @@ check_cheb_minv (int n,
 				    atimes_by_matrix, (void *)ainv);
   if (verbose != 0)
     {
-      fprintf (stdout, "# matrix : err_minv = %e\n", err_minv);
+      fprintf (stdout, " matrix : err_minv = %e\n", err_minv);
     }
 
   /**
@@ -159,7 +160,7 @@ check_cheb_minv (int n,
 				       atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stdout, "# atimes : err_minv = %e\n", err_minv);
+      fprintf (stdout, " atimes : err_minv = %e\n", err_minv);
     }
 
   double zz_mat = 0.0;
@@ -169,7 +170,8 @@ check_cheb_minv (int n,
       zz_mat += z_mat[i] * z_mat[i];
       zz_ax  += z_ax[i]  * z_ax[i];
     }
-  check += compare (zz_mat, zz_ax, "# zz(mat) vs zz(ax)", verbose, tiny);
+  check += compare_max (zz_mat, zz_ax, " zz(mat) vs zz(ax)",
+			verbose, tiny, &max);
 
 
   free (y);
@@ -184,10 +186,9 @@ check_cheb_minv (int n,
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -205,11 +206,12 @@ check_cheb_lub (int n,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_cheb_lub : start\n");
-      fprintf (stdout, "# z[i] satisfy z.z = y.A.y\n");
+	       "check_cheb_lub(n=%d) : start\n", n);
+      fprintf (stdout, " to check z[i] satisfy z.z = y.A.y\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double err_lub;
@@ -258,7 +260,7 @@ check_cheb_lub (int n,
 				   atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stdout, "# matrix : err_lub = %e\n", err_lub);
+      fprintf (stdout, " matrix : err_lub = %e\n", err_lub);
     }
 
   /**
@@ -284,7 +286,7 @@ check_cheb_lub (int n,
 				   atimes_by_matrix, (void *)a);
   if (verbose != 0)
     {
-      fprintf (stdout, "# atimes : err_lub = %e\n", err_lub);
+      fprintf (stdout, " atimes : err_lub = %e\n", err_lub);
     }
 
   double zz_mat = 0.0;
@@ -294,7 +296,8 @@ check_cheb_lub (int n,
       zz_mat += z_mat[i] * z_mat[i];
       zz_ax  += z_ax[i]  * z_ax[i];
     }
-  check += compare (zz_mat, zz_ax, "# zz(mat) vs zz(ax)", verbose, tiny);
+  check += compare_max (zz_mat, zz_ax, " zz(mat) vs zz(ax)",
+			verbose, tiny, &max);
 
 
   free (y);
@@ -308,10 +311,9 @@ check_cheb_lub (int n,
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -329,10 +331,11 @@ check_minv_FU (int verbose, double tiny)
       fprintf (stdout,
 	       "==================================================\n"
 	       "check_minv_FU : start\n");
-      fprintf (stdout, "# M^{-1}_{FU} by matrix and atimes routines\n");
+      fprintf (stdout, " to check M^{-1}_{FU} by matrix and atimes routines\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   /**
@@ -461,12 +464,16 @@ check_minv_FU (int verbose, double tiny)
 	}
     }
 
-  fprintf (stdout, "# 1) & 2) BD_atimes_mob_FU() vs solve_mob_3fts_matrix()\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout,
+	       " 1) & 2) BD_atimes_mob_FU() vs solve_mob_3fts_matrix()\n");
+    }
   char label[80];
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# %d", i);
-      check += compare (z[i], x[i], label, verbose, tiny);
+      sprintf (label, " %d", i);
+      check += compare_max (z[i], x[i], label, verbose, tiny, &max);
     }
 
   /**
@@ -503,12 +510,15 @@ check_minv_FU (int verbose, double tiny)
 	}
     }
 
-  fprintf (stdout, "# 3) compare for (M_FU)^{-1}"
-	   " by solve_res_3fts_matrix_0()\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout, " 3) compare for (M_FU)^{-1}"
+	       " by solve_res_3fts_matrix_0()\n");
+    }
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# solve_res_3fts_matrix_0() : %d", i);
-      check += compare (z0[i], y[i], label, verbose, tiny);
+      sprintf (label, " solve_res_3fts_matrix_0() : %d", i);
+      check += compare_max (z0[i], y[i], label, verbose, tiny, &max);
     }
 
   free (f);
@@ -559,12 +569,15 @@ check_minv_FU (int verbose, double tiny)
 	  z2[i*6+ii] = fts[i*11+ii];
 	}
     }
-  fprintf (stdout, "# 4) compare with direct calc by"
-	   " make_matrix_mob_3all() -> lapack_inv_()\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout, " 4) compare with direct calc by"
+	       " make_matrix_mob_3all() -> lapack_inv_()\n");
+    }
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# z0 and z2 : %d", i);
-      check += compare (z0[i], z2[i], label, verbose, tiny);
+      sprintf (label, " z0 and z2 : %d", i);
+      check += compare_max (z0[i], z2[i], label, verbose, tiny, &max);
     }
 
   free (z2);
@@ -604,8 +617,8 @@ check_minv_FU (int verbose, double tiny)
 
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# z0 and z1 : %d", i);
-      check += compare (z0[i], z1[i], label, verbose, tiny);
+      sprintf (label, " z0 and z1 : %d", i);
+      check += compare_max (z0[i], z1[i], label, verbose, tiny, &max);
     }
 
   /**
@@ -617,13 +630,17 @@ check_minv_FU (int verbose, double tiny)
   BD_matrix_minv_FU (BD, minv);
 
   // first compare the matrices
-  fprintf (stdout, "# 5) matrix BD_matrix_minv_FU()\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout, " 5) matrix BD_matrix_minv_FU()\n");
+    }
   for (i = 0; i < n; i ++)
     {
       for (j = 0; j < n; j ++)
 	{
-	  sprintf (label, "# minv [%d, %d]", i, j);
-	  check += compare (minv0[i*n+j], minv[i*n+j], label, verbose, tiny);
+	  sprintf (label, " minv [%d, %d]", i, j);
+	  check += compare_max (minv0[i*n+j], minv[i*n+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -638,19 +655,25 @@ check_minv_FU (int verbose, double tiny)
     }
   // z = M^{-1} . x should be equal to y
 
-  fprintf (stdout, "# 6) Compare z and y\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout, " 6) Compare z and y\n");
+    }
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# %d", i);
-      check += compare (z[i], y[i], label, verbose, tiny);
+      sprintf (label, " %d", i);
+      check += compare_max (z[i], y[i], label, verbose, tiny, &max);
     }
 
-  fprintf (stdout, "# 7) Compare z0 and z\n");
+  if (verbose != 0)
+    {
+      fprintf (stdout, " 7) Compare z0 and z\n");
+    }
   // comparison between solve_... and BD_...
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# solve_... vs BD_... : %d", i);
-      check += compare (z0[i], z[i], label, verbose, tiny);
+      sprintf (label, " solve_... vs BD_... : %d", i);
+      check += compare_max (z0[i], z[i], label, verbose, tiny, &max);
     }
 
   free (m);
@@ -667,10 +690,9 @@ check_minv_FU (int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -687,10 +709,11 @@ check_lub_FU (int verbose, double tiny)
       fprintf (stdout,
 	       "==================================================\n"
 	       "check_lub_FU : start\n");
-      fprintf (stdout, "# L_{FU} by matrix and atimes routines\n");
+      fprintf (stdout, " to check L_{FU} by matrix and atimes routines\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   /**
@@ -798,8 +821,8 @@ check_lub_FU (int verbose, double tiny)
   char label[80];
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, "# %d", i);
-      check += compare (z[i], x[i], label, verbose, tiny);
+      sprintf (label, " %d", i);
+      check += compare_max (z[i], x[i], label, verbose, tiny, &max);
     }
 
 
@@ -813,10 +836,9 @@ check_lub_FU (int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -908,14 +930,12 @@ benchmark_BD_minv_FU_in_FTS (int np, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "benchmark_BD_minv_FU_in_FTS : start\n");
-      fprintf (stdout, "# benchmark test on benchmark_BD_minv_FU_in_FTS()\n");
-      fprintf (stdout, "# np, t1, t2, where\n"
-	       "# t1 : with mul_matrices in libstokes\n"
-	       "# t2 : with double for loop\n");
+	       "benchmark_BD_minv_FU_in_FTS(np=%d) : start\n", np);
+      fprintf (stdout, " benchmark test on benchmark_BD_minv_FU_in_FTS()\n");
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   /**
@@ -964,15 +984,22 @@ benchmark_BD_minv_FU_in_FTS (int np, int verbose, double tiny)
   t2 -= t0;
   t2 *= 0.1;
 
-  fprintf (stdout, "%d %f %f\n", np, t1, t2);
+  if (verbose != 0)
+    {
+      fprintf (stdout, " np, t1, t2, where\n"
+	       " t1 : with mul_matrices in libstokes\n"
+	       " t2 : with double for loop\n");
+      fprintf (stdout, " %d %f %f\n", np, t1, t2);
+    }
 
   char label[80];
   for (i = 0; i < n6; i ++)
     {
       for (j = 0; j < n6; j ++)
 	{
-	  sprintf (label, "# ainv[%d %d]", i, j);
-	  check += compare (ainv1[i*n6+j], ainv2[i*n6+j], label, verbose, tiny);
+	  sprintf (label, " ainv[%d %d]", i, j);
+	  check += compare_max (ainv1[i*n6+j], ainv2[i*n6+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -983,10 +1010,9 @@ benchmark_BD_minv_FU_in_FTS (int np, int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -1098,10 +1124,12 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_inv_by_submatrices : start\n");
+	       "check_inv_by_submatrices(n1=%d,n2=%d) : start\n", n1, n2);
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   /**
    * initialization
@@ -1190,8 +1218,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       for (j = 0; j < n1; j ++)
 	{
-	  sprintf (label, "# x1,x2[%d %d]", i, j);
-	  check += compare (x1[i*n1+j], x2[i*n1+j], label, verbose, tiny);
+	  sprintf (label, " x1,x2[%d %d]", i, j);
+	  check += compare_max (x1[i*n1+j], x2[i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -1218,8 +1247,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       for (j = 0; j < n1; j ++)
 	{
-	  sprintf (label, "# y1,y2[%d %d]", i, j);
-	  check += compare (y1[i*n1+j], y2[i*n1+j], label, verbose, tiny);
+	  sprintf (label, " y1,y2[%d %d]", i, j);
+	  check += compare_max (y1[i*n1+j], y2[i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -1237,8 +1267,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       for (j = 0; j < n1; j ++)
 	{
-	  sprintf (label, "# ainv1,ainv2[%d %d]", i, j);
-	  check += compare (ainv1[i*n1+j], ainv2[i*n1+j], label, verbose, tiny);
+	  sprintf (label, " ainv1,ainv2[%d %d]", i, j);
+	  check += compare_max (ainv1[i*n1+j], ainv2[i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -1249,8 +1280,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       for (j = 0; j < n1; j ++)
 	{
-	  sprintf (label, "# after inv - ainv1,ainv2[%d %d]", i, j);
-	  check += compare (ainv1[i*n1+j], ainv2[i*n1+j], label, verbose, tiny);
+	  sprintf (label, " after inv - ainv1,ainv2[%d %d]", i, j);
+	  check += compare_max (ainv1[i*n1+j], ainv2[i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -1275,8 +1307,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
     {
       for (j = 0; j < n1; j ++)
 	{
-	  sprintf (label, "# ainv[%d %d]", i, j);
-	  check += compare (ainv1[i*n1+j], ainv2[i*n1+j], label, verbose, tiny);
+	  sprintf (label, " ainv[%d %d]", i, j);
+	  check += compare_max (ainv1[i*n1+j], ainv2[i*n1+j],
+				label, verbose, tiny, &max);
 	}
     }
   free (ainv1);
@@ -1284,10 +1317,9 @@ check_inv_by_submatrices (int n1, int n2, int verbose, double tiny)
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

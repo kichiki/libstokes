@@ -1,6 +1,6 @@
 /* test code for chebyshev.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-chebyshev.c,v 1.2 2007/09/30 03:54:47 kichiki Exp $
+ * $Id: check-chebyshev.c,v 1.3 2007/12/01 18:26:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ static int
 check_chebyshev_sub (int ncheb, double x0, double x1, 
 		     double (*func)(double),
 		     char *label,
-		     int verbose, double tiny)
+		     int verbose, double tiny, double *max)
 {
   int check = 0;
 
@@ -49,10 +49,10 @@ check_chebyshev_sub (int ncheb, double x0, double x1,
       double y2 = chebyshev_eval_ (ncheb, a_cheb, x0, x1, x);
 
       sprintf (label_i, "%s(%f) y0-y1 [%d]", label, x, i);
-      check += compare (y0, y1, label_i, verbose, tiny);
+      check += compare_max (y0, y1, label_i, verbose, tiny, max);
 
       sprintf (label_i, "%s(%f) y1-y2 [%d]", label, x, i);
-      check += compare (y1, y2, label_i, verbose, tiny);
+      check += compare_max (y1, y2, label_i, verbose, tiny, max);
     }
 
   free (a_cheb);
@@ -79,17 +79,19 @@ check_chebyshev (int verbose, double tiny)
     }
 
   int check = 0;
+  double max = 0.0;
 
   int ncheb = 100;
   check += check_chebyshev_sub (ncheb, 0.0, M_PI, cos, "cos(x)",
-				verbose, tiny);
+				verbose, tiny, &max);
   check += check_chebyshev_sub (ncheb, 1e-2, M_PI, sin, "sin(x)",
-				verbose, tiny);
+				verbose, tiny, &max);
   check += check_chebyshev_sub (ncheb, 1e-2, 1.0, sqrt, "sqrt(x)",
-				verbose, tiny);
+				verbose, tiny, &max);
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }

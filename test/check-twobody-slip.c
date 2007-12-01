@@ -1,6 +1,6 @@
 /* check for twobody-slip.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-twobody-slip.c,v 1.1 2007/09/30 04:04:06 kichiki Exp $
+ * $Id: check-twobody-slip.c,v 1.2 2007/12/01 18:31:41 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,8 @@ check_twobody_slip_with_noslip (double s, double l,
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double *slip = (double *)malloc (sizeof (double) * 22);
   CHECK_MALLOC (slip, "check_twobody");
@@ -51,38 +53,38 @@ check_twobody_slip_with_noslip (double s, double l,
   twobody_slip_far (2, /* FTS */ 15, l, s, 0.0, 0.0, slip);
   twobody_far      (2, /* FTS */ 15, l, s,           noslip);
 
-  check += compare (slip [0], noslip [0], "check_twobody_slip_with_noslip: XA11", verbose, tiny);
-  check += compare (slip [1], noslip [1], "check_twobody_slip_with_noslip: XA12", verbose, tiny);
-  check += compare (slip [2], noslip [2], "check_twobody_slip_with_noslip: YA11", verbose, tiny);
-  check += compare (slip [3], noslip [3], "check_twobody_slip_with_noslip: YA12", verbose, tiny);
-  check += compare (slip [4], noslip [4], "check_twobody_slip_with_noslip: YB11", verbose, tiny);
-  check += compare (slip [5], noslip [5], "check_twobody_slip_with_noslip: YB12", verbose, tiny);
-  check += compare (slip [6], noslip [6], "check_twobody_slip_with_noslip: XC11", verbose, tiny);
-  check += compare (slip [7], noslip [7], "check_twobody_slip_with_noslip: XC12", verbose, tiny);
-  check += compare (slip [8], noslip [8], "check_twobody_slip_with_noslip: YC11", verbose, tiny);
-  check += compare (slip [9], noslip [9], "check_twobody_slip_with_noslip: YC12", verbose, tiny);
-  check += compare (slip[10], noslip[10], "check_twobody_slip_with_noslip: XG11", verbose, tiny);
-  check += compare (slip[11], noslip[11], "check_twobody_slip_with_noslip: XG12", verbose, tiny);
-  check += compare (slip[12], noslip[12], "check_twobody_slip_with_noslip: YG11", verbose, tiny);
-  check += compare (slip[13], noslip[13], "check_twobody_slip_with_noslip: YG12", verbose, tiny);
-  check += compare (slip[14], noslip[14], "check_twobody_slip_with_noslip: YH11", verbose, tiny);
-  check += compare (slip[15], noslip[15], "check_twobody_slip_with_noslip: YH12", verbose, tiny);
-  check += compare (slip[16], noslip[16], "check_twobody_slip_with_noslip: XM11", verbose, tiny);
-  check += compare (slip[17], noslip[17], "check_twobody_slip_with_noslip: XM12", verbose, tiny);
-  check += compare (slip[18], noslip[18], "check_twobody_slip_with_noslip: YM11", verbose, tiny);
-  check += compare (slip[19], noslip[19], "check_twobody_slip_with_noslip: YM12", verbose, tiny);
-  check += compare (slip[20], noslip[20], "check_twobody_slip_with_noslip: ZM11", verbose, tiny);
-  check += compare (slip[21], noslip[21], "check_twobody_slip_with_noslip: ZM12", verbose, tiny);
+  check += compare_max (slip [0], noslip [0], " XA11", verbose, tiny, &max);
+  check += compare_max (slip [1], noslip [1], " XA12", verbose, tiny, &max);
+  check += compare_max (slip [2], noslip [2], " YA11", verbose, tiny, &max);
+  check += compare_max (slip [3], noslip [3], " YA12", verbose, tiny, &max);
+  check += compare_max (slip [4], noslip [4], " YB11", verbose, tiny, &max);
+  check += compare_max (slip [5], noslip [5], " YB12", verbose, tiny, &max);
+  check += compare_max (slip [6], noslip [6], " XC11", verbose, tiny, &max);
+  check += compare_max (slip [7], noslip [7], " XC12", verbose, tiny, &max);
+  check += compare_max (slip [8], noslip [8], " YC11", verbose, tiny, &max);
+  check += compare_max (slip [9], noslip [9], " YC12", verbose, tiny, &max);
+  check += compare_max (slip[10], noslip[10], " XG11", verbose, tiny, &max);
+  check += compare_max (slip[11], noslip[11], " XG12", verbose, tiny, &max);
+  check += compare_max (slip[12], noslip[12], " YG11", verbose, tiny, &max);
+  check += compare_max (slip[13], noslip[13], " YG12", verbose, tiny, &max);
+  check += compare_max (slip[14], noslip[14], " YH11", verbose, tiny, &max);
+  check += compare_max (slip[15], noslip[15], " YH12", verbose, tiny, &max);
+  check += compare_max (slip[16], noslip[16], " XM11", verbose, tiny, &max);
+  check += compare_max (slip[17], noslip[17], " XM12", verbose, tiny, &max);
+  check += compare_max (slip[18], noslip[18], " YM11", verbose, tiny, &max);
+  check += compare_max (slip[19], noslip[19], " YM12", verbose, tiny, &max);
+  check += compare_max (slip[20], noslip[20], " ZM11", verbose, tiny, &max);
+  check += compare_max (slip[21], noslip[21], " ZM12", verbose, tiny, &max);
 
   free (slip);
   free (noslip);
 
+
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

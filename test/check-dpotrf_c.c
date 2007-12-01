@@ -1,6 +1,6 @@
 /* test code for dpotrf_c.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-dpotrf_c.c,v 1.1 2007/10/27 23:08:40 kichiki Exp $
+ * $Id: check-dpotrf_c.c,v 1.2 2007/12/01 18:32:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,10 +33,11 @@ check_dpotrf_c (int n,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_dpotrf_c : start\n");
+	       "check_dpotrf_c(n=%d) : start\n", n);
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a = (double *)malloc (sizeof (double) * n * n);
@@ -72,17 +73,16 @@ check_dpotrf_c (int n,
 	      b += l[i*n+k] * l[j*n+k];
 	    }
 	  sprintf (label, "a[%d,%d]", i, j);
-	  check += compare (a[i*n+j], b, label, verbose, tiny);
+	  check += compare_max (a[i*n+j], b, label, verbose, tiny, &max);
 	}
     }
 
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -96,10 +96,11 @@ check_dpotf2_c (int n,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_dpotf2_c : start\n");
+	       "check_dpotf2_c(n=%d) : start\n", n);
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a = (double *)malloc (sizeof (double) * n * n);
@@ -134,17 +135,16 @@ check_dpotf2_c (int n,
 	      b += l[i*n+k] * l[j*n+k];
 	    }
 	  sprintf (label, "a[%d,%d]", i, j);
-	  check += compare (a[i*n+j], b, label, verbose, tiny);
+	  check += compare_max (a[i*n+j], b, label, verbose, tiny, &max);
 	}
     }
 
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, " => PASSED\n\n");
-      else
-	fprintf (stdout, " => FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);

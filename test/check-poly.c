@@ -1,6 +1,6 @@
 /* test code for polydisperse handling for non-periodic systems
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-poly.c,v 1.4 2007/04/25 05:39:46 kichiki Exp $
+ * $Id: check-poly.c,v 1.5 2007/12/01 18:29:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,10 +46,14 @@ check_scalars_nonewald_poly (double r,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_nonewald_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_nonewald_poly : start\n");
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double poly[11];
   double t0, t;
@@ -64,39 +68,26 @@ check_scalars_nonewald_poly (double r,
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
-  check += compare (poly [0], mono [0], "check_scalars_nonewald_poly : xa",
-		    verbose, tiny);
-  check += compare (poly [1], mono [1], "check_scalars_nonewald_poly : ya",
-		    verbose, tiny);
-  check += compare (poly [2], mono [2], "check_scalars_nonewald_poly : yb",
-		    verbose, tiny);
-  check += compare (poly [3], mono [3], "check_scalars_nonewald_poly : xc",
-		    verbose, tiny);
-  check += compare (poly [4], mono [4], "check_scalars_nonewald_poly : yc",
-		    verbose, tiny);
-  check += compare (poly [5], mono [5], "check_scalars_nonewald_poly : xg",
-		    verbose, tiny);
-  check += compare (poly [6], mono [6], "check_scalars_nonewald_poly : yg",
-		    verbose, tiny);
-  check += compare (poly [7], mono [7], "check_scalars_nonewald_poly : yh",
-		    verbose, tiny);
-  check += compare (poly [8], mono [8], "check_scalars_nonewald_poly : xm",
-		    verbose, tiny);
-  check += compare (poly [9], mono [9], "check_scalars_nonewald_poly : ym",
-		    verbose, tiny);
-  check += compare (poly[10], mono[10], "check_scalars_nonewald_poly : zm",
-		    verbose, tiny);
+  check += compare_max (poly [0], mono [0], " xa", verbose, tiny, &max);
+  check += compare_max (poly [1], mono [1], " ya", verbose, tiny, &max);
+  check += compare_max (poly [2], mono [2], " yb", verbose, tiny, &max);
+  check += compare_max (poly [3], mono [3], " xc", verbose, tiny, &max);
+  check += compare_max (poly [4], mono [4], " yc", verbose, tiny, &max);
+  check += compare_max (poly [5], mono [5], " xg", verbose, tiny, &max);
+  check += compare_max (poly [6], mono [6], " yg", verbose, tiny, &max);
+  check += compare_max (poly [7], mono [7], " yh", verbose, tiny, &max);
+  check += compare_max (poly [8], mono [8], " xm", verbose, tiny, &max);
+  check += compare_max (poly [9], mono [9], " ym", verbose, tiny, &max);
+  check += compare_max (poly[10], mono[10], " zm", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_nonewald_poly :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_scalars_nonewald_poly : PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_nonewald_poly : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -119,10 +110,14 @@ check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_nonewald_poly_symmetry : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_nonewald_poly_symmetry : start\n");
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   // for (12)-interaction
   // scalar[] is in the dimensional form (not the SD scaling)
@@ -174,13 +169,13 @@ check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
 
 
   // compare (12) and (21)
-  check += compare (xa12, xa21, "check_scalars_nonewald_poly_symmetry: xa12", verbose, tiny);
-  check += compare (ya12, ya21, "check_scalars_nonewald_poly_symmetry: ya12", verbose, tiny);
-  check += compare (xc12, xc21, "check_scalars_nonewald_poly_symmetry: xc12", verbose, tiny);
-  check += compare (yc12, yc21, "check_scalars_nonewald_poly_symmetry: yc12", verbose, tiny);
-  check += compare (xm12, xm21, "check_scalars_nonewald_poly_symmetry: xm12", verbose, tiny);
-  check += compare (ym12, ym21, "check_scalars_nonewald_poly_symmetry: ym12", verbose, tiny);
-  check += compare (zm12, zm21, "check_scalars_nonewald_poly_symmetry: zm12", verbose, tiny);
+  check += compare_max (xa12, xa21, " xa12", verbose, tiny, &max);
+  check += compare_max (ya12, ya21, " ya12", verbose, tiny, &max);
+  check += compare_max (xc12, xc21, " xc12", verbose, tiny, &max);
+  check += compare_max (yc12, yc21, " yc12", verbose, tiny, &max);
+  check += compare_max (xm12, xm21, " xm12", verbose, tiny, &max);
+  check += compare_max (ym12, ym21, " ym12", verbose, tiny, &max);
+  check += compare_max (zm12, zm21, " zm12", verbose, tiny, &max);
 
   /* because of the finite size effects in G part,
    * [xy]g12 != [xy]g21 for unequal spheres in general.
@@ -188,17 +183,16 @@ check_scalars_nonewald_poly_symmetry (double r, double a1, double a2,
    * mobility functions for 12 is equal to 21 even for unequal spheres
    * because there is no finite size effects in M^inf.
    */
-  //check += compare (xg12, xg21, "check_scalars_nonewald_poly_symmetry: xg12", verbose, tiny);
-  //check += compare (yg12, yg21, "check_scalars_nonewald_poly_symmetry: yg12", verbose, tiny);
-  check += compare (yb12, yb21, "check_scalars_nonewald_poly_symmetry: yb12", verbose, tiny);
-  check += compare (yh12, yh21, "check_scalars_nonewald_poly_symmetry: yh12", verbose, tiny);
+  //check += compare_max (xg12, xg21, " xg12", verbose, tiny, &max);
+  //check += compare_max (yg12, yg21, " yg12", verbose, tiny, &max);
+  check += compare_max (yb12, yb21, " yb12", verbose, tiny, &max);
+  check += compare_max (yh12, yh21, " yh12", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      if (check == 0)
-	fprintf (stdout, "check_scalars_nonewald_poly_symmetry : PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_nonewald_poly_symmetry : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
@@ -224,10 +218,14 @@ check_scalars_ewald_real_poly (double r, double xi,
 {
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_ewald_real_poly : start\n");
+      fprintf (stdout,
+	       "==================================================\n"
+	       "check_scalars_ewald_real_poly : start\n");
     }
 
   int check = 0;
+  double max = 0.0;
+
 
   double poly[11];
   double t0, t;
@@ -266,39 +264,26 @@ check_scalars_ewald_real_poly (double r, double xi,
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
-  check += compare (poly [0], mono [0], "check_scalars_ewald_real_poly : xa",
-		    verbose, tiny);
-  check += compare (poly [1], mono [1], "check_scalars_ewald_real_poly : ya",
-		    verbose, tiny);
-  check += compare (poly [2], mono [2], "check_scalars_ewald_real_poly : yb",
-		    verbose, tiny);
-  check += compare (poly [3], mono [3], "check_scalars_ewald_real_poly : xc",
-		    verbose, tiny);
-  check += compare (poly [4], mono [4], "check_scalars_ewald_real_poly : yc",
-		    verbose, tiny);
-  check += compare (poly [5], mono [5], "check_scalars_ewald_real_poly : xg",
-		    verbose, tiny);
-  check += compare (poly [6], mono [6], "check_scalars_ewald_real_poly : yg",
-		    verbose, tiny);
-  check += compare (poly [7], mono [7], "check_scalars_ewald_real_poly : yh",
-		    verbose, tiny);
-  check += compare (poly [8], mono [8], "check_scalars_ewald_real_poly : xm",
-		    verbose, tiny);
-  check += compare (poly [9], mono [9], "check_scalars_ewald_real_poly : ym",
-		    verbose, tiny);
-  check += compare (poly[10], mono[10], "check_scalars_ewald_real_poly : zm",
-		    verbose, tiny);
+  check += compare_max (poly [0], mono [0], " xa", verbose, tiny, &max);
+  check += compare_max (poly [1], mono [1], " ya", verbose, tiny, &max);
+  check += compare_max (poly [2], mono [2], " yb", verbose, tiny, &max);
+  check += compare_max (poly [3], mono [3], " xc", verbose, tiny, &max);
+  check += compare_max (poly [4], mono [4], " yc", verbose, tiny, &max);
+  check += compare_max (poly [5], mono [5], " xg", verbose, tiny, &max);
+  check += compare_max (poly [6], mono [6], " yg", verbose, tiny, &max);
+  check += compare_max (poly [7], mono [7], " yh", verbose, tiny, &max);
+  check += compare_max (poly [8], mono [8], " xm", verbose, tiny, &max);
+  check += compare_max (poly [9], mono [9], " ym", verbose, tiny, &max);
+  check += compare_max (poly[10], mono[10], " zm", verbose, tiny, &max);
 
   if (verbose != 0)
     {
-      fprintf (stdout, "check_scalars_ewald_real_poly :"
-	       " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
+      fprintf (stdout, " ptime mono, poly = %.3f %.3f, poly/mono = %f\n",
 	       ptime_mono, ptime_poly, ptime_poly / ptime_mono);
 
-      if (check == 0)
-	fprintf (stdout, "check_scalars_ewald_real_poly : PASSED\n\n");
-      else
-	fprintf (stdout, "check_scalars_ewald_real_poly : FAILED\n\n");
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
+      if (check == 0) fprintf (stdout, " => PASSED\n\n");
+      else            fprintf (stdout, " => FAILED\n\n");
     }
 
   return (check);
