@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional F version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f-matrix.c,v 2.16 2007/11/17 23:29:38 kichiki Exp $
+ * $Id: ewald-3f-matrix.c,v 2.17 2007/12/01 18:42:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -97,10 +97,12 @@ solve_res_3f_matrix_0 (struct stokes * sys,
   CHECK_MALLOC (mat, "solve_res_3f_matrix");
 
   make_matrix_mob_3all (sys, mat); // sys->version is 0 (F)
-  lapack_inv_ (n3, mat);
-
   // f := M^-1.u
+  /*
+  lapack_inv_ (n3, mat);
   dot_prod_matrix (mat, n3, n3, u, f);
+  */
+  lapack_solve_lin (n3, mat, u, f);
 
   free (mat);
 }
@@ -276,14 +278,18 @@ solve_mob_lub_3f_matrix (struct stokes * sys,
     {
       iml [i * n3 + i] += 1.0;
     }
-  // IML^-1
-  lapack_inv_ (n3, iml);
 
   // x := M.F
   dot_prod_matrix (mat, n3, n3, f, x);
 
   // u := (I+M.L)^-1.M.F
+  /*
+  // IML^-1
+  lapack_inv_ (n3, iml);
   dot_prod_matrix (iml, n3, n3, x, u);
+  */
+  lapack_solve_lin (n3, iml, x, u);
+
   free (mat);
   free (iml);
   free (x);
