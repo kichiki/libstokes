@@ -1,6 +1,6 @@
 /* utility routines for check
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check.c,v 1.1 2007/04/25 05:50:49 kichiki Exp $
+ * $Id: check.c,v 1.2 2007/12/01 18:23:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,47 @@ compare (double x, double y, char *label,
       // see the absolute error
       d = fabs (x - y);
     }
+
+  if (d > tiny)
+    {
+      if (verbose != 0)
+	{
+	  fprintf (stdout, "%s %f %f %e\n",
+		   label, x, y, d);
+	}
+      check ++;
+    }
+
+  return (check);
+}
+
+/* compare x and y and keep the max error
+ */
+int
+compare_max (double x, double y, char *label,
+	     int verbose, double tiny,
+	     double *max)
+{
+  int check = 0;
+
+  double d;
+  if (fabs (x) > tiny)
+    {
+      // see the relative error
+      d = fabs ((x - y) / x);
+    }
+  else if (fabs (y) > tiny)
+    {
+      // see the relative error
+      d = fabs ((x - y) / y);
+    }
+  else
+    {
+      // see the absolute error
+      d = fabs (x - y);
+    }
+
+  if (d > *max) *max = d;
 
   if (d > tiny)
     {

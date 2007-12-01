@@ -1,7 +1,7 @@
 /* header file for check.c --
  * utility routines for check
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check.h,v 1.1 2007/04/25 05:51:21 kichiki Exp $
+ * $Id: check.h,v 1.2 2007/12/01 18:23:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,6 +27,13 @@
 int
 compare (double x, double y, char *label,
 	 int verbose, double tiny);
+
+/* compare x and y and keep the max error
+ */
+int
+compare_max (double x, double y, char *label,
+	     int verbose, double tiny,
+	     double *max);
 
 
 #endif /* !_CHECK_H_ */
