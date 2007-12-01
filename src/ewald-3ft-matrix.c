@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FT version problems by MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft-matrix.c,v 2.15 2007/11/17 23:28:21 kichiki Exp $
+ * $Id: ewald-3ft-matrix.c,v 2.16 2007/12/01 18:43:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -116,10 +116,12 @@ solve_res_3ft_matrix_0 (struct stokes * sys,
   set_ft_by_FT (np, b, u, o);
 
   make_matrix_mob_3all (sys, mat); // sys->version is 1 (FT)
-  lapack_inv_ (n6, mat);
-
   // x := M^-1.b
+  /*
+  lapack_inv_ (n6, mat);
   dot_prod_matrix (mat, n6, n6, b, x);
+  */
+  lapack_solve_lin (n6, mat, b, x);
 
   /* x := (FT) */
   set_FT_by_ft (np, f, t, x);
@@ -343,22 +345,25 @@ solve_mob_lub_3ft_matrix (struct stokes * sys,
 		lub, n6, n6,
 		iml);
   free (lub);
-  // IML = I + M.L
-  int i;
-  for (i = 0; i < n6; ++i)
-    {
-      iml [i * n6 + i] += 1.0;
-    }
-  // IML^-1
-  lapack_inv_ (n6, iml);
 
   /* b := (FT) */
   set_ft_by_FT (np, b, f, t);
   // x := M.(FT)
   dot_prod_matrix (mat, n6, n6, b, x);
 
+  // IML = I + M.L
+  int i;
+  for (i = 0; i < n6; ++i)
+    {
+      iml [i * n6 + i] += 1.0;
+    }
   // b := (I+M.L)^-1.M.(FT)
+  /*
+  // IML^-1
+  lapack_inv_ (n6, iml);
   dot_prod_matrix (iml, n6, n6, x, b);
+  */
+  lapack_solve_lin (n6, iml, x, b);
 
   set_FT_by_ft (np, u, o, b);
 
