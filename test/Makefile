@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.12 2007/11/10 23:12:43 kichiki Exp $
+# $Id: Makefile,v 1.13 2007/12/01 18:35:18 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -50,6 +50,7 @@ test-all-OBJ =\
 	check.o	\
 	check-mul-matrices.o \
 	check-lapack-inv.o \
+	check-lapack-solve-lin.o \
 	check-solve-gen-linear.o \
 	check-twobody.o	\
 	check-poly.o	\
