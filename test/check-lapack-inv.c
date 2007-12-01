@@ -1,6 +1,6 @@
 /* test code for lapack_inv_() in matrix.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-lapack-inv.c,v 1.2 2007/09/30 03:58:48 kichiki Exp $
+ * $Id: check-lapack-inv.c,v 1.3 2007/12/01 18:25:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,10 +40,11 @@ check_lapack_inv_ (int n, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_lapack_inv_ : start\n");
+	       "check_lapack_inv_(n=%d) : start\n", n);
     }
 
   int check = 0;
+  double max = 0.0;
 
 
   double *a  = (double *)malloc (sizeof (double) * n * n);
@@ -92,7 +93,7 @@ check_lapack_inv_ (int n, int verbose, double tiny)
 	  else        d = fabs (b [i*n+j]);
 
 	  sprintf (label, "check_lapack_inv_ : [%d]", i);
-	  check += compare (d+1.0, 1.0, label, verbose, tiny);
+	  check += compare_max (d+1.0, 1.0, label, verbose, tiny, &max);
 	}
     }
 
@@ -102,6 +103,7 @@ check_lapack_inv_ (int n, int verbose, double tiny)
 
   if (verbose != 0)
     {
+      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
       if (check == 0) fprintf (stdout, " => PASSED\n\n");
       else            fprintf (stdout, " => FAILED\n\n");
     }
