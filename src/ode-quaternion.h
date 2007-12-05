@@ -1,7 +1,7 @@
 /* header file for ode-quaternion.c --
  * ODE utility routines for angle by quaternion
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.h,v 1.1 2007/05/14 00:16:18 kichiki Exp $
+ * $Id: ode-quaternion.h,v 1.2 2007/12/05 03:48:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +46,6 @@ quaternion_dQdt (const double *Q, const double *O,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -73,7 +72,6 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
