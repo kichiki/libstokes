@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.25 2007/11/28 03:27:08 kichiki Exp $
+ * $Id: stokes.c,v 2.26 2007/12/05 03:44:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@
 
 #include "twobody.h" // twobody_f_free()
 #include "twobody-slip.h" // struct twobody_slip_f, twobody_slip_f_list
+#include "bonds.h" // struct list_ex
 
 #include "stokes.h"
 
@@ -396,6 +397,7 @@ stokes_init (void)
   /* for lubrication */
   sys->lubmin2 = 0.0;
   sys->lubmax  = 0.0;
+  sys->ex_lub = NULL;
 
   /* for xi program */
   sys->cpu1 = 0.0;
@@ -443,12 +445,16 @@ stokes_free (struct stokes * sys)
       if (sys->yh != NULL) free (sys->yh);
       if (sys->ym != NULL) free (sys->ym);
 
+      if (sys->ex_lub != NULL) list_ex_free (sys->ex_lub);
+
       if (sys->it != NULL) iter_free (sys->it);
       free (sys);
     }
 }
 
 /* set np and nm and allocate the memory for pos[np*3]
+ * also struct list_ex *ex_lub is allocated here
+ * (becuase np is necessary for ex_lub).
  */
 void
 stokes_set_np (struct stokes * sys,
@@ -460,6 +466,10 @@ stokes_set_np (struct stokes * sys,
   if (sys->pos != NULL) free (sys->pos);
   sys->pos = (double *) malloc (sizeof (double) * np * 3);
   CHECK_MALLOC (sys->pos, "stokes_set_np");
+
+  if (sys->ex_lub != NULL) free (sys->ex_lub);
+  sys->ex_lub = list_ex_init (np);
+  CHECK_MALLOC (sys->ex_lub, "stokes_set_np");
 }
 
 void

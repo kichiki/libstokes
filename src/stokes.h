@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.23 2007/11/07 04:39:31 kichiki Exp $
+ * $Id: stokes.h,v 1.24 2007/12/05 03:44:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -123,6 +123,8 @@ struct stokes {
 		  * 0 means no limit for open systems and 
 		  * all particles within +/-1 cells in x,y,z for the periodic
 		  */
+  /* exclusion list for lubrication due to the bonding */
+  struct list_ex *ex_lub;
 
   /**
    * for zeta program
@@ -145,6 +147,8 @@ void
 stokes_free (struct stokes * sys);
 
 /* set np and nm and allocate the memory for pos[np*3]
+ * also struct list_ex *ex_lub is allocated here
+ * (becuase np is necessary for ex_lub).
  */
 void
 stokes_set_np (struct stokes * sys,
