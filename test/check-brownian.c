@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.5 2007/12/01 18:32:24 kichiki Exp $
+ * $Id: check-brownian.c,v 1.6 2007/12/05 03:54:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -380,7 +380,6 @@ check_minv_FU (int verbose, double tiny)
   struct BD_params *BD = BD_params_init
     (sys,
      0,    // unsigned long seed,
-     NULL, // double *pos_fixed,
      NULL, // double *F,
      NULL, // double *T,
      NULL, // double *E,
@@ -751,7 +750,6 @@ check_lub_FU (int verbose, double tiny)
   struct BD_params *BD = BD_params_init
     (sys,
      0,    // unsigned long seed,
-     NULL, // double *pos_fixed,
      NULL, // double *F,
      NULL, // double *T,
      NULL, // double *E,
