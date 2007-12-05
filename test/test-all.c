@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.14 2007/12/01 18:34:49 kichiki Exp $
+ * $Id: test-all.c,v 1.15 2007/12/05 03:53:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,8 @@
 #include "check-sqrt-dgeev.h"
 
 #include "check-matrix.h"
+
+#include "check-list-ex.h"
 
 
 /* main program */
@@ -189,6 +191,9 @@ main (int argc, char** argv)
 
   // check-sqrt-dgeev.c
   check += check_BD_sqrt_by_dgeev (100, 1, 4.1e-13);
+
+  // check-list-ex.c
+  check += check_list_ex (1, 0.0);
 
 
   fprintf (stdout,
