@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.5 2007/10/25 05:55:44 kichiki Exp $
+ * $Id: ode.c,v 1.6 2007/12/05 03:47:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -163,7 +163,6 @@ solve_mix_3all (struct stokes * sys,
 /* set the parameters to struct ode_params
  * INPUT
  *  (struct stokes *)sys
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -180,7 +179,6 @@ solve_mix_3all (struct stokes * sys,
  */
 struct ode_params *
 ode_params_init (struct stokes *sys,
-		 double *pos_fixed,
 		 double *F,
 		 double *T,
 		 double *E,
@@ -198,7 +196,6 @@ ode_params_init (struct stokes *sys,
   CHECK_MALLOC (params, "ode_params_init");
 
   params->sys       = sys;
-  params->pos_fixed = pos_fixed;
   params->F         = F;
   params->T         = T;
   params->E         = E;
@@ -231,7 +228,6 @@ ode_params_free (struct ode_params *params)
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->bonds     : (struct bonds *)
  *           ode->gamma     : the friction coef
  * OUTPUT
@@ -246,7 +242,6 @@ dydt_relax_bond (double t, const double *y, double *f,
 
 
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
   bonds_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
 
@@ -269,7 +264,6 @@ dydt_relax_bond (double t, const double *y, double *f,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -333,7 +327,6 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
   if (ode->bonds->n > 0)
     {
@@ -377,7 +370,6 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -438,7 +430,6 @@ dydt_hydro (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
 
   if (ode->bonds->n > 0)
     {
@@ -465,174 +456,4 @@ dydt_hydro (double t, const double *y, double *dydt,
     }
 
   return GSL_SUCCESS;
-}
-
-
-
-/** test routines **/
-
-void
-ODE_st_euler (double t, int n, double *y,
-	      double t_out,
-	      int (*f_dydt)(double, const double *, double *, void *),
-	      void *params)
-{
-  // get the parameters
-  struct ode_params *ode = (struct ode_params *)params;
-
-
-  int ndt = 10;
-  double dt = (t_out - t) / (double)ndt;
-
-  double *dydt = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (dydt, "ODE_st_euler");
-
-  int np3 = ode->sys->np * 3;
-  double *pos = (double *)malloc (sizeof (double) * np3);
-  CHECK_MALLOC (pos, "ODE_st_euler");
-
-  // set pos for fixed particles
-  int nm3 = ode->sys->nm * 3;
-  int j;
-  for (j = nm3; j < np3; j ++)
-    {
-      pos [j] = ode->pos_fixed [j - nm3];
-    }
-
-  int i;
-  for (i = 0; i < ndt; i ++)
-    {
-      f_dydt (t, y, dydt, params);
-      for (j = 0; j < n; j ++)
-	{
-	  y[j] += dt * dydt[j];
-	}
-
-      // set pos for mobile particles
-      for (j = 0; j < nm3; j ++)
-	{
-	  pos [j] = y [j];
-	}
-
-      // check the collision
-      collide_particles (ode->sys,
-			 pos, y + nm3,
-			 1.0);
-      collide_wall_z (ode->sys,
-		      pos, y + nm3,
-		      1.0, 0.0, 0.0);
-
-      // check periodicity
-      if (ode->sys->periodic == 1)
-	{
-	  check_periodic (ode->sys, y);
-	}
-    }
-
-  free (dydt);
-  free (pos);
-}
-
-
-void
-ODE_plain_euler (double t, int n, double *y,
-		 double t_out,
-		 void *params)
-{
-  // get the parameters
-  struct ode_params *ode = (struct ode_params *)params;
-
-  // prepare variables for mobile particles
-  int nm = ode->sys->nm;
-  int nm3 = nm * 3;
-  int nm5 = nm * 5;
-  double *O = NULL;
-  double *S = NULL;
-  O = (double *)malloc (sizeof (double) * nm3);
-  S = (double *)malloc (sizeof (double) * nm5);
-  CHECK_MALLOC (O, "ODE_plain_euler");
-  CHECK_MALLOC (S, "ODE_plain_euler");
-
-  // prepare variables for fixed particles
-  int nf = ode->sys->np - nm;
-  int nf3 = nf * 3;
-  int nf5 = nf * 5;
-  double *ff = NULL;
-  double *tf = NULL;
-  double *sf = NULL;
-  if (nf > 0)
-    {
-      ff = (double *)malloc (sizeof (double) * nf3);
-      tf = (double *)malloc (sizeof (double) * nf3);
-      sf = (double *)malloc (sizeof (double) * nf5);
-      CHECK_MALLOC (ff, "ODE_plain_euler");
-      CHECK_MALLOC (tf, "ODE_plain_euler");
-      CHECK_MALLOC (sf, "ODE_plain_euler");
-    }
-
-
-  int ndt = 10;
-  double dt = (t_out - t) / (double)ndt;
-
-  double *V = (double *)malloc (sizeof (double) * nm3);
-  CHECK_MALLOC (V, "ODE_plain_euler");
-
-  // set the current configuration into struct stokes "sys"
-  stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_pos_fixed (ode->sys, ode->pos_fixed);
-
-  /* parameters for the scheme in stokes3.c for non-zero st
-  double dts   = dt / ode->st;
-  double edts  = exp (- dts);
-  double edts2 = - ode->st * (edts - 1.0);
-  */
-  int i;
-  for (i = 0; i < ndt; i ++)
-    {
-      // set terminal velocity V = R^-1 . F
-      solve_mix_3all (ode->sys,
-		      ode->flag_lub, ode->flag_mat,
-		      ode->F, ode->T, ode->E, ode->uf, ode->of, ode->ef,
-		      V, O, S, ff, tf, sf);
-
-      int j;
-      for (j = 0; j < nm3; j ++)
-	{
-	  y[j]       += dt * y[nm3 + j];
-	  y[nm3 + j] += dt * (-y[nm3 + j] + V[j]) / ode->st;
-
-	  /* the scheme implemented in stokes3.c for non-zero st
-	  y[j]       += dt * V [j] + (y[nm3 + j] - V [j]) * edts2;
-	  y[nm3 + j] = V [j] + (y[nm3 + j] - V [j]) * edts;
-	  */
-	}
-
-      // update the current configuration into struct stokes "sys"
-      // this is for collide routines, which require both mobile and fixed.
-      stokes_set_pos_mobile (ode->sys, y);
-
-      // check the collision
-      collide_particles (ode->sys,
-			 ode->sys->pos, // pos
-			 y + nm3, // U
-			 1.0);
-      collide_wall_z (ode->sys,
-		      ode->sys->pos, // pos
-		      y + nm3, // U
-		      1.0, 0.0, 0.0);
-
-      check_periodic (ode->sys, y);
-    }
-
-  free (V);
-
-  // house-keeping
-  free (O);
-  free (S);
-  if (nf > 0)
-    {
-      free (ff);
-      free (tf);
-      free (sf);
-    }
 }

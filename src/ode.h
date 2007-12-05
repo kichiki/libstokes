@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.h,v 1.3 2007/10/06 18:09:36 kichiki Exp $
+ * $Id: ode.h,v 1.4 2007/12/05 03:47:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,7 +36,6 @@ solve_mix_3all (struct stokes * sys,
 struct ode_params
 {
   struct stokes *sys;
-  double *pos_fixed;
   double *F;
   double *T;
   double *E;
@@ -54,7 +53,6 @@ struct ode_params
 /* set the parameters to struct ode_params
  * INPUT
  *  (struct stokes *)sys -- initialize before calling!
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -71,7 +69,6 @@ struct ode_params
  */
 struct ode_params *
 ode_params_init (struct stokes *sys,
-		 double *pos_fixed,
 		 double *F,
 		 double *T,
 		 double *E,
@@ -97,7 +94,6 @@ ode_params_free (struct ode_params *params);
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->bonds     : (struct bonds *)
  *           ode->gamma     : the friction coef
  * OUTPUT
@@ -115,7 +111,6 @@ dydt_relax_bond (double t, const double *y, double *f,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -144,7 +139,6 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
