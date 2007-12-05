@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.1 2007/11/07 04:41:05 kichiki Exp $
+ * $Id: bd-imp.c,v 1.2 2007/12/05 03:46:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -93,7 +93,7 @@ BD_imp_init (struct BD_params *BD,
   BDimp->z = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (BDimp->z, "BD_imp_init");
 
-  stokes_set_pos (BD->sys, x0);
+  stokes_set_pos_mobile (BD->sys, x0);
   calc_brownian_force (BD, BDimp->z);
 
   BDimp->fact = sqrt(2.0 / (BD->peclet * dt));
@@ -149,7 +149,7 @@ BD_imp_set_xq (struct BD_imp *BDimp,
   /**
    * update the brownian force by the new config x[]
    */
-  stokes_set_pos (BDimp->BD->sys, x);
+  stokes_set_pos_mobile (BDimp->BD->sys, x);
   calc_brownian_force (BDimp->BD, BDimp->z);
 
   BDimp->fact = sqrt(2.0 / (BDimp->BD->peclet * BDimp->dt));
@@ -255,7 +255,8 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
    * set the force for x[]
    * F^P should be evaluated for the new config x[]
    */
-  stokes_set_pos (sys, pos); // first nm3 is the position
+  stokes_set_pos_mobile (sys, pos); // first nm3 is the position
+
   if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
@@ -273,7 +274,7 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
    * solve (u, o) with F^P(x) for the configuration to x0[]
    */
   // reset the configuration to x0[]
-  stokes_set_pos (sys, BDimp->x0);
+  stokes_set_pos_mobile (sys, BDimp->x0);
   solve_mix_3all (sys,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f, FTS->t, FTS->e,
