@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.8 2007/11/17 23:26:07 kichiki Exp $
+ * $Id: brownian.c,v 1.9 2007/12/05 03:46:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,6 @@
  *             you have to take care of them! (free, for example.)
  *  (struct stokes *)sys -- initialize before calling!
  *  seed : for random number generator
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -87,7 +86,6 @@
 struct BD_params *
 BD_params_init (struct stokes *sys,
 		unsigned long seed,
-		double *pos_fixed,
 		double *F,
 		double *T,
 		double *E,
@@ -118,7 +116,6 @@ BD_params_init (struct stokes *sys,
   BD->rng = KIrand_init ();
   KIrand_init_genrand (BD->rng, seed);
 
-  BD->pos_fixed = pos_fixed;
   BD->F = F;
   BD->T = T;
   BD->E = E;
@@ -1574,7 +1571,9 @@ FTS_init (struct stokes *sys)
   if (nf > 0)
     {
       FTS->ff = (double *)malloc (sizeof (double) * nf3);
+      FTS->uf = (double *)malloc (sizeof (double) * nf3);
       CHECK_MALLOC (FTS->ff, "FTS_init");
+      CHECK_MALLOC (FTS->uf, "FTS_init");
     }
   if (sys->version > 0)
     {
@@ -1585,7 +1584,9 @@ FTS_init (struct stokes *sys)
       if (nf > 0)
 	{
 	  FTS->tf = (double *)malloc (sizeof (double) * nf3);
+	  FTS->of = (double *)malloc (sizeof (double) * nf3);
 	  CHECK_MALLOC (FTS->tf, "FTS_init");
+	  CHECK_MALLOC (FTS->of, "FTS_init");
 	}
     }
   if (sys->version > 1)
@@ -1597,7 +1598,9 @@ FTS_init (struct stokes *sys)
       if (nf > 0)
 	{
 	  FTS->sf = (double *)malloc (sizeof (double) * nf5);
+	  FTS->ef = (double *)malloc (sizeof (double) * nf5);
 	  CHECK_MALLOC (FTS->sf, "FTS_init");
+	  CHECK_MALLOC (FTS->ef, "FTS_init");
 	}
     }
   return (FTS);
@@ -1814,7 +1817,7 @@ BD_evolve_mid (struct BD_params *BD,
 
  BD_evolve_mid_REDO:
   // set configuration for calc_brownian_force()
-  stokes_set_pos (BD->sys, x);
+  stokes_set_pos_mobile (BD->sys, x);
  BD_evolve_mid_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -1916,7 +1919,7 @@ BD_evolve_mid (struct BD_params *BD,
    * 2 : solve for the intermediate (mid-point) configuration *
    ************************************************************/
   // set the intermediate configuration
-  stokes_set_pos (BD->sys, xmid);
+  stokes_set_pos_mobile (BD->sys, xmid);
   // set force (and torque) for xmid[]
   if (BD->sys->version == 0) // F version
     {
@@ -2056,6 +2059,7 @@ BD_evolve_BB03 (struct BD_params *BD,
 
   // fts vectors for local use
   struct FTS *FTS = FTS_init (BD->sys);
+  CHECK_MALLOC (FTS, "BD_evolve_BB03");
 
   int nm3 = BD->sys->nm * 3;
   int nm4 = nm3 + BD->sys->nm;
@@ -2089,7 +2093,7 @@ BD_evolve_BB03 (struct BD_params *BD,
 
  BD_evolve_BB03_REDO:
   // (re-)set brownian force
-  stokes_set_pos (BD->sys, x);
+  stokes_set_pos_mobile (BD->sys, x);
  BD_evolve_BB03_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -2190,7 +2194,7 @@ BD_evolve_BB03 (struct BD_params *BD,
   /* 1-3 : solve the Brownian velocity for the intermediate configuration
    */
   // set the intermediate configuration
-  stokes_set_pos (BD->sys, xBB);
+  stokes_set_pos_mobile (BD->sys, xBB);
   // calc dydt with the same Brownian force
   solve_mix_3all (BD->sys,
 		  BD->flag_lub, BD->flag_mat,
@@ -2371,7 +2375,7 @@ BD_evolve_BM97 (struct BD_params *BD,
 
  BD_evolve_BM97_REDO:
   // (re-)set brownian force
-  stokes_set_pos (BD->sys, x);
+  stokes_set_pos_mobile (BD->sys, x);
  BD_evolve_BM97_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -2461,7 +2465,7 @@ BD_evolve_BM97 (struct BD_params *BD,
    * 2 : solve for the intermediate (mid-point) configuration *
    ************************************************************/
   // set the intermediate configuration
-  stokes_set_pos (BD->sys, xBM);
+  stokes_set_pos_mobile (BD->sys, xBM);
   /* now BD->F[i] etc. are independent of the configuration,
    * we just skip the update the force f[].
   for (i = 0; i < n; i ++)

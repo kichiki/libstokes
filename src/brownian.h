@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.6 2007/11/17 23:26:34 kichiki Exp $
+ * $Id: brownian.h,v 1.7 2007/12/05 03:46:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,7 +30,6 @@ struct BD_params
    */
   struct stokes *sys;
   struct KIrand *rng;
-  double *pos_fixed;
   double *F;
   double *T;
   double *E;
@@ -77,7 +76,6 @@ struct BD_params
  *             you have to take care of them! (free, for example.)
  *  (struct stokes *)sys -- initialize before calling!
  *  seed : for random number generator
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -104,7 +102,6 @@ struct BD_params
 struct BD_params *
 BD_params_init (struct stokes *sys,
 		unsigned long seed,
-		double *pos_fixed,
 		double *F,
 		double *T,
 		double *E,
