@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.45 2007/11/30 06:40:25 kichiki Exp $
+ * $Id: libstokes.h,v 1.46 2007/12/05 03:49:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -125,6 +125,8 @@ struct stokes {
 		  * 0 means no limit for open systems and 
 		  * all particles within +/-1 cells in x,y,z for the periodic
 		  */
+  /* exclusion list for lubrication due to the bonding */
+  struct list_ex *ex_lub;
 
   /**
    * for zeta program
@@ -147,6 +149,8 @@ void
 stokes_free (struct stokes * sys);
 
 /* set np and nm and allocate the memory for pos[np*3]
+ * also struct list_ex *ex_lub is allocated here
+ * (becuase np is necessary for ex_lub).
  */
 void
 stokes_set_np (struct stokes * sys,
@@ -290,6 +294,7 @@ stokes_unset_slip (struct stokes *sys);
  */
 struct stokes *
 stokes_copy (struct stokes *s0);
+
 
 
 /************************************
@@ -910,6 +915,14 @@ struct bonds {
   double *p2;  // the second parameter (r0 or b_{K})
 
   struct bond_pairs **pairs; // pairs for the bond
+
+  int *nex;    // number of excluded particles in the chain
+};
+
+struct list_ex {
+  int np;  // total number of particles (must be equal to sys->np)
+  int *n;  // n[np] : number of excluded particles for each particles
+  int **i; // i[j][k] : k-th particle index to exclude for particle j.
 };
 
 
@@ -939,12 +952,14 @@ bonds_free (struct bonds *bonds);
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
  *           1 == (p1, p2) = (N_{K,s}, b_{K})
  *  p1, p2 : spring parameters
+ *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2);
+		int type, int fene, double p1, double p2,
+		int nex);
 
 /* set FENE spring parameters for run
  * INPUT
@@ -977,6 +992,7 @@ bonds_calc_force (struct bonds *bonds,
 void
 fprint_bonds (FILE *out, struct bonds *bonds);
 
+
 /**
  * SWIG utility routine
  * For examplean, expected usage in python by SWIG:
@@ -1008,6 +1024,39 @@ bonds_get_pairs (struct bonds *b, int i,
 		 int *ia, int *ib);
 
 
+/**
+ * exclusion list for lubrication due to the bonding
+ */
+struct list_ex *
+list_ex_init (int np);
+
+void
+list_ex_add (struct list_ex *ex, int j, int k);
+
+void
+list_ex_free (struct list_ex *ex);
+
+struct list_ex *
+list_ex_copy (struct list_ex *ex0);
+
+/* construct the excluded list by struct bonds
+ */
+void
+list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b);
+
+/* check whether j is excluded for i
+ * INPUT
+ *  ex : struct list_ex
+ *  i  : particle now we are considering
+ *  j  : particle whether it is in the list or not.
+ * OUTPUT
+ *  returned value : 0 (false); j is NOT in the excluded list for i.
+ *                   1 (true);  j IS in the excluded list for i.
+ */
+int
+list_ex_check (struct list_ex *ex, int i, int j);
+
+
 /* from bonds-guile.h */
 /* get bonds from SCM
  * in SCM, bonds are something like
@@ -1020,7 +1069,9 @@ bonds_get_pairs (struct bonds *b, int i,
  *      2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
  *     ((0 1)    ; 3) list of pairs
  *      (1 2)
- *      (2 3)))
+ *      (2 3))
+ *      -1)      ; 4) number of exclusion for lubrication
+ *               ;    negative means all particles in the chain is excluded.
  *    (; bond 2
  *     2         ; 1) spring type
  *     (         ; 2) spring parameters (list with 3 elements)
@@ -1029,7 +1080,8 @@ bonds_get_pairs (struct bonds *b, int i,
  *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)
  *     ((4 5)    ; 3) list of pairs
  *      (5 6)
- *      (6 7)))
+ *      (6 7))
+ *       1)      ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
  *   0 : Hookean spring (Asp * (r - Ls)
@@ -1131,7 +1183,6 @@ EV_calc_force (struct EV *ev,
 struct ode_params
 {
   struct stokes *sys;
-  double *pos_fixed;
   double *F;
   double *T;
   double *E;
@@ -1149,7 +1200,6 @@ struct ode_params
 /* set the parameters to struct ode_params
  * INPUT
  *  (struct stokes *)sys -- initialize before calling!
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -1166,7 +1216,6 @@ struct ode_params
  */
 struct ode_params *
 ode_params_init (struct stokes *sys,
-		 double *pos_fixed,
 		 double *F,
 		 double *T,
 		 double *E,
@@ -1192,7 +1241,6 @@ ode_params_free (struct ode_params *params);
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->bonds     : (struct bonds *)
  *           ode->gamma     : the friction coef
  * OUTPUT
@@ -1210,7 +1258,6 @@ dydt_relax_bond (double t, const double *y, double *f,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -1239,7 +1286,6 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -1266,7 +1312,6 @@ dydt_hydro (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -1293,7 +1338,6 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->pos_fixed : 
  *           ode->F [np*3]
  *           ode->T [np*3]
  *           ode->E [np*5]
@@ -1326,7 +1370,6 @@ struct BD_params
    */
   struct stokes *sys;
   struct KIrand *rng;
-  double *pos_fixed;
   double *F;
   double *T;
   double *E;
@@ -1373,7 +1416,6 @@ struct BD_params
  *             you have to take care of them! (free, for example.)
  *  (struct stokes *)sys -- initialize before calling!
  *  seed : for random number generator
- *  (double *)pos_fix (the position of fixed particles)
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
@@ -1400,7 +1442,6 @@ struct BD_params
 struct BD_params *
 BD_params_init (struct stokes *sys,
 		unsigned long seed,
-		double *pos_fixed,
 		double *F,
 		double *T,
 		double *E,
