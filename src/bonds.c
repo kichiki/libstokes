@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.7 2007/11/30 06:39:06 kichiki Exp $
+ * $Id: bonds.c,v 1.8 2007/12/05 03:42:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -82,6 +82,7 @@ bonds_init (void)
   bonds->p1    = NULL;
   bonds->p2    = NULL;
   bonds->pairs = NULL;
+  bonds->nex   = NULL;
 
   return (bonds);
 }
@@ -103,6 +104,7 @@ bonds_free (struct bonds *bonds)
 	}
       free (bonds->pairs);
     }
+  if (bonds->nex   != NULL) free (bonds->nex);
   free (bonds);
 }
 
@@ -113,12 +115,14 @@ bonds_free (struct bonds *bonds)
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
  *           1 == (p1, p2) = (N_{K,s}, b_{K})
  *  p1, p2 : spring parameters
+ *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2)
+		int type, int fene, double p1, double p2,
+		int nex)
 {
   bonds->n ++;
 
@@ -131,6 +135,8 @@ bonds_add_type (struct bonds *bonds,
   bonds->pairs
     = (struct bond_pairs **)realloc (bonds->pairs,
 				     sizeof (struct bond_pairs *) * n);
+  bonds->nex  = (int *)realloc (bonds->nex, sizeof (int) * n);
+
 
   // set n as the newly added element
   n--;
@@ -140,6 +146,8 @@ bonds_add_type (struct bonds *bonds,
   bonds->p2   [n] = p2;
 
   bonds->pairs [n] = bond_pairs_init ();
+
+  bonds->nex  [n] = nex;
 }
 
 /* set FENE spring parameters for run
@@ -418,4 +426,240 @@ bonds_get_pairs (struct bonds *b, int i,
       ia[j] = b->pairs[i]->ia[j];
       ib[j] = b->pairs[i]->ib[j];
     }
+}
+
+
+/**
+ * exclusion list for lubrication due to the bonding
+ */
+struct list_ex *
+list_ex_init (int np)
+{
+  struct list_ex *ex = (struct list_ex *)malloc (sizeof (struct list_ex));
+  CHECK_MALLOC (ex, "list_ex_init");
+
+  ex->np = np;
+  ex->n = (int *)malloc (sizeof (int) * np);
+  CHECK_MALLOC (ex->n, "list_ex_init");
+  ex->i = (int **)malloc (sizeof (int *) * np);
+  CHECK_MALLOC (ex->i, "list_ex_init");
+  
+  int i;
+  for (i = 0; i < np; i ++)
+    {
+      ex->n[i] = 0;
+      ex->i[i] = NULL;
+    }
+
+  return (ex);
+}
+
+void
+list_ex_add (struct list_ex *ex, int j, int k)
+{
+  // self is not in the excluded list
+  if (j == k) return;
+
+  // check the duplication
+  int i;
+  for (i = 0; i < ex->n[j]; i ++)
+    {
+      if (ex->i[j][i] == k)
+	{
+	  // k is already in the list
+	  return;
+	}
+    }
+
+  // add k in the excluded list for particle j.
+  ex->n[j] ++;
+  ex->i[j] = (int *)realloc (ex->i[j], sizeof (int) * ex->n[j]);
+  ex->i[j][ex->n[j]-1] = k;
+}
+
+void
+list_ex_free (struct list_ex *ex)
+{
+  if (ex == NULL) return;
+  int i;
+  for (i = 0; i < ex->np; i ++)
+    {
+      if (ex->i[i] != NULL) free (ex->i[i]);
+    }
+  if (ex->i != NULL) free (ex->i);
+  if (ex->n != NULL) free (ex->n);
+}
+
+struct list_ex *
+list_ex_copy (struct list_ex *ex0)
+{
+  if (ex0 == NULL) return (NULL);
+
+  struct list_ex *ex = list_ex_init (ex0->np);
+  CHECK_MALLOC (ex, "list_ex_copy");
+
+  int i;
+  for (i = 0; i < ex0->np; i ++)
+    {
+      int j;
+      for (j = 0; j < ex0->n[i]; j ++)
+	{
+	  list_ex_add (ex, i, ex0->i[i][j]);
+	}
+    }
+
+  return (ex);
+}
+
+/* 
+ * OUTPUT
+ *  returned value : 0 == ia is NOT found in the list nn[n]
+ *                   1 == ia IS found in the list nn[n]
+ */
+static int
+check_nn_list (int n, const int *nn, int ia)
+{
+  int flag = 0;
+  int k;
+  for (k = 0; k < n; k ++)
+    {
+      if (nn[k] == ia)
+	{
+	  flag = 1;
+	  break;
+	}
+    }
+  return (flag);
+}
+
+/* construct the excluded list by struct bonds
+ */
+void
+list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b)
+{
+  // i is the bond type
+  int i;
+  for (i = 0; i < b->n; i ++)
+    {
+      if (b->nex[i] == 0)
+	{
+	  // no exclusion
+	  continue;
+	}
+
+      // first, count the number of particles in the chain
+      struct bond_pairs *pairs = b->pairs [i];
+      int n = 0;
+      int *nn = NULL;
+      int j;
+      for (j = 0; j < pairs->n; j ++)
+	{
+	  int ia = pairs->ia [j];
+	  int ib = pairs->ib [j];
+	  // check the particle is in the list
+	  if (check_nn_list (n, nn, ia) == 0)
+	    {
+	      // ia is new
+	      n ++;
+	      nn = (int *)realloc (nn, sizeof (int) * n);
+	      CHECK_MALLOC (nn, "list_ex_set_by_bonds");
+	      nn[n-1] = ia;
+	    }
+	  if (check_nn_list (n, nn, ib) == 0)
+	    {
+	      // ib is new
+	      n ++;
+	      nn = (int *)realloc (nn, sizeof (int) * n);
+	      CHECK_MALLOC (nn, "list_ex_set_by_bonds");
+      	      nn[n-1] = ib;
+	    }
+	}
+      /* now n is the number of particles
+       * and nn[n] is the particle indices.
+       */
+
+      int nex = b->nex[i];
+      if (nex < 0) nex = n-1;
+      // this is equivalent to exclude all particles in the chain
+
+
+      // make the nearest-neighbor list in "ex"
+      for (j = 0; j < pairs->n; j ++)
+	{
+	  int ia = pairs->ia [j];
+	  int ib = pairs->ib [j];
+
+	  list_ex_add (ex, ia, ib);
+	  list_ex_add (ex, ib, ia);
+	}
+      /* now ex is the list of the nearest neighbors,
+       * which is equivalent to the excluded list with nex = 1.
+       */
+
+      // extend the list to the level of nex.
+      int m = 1;
+      while (m < nex)
+	{
+	  // reference should be the old one
+	  struct list_ex *ex0 = list_ex_copy (ex);
+	  CHECK_MALLOC (ex0, "list_ex_set_by_bonds");
+
+	  // loop for the particles in the chain
+	  int k;
+	  for (k = 0; k < n; k ++)
+	    {
+	      int ia = nn[k]; // the particle now considering
+	      for (j = 0; j < ex0->n[ia]; j ++)
+		{
+		  int ib = ex0->i[ia][j]; // ia's j-th excluded particle
+		  int l;
+		  for (l = 0; l < ex0->n[ib]; l ++)
+		    {
+		      int ic = ex0->i[ib][l]; // l-th excluded particle for ib
+		      if (ic != ia)
+			{
+			  // add ic in the excluded list for ia.
+			  list_ex_add (ex, ia, ic);
+			  /* note that the duplication is checked
+			   * in list_ex_add()
+			   */
+			}
+		    }
+		}
+	    }
+	  list_ex_free (ex0);
+	  m ++;
+	}
+
+      // done for the i-th chain.
+      free (nn);
+    }
+}
+
+/* check whether j is excluded for i
+ * INPUT
+ *  ex : struct list_ex
+ *  i  : particle now we are considering
+ *  j  : particle whether it is in the list or not.
+ * OUTPUT
+ *  returned value : 0 (false); j is NOT in the excluded list for i.
+ *                   1 (true);  j IS in the excluded list for i.
+ *                   NOTE, the self for i in some chain is EXCLUDED,
+ *                   while the self for particles is NOT excluded.
+ */
+int
+list_ex_check (struct list_ex *ex, int i, int j)
+{
+  if (ex->n[i] == 0) return 0; /* i is not in some chain, so 
+				* false; j is NOT in the excluded list.
+				*/
+  if (i == j) return 1; // if i is in some chain, the self is excluded.
+
+  int k;
+  for (k = 0; k < ex->n[i]; k ++)
+    {
+      if (ex->i[i][k] == j) return 1; // true; j IS in the excluded list.
+    }
+
+  return 0;
 }

@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.4 2007/11/30 06:39:25 kichiki Exp $
+ * $Id: bonds.h,v 1.5 2007/12/05 03:43:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,16 @@ struct bonds {
   double *p2;  // the second parameter (r0 or b_{K})
 
   struct bond_pairs **pairs; // pairs for the bond
+
+  int *nex;    // number of excluded particles in the chain
 };
+
+struct list_ex {
+  int np;  // total number of particles (must be equal to sys->np)
+  int *n;  // n[np] : number of excluded particles for each particles
+  int **i; // i[j][k] : k-th particle index to exclude for particle j.
+};
+
 
 
 void
@@ -82,12 +91,14 @@ bonds_free (struct bonds *bonds);
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
  *           1 == (p1, p2) = (N_{K,s}, b_{K})
  *  p1, p2 : spring parameters
+ *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2);
+		int type, int fene, double p1, double p2,
+		int nex);
 
 /* set FENE spring parameters for run
  * INPUT
@@ -150,6 +161,41 @@ bonds_get_pairs_n (struct bonds *b, int i);
 void
 bonds_get_pairs (struct bonds *b, int i,
 		 int *ia, int *ib);
+
+
+/**
+ * exclusion list for lubrication due to the bonding
+ */
+struct list_ex *
+list_ex_init (int np);
+
+void
+list_ex_add (struct list_ex *ex, int j, int k);
+
+void
+list_ex_free (struct list_ex *ex);
+
+struct list_ex *
+list_ex_copy (struct list_ex *ex0);
+
+/* construct the excluded list by struct bonds
+ */
+void
+list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b);
+
+/* check whether j is excluded for i
+ * INPUT
+ *  ex : struct list_ex
+ *  i  : particle now we are considering
+ *  j  : particle whether it is in the list or not.
+ * OUTPUT
+ *  returned value : 0 (false); j is NOT in the excluded list for i.
+ *                   1 (true);  j IS in the excluded list for i.
+ *                   NOTE, the self for i in some chain is EXCLUDED,
+ *                   while the self for particles is NOT excluded.
+ */
+int
+list_ex_check (struct list_ex *ex, int i, int j);
 
 
 #endif /* !_BONDS_H_ */
