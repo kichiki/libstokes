@@ -1,7 +1,7 @@
 /* header file for bonds-guile.c --
  * guile interface for struct bonds
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.h,v 1.3 2007/11/07 04:52:28 kichiki Exp $
+ * $Id: bonds-guile.h,v 1.4 2007/12/05 03:43:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,7 +32,9 @@
  *      2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
  *     ((0 1)    ; 3) list of pairs
  *      (1 2)
- *      (2 3)))
+ *      (2 3))
+ *      -1)      ; 4) number of exclusion for lubrication
+ *               ;    negative means all particles in the chain is excluded.
  *    (; bond 2
  *     2         ; 1) spring type
  *     (         ; 2) spring parameters (list with 3 elements)
@@ -41,7 +43,8 @@
  *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)
  *     ((4 5)    ; 3) list of pairs
  *      (5 6)
- *      (6 7)))
+ *      (6 7))
+ *       1)      ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
  *   0 : Hookean spring (Asp * (r - Ls)
