@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.12 2007/11/28 03:14:15 kichiki Exp $
+ * $Id: lub.c,v 5.13 2007/12/05 03:45:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@
 #include <math.h>
 
 #include "stokes.h"
+#include "bonds.h" // list_ex_check()
 #include "f.h"
 #include "ft.h"
 #include "fts.h"
@@ -196,6 +197,12 @@ calc_lub_3f (struct stokes *sys,
       i3 = i * 3;
       for (j = i; j < np; ++j)
 	{
+	  if (list_ex_check (sys->ex_lub, i, j) == 1)
+	    {
+	      // j is in the exclusion list for i
+	      continue;
+	    }
+
 	  j3 = j * 3;
 
 	  if (sys->periodic == 0)
@@ -260,6 +267,7 @@ calc_lub_3f (struct stokes *sys,
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -383,6 +391,12 @@ calc_lub_3ft (struct stokes * sys,
       i6 = i * 6;
       for (j = i; j < np; ++j)
 	{
+	  if (list_ex_check (sys->ex_lub, i, j) == 1)
+	    {
+	      // j is in the exclusion list for i
+	      continue;
+	    }
+
 	  j3 = j * 3;
 	  j6 = j * 6;
 
@@ -571,6 +585,12 @@ calc_lub_3fts (struct stokes * sys,
       i11 = i * 11;
       for (j = i; j < np; ++j)
 	{
+	  if (list_ex_check (sys->ex_lub, i, j) == 1)
+	    {
+	      // j is in the exclusion list for i
+	      continue;
+	    }
+
 	  j3 = j * 3;
 	  j11 = j * 11;
 
