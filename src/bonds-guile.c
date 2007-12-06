@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.4 2007/12/05 03:43:37 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.5 2007/12/06 02:27:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -154,8 +154,8 @@ guile_get_bonds (const char * var)
 
       // 4th element (3) of the list scm_bond
       // (3rd element will be taken later)
-      int nex = scm_num2int (scm_list_ref (scm_bond, scm_int2num (0)),
-			     3,
+      int nex = scm_num2int (scm_list_ref (scm_bond, scm_int2num (3)),
+			     0,
 			     "guile_get_bonds");
 
       bonds_add_type (bonds, type, fene, p1, p2, nex);
