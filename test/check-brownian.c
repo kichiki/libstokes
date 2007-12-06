@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.6 2007/12/05 03:54:36 kichiki Exp $
+ * $Id: check-brownian.c,v 1.7 2007/12/06 02:30:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,6 +35,7 @@
 #include <ewald-3fts-matrix.h>
 #include <ewald.h> // make_matrix_mob_3all()
 #include <matrix.h> // multiply_extmat_with_extvec_3fts()
+#include <bonds.h> // bonds_init(), bonds_free()
 
 #include <bench.h> // ptime_ms_d()
 
@@ -747,6 +748,7 @@ check_lub_FU (int verbose, double tiny)
   double xi = xi_by_tratio (sys, 1.0);
   stokes_set_xi (sys, xi, 1.0e-6);
 
+  struct bonds *bonds = bonds_init ();
   struct BD_params *BD = BD_params_init
     (sys,
      0,    // unsigned long seed,
@@ -759,7 +761,7 @@ check_lub_FU (int verbose, double tiny)
      1,    // int flag_lub,
      1,    // int flag_mat,
      0.0,  // double st,
-     NULL, // struct bonds *bonds,
+     bonds,// struct bonds *bonds, <-- necessary to define BD->flag_lub
      0.0,  // double gamma,
      NULL, // struct EV *ev,
      0,    // int flag_Q,
@@ -772,6 +774,7 @@ check_lub_FU (int verbose, double tiny)
      1.0   // double dt_lim
      );
   CHECK_MALLOC (BD, "check_lub_FU");
+  bonds_free (bonds);
 
   int n = np * 6;
   double *x = (double *)malloc (sizeof (double) * n);
