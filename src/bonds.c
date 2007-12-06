@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.8 2007/12/05 03:42:35 kichiki Exp $
+ * $Id: bonds.c,v 1.9 2007/12/06 02:26:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -366,15 +366,17 @@ bonds_calc_force (struct bonds *bonds,
 
 
 void
-fprint_bonds (FILE *out, struct bonds *bonds)
+bonds_print (FILE *out, struct bonds *bonds)
 {
   int i;
   for (i = 0; i < bonds->n; i ++)
     {
-      fprintf (out, "bond-index %d: type = %d, k = %f, r0 = %f,"
-	       " number of pairs = %d\n",
-	       i, bonds->type[i], bonds->p1[i], bonds->p2[i], 
-	       bonds->pairs[i]->n);
+      fprintf (out, "bond-index %d:\n", i);
+      fprintf (out, " type = %d\n", bonds->type[i]);
+      fprintf (out, " k = %f\n", bonds->p1[i]);
+      fprintf (out, " r0 = %f\n", bonds->p2[i]);
+      fprintf (out, " nex = %d\n", bonds->nex[i]);
+      fprintf (out, " number of pairs = %d\n", bonds->pairs[i]->n);
       int j;
       for (j = 0; j < bonds->pairs[i]->n; j ++)
 	{

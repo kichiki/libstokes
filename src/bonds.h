@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.5 2007/12/05 03:43:13 kichiki Exp $
+ * $Id: bonds.h,v 1.6 2007/12/06 02:27:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -129,7 +129,7 @@ bonds_calc_force (struct bonds *bonds,
 		  int flag_add);
 
 void
-fprint_bonds (FILE *out, struct bonds *bonds);
+bonds_print (FILE *out, struct bonds *bonds);
 
 
 /**
