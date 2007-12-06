@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.7 2007/12/05 03:46:25 kichiki Exp $
+ * $Id: brownian.h,v 1.8 2007/12/06 02:28:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,6 +39,7 @@ struct BD_params
 
   int flag_mat;
   int flag_lub;
+  int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
 
   // currently the following parameters are just place holders
   double st;
@@ -84,6 +85,10 @@ struct BD_params
  *  ef [np*5]
  *  (int) flag_mat
  *  (int) flag_lub
+ *        NOTE, flag_lub_B is used for calc_brownian_force() where
+ *        lub among ONLY mobile particles are taken.
+ *        therefore, check for the existance of mobile pair(s)
+ *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct bonds *)bonds
  *  (double) gamma

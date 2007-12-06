@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.9 2007/12/05 03:46:02 kichiki Exp $
+ * $Id: brownian.c,v 1.10 2007/12/06 02:28:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,6 +68,10 @@
  *  ef [np*5]
  *  (int) flag_mat
  *  (int) flag_lub
+ *        NOTE, flag_lub_B is used for calc_brownian_force() where
+ *        lub among ONLY mobile particles are taken.
+ *        therefore, check for the existance of mobile pair(s)
+ *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct bonds *)bonds
  *  (double) gamma
@@ -124,6 +128,35 @@ BD_params_init (struct stokes *sys,
   BD->ef = ef;
 
   BD->flag_lub = flag_lub;
+
+  /* BD->flag_lub_B is used for calc_brownian_force() where, 
+   * lubrication among mobile particles are taken into account.
+   * So, we need to check there is "at least" one mobile particle
+   * not excluded for lub calculation to set BD->flag_lub_B = 1. */
+  BD->flag_lub_B = 0;
+  int i;
+  if (flag_lub != 0 && bonds->n != 0)
+    {
+      for (i = 0; i < sys->nm; i ++)
+	{
+	  int j;
+	  for (j = i+1; j < sys->nm; j ++)
+	    {
+	      if (list_ex_check (sys->ex_lub, i, j) == 0)
+		{
+		  // not excluded!
+		  BD->flag_lub_B = 1;
+		  break;
+		}
+	    }
+	  if (BD->flag_lub_B == 1)
+	    {
+	      // we've already found the non-excluded pair in mobile particles
+	      break;
+	    }
+	}
+    }
+
   BD->flag_mat = flag_mat;
   BD->st       = st;
   BD->bonds    = bonds;
@@ -135,7 +168,6 @@ BD_params_init (struct stokes *sys,
   BD->peclet = peclet;
   BD->eps = eps;
 
-  int i;
   BD->n_minv = n_minv;
   BD->eig_minv[0] = 0.0;
   BD->eig_minv[1] = 0.0;
@@ -1205,7 +1237,6 @@ BD_sqrt_by_dgeev (int n, const double *a, double *s)
   return (0);
 }
 
-
 /*
  * INPUT
  *  BD   : struct BD_params
@@ -1324,7 +1355,7 @@ calc_brownian_force (struct BD_params *BD,
   /**
    * lubrication part
    */
-  if (BD->flag_lub != 0)
+  if (BD->flag_lub_B != 0)
     {
       double *y_lub = (double *)malloc (sizeof (double) * n);
       double *z_lub = (double *)malloc (sizeof (double) * n);
