@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.46 2007/12/05 03:49:12 kichiki Exp $
+ * $Id: libstokes.h,v 1.47 2007/12/06 02:29:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -990,7 +990,7 @@ bonds_calc_force (struct bonds *bonds,
 		  int flag_add);
 
 void
-fprint_bonds (FILE *out, struct bonds *bonds);
+bonds_print (FILE *out, struct bonds *bonds);
 
 
 /**
@@ -1379,6 +1379,7 @@ struct BD_params
 
   int flag_mat;
   int flag_lub;
+  int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
 
   // currently the following parameters are just place holders
   double st;
@@ -1424,6 +1425,10 @@ struct BD_params
  *  ef [np*5]
  *  (int) flag_mat
  *  (int) flag_lub
+ *        NOTE, flag_lub_B is used for calc_brownian_force() where
+ *        lub among ONLY mobile particles are taken.
+ *        therefore, check for the existance of mobile pair(s)
+ *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct bonds *)bonds
  *  (double) gamma
