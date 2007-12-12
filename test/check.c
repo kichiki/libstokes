@@ -1,6 +1,6 @@
 /* utility routines for check
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check.c,v 1.2 2007/12/01 18:23:00 kichiki Exp $
+ * $Id: check.c,v 1.3 2007/12/12 06:30:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ compare (double x, double y, char *label,
     {
       if (verbose != 0)
 	{
-	  fprintf (stdout, "%s %f %f %e\n",
+	  fprintf (stdout, "%s %e %e %e\n",
 		   label, x, y, d);
 	}
       check ++;
@@ -91,7 +91,7 @@ compare_max (double x, double y, char *label,
     {
       if (verbose != 0)
 	{
-	  fprintf (stdout, "%s %f %f %e\n",
+	  fprintf (stdout, "%s %e %e %e\n",
 		   label, x, y, d);
 	}
       check ++;
