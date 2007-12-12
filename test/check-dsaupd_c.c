@@ -1,6 +1,6 @@
 /* test code for dsaupd_c.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-dsaupd_c.c,v 1.3 2007/12/01 18:26:46 kichiki Exp $
+ * $Id: check-dsaupd_c.c,v 1.4 2007/12/12 06:33:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ check_dsaupd_c (int n, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_dsaupd_c : start\n");
+	       "check_dsaupd_c(n=%d) : start\n", n);
     }
 
   int check = 0;
