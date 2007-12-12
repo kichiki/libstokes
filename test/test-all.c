@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.15 2007/12/05 03:53:50 kichiki Exp $
+ * $Id: test-all.c,v 1.16 2007/12/12 06:32:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,6 +42,7 @@
 
 #include "check-dpotrf_c.h"
 #include "check-brownian.h"
+#include "check-bd-imp.h"
 #include "check-sqrt-dgeev.h"
 
 #include "check-matrix.h"
@@ -54,6 +55,115 @@ int
 main (int argc, char** argv)
 {
   int check = 0;
+
+  // check-bd-imp.c
+  // for BD_evolve_JGdP00()
+  // dt dependence
+  check += check_BD_evolve_JGdP00 (0,   // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,   // flag_Q
+				   0.1, // dt
+				   1, 8.0e-6);
+  check += check_BD_evolve_JGdP00 (0,    // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  check += check_BD_evolve_JGdP00 (0,    // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.001,// dt
+				   1, 8.0e-10);
+  // higher versions
+  check += check_BD_evolve_JGdP00 (1,    // FT version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  check += check_BD_evolve_JGdP00 (2,    // FTS version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  // lub
+  check += check_BD_evolve_JGdP00 (2,    // FTS version
+				   1,   // flag_lub
+				   1,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  // quaternion
+  /* NOW CHECKING
+  check += check_BD_evolve_JGdP00 (2,    // FT version
+				   1,   // flag_lub
+				   1,   // flag_mat
+				   1,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  exit (1);
+  */
+
+  // t_out dependence
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    10.0,// t_out
+				    1, 9.0e-5);
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    100.0,// t_out
+				    1, 3.0e-3);
+  // higher versions
+  check += check_BD_imp_ode_evolve (1,   // FT version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  // lub
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    1,   // flag_lub
+				    1,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  // quaternion
+  /* NOW CHECKING
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    1,   // flag_lub
+				    1,   // flag_mat
+				    1,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  exit (1);
+  */
 
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
@@ -93,7 +203,7 @@ main (int argc, char** argv)
   check += check_twobody_scalars_res_with_equal(r, 50, 1, 8.0e-7);
 
   // check-poly.c
-  check += check_scalars_nonewald_poly (r, 1, 1.0e-17);
+  check += check_scalars_nonewald_poly (r, 1, 2.0e-16);
   check += check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
   check += check_scalars_ewald_real_poly (2.5, 1.0, 1, 1.0e-15);
 
@@ -137,7 +247,7 @@ main (int argc, char** argv)
 
   check += check_make_matrix_mob_ewald_3all_poly_SC_1
     (version, phi, 4.0, // ewald_tr
-     ewald_eps, 1, 5.0e-15);
+     ewald_eps, 1, 7.0e-15);
   check += check_make_matrix_mob_ewald_3all_poly_SC_1
     (version, phi, 1.0, // ewald_tr
      ewald_eps, 1, 8.0e-15);

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.14 2007/12/05 03:54:09 kichiki Exp $
+# $Id: Makefile,v 1.15 2007/12/12 06:32:31 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -68,6 +68,7 @@ test-all-OBJ =\
 	check-dgeev_c.o		\
 	check-dpotrf_c.o	\
 	check-brownian.o	\
+	check-bd-imp.o		\
 	check-sqrt-dgeev.o	\
 	check-matrix.o		\
 	check-list-ex.o
