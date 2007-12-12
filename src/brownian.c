@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.10 2007/12/06 02:28:18 kichiki Exp $
+ * $Id: brownian.c,v 1.11 2007/12/12 06:29:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -220,7 +220,6 @@ BD_params_free (struct BD_params *BD)
   if (BD->a_lub  != NULL) free (BD->a_lub);
   free (BD);
 }
-
 
 static double
 BD_inv_sqrt (double x)
@@ -1795,6 +1794,20 @@ reset_dt_by_ol (struct stokes *sys,
   return (dt);
 }
 
+/* return factor for BD->z[]
+ */
+double
+BD_params_get_fact (struct BD_params *BD,
+		    double dt)
+{
+  double fact = 0.0;
+  if (BD->peclet > 0.0)
+    {
+      fact = sqrt(2.0 / (BD->peclet * dt));
+    }
+  return (fact);
+}
+
 /* evolve position of particles -- the mid-point scheme
  * INPUT
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
@@ -1842,7 +1855,7 @@ BD_evolve_mid (struct BD_params *BD,
       CHECK_MALLOC (qmid, "BD_evolve_mid");
     }
 
-  double fact = sqrt(2.0 / (BD->peclet * dt));
+  double fact = BD_params_get_fact (BD, dt);
 
   int i;
 
@@ -1938,7 +1951,8 @@ BD_evolve_mid (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# mid-point: overlap in 1st step. "
 		   "dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_mid_REDO_scale;
@@ -2031,7 +2045,8 @@ BD_evolve_mid (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# mid-point: overlap in 2nd step. "
 		   "dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_mid_REDO_scale;
@@ -2117,8 +2132,7 @@ BD_evolve_BB03 (struct BD_params *BD,
 	}
     }
 
-  double fact = sqrt(2.0 / (BD->peclet * dt));
-
+  double fact = BD_params_get_fact (BD, dt);
 
   int i;
 
@@ -2215,7 +2229,8 @@ BD_evolve_BB03 (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# BB03 : overlap in the intermediate step."
 		   " dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_BB03_REDO_scale;
@@ -2315,7 +2330,8 @@ BD_evolve_BB03 (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# BB03 : overlap in the final step."
 		   " dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_BB03_REDO_scale;
@@ -2399,7 +2415,7 @@ BD_evolve_BM97 (struct BD_params *BD,
 	}
     }
 
-  double fact = sqrt(2.0 / (BD->peclet * dt));
+  double fact = BD_params_get_fact (BD, dt);
 
   int i;
 
@@ -2485,7 +2501,8 @@ BD_evolve_BM97 (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# BM97: overlap in 1st step. "
 		   "dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_BM97_REDO_scale;
@@ -2559,7 +2576,8 @@ BD_evolve_BM97 (struct BD_params *BD,
 	}
       else
 	{
-	  fact = sqrt(2.0 / (BD->peclet * dt));
+	  fact = BD_params_get_fact (BD, dt);
+
 	  fprintf (stderr, "# BM97: overlap in 2nd step. "
 		   "dt = %e > %e\n", dt, BD->dt_lim);
 	  goto BD_evolve_BM97_REDO_scale;
