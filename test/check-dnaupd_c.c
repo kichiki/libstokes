@@ -1,6 +1,6 @@
 /* test code for dnaupd_c.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-dnaupd_c.c,v 1.3 2007/12/01 18:27:06 kichiki Exp $
+ * $Id: check-dnaupd_c.c,v 1.4 2007/12/12 06:34:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ check_dnaupd_c (int n, int verbose, double tiny)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_dnaupd_c : start\n");
+	       "check_dnaupd_c(n=%d) : start\n", n);
     }
 
   int check = 0;
