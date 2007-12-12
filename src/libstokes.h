@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.47 2007/12/06 02:29:06 kichiki Exp $
+ * $Id: libstokes.h,v 1.48 2007/12/12 06:28:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1495,6 +1495,44 @@ BD_ode_evolve (struct BD_params *BD,
 
 
 /* from bd-imp.h */
+#include <gsl/gsl_multiroots.h>
+struct BD_imp {
+  struct BD_params *BD;
+  double dt;
+  double *x0;
+  double *q0;
+  double fact;
+  double *z;
+
+  // GSL stuff
+  const gsl_multiroot_fsolver_type *T;
+  gsl_multiroot_function *F;
+  gsl_multiroot_fsolver  *S;
+  gsl_vector *guess;
+  int itmax;
+  double eps;
+
+  // working area used in BD_imp_JGdP00_func()
+  struct FTS *FTS;
+  double *pos;
+  double *q;
+};
+
+
+/* initialize struct BD_imp
+ * INPUT
+ *  BD : struct BD_params
+ *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  itmax : max of iteration for the root-finding
+ *  eps   : tolerance for the root-finding
+ */
+struct BD_imp *
+BD_imp_init (struct BD_params *BD,
+	     int itmax, double eps);
+
+void
+BD_imp_free (struct BD_imp *BDimp);
+
 /* wrapper for BD_imp_evolve()
  * INPUT
  *  *t    : (input) current time
@@ -1512,7 +1550,7 @@ BD_ode_evolve (struct BD_params *BD,
  *  y[n]  : (output) updated configuration at t_out
  */
 void
-BD_imp_ode_evolve (struct BD_params *BD,
+BD_imp_ode_evolve (struct BD_imp *BDimp,
 		   double *t, double t_out, double *dt,
 		   double *y);
 
