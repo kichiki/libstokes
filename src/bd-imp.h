@@ -1,7 +1,7 @@
 /* header file for bd-imp.c --
  * implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.h,v 1.1 2007/11/07 04:41:29 kichiki Exp $
+ * $Id: bd-imp.h,v 1.2 2007/12/12 06:27:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,26 +31,50 @@ struct BD_imp {
   double *q0;
   double fact;
   double *z;
+
+  // GSL stuff
+  const gsl_multiroot_fsolver_type *T;
+  gsl_multiroot_function *F;
+  gsl_multiroot_fsolver  *S;
+  gsl_vector *guess;
+  int itmax;
+  double eps;
+
+  // working area used in BD_imp_JGdP00_func()
+  struct FTS *FTS;
+  double *pos;
+  double *q;
 };
 
 
+/* initialize struct BD_imp
+ * INPUT
+ *  BD : struct BD_params
+ *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  itmax : max of iteration for the root-finding
+ *  eps   : tolerance for the root-finding
+ */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
-	     double dt,
-	     const double *x0,
-	     const double *q0);
+	     int itmax, double eps);
 
 void
 BD_imp_free (struct BD_imp *BDimp);
 
+/* set configuration x[] and q[],
+ * and calculate the Brownian force vector BDimp->z[] for it.
+ * note that even though q0==NULL, BDimp->q[] is set for FT and FTS versions.
+ */
 void
 BD_imp_set_xq (struct BD_imp *BDimp,
 	       const double *x, const double *q);
 
+/* set the time step,
+ * and pre-factor BDimp->fact of the Brownian force to BDimp->z[].
+ */
 void
 BD_imp_set_dt (struct BD_imp *BDimp,
 	       double dt);
-
 
 /*
  * INTPUT
@@ -59,11 +83,15 @@ BD_imp_set_dt (struct BD_imp *BDimp,
  *  p    : (struct BD_imp *)
  * OUTPUT
  *  f[n] := -x + x0 + dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
+ *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  */
 int
 BD_imp_JGdP00_func (const gsl_vector *x, void *p,
 		    gsl_vector *f);
 
+/* set gsl_vector
+ * if q == NULL, q = (0,0,0,1) is set.
+ */
 void
 BD_imp_set_guess (const struct BD_imp *BDimp,
 		  const double *x,
@@ -76,12 +104,10 @@ BD_imp_get_root (const struct BD_imp *BDimp,
 		 double *x,
 		 double *q);
 
-
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
- *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E, peclet are used.)
+ *  BDimp   : struct BD_imp
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
@@ -90,12 +116,12 @@ BD_imp_get_root (const struct BD_imp *BDimp,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
-BD_evolve_JGdP00 (struct BD_params *BD,
+double
+BD_evolve_JGdP00 (struct BD_imp *BDimp,
 		  double *x, double *q,
 		  double dt);
-
 
 /* wrapper for BD_imp_evolve()
  * INPUT
@@ -114,7 +140,7 @@ BD_evolve_JGdP00 (struct BD_params *BD,
  *  y[n]  : (output) updated configuration at t_out
  */
 void
-BD_imp_ode_evolve (struct BD_params *BD,
+BD_imp_ode_evolve (struct BD_imp *BDimp,
 		   double *t, double t_out, double *dt,
 		   double *y);
 

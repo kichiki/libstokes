@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.2 2007/12/05 03:46:59 kichiki Exp $
+ * $Id: bd-imp.c,v 1.3 2007/12/12 06:27:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,69 +34,90 @@
 #include "bd-imp.h"
 
 
-/*
- * note that even though q0==NULL, BDimp->q[] is set for FT and FTS versions.
+/* initialize struct BD_imp
+ * INPUT
+ *  BD : struct BD_params
+ *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  itmax : max of iteration for the root-finding
+ *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
-	     double dt,
-	     const double *x0,
-	     const double *q0)
+	     int itmax, double eps)
 {
   struct BD_imp *BDimp = (struct BD_imp *)malloc (sizeof (struct BD_imp));
   CHECK_MALLOC (BDimp, "BD_imp_init");
 
   BDimp->BD = BD;
-  BDimp->dt = dt;
+  BDimp->itmax = itmax;
+  BDimp->eps = eps;
 
-  BDimp->x0 = (double *)malloc (sizeof (double) * BD->sys->nm * 3);
+  // dt is set by 0 here. use BD_imp_set_dt() to set later.
+  BDimp->dt = 0.0;
+
+  int nm = BD->sys->nm;
+
+  // x0[] and q0[] are set by 0 here. use BD_imp_set_xq() to set later.
+  BDimp->x0 = (double *)malloc (sizeof (double) * nm * 3);
   CHECK_MALLOC (BDimp->x0, "BD_imp_init");
-  int n;
   int i;
-  for (i = 0; i < BD->sys->nm * 3; i ++)
+  for (i = 0; i < nm * 3; i ++)
     {
-      BDimp->x0[i] = x0[i];
+      BDimp->x0[i] = 0.0;
     }
 
+  int nz; // dimension for BDimp->z[]
   if (BD->sys->version == 0)
     {
-      n = BD->sys->nm * 3;
+      nz = nm * 3;
       BDimp->q0 = NULL;
     }
   else
     {
-      n = BD->sys->nm * 6;
-      BDimp->q0 = (double *)malloc (sizeof (double) * BD->sys->nm * 4);
+      nz = nm * 6; // z[] is for F and T (not the quaternion)
+      BDimp->q0 = (double *)malloc (sizeof (double) * nm * 4);
       CHECK_MALLOC (BDimp->q0, "BD_imp_init");
-      if (q0 == NULL)
+      for (i = 0; i < nm * 4; i ++)
 	{
-	  for (i = 0; i < BD->sys->nm; i ++)
-	    {
-	      BDimp->q0[i*4+0] = 0.0;
-	      BDimp->q0[i*4+1] = 0.0;
-	      BDimp->q0[i*4+2] = 0.0;
-	      BDimp->q0[i*4+3] = 1.0;
-	    }
-	}
-      else
-	{
-	  for (i = 0; i < BD->sys->nm * 4; i ++)
-	    {
-	      BDimp->q0[i] = q0[i];
-	    }
+	  BDimp->q0[i] = 0.0;
 	}
     }
 
-  /**
-   * set brownian force by the config x0[]
-   */
-  BDimp->z = (double *)malloc (sizeof (double) * n);
+  // z[] is set by 0 here. it is defined by BD_imp_set_xq().
+  BDimp->z = (double *)malloc (sizeof (double) * nz);
   CHECK_MALLOC (BDimp->z, "BD_imp_init");
 
-  stokes_set_pos_mobile (BD->sys, x0);
-  calc_brownian_force (BD, BDimp->z);
+  // initialize GSL stuff
+  BDimp->T = gsl_multiroot_fsolver_hybrid;
 
-  BDimp->fact = sqrt(2.0 / (BD->peclet * dt));
+  BDimp->F = (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
+  CHECK_MALLOC (BDimp->F, "BD_imp_init");
+
+  BDimp->F->f = BD_imp_JGdP00_func;
+  if (BDimp->BD->sys->version == 0)
+    {
+      BDimp->F->n = nm * 3;
+    }
+  else
+    {
+      BDimp->F->n = nm * 7; // quaternion is used here
+    }
+  BDimp->F->params = BDimp;
+
+  BDimp->S = gsl_multiroot_fsolver_alloc (BDimp->T, BDimp->F->n);
+  CHECK_MALLOC (BDimp->S, "BD_imp_init");
+
+  BDimp->guess = gsl_vector_alloc (BDimp->F->n);
+  CHECK_MALLOC (BDimp->guess, "BD_imp_init");
+
+  // working area
+  BDimp->FTS = FTS_init (BDimp->BD->sys);
+  CHECK_MALLOC (BDimp->FTS, "BD_imp_init");
+
+  BDimp->pos = (double *)malloc (sizeof (double) * nm * 3);
+  CHECK_MALLOC (BDimp->pos, "BD_imp_init");
+  BDimp->q   = (double *)malloc (sizeof (double) * nm * 4);
+  CHECK_MALLOC (BDimp->q,   "BD_imp_init");
 
   return (BDimp);
 }
@@ -108,11 +129,22 @@ BD_imp_free (struct BD_imp *BDimp)
 
   if (BDimp->x0 != NULL) free (BDimp->x0);
   if (BDimp->q0 != NULL) free (BDimp->q0);
+
   if (BDimp->z  != NULL) free (BDimp->z);
+
+  if (BDimp->F  != NULL) free (BDimp->F);
+  if (BDimp->S  != NULL) gsl_multiroot_fsolver_free (BDimp->S);
+  if (BDimp->guess != NULL) gsl_vector_free (BDimp->guess);
+
+  if (BDimp->FTS != NULL) FTS_free (BDimp->FTS);
+  if (BDimp->pos != NULL) free (BDimp->pos);
+  if (BDimp->q   != NULL) free (BDimp->q);
+
   free (BDimp);
 }
 
-/*
+/* set configuration x[] and q[],
+ * and calculate the Brownian force vector BDimp->z[] for it.
  * note that even though q0==NULL, BDimp->q[] is set for FT and FTS versions.
  */
 void
@@ -151,16 +183,24 @@ BD_imp_set_xq (struct BD_imp *BDimp,
    */
   stokes_set_pos_mobile (BDimp->BD->sys, x);
   calc_brownian_force (BDimp->BD, BDimp->z);
-
-  BDimp->fact = sqrt(2.0 / (BDimp->BD->peclet * BDimp->dt));
 }
 
+/* set the time step,
+ * and pre-factor BDimp->fact of the Brownian force to BDimp->z[].
+ */
 void
 BD_imp_set_dt (struct BD_imp *BDimp,
 	       double dt)
 {
   BDimp->dt = dt;
-  BDimp->fact = sqrt(2.0 / (BDimp->BD->peclet * dt));
+  if (BDimp->BD->peclet > 0.0)
+    {
+      BDimp->fact = sqrt(2.0 / (BDimp->BD->peclet * dt));
+    }
+  else
+    {
+      BDimp->fact = 0.0;
+    }
 }
 
 
@@ -171,6 +211,7 @@ BD_imp_set_dt (struct BD_imp *BDimp,
  *  p    : (struct BD_imp *)
  * OUTPUT
  *  f[n] := -x + x0 + dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
+ *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  */
 int
 BD_imp_JGdP00_func (const gsl_vector *x, void *p,
@@ -190,64 +231,44 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
   /**
    * set the forces for x0[] (and independent of the config)
    */
-  static struct FTS *FTS = NULL;
-  if (FTS == NULL)
-    {
-      FTS = FTS_init (BD->sys);
-      CHECK_MALLOC (FTS, "BD_evolve_mid");
-    }
-
   // set force (and torque)
   if (sys->version == 0) // F version
     {
       for (i = 0; i < nm3; i ++)
 	{
-	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
 	}
     }
   else // FT and FTS version
     {
       for (i = 0; i < nm3; i ++)
 	{
-	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
 	}
       for (i = 0; i < nm3; i ++)
 	{
-	  FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
+	  BDimp->FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
 	}
       if (sys->version == 2)
 	{
 	  // FTS version
 	  for (i = 0; i < nm5; i ++)
 	    {
-	      FTS->e[i] = BD->E[i];
+	      BDimp->FTS->e[i] = BD->E[i];
 	    }
 	}
     }
 
   /* extract pos[nm3] and q[nm4] from gsl_vector *x */
-  static double *pos = NULL;
-  static double *q   = NULL;
-  if (pos == NULL)
-    {
-      pos = (double *)malloc (sizeof (double) * nm3);
-      CHECK_MALLOC (pos, "BD_imp_JGdP00_func");
-      if (sys->version > 0)
-	{
-	  q = (double *)malloc (sizeof (double) * nm4);
-	  CHECK_MALLOC (q, "BD_imp_JGdP00_func");
-	}
-    }
-
   for (i = 0; i < nm3; i ++)
     {
-      pos[i] = gsl_vector_get (x, i);
+      BDimp->pos[i] = gsl_vector_get (x, i);
     }
   if (sys->version > 0)
     {
       for (i = 0; i < nm4; i ++)
 	{
-	  q[i] = gsl_vector_get (x, nm3 + i);
+	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
 	}
     }
 
@@ -255,19 +276,19 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
    * set the force for x[]
    * F^P should be evaluated for the new config x[]
    */
-  stokes_set_pos_mobile (sys, pos); // first nm3 is the position
+  stokes_set_pos_mobile (sys, BDimp->pos); // first nm3 is the position
 
   if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
       bonds_calc_force (BD->bonds, sys,
-			FTS->f, 1/* add */);
+			BDimp->FTS->f, 1/* add */);
     }
   if (BD->ev != NULL)
     {
       // calc EV force
       EV_calc_force (BD->ev, sys,
-		     FTS->f, 1/* add */);
+		     BDimp->FTS->f, 1/* add */);
     }
 
   /**
@@ -277,17 +298,23 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
   stokes_set_pos_mobile (sys, BDimp->x0);
   solve_mix_3all (sys,
 		  BD->flag_lub, BD->flag_mat,
-		  FTS->f, FTS->t, FTS->e,
+		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
 		  BD->uf, BD->of, BD->ef,
-		  FTS->u, FTS->o, FTS->s,
-		  FTS->ff, FTS->tf, FTS->sf);
+		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
+		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
+  /* note that FTS->[u,o] are in the labo frame */
 
   /**
    * adjust the imposed flow with the new config x[].
+   *
+   * now FTS->u = U (in the labo frame)
+   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   * so that FTS->u += (u(x) - u(x0))
+   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   *                   ^^^^
    * note that only u depends on the position (not o (nor e))
-   */
-  /* now FTS->u = U - u(x0),
-   * so that FTS->u += (u(x0) - u(x)) => U - u(x)
+   * thereofre, there is no correction
+   * (that is, the components in (u(x) - u(x0)) are zero)
    */
   for (i = 0; i < nm; i ++)
     {
@@ -295,16 +322,16 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
       int iy = ix + 1;
       int iz = ix + 2;
 
-      double dx = BDimp->x0[ix] - pos[ix];
-      double dy = BDimp->x0[iy] - pos[iy];
-      double dz = BDimp->x0[iz] - pos[iz];
+      double dx = BDimp->pos[ix] - BDimp->x0[ix];
+      double dy = BDimp->pos[iy] - BDimp->x0[iy];
+      double dz = BDimp->pos[iz] - BDimp->x0[iz];
 
-      // O\times (x0 - x)
+      // O\times (x - x0)
       double uOx = sys->Oi[1] * dz - sys->Oi[2] * dy;
       double uOy = sys->Oi[2] * dx - sys->Oi[0] * dz;
       double uOz = sys->Oi[0] * dy - sys->Oi[1] * dx;
 
-      // E.(x0 - x)
+      // E.(x - x0)
       double Ezz =
 	- sys->Ei[0]
 	- sys->Ei[4];
@@ -319,12 +346,13 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
       double uEz
 	= sys->Ei[2] * dx // zx . x
 	+ sys->Ei[3] * dy // zy . y
-	+ Ezz            * dz;// zz . z
+	+ Ezz        * dz;// zz . z
 
-      FTS->u [ix] += uOx + uEx;
-      FTS->u [iy] += uOy + uEy;
-      FTS->u [iz] += uOz + uEz;
+      BDimp->FTS->u [ix] += uOx + uEx;
+      BDimp->FTS->u [iy] += uOy + uEy;
+      BDimp->FTS->u [iz] += uOz + uEz;
     }
+  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
 
   /**
    * form the vector f[] for the root-finding routines
@@ -332,9 +360,13 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
   for (i = 0; i < nm3; i ++)
     {
       double fi = 
-	-pos[i]
+	/*
+	- BDimp->pos[i]
 	+ BDimp->x0[i]
-	+ BDimp->dt * FTS->u[i];
+	+ BDimp->dt * BDimp->FTS->u[i];
+	*/
+	BDimp->pos[i] - BDimp->x0[i]
+	- BDimp->dt * BDimp->FTS->u[i];
       gsl_vector_set (f, i, fi);
     }
   if (sys->version > 0)
@@ -345,23 +377,22 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
 	  int ix = i * 3;
 	  int iq = i * 4;
 	  double dQdt[4];
-	  quaternion_dQdt (q + iq, FTS->o + ix, dQdt);
+	  quaternion_dQdt (BDimp->q + iq, BDimp->FTS->o + ix, dQdt);
 	  int ii;
 	  for (ii = 0; ii < 4; ii ++)
 	    {
-	      double fi = -q[iq + ii]
+	      double fi =
+		/*
+		- BDimp->q[iq + ii]
 		+ BDimp->q0[iq + ii]
 		+ BDimp->dt * dQdt[ii];
+		*/
+		BDimp->q[iq + ii] - BDimp->q0[iq + ii]
+		- BDimp->dt * dQdt[ii];
 	      gsl_vector_set (f, nm3 + iq + ii, fi);
 	    }
 	}
     }
-
-  /*
-  FTS_free (FTS);
-  free (pos);
-  if (q != NULL) free (q);
-  */
 
   return (GSL_SUCCESS);
 }
@@ -428,8 +459,7 @@ BD_imp_get_root (const struct BD_imp *BDimp,
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
- *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
- *                              flag_Q, F, T, E, peclet are used.)
+ *  BDimp   : struct BD_imp
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
  *            if NULL is given, just ignored.
@@ -438,102 +468,63 @@ BD_imp_get_root (const struct BD_imp *BDimp,
  *  x[nm*3] : updated positions of particles at t = t0 + dt
  *  q[nm*4] : quaternions of particles       at t = t0 + dt
  *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
  */
-void
-BD_evolve_JGdP00 (struct BD_params *BD,
+double
+BD_evolve_JGdP00 (struct BD_imp *BDimp,
 		  double *x, double *q,
 		  double dt)
 {
-  int itmax = 1000;
-  double eps = 1.0e-6;
-
-
   /**
-   * BD_imp data
+   * update BD_imp data
    */
-  static struct BD_imp *BDimp = NULL;
-  if (BDimp == NULL)
-    {
-      BDimp = BD_imp_init (BD, dt, x, q);
-    }
-  else
-    {
-      BD_imp_set_xq (BDimp, x, q);
-    }
-
+  BD_imp_set_xq (BDimp, x, q);
   if (dt != BDimp->dt)
     {
       BD_imp_set_dt (BDimp, dt);
     }
 
   /**
-   * GSL multiroot solver
-   */
-  const gsl_multiroot_fsolver_type *T
-    = gsl_multiroot_fsolver_hybrid;
-
-  static gsl_multiroot_function *F = NULL;
-  static gsl_multiroot_fsolver  *S = NULL;
-  static gsl_vector *guess = NULL;
-  if (F == NULL)
-    {
-      F = (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
-      CHECK_MALLOC (F, "BD_evolve_JGdP00");
-
-      F->f = &BD_imp_JGdP00_func;
-      if (BDimp->BD->sys->version == 0)
-	{
-	  F->n = BDimp->BD->sys->nm * 3;
-	}
-      else
-	{
-	  F->n = BDimp->BD->sys->nm * 7; // quaternion is used here
-	}
-      F->params = BDimp;
-
-      S = gsl_multiroot_fsolver_alloc (T, F->n);
-      CHECK_MALLOC (S, "BD_evolve_JGdP00");
-
-      guess = gsl_vector_alloc (F->n);
-      CHECK_MALLOC (guess, "BD_evolve_JGdP00");
-    }
-
-  /** check
-  int i;
-  for (i = 0; i < BD->sys->np; i ++)
-    {
-      fprintf (stdout, "#JGdP00 x[%d] = %f %f %f\n",
-	       i, x[i*3], x[i*3+1], x[i*3+2]);
-    }
-  **/
-
-  /**
    * set the initial guess
    */
-  BD_imp_set_guess (BDimp, x, q, guess);
-  gsl_multiroot_fsolver_set (S, F, guess);
+  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
+  gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
 
   int status;
   int iter = 0;
   do
     {
       iter++;
-      status = gsl_multiroot_fsolver_iterate (S);
+      status = gsl_multiroot_fsolver_iterate (BDimp->S);
 
       if (status)   /* check if solver is stuck */
 	break;
 
-      status = gsl_multiroot_test_residual (S->f, eps);
+      status = gsl_multiroot_test_residual (BDimp->S->f, BDimp->eps);
     }
-  while (status == GSL_CONTINUE && iter < itmax);
+  while (status == GSL_CONTINUE && iter < BDimp->itmax);
 
   /**
    * retreive the solution
    */
-  gsl_vector *root = gsl_multiroot_fsolver_root (S);
+  gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
   BD_imp_get_root (BDimp, root, x, q);
 
+  /** check
+  int i;
+  for (i = 0; i < F->n; i ++)
+    {
+      fprintf (stdout, "#JGdP00 solution x[%d] = %e %e %e\n",
+	       i,
+	       x[i], 
+	       gsl_vector_get (guess, i),
+	       fabs (x[i] - gsl_vector_get (guess, i)));
+    }
+  **/
+
   //gsl_vector_free (root); // don't we need that?
+
+  return (dt);
 }
 
 
@@ -554,10 +545,12 @@ BD_evolve_JGdP00 (struct BD_params *BD,
  *  y[n]  : (output) updated configuration at t_out
  */
 void
-BD_imp_ode_evolve (struct BD_params *BD,
+BD_imp_ode_evolve (struct BD_imp *BDimp,
 		   double *t, double t_out, double *dt,
 		   double *y)
 {
+  struct BD_params *BD = BDimp->BD;
+
   int nm3 = BD->sys->nm * 3;
   // asign local pointers x[] and q[] by y[].
   double *x = y;
@@ -578,9 +571,10 @@ BD_imp_ode_evolve (struct BD_params *BD,
 	  dt_local = t_out - (*t);
 	}
 
-      BD_evolve_JGdP00 (BD, x, q, dt_local);
+      double dt_done = BD_evolve_JGdP00 (BDimp, x, q, dt_local);
 
-      (*t) += dt_local;
+      //(*t) += dt_local;
+      (*t) += dt_done;
     }
   while ((*t) < t_out);
 }
