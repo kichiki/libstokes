@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.11 2007/12/12 06:29:18 kichiki Exp $
+ * $Id: brownian.c,v 1.12 2007/12/13 05:41:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1441,7 +1441,7 @@ calc_brownian_force (struct BD_params *BD,
 	      fprintf (stderr, " => err = %e\n", err_lub);
 	    }
 	}
-      // add z_lub[] into z[], total random force
+      // add z_lub[] into zp[], total random force in the particle-wise order
       for (i = 0; i < n; i ++)
 	{
 	  zp[i] += z_lub[i];
@@ -1494,16 +1494,10 @@ evolve_Euler_3all (struct stokes *sys,
 		   double dt,
 		   double *x, double *q)
 {
+  double dQdt[4];
   int i;
   int nm3 = sys->nm * 3;
   int nm4 = nm3 + sys->nm;
-  double *dQdt = NULL;
-
-  if (q != NULL)
-    {
-      dQdt = (double *)malloc (sizeof (double) * nm4);
-      CHECK_MALLOC (dQdt, "evolve_Euler_3all");
-    }
 
   if (sys->version == 0)
     {
@@ -1513,30 +1507,9 @@ evolve_Euler_3all (struct stokes *sys,
 	  x[i] += dt * u[i];
 	}
     }
-  else if (sys->version == 1)
-    {
-      // FT version
-      for (i = 0; i < nm3; i ++)
-	{
-	  x[i] += dt * u[i];
-	}
-      // calculate dQdt
-      if (q != NULL)
-	{
-	  for (i = 0; i < sys->nm; i ++)
-	    {
-	      int i3 = i * 3;
-	      int i4 = i3 + i;
-	      quaternion_dQdt (q + i4, o + i3, dQdt + i4);
-	    }
-	  for (i = 0; i < nm4; i ++)
-	    {
-	      q[i] += dt * dQdt[i];
-	    }
-	}
-    }
   else
     {
+      // FT and FTS version
       for (i = 0; i < nm3; i ++)
 	{
 	  x[i] += dt * u[i];
@@ -1548,16 +1521,15 @@ evolve_Euler_3all (struct stokes *sys,
 	    {
 	      int i3 = i * 3;
 	      int i4 = i3 + i;
-	      quaternion_dQdt (q + i4, o + i3, dQdt + i4);
-	    }
-	  for (i = 0; i < nm4; i ++)
-	    {
-	      q[i] += dt * dQdt[i];
+	      quaternion_dQdt (q + i4, o + i3, dQdt);
+
+	      q[i4]   += dt * dQdt[0];
+	      q[i4+1] += dt * dQdt[1];
+	      q[i4+2] += dt * dQdt[2];
+	      q[i4+3] += dt * dQdt[3];
 	    }
 	}
     }
-
-  if (q != NULL) free (dQdt);
 }
 
 
@@ -1698,7 +1670,7 @@ BD_get_n (struct stokes *sys)
  *  y[n]  : (input) current configuration at (*t),
  *          where n = nm*3 for F version
  *                    (y[] in the first (nm*3) elements = velocity),
- *                n = nm*3 + nm*4 with quaternion
+ *                n = nm*3 + nm*4 with quaternion (by BD->flag_Q == 1)
  *                    (y[] in the first (nm*3) elements = velocity,
  *                     y[] in the next (nm*4) elements = quaternion).
  * OUTPUT
@@ -2123,7 +2095,7 @@ BD_evolve_BB03 (struct BD_params *BD,
   double *oBB = NULL;
   if (BD->sys->version > 0)
     {
-      oBB = (double *)malloc (sizeof (double) * nm4);
+      oBB = (double *)malloc (sizeof (double) * nm3);
       CHECK_MALLOC (oBB, "BD_evolve_BB03");
       if (q != NULL)
 	{
@@ -2259,7 +2231,7 @@ BD_evolve_BB03 (struct BD_params *BD,
     }
   if (BD->sys->version > 0 && q != NULL)
     {
-      for (i = 0; i < nm4; i ++)
+      for (i = 0; i < nm3; i ++)
 	{
 	  oBB[i] = oBB[i] + BBfact * (FTS->o[i] - oBB[i]);
 	}
@@ -2289,7 +2261,7 @@ BD_evolve_BB03 (struct BD_params *BD,
     }
   if (BD->sys->version > 0 && q != NULL)
     {
-      for (i = 0; i < nm4; i ++)
+      for (i = 0; i < nm3; i ++)
 	{
 	  FTS->o[i] += oBB[i];
 	}
@@ -2406,7 +2378,7 @@ BD_evolve_BM97 (struct BD_params *BD,
   double *oBM = NULL;
   if (BD->sys->version > 0)
     {
-      oBM = (double *)malloc (sizeof (double) * nm4);
+      oBM = (double *)malloc (sizeof (double) * nm3);
       CHECK_MALLOC (oBM, "BD_evolve_BM97");
       if (q != NULL)
 	{
@@ -2538,7 +2510,7 @@ BD_evolve_BM97 (struct BD_params *BD,
     }
   if (BD->sys->version > 0 && q != NULL)
     {
-      for (i = 0; i < nm4; i ++)
+      for (i = 0; i < nm3; i ++)
 	{
 	  FTS->o[i] = 0.5 * (oBM[i] + FTS->o[i]);
 	}
