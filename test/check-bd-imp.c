@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.1 2007/12/12 06:31:28 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.2 2007/12/13 05:58:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,8 +38,10 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_BD_evolve_JGdP00(ver=%d,lub=%d,mat=%d,dt=%f) : start\n",
-	       version, flag_lub, flag_mat, dt);
+	       "check_BD_evolve_JGdP00\n"
+	       "(ver=%d,lub=%d,mat=%d,Q=%d,dt=%f)"
+	       " : start\n",
+	       version, flag_lub, flag_mat, flag_Q, dt);
     }
 
   int check = 0;
@@ -169,6 +171,14 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 	  q_BM[i]   = 0.0;
 	  q_JGdP[i] = 0.0;
 	}
+      // set Q4 = 1 as an initial condition
+      for (i = 0; i < np; i ++)
+	{
+	  q_mid[i*4+3]  = 1.0;
+	  q_BB[i*4+3]   = 1.0;
+	  q_BM[i*4+3]   = 1.0;
+	  q_JGdP[i*4+3] = 1.0;
+	}
     }
 
 
@@ -204,11 +214,9 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
       sprintf (label, "mid [%d] x", i);
       check += compare_max (x_mid[i3]-x_JGdP[i3]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "mid [%d] y", i);
       check += compare_max (x_mid[i3+1]-x_JGdP[i3+1]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "mid [%d] z", i);
       check += compare_max (x_mid[i3+2]-x_JGdP[i3+2]+1.0, 1.0,
 			    label, verbose, tiny, &max);
@@ -216,11 +224,9 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
       sprintf (label, "BB [%d] x", i);
       check += compare_max (x_BB[i3]-x_JGdP[i3]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "BB [%d] y", i);
       check += compare_max (x_BB[i3+1]-x_JGdP[i3+1]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "BB [%d] z", i);
       check += compare_max (x_BB[i3+2]-x_JGdP[i3+2]+1.0, 1.0,
 			    label, verbose, tiny, &max);
@@ -228,14 +234,108 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
       sprintf (label, "BM [%d] x", i);
       check += compare_max (x_BM[i3]-x_JGdP[i3]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "BM [%d] y", i);
       check += compare_max (x_BM[i3+1]-x_JGdP[i3+1]+1.0, 1.0,
 			    label, verbose, tiny, &max);
-
       sprintf (label, "BM [%d] z", i);
       check += compare_max (x_BM[i3+2]-x_JGdP[i3+2]+1.0, 1.0,
 			    label, verbose, tiny, &max);
+
+      /* check */
+      sprintf (label, "mid-BB [%d] x", i);
+      check += compare_max (x_mid[i3]-x_BB[i3]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+      sprintf (label, "mid-BB [%d] y", i);
+      check += compare_max (x_mid[i3+1]-x_BB[i3+1]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+      sprintf (label, "mid-BB [%d] z", i);
+      check += compare_max (x_mid[i3+2]-x_BB[i3+2]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+
+      sprintf (label, "mid-BM [%d] x", i);
+      check += compare_max (x_mid[i3]-x_BM[i3]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+      sprintf (label, "mid-BM [%d] y", i);
+      check += compare_max (x_mid[i3+1]-x_BM[i3+1]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+      sprintf (label, "mid-BM [%d] z", i);
+      check += compare_max (x_mid[i3+2]-x_BM[i3+2]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+    }
+
+  if (version > 0 && flag_Q != 0)
+    {
+      for (i = 0; i < np; i ++)
+	{
+	  int i4 = i * 4;
+	  char label[80];
+
+	  sprintf (label, "mid [%d] Q1", i);
+	  check += compare_max (q_mid[i4]-q_JGdP[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid [%d] Q2", i);
+	  check += compare_max (q_mid[i4+1]-q_JGdP[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid [%d] Q3", i);
+	  check += compare_max (q_mid[i4+2]-q_JGdP[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid [%d] Q4", i);
+	  check += compare_max (q_mid[i4+3]-q_JGdP[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "BB [%d] Q1", i);
+	  check += compare_max (q_BB[i4]-q_JGdP[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BB [%d] Q2", i);
+	  check += compare_max (q_BB[i4+1]-q_JGdP[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BB [%d] Q3", i);
+	  check += compare_max (q_BB[i4+2]-q_JGdP[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BB [%d] Q4", i);
+	  check += compare_max (q_BB[i4+3]-q_JGdP[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "BM [%d] Q1", i);
+	  check += compare_max (q_BM[i4]-q_JGdP[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BM [%d] Q2", i);
+	  check += compare_max (q_BM[i4+1]-q_JGdP[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BM [%d] Q3", i);
+	  check += compare_max (q_BM[i4+2]-q_JGdP[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "BM [%d] Q4", i);
+	  check += compare_max (q_BM[i4+3]-q_JGdP[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  /* check */
+	  sprintf (label, "mid-BB [%d] Q1", i);
+	  check += compare_max (q_mid[i4]-q_BB[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BB [%d] Q2", i);
+	  check += compare_max (q_mid[i4+1]-q_BB[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BB [%d] Q3", i);
+	  check += compare_max (q_mid[i4+2]-q_BB[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BB [%d] Q4", i);
+	  check += compare_max (q_mid[i4+3]-q_BB[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "mid-BM [%d] Q1", i);
+	  check += compare_max (q_mid[i4]-q_BM[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BM [%d] Q2", i);
+	  check += compare_max (q_mid[i4+1]-q_BM[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BM [%d] Q3", i);
+	  check += compare_max (q_mid[i4+2]-q_BM[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	  sprintf (label, "mid-BM [%d] Q4", i);
+	  check += compare_max (q_mid[i4+3]-q_BM[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
+	}
     }
 
 
@@ -279,9 +379,10 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_BD_imp_ode_evolve(ver=%d,lub=%d,mat=%d,h=%f,t_out=%f)"
+	       "check_BD_imp_ode_evolve\n"
+	       "(ver=%d,lub=%d,mat=%d,Q=%d,h=%f,t_out=%f)"
 	       " : start\n",
-	       version, flag_lub, flag_mat, h, t_out);
+	       version, flag_lub, flag_mat, flag_Q, h, t_out);
     }
 
   int check = 0;
@@ -396,19 +497,27 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   CHECK_MALLOC (y_JGdP, "check_BD_imp_ode_evolve");
   for (i = 0; i < np3; i ++)
     {
-      y_mid[i]  = pos[i];
-      y_BB[i]   = pos[i];
-      y_BM[i]   = pos[i];
+      y_mid [i] = pos[i];
+      y_BB  [i] = pos[i];
+      y_BM  [i] = pos[i];
       y_JGdP[i] = pos[i];
     }
   if (version > 0 && flag_Q != 0)
     {
       for (i = 0; i < np * 4; i ++)
 	{
-	  y_mid[np3 + i]  = 0.0;
-	  y_BB[np3 + i]   = 0.0;
-	  y_BM[np3 + i]   = 0.0;
+	  y_mid [np3 + i] = 0.0;
+	  y_BB  [np3 + i] = 0.0;
+	  y_BM  [np3 + i] = 0.0;
 	  y_JGdP[np3 + i] = 0.0;
+	}
+      // set Q4 = 1 as an initial condition
+      for (i = 0; i < np; i ++)
+	{
+	  y_mid [np3 + i*4+3] = 1.0;
+	  y_BB  [np3 + i*4+3] = 1.0;
+	  y_BM  [np3 + i*4+3] = 1.0;
+	  y_JGdP[np3 + i*4+3] = 1.0;
 	}
     }
 
