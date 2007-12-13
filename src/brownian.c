@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.12 2007/12/13 05:41:44 kichiki Exp $
+ * $Id: brownian.c,v 1.13 2007/12/13 06:08:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1497,7 +1497,6 @@ evolve_Euler_3all (struct stokes *sys,
   double dQdt[4];
   int i;
   int nm3 = sys->nm * 3;
-  int nm4 = nm3 + sys->nm;
 
   if (sys->version == 0)
     {
