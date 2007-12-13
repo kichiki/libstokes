@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.16 2007/12/12 06:32:14 kichiki Exp $
+ * $Id: test-all.c,v 1.17 2007/12/13 05:58:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,115 +55,6 @@ int
 main (int argc, char** argv)
 {
   int check = 0;
-
-  // check-bd-imp.c
-  // for BD_evolve_JGdP00()
-  // dt dependence
-  check += check_BD_evolve_JGdP00 (0,   // F version
-				   0,   // flag_lub
-				   0,   // flag_mat
-				   0,   // flag_Q
-				   0.1, // dt
-				   1, 8.0e-6);
-  check += check_BD_evolve_JGdP00 (0,    // F version
-				   0,   // flag_lub
-				   0,   // flag_mat
-				   0,    // flag_Q
-				   0.01, // dt
-				   1, 8.0e-8);
-  check += check_BD_evolve_JGdP00 (0,    // F version
-				   0,   // flag_lub
-				   0,   // flag_mat
-				   0,    // flag_Q
-				   0.001,// dt
-				   1, 8.0e-10);
-  // higher versions
-  check += check_BD_evolve_JGdP00 (1,    // FT version
-				   0,   // flag_lub
-				   0,   // flag_mat
-				   0,    // flag_Q
-				   0.01, // dt
-				   1, 8.0e-8);
-  check += check_BD_evolve_JGdP00 (2,    // FTS version
-				   0,   // flag_lub
-				   0,   // flag_mat
-				   0,    // flag_Q
-				   0.01, // dt
-				   1, 8.0e-8);
-  // lub
-  check += check_BD_evolve_JGdP00 (2,    // FTS version
-				   1,   // flag_lub
-				   1,   // flag_mat
-				   0,    // flag_Q
-				   0.01, // dt
-				   1, 8.0e-8);
-  // quaternion
-  /* NOW CHECKING
-  check += check_BD_evolve_JGdP00 (2,    // FT version
-				   1,   // flag_lub
-				   1,   // flag_mat
-				   1,    // flag_Q
-				   0.01, // dt
-				   1, 8.0e-8);
-  exit (1);
-  */
-
-  // t_out dependence
-  check += check_BD_imp_ode_evolve (0,   // F version
-				    0,   // flag_lub
-				    0,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    1.0, // t_out
-				    1, 8.0e-6);
-  check += check_BD_imp_ode_evolve (0,   // F version
-				    0,   // flag_lub
-				    0,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    10.0,// t_out
-				    1, 9.0e-5);
-  check += check_BD_imp_ode_evolve (0,   // F version
-				    0,   // flag_lub
-				    0,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    100.0,// t_out
-				    1, 3.0e-3);
-  // higher versions
-  check += check_BD_imp_ode_evolve (1,   // FT version
-				    0,   // flag_lub
-				    0,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    1.0, // t_out
-				    1, 8.0e-6);
-  check += check_BD_imp_ode_evolve (2,   // FTS version
-				    0,   // flag_lub
-				    0,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    1.0, // t_out
-				    1, 8.0e-6);
-  // lub
-  check += check_BD_imp_ode_evolve (2,   // FTS version
-				    1,   // flag_lub
-				    1,   // flag_mat
-				    0,   // flag_Q
-				    0.01,// h
-				    1.0, // t_out
-				    1, 8.0e-6);
-  // quaternion
-  /* NOW CHECKING
-  check += check_BD_imp_ode_evolve (2,   // FTS version
-				    1,   // flag_lub
-				    1,   // flag_mat
-				    1,   // flag_Q
-				    0.01,// h
-				    1.0, // t_out
-				    1, 8.0e-6);
-  exit (1);
-  */
 
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
@@ -298,6 +189,123 @@ main (int argc, char** argv)
   check += check_lub_FU (1, 2.6e-13);
   check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
   check += check_inv_by_submatrices (50, 50, 1, 1.2e-10);
+
+  // check-bd-imp.c
+  // for BD_evolve_JGdP00()
+  // dt dependence
+  check += check_BD_evolve_JGdP00 (0,   // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,   // flag_Q
+				   0.1, // dt
+				   1, 8.0e-6);
+  check += check_BD_evolve_JGdP00 (0,    // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  check += check_BD_evolve_JGdP00 (0,    // F version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.001,// dt
+				   1, 8.0e-10);
+  // higher versions
+  check += check_BD_evolve_JGdP00 (1,    // FT version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  check += check_BD_evolve_JGdP00 (2,    // FTS version
+				   0,   // flag_lub
+				   0,   // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  // lub
+  check += check_BD_evolve_JGdP00 (2,    // FTS version
+				   1,    // flag_lub
+				   1,    // flag_mat
+				   0,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  // quaternion
+  check += check_BD_evolve_JGdP00 (1,    // FTS version
+				   0,    // flag_lub
+				   1,    // flag_mat
+				   1,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+  check += check_BD_evolve_JGdP00 (2,    // FT version
+				   1,    // flag_lub
+				   1,    // flag_mat
+				   1,    // flag_Q
+				   0.01, // dt
+				   1, 8.0e-8);
+
+  // for BD_imp_ode_evolve()
+  // t_out dependence
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    10.0,// t_out
+				    1, 9.0e-5);
+  check += check_BD_imp_ode_evolve (0,   // F version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    100.0,// t_out
+				    1, 3.0e-3);
+  // higher versions
+  check += check_BD_imp_ode_evolve (1,   // FT version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    0,   // flag_lub
+				    0,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  // lub
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    1,   // flag_lub
+				    1,   // flag_mat
+				    0,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  // quaternion
+  check += check_BD_imp_ode_evolve (1,   // FT version
+				    0,   // flag_lub
+				    1,   // flag_mat
+				    1,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
+  check += check_BD_imp_ode_evolve (2,   // FTS version
+				    1,   // flag_lub
+				    1,   // flag_mat
+				    1,   // flag_Q
+				    0.01,// h
+				    1.0, // t_out
+				    1, 8.0e-6);
 
   // check-sqrt-dgeev.c
   check += check_BD_sqrt_by_dgeev (100, 1, 4.1e-13);
