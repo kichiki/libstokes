@@ -1,6 +1,6 @@
 /* test code for ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald.c,v 1.3 2007/12/01 18:30:37 kichiki Exp $
+ * $Id: check-ewald.c,v 1.4 2007/12/22 18:26:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,8 +67,8 @@ check_ewald_3all_atimes_matrix_SC (int version,
   else                   n0 = 11;
 
 
-  struct stokes * sys = NULL;
-  sys = stokes_init ();
+  struct stokes *sys = stokes_init ();
+  CHECK_MALLOC (sys, "check_ewald_3all_atimes_matrix_SC");
   sys->version = version;
 
   /*
@@ -129,14 +129,12 @@ check_ewald_3all_atimes_matrix_SC (int version,
   double xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
 
-  //sys->lubmin = 2.0000000001;
   sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
 
 
-  double *x = NULL;
-  x = (double *)malloc (sizeof (double) * n);
+  double *x = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (x, "check_ewald_3all_atimes_matrix_SC");
   int i;
   for (i = 0; i < n; i ++)
@@ -145,18 +143,15 @@ check_ewald_3all_atimes_matrix_SC (int version,
     }
 
   // atimes version
-  double *y1 = NULL;
-  y1 = (double *)malloc (sizeof (double) * n);
+  double *y1 = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y1, "check_ewald_3all_atimes_matrix_SC");
 
   atimes_ewald_3all (n, x, y1, (void *)sys);
 
 
   // matrix version
-  double *y2 = NULL;
-  double *mat = NULL;
-  y2 = (double *)malloc (sizeof (double) * n);
-  mat = (double *)malloc (sizeof (double) * n * n);
+  double *y2 = (double *)malloc (sizeof (double) * n);
+  double *mat = (double *)malloc (sizeof (double) * n * n);
   CHECK_MALLOC (y2,  "check_ewald_3all_atimes_matrix_SC");
   CHECK_MALLOC (mat, "check_ewald_3all_atimes_matrix_SC");
 
