@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.15 2007/12/05 03:45:39 kichiki Exp $
+ * $Id: lub-matrix.c,v 1.16 2007/12/22 17:34:29 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -150,6 +150,7 @@ make_matrix_lub_3f (struct stokes *sys,
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -160,6 +161,16 @@ make_matrix_lub_3f (struct stokes *sys,
 		      for (iz = -imaxz; iz <= imaxz; iz++)
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
+
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
 
 			  if (sys->a == NULL)
 			    {
@@ -285,6 +296,7 @@ make_matrix_lub_3ft (struct stokes *sys,
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -295,6 +307,16 @@ make_matrix_lub_3ft (struct stokes *sys,
 		      for (iz = -imaxz; iz <= imaxz; iz++)
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
+
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
 
 			  if (sys->a == NULL)
 			    {
@@ -420,6 +442,7 @@ make_matrix_lub_3fts (struct stokes *sys,
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -430,6 +453,16 @@ make_matrix_lub_3fts (struct stokes *sys,
 		      for (iz = -imaxz; iz <= imaxz; iz++)
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
+
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
 
 			  if (sys->a == NULL)
 			    {
