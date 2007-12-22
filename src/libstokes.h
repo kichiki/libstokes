@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.48 2007/12/12 06:28:14 kichiki Exp $
+ * $Id: libstokes.h,v 1.49 2007/12/22 04:35:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,6 +68,18 @@ struct stokes {
   double Oi[3];
   double Ei[5];
 
+  /* auxiliary imposed-flow parameters for simple shear */
+  int shear_mode; /* 0 : imposed flow is given by Ui,Oi,Ei.
+		   * 1 : x = flow dir, y = grad dir
+		   * 2 : x = flow dir, z = grad dir
+		   */
+  double shear_rate;
+  double shear_shift; /* shift of the periodic cell (H.rate.t) at the time t
+		       * which is in [0, L)
+		       * H : cell size in the grad dir
+		       * L : cell size in the flow dir
+		       */
+
   /**
    * periodic parameters
    */
@@ -98,6 +110,9 @@ struct stokes {
   double * rlx;
   double * rly;
   double * rlz;
+  int * rmx;
+  int * rmy;
+  int * rmz;
   // reciprocal space
   int nk; // number of lattice points
   double * ex;
@@ -166,6 +181,30 @@ void
 stokes_set_Ei (struct stokes * sys,
 	       double eixx, double eixy, double eixz,
 	       double eiyz, double eiyy);
+
+/* set auxiliary imposed flow parameters for simple shear
+ * and overwrite the imposed parameters Ui, Oi, Ei.
+ * INPUT
+ *  shear_mode : 1 (x = flow dir, y = grad dir)
+ *               2 (x = flow dir, z = grad dir)
+ *  shear_rate :
+ * OUTPUT
+ *  sys : struct stokes
+ */
+void
+stokes_set_shear (struct stokes *sys,
+		  int shear_mode,
+		  double shear_rate);
+/* set shear_shift at the given time t
+ * INPUT
+ *  t : time 
+ *  sys : struct stokes
+ * OUTPUT
+ *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
+ */
+void
+stokes_set_shear_shift (struct stokes *sys,
+			double t);
 
 void
 stokes_set_l (struct stokes * sys,
@@ -294,7 +333,6 @@ stokes_unset_slip (struct stokes *sys);
  */
 struct stokes *
 stokes_copy (struct stokes *s0);
-
 
 
 /************************************
@@ -1403,8 +1441,18 @@ struct BD_params
   int scheme;  /* 0 : the mid-point algorithm
 		* 1 : Banchio-Brady (2003)
 		* 2 : Ball-Melrose (1997)
+		* 3 : Jendrejack et al (2000)
+		* 4 : semi-implicit predictor-corrector
+		* note that, for 3 and 4, BD_imp_ode_evolve() should be used.
 		*/
   double BB_n; // step parameter for BB03 algorithm
+
+  double rmin;   /* minimum distance for dt-adjustment
+		  * if (r < rmin*(ai+aj)), dt is adjusted
+		  * rmin == 0 corresponds to "no dt-adjustment"
+		  * rmin == 1 corresponds to dt-adjustment for overlap
+		  * NOTE: if sys->rmin is defined, dt-adjustment is ignored.
+		  */
   double dt_lim; /* lower bound to shrink dt to prevent overlaps
 		  * set "dt" if you don't want to adjust dt but just reject
 		  */
@@ -1440,6 +1488,7 @@ struct BD_params
  *  (int) n_lub
  *  (int) scheme
  *  (double) BB_n
+ *  (double) rmin
  *  (double) dt_lim
  * OUTPUT :
  *  (struct ode_params) params
@@ -1466,6 +1515,7 @@ BD_params_init (struct stokes *sys,
 		int    n_lub,
 		int    scheme,
 		double BB_n,
+		double rmin,
 		double dt_lim);
 
 void
@@ -1516,6 +1566,13 @@ struct BD_imp {
   struct FTS *FTS;
   double *pos;
   double *q;
+
+  // for predictor-corrector algorithm
+  int flag_PC;
+  double *xP;
+  double *qP;
+  double *uP;
+  double *dQdtP;
 };
 
 
