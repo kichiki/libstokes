@@ -1,6 +1,6 @@
 /* Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.17 2007/11/17 23:31:03 kichiki Exp $
+ * $Id: ewald-3fts.c,v 5.18 2007/12/22 17:36:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,6 +34,50 @@
 
 
 /** natural resistance problem **/
+/* solve natural resistance problem in FTS version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
+ */
+void
+solve_res_3fts_0 (struct stokes * sys,
+		  const double *u, const double *o, const double *e,
+		  double *f, double *t, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_3fts_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int n11 = np * 11;
+
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  CHECK_MALLOC (b, "solve_res_3fts_0");
+  CHECK_MALLOC (x, "solve_res_3fts_0");
+
+  set_fts_by_FTS (np, b, u, o, e);
+
+  solve_iter (n11, b, x,
+	      atimes_3all, (void *)sys,
+	      sys->it);
+  // for atimes_3all(), sys->version is 2 (FTS)
+
+  set_FTS_by_fts (np, f, t, s, x);
+
+  free (b);
+  free (x);
+}
 /* solve natural resistance problem in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -85,50 +129,6 @@ solve_res_3fts (struct stokes * sys,
   // here, no velocity in output, we do nothing
 }
 
-/* solve natural resistance problem in FTS version in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
- * OUTPUT
- *  f [np * 3] :
- *  t [np * 3] :
- *  s [np * 5] :
- */
-void
-solve_res_3fts_0 (struct stokes * sys,
-		  const double *u, const double *o, const double *e,
-		  double *f, double *t, double *s)
-{
-  if (sys->version != 2)
-    {
-      fprintf (stderr, "libstokes solve_res_3fts_0 :"
-	       " the version is wrong. reset to FTS\n");
-      sys->version = 2;
-    }
-
-  int np = sys->np;
-  int n11 = np * 11;
-
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
-  CHECK_MALLOC (b, "solve_res_3fts_0");
-  CHECK_MALLOC (x, "solve_res_3fts_0");
-
-  set_fts_by_FTS (np, b, u, o, e);
-
-  solve_iter (n11, b, x,
-	      atimes_3all, (void *)sys,
-	      sys->it);
-  // for atimes_3all(), sys->version is 2 (FTS)
-
-  set_FTS_by_fts (np, f, t, s, x);
-
-  free (b);
-  free (x);
-}
 
 /** natural mobility problem **/
 /* calc b-term (constant term) of (natural) mobility problem
@@ -168,7 +168,7 @@ calc_b_mob_3fts (struct stokes * sys,
       v5_0 [i] = 0.0;
     }
 
-  set_fts_by_FTS (np, x, f, t, v5_0);
+  set_fts_by_FTS (np, x, f, t, v5_0); // (f,t,0) => x
   atimes_3all (n11, x, b, (void *) sys); // sys->version is 2 (FTS)
 
   for (i = 0; i < np; ++i)
@@ -181,6 +181,7 @@ calc_b_mob_3fts (struct stokes * sys,
 	  b [i11 + 6 + j] -= e [i5 + j];
 	}
     }
+  // b = -(0,0,e) + M(f,t,0)
 
   free (x);
   free (v5_0);
@@ -226,17 +227,18 @@ atimes_mob_3fts (int n, const double *x, double *y, void * user_data)
       v5_0 [i] = 0.0;
     }
 
-  set_FTS_by_fts (np, u, o, s, x);
+  set_FTS_by_fts (np, u, o, s, x); // x => (u,o,s)
 
-  set_fts_by_FTS (np, y, v5_0, v5_0, s);
+  set_fts_by_FTS (np, y, v5_0, v5_0, s); // (0,0,s) => y
   atimes_3all (n, y, z, (void *) sys); // sys->version is 2 (FTS)
 
-  set_fts_by_FTS (np, y, u, o, v5_0);
+  set_fts_by_FTS (np, y, u, o, v5_0); // (u,o,0) => y
 
   for (i = 0; i < n; ++i)
     {
       y [i] -= z [i];
     }
+  // y = (u,o,0) - M.(0,0,s)
 
   free (z);
   free (v5_0);
@@ -244,50 +246,6 @@ atimes_mob_3fts (int n, const double *x, double *y, void * user_data)
   free (o);
   free (s);
 }
-/* solve natural mobility problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  f [np * 3] :
- *  t [np * 3] :
- *  e [np * 5] : strain tensor     in the labo frame.
- * OUTPUT
- *  u [np * 3] : particle velocity in the labo frame.
- *  o [np * 3] : angular  velocity in the labo frame.
- *  s [np * 5] :
- */
-void
-solve_mob_3fts (struct stokes * sys,
-		const double *f, const double *t, const double *e,
-		double *u, double *o, double *s)
-{
-  if (sys->version != 2)
-    {
-      fprintf (stderr, "libstokes solve_mob_3fts :"
-	       " the version is wrong. reset to FTS\n");
-      sys->version = 2;
-    }
-
-  int np = sys->np;
-  double *e0 = (double *) malloc (sizeof (double) * np * 5);
-  CHECK_MALLOC (e0, "solve_mob_3fts");
-
-  shift_labo_to_rest_E (sys, np, e, e0);
-  /* the main calculation is done in the the fluid-rest frame;
-   * u(x)=0 as |x|-> infty */
-
-  solve_mob_3fts_0 (sys, sys->it,
-		    f, t, e0,
-		    u, o, s);
-
-  free (e0);
-
-  /* for the interface, we are in the labo frame, that is
-   * u(x) is given by the imposed flow field as |x|-> infty */
-  shift_rest_to_labo_U (sys, sys->np, u);
-  shift_rest_to_labo_O (sys, sys->np, o);
-}
-
 /* solve natural mobility problem in FTS version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -341,6 +299,50 @@ solve_mob_3fts_0 (struct stokes *sys, struct iter *iter,
   free (b);
   free (x);
 }
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : strain tensor     in the labo frame.
+ * OUTPUT
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ *  s [np * 5] :
+ */
+void
+solve_mob_3fts (struct stokes * sys,
+		const double *f, const double *t, const double *e,
+		double *u, double *o, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mob_3fts :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  double *e0 = (double *) malloc (sizeof (double) * np * 5);
+  CHECK_MALLOC (e0, "solve_mob_3fts");
+
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  solve_mob_3fts_0 (sys, sys->it,
+		    f, t, e0,
+		    u, o, s);
+
+  free (e0);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  shift_rest_to_labo_U (sys, sys->np, u);
+  shift_rest_to_labo_O (sys, sys->np, o);
+}
+
 
 /** natural mobility problem with fixed particles **/
 /* calc b-term (constant term) of (natural) mobility problem
@@ -506,6 +508,80 @@ atimes_mix_3fts (int n, const double *x, double *y, void * user_data)
   free (sf);
 }
 /* solve natural mobility problem with fixed particles in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  iter : struct iter (if NULL is given, use sys->it for the solver)
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ *  uf [nf * 3] : in the fluid-rest frame
+ *  of [nf * 3] : in the fluid-rest frame
+ *  ef [nf * 5] : in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [nm * 5] :
+ *  ff [nf * 3] :
+ *  tf [nf * 3] :
+ *  sf [nf * 5] :
+ */
+void
+solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
+		  const double *f, const double *t, const double *e,
+		  const double *uf, const double *of, const double *ef,
+		  double *u, double *o, double *s,
+		  double *ff, double *tf, double *sf)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mix_3fts_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int nm = sys->nm;
+  if (np == nm)
+    {
+      solve_mob_3fts_0 (sys, iter,
+			f, t, e,
+			u, o, s);
+      return;
+    }
+
+  int nf = np - nm;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
+
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  CHECK_MALLOC (b, "solve_mix_3fts_0");
+  CHECK_MALLOC (x, "solve_mix_3fts_0");
+
+  calc_b_mix_3fts (sys, f, t, e, uf, of, ef, b);
+
+  if (iter == NULL)
+    {
+      solve_iter (n11, b, x,
+		  atimes_mix_3fts, (void *)sys,
+		  sys->it);
+    }
+  else
+    {
+      solve_iter (n11, b, x,
+		  atimes_mix_3fts, (void *)sys,
+		  iter);
+    }
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (b);
+  free (x);
+}
+/* solve natural mobility problem with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
@@ -581,133 +657,8 @@ solve_mix_3fts (struct stokes * sys,
   shift_rest_to_labo_O (sys, nm, o);
 }
 
-/* solve natural mobility problem with fixed particles in FTS version
- * in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  iter : struct iter (if NULL is given, use sys->it for the solver)
- *  f [nm * 3] :
- *  t [nm * 3] :
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
- *  uf [nf * 3] : in the fluid-rest frame
- *  of [nf * 3] : in the fluid-rest frame
- *  ef [nf * 5] : in the fluid-rest frame
- * OUTPUT
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  s [nm * 5] :
- *  ff [nf * 3] :
- *  tf [nf * 3] :
- *  sf [nf * 5] :
- */
-void
-solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
-		  const double *f, const double *t, const double *e,
-		  const double *uf, const double *of, const double *ef,
-		  double *u, double *o, double *s,
-		  double *ff, double *tf, double *sf)
-{
-  if (sys->version != 2)
-    {
-      fprintf (stderr, "libstokes solve_mix_3fts_0 :"
-	       " the version is wrong. reset to FTS\n");
-      sys->version = 2;
-    }
-
-  int np = sys->np;
-  int nm = sys->nm;
-  if (np == nm)
-    {
-      solve_mob_3fts (sys,
-		      f, t, e,
-		      u, o, s);
-      return;
-    }
-
-  int nf = np - nm;
-  int n11 = np * 11;
-  int nm11 = nm * 11;
-
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
-  CHECK_MALLOC (b, "solve_mix_3fts_0");
-  CHECK_MALLOC (x, "solve_mix_3fts_0");
-
-  calc_b_mix_3fts (sys, f, t, e, uf, of, ef, b);
-
-  if (iter == NULL)
-    {
-      solve_iter (n11, b, x,
-		  atimes_mix_3fts, (void *)sys,
-		  sys->it);
-    }
-  else
-    {
-      solve_iter (n11, b, x,
-		  atimes_mix_3fts, (void *)sys,
-		  iter);
-    }
-
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
-
-  free (b);
-  free (x);
-}
 
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] : in the labo frame.
- *   o [np * 3] : in the labo frame.
- *   e [np * 5] : in the labo frame.
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_lub_3fts (struct stokes * sys,
-		    const double *u, const double *o, const double *e,
-		    double *f, double *t, double *s)
-{
-  if (sys->version != 2)
-    {
-      fprintf (stderr, "libstokes solve_res_lub_3fts :"
-	       " the version is wrong. reset to FTS\n");
-      sys->version = 2;
-    }
-
-  int np = sys->np;
-  double *u0 = (double *) malloc (sizeof (double) * np * 3);
-  double *o0 = (double *) malloc (sizeof (double) * np * 3);
-  double *e0 = (double *) malloc (sizeof (double) * np * 5);
-  CHECK_MALLOC (u0, "solve_res_lub_3fts");
-  CHECK_MALLOC (o0, "solve_res_lub_3fts");
-  CHECK_MALLOC (e0, "solve_res_lub_3fts");
-
-  shift_labo_to_rest_U (sys, np, u, u0);
-  shift_labo_to_rest_O (sys, np, o, o0);
-  shift_labo_to_rest_E (sys, np, e, e0);
-  /* the main calculation is done in the the fluid-rest frame;
-   * u(x)=0 as |x|-> infty */
-
-  solve_res_lub_3fts_0 (sys,
-			u0, o0, e0,
-			f, t, s);
-
-  free (u0);
-  free (o0);
-  free (e0);
-
-  /* for the interface, we are in the labo frame, that is
-   * u(x) is given by the imposed flow field as |x|-> infty */
-  // here, no velocity in output, we do nothing
-}
-
 /* solve natural resistance problem with lubrication in FTS version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -765,6 +716,56 @@ solve_res_lub_3fts_0 (struct stokes * sys,
   free (b);
   free (x);
   free (lub);
+}
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] : in the labo frame.
+ *   o [np * 3] : in the labo frame.
+ *   e [np * 5] : in the labo frame.
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_lub_3fts (struct stokes * sys,
+		    const double *u, const double *o, const double *e,
+		    double *f, double *t, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3fts :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  double *u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *o0 = (double *) malloc (sizeof (double) * np * 3);
+  double *e0 = (double *) malloc (sizeof (double) * np * 5);
+  CHECK_MALLOC (u0, "solve_res_lub_3fts");
+  CHECK_MALLOC (o0, "solve_res_lub_3fts");
+  CHECK_MALLOC (e0, "solve_res_lub_3fts");
+
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  shift_labo_to_rest_E (sys, np, e, e0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  solve_res_lub_3fts_0 (sys,
+			u0, o0, e0,
+			f, t, s);
+
+  free (u0);
+  free (o0);
+  free (e0);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
 }
 
 
@@ -906,6 +907,50 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
   free (tmp);
 }
 /* solve natural mobility problem with lubrication in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [np * 5] :
+ */
+void
+solve_mob_lub_3fts_0 (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      double *u, double *o, double *s)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mob_lub_3fts_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int n11 = np * 11;
+
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  CHECK_MALLOC (b, "solve_mob_lub_3fts_0");
+  CHECK_MALLOC (x, "solve_mob_lub_3fts_0");
+
+  calc_b_mob_lub_3fts (sys, f, t, e, b);
+
+  solve_iter (n11, b, x,
+	      atimes_mob_lub_3fts, (void *)sys,
+	      sys->it);
+
+  set_FTS_by_fts (np, u, o, s, x);
+
+  free (b);
+  free (x);
+}
+/* solve natural mobility problem with lubrication in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
@@ -930,31 +975,19 @@ solve_mob_lub_3fts (struct stokes * sys,
     }
 
   int np = sys->np;
-  int n11 = np * 11;
   int n5 = np * 5;
-
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
-  CHECK_MALLOC (b, "solve_mob_lub_3fts");
-  CHECK_MALLOC (x, "solve_mob_lub_3fts");
 
   double *e0 = (double *) malloc (sizeof (double) * n5);
   CHECK_MALLOC (e0, "solve_mob_lub_3fts");
+
   shift_labo_to_rest_E (sys, np, e, e0);
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  calc_b_mob_lub_3fts (sys, f, t, e0, b);
+  solve_mob_lub_3fts_0 (sys, f, t, e0,
+			u, o, s);
+
   free (e0);
-
-  solve_iter (n11, b, x,
-	      atimes_mob_lub_3fts, (void *)sys,
-	      sys->it);
-
-  set_FTS_by_fts (np, u, o, s, x);
-
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
@@ -1137,6 +1170,70 @@ atimes_mix_lub_3fts (int n, const double *x,
 }
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ *  uf [nf * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  of [nf * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  ef [nf * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [nm * 5] :
+ *  ff [nf * 3] :
+ *  tf [nf * 3] :
+ *  sf [nf * 5] :
+ */
+void
+solve_mix_lub_3fts_0 (struct stokes * sys,
+		      const double *f, const double *t, const double *e,
+		      const double *uf, const double *of,
+		      const double *ef,
+		      double *u, double *o, double *s,
+		      double *ff, double *tf, double *sf)
+{
+  if (sys->version != 2)
+    {
+      fprintf (stderr, "libstokes solve_mix_lub_3fts_0 :"
+	       " the version is wrong. reset to FTS\n");
+      sys->version = 2;
+    }
+
+  int np = sys->np;
+  int nm = sys->nm;
+  if (np == nm)
+    {
+      solve_mob_lub_3fts_0 (sys, f, t, e, u, o, s);
+      return;
+    }
+
+  int nf = np - nm;
+  int n11 = np * 11;
+  int nm11 = nm * 11;
+
+  double *b = (double *) malloc (sizeof (double) * n11);
+  double *x = (double *) malloc (sizeof (double) * n11);
+  CHECK_MALLOC (b, "solve_mix_lub_3fts");
+  CHECK_MALLOC (x, "solve_mix_lub_3fts");
+
+  calc_b_mix_lub_3fts (sys, f, t, e, uf, of, ef, b);
+
+  solve_iter (n11, b, x,
+	      atimes_mix_lub_3fts, (void *)sys,
+	      sys->it);
+
+  set_FTS_by_fts (nm, u, o, s, x);
+  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
+
+  free (b);
+  free (x);
+}
+/* solve natural mobility problem with lubrication
+ * with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
@@ -1178,21 +1275,15 @@ solve_mix_lub_3fts (struct stokes * sys,
     }
 
   int nf = np - nm;
-  int n11 = np * 11;
-  int nm11 = nm * 11;
 
   double *uf0 = (double *) malloc (sizeof (double) * nf * 3);
   double *of0 = (double *) malloc (sizeof (double) * nf * 3);
   double *ef0 = (double *) malloc (sizeof (double) * nf * 5);
   double *e0 = (double *) malloc (sizeof (double) * nm * 5);
-  double *b = (double *) malloc (sizeof (double) * n11);
-  double *x = (double *) malloc (sizeof (double) * n11);
   CHECK_MALLOC (uf0, "solve_mix_lub_3fts");
   CHECK_MALLOC (of0, "solve_mix_lub_3fts");
   CHECK_MALLOC (ef0, "solve_mix_lub_3fts");
   CHECK_MALLOC (e0, "solve_mix_lub_3fts");
-  CHECK_MALLOC (b, "solve_mix_lub_3fts");
-  CHECK_MALLOC (x, "solve_mix_lub_3fts");
 
   shift_labo_to_rest_U (sys, nf, uf, uf0);
   shift_labo_to_rest_O (sys, nf, of, of0);
@@ -1201,21 +1292,12 @@ solve_mix_lub_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  calc_b_mix_lub_3fts (sys, f, t, e0, uf0, of0, ef0, b);
+  solve_mix_lub_3fts_0 (sys, f, t, e0, uf0, of0, ef0,
+			u, o, s, ff, tf, sf);
   free (uf0);
   free (of0);
   free (ef0);
   free (e0);
-
-  solve_iter (n11, b, x,
-	      atimes_mix_lub_3fts, (void *)sys,
-	      sys->it);
-
-  set_FTS_by_fts (nm, u, o, s, x);
-  set_FTS_by_fts (nf, ff, tf, sf, x + nm11);
-
-  free (b);
-  free (x);
 
   /* for the interface, we are in the labo frame, that is
    * u(x) is given by the imposed flow field as |x|-> infty */
