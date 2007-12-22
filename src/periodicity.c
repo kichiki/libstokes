@@ -1,6 +1,6 @@
 /* periodicity handling routines
  * Copyright (C) 1995-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: periodicity.c,v 1.2 2007/05/04 01:19:25 kichiki Exp $
+ * $Id: periodicity.c,v 1.3 2007/12/22 17:34:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
  *  x [np * 3] : position to check; the range is [0, l[xyz])
  */
 void
-check_periodic (struct stokes * sys,
+check_periodic (struct stokes *sys,
 		double *x)
 {
   int i;
@@ -51,12 +51,44 @@ check_periodic (struct stokes * sys,
       for (;x [ix] >= lx;) x [ix] -= lx;
 
       /* periodic condition in horizontal */
-      for (;x [iy] < 0.0;) x [iy] += ly;
-      for (;x [iy] >= ly;) x [iy] -= ly;
+      if (sys->shear_mode == 1)
+	{
+	  for (;x [iy] < 0.0;)
+	    {
+	      x [iy] += ly;
+	      x [ix] += sys->shear_shift;
+	    }
+	  for (;x [iy] >= ly;)
+	    {
+	      x [iy] -= ly;
+	      x [ix] -= sys->shear_shift;
+	    }
+	}
+      else
+	{
+	  for (;x [iy] < 0.0;) x [iy] += ly;
+	  for (;x [iy] >= ly;) x [iy] -= ly;
+	}
 
       /* periodic condition in vertical */
-      for (;x [iz] < 0.0;) x [iz] += lz;
-      for (;x [iz] >= lz;) x [iz] -= lz;
+      if (sys->shear_mode == 2)
+	{
+	  for (;x [iz] < 0.0;)
+	    {
+	      x [iz] += lz;
+	      x [ix] += sys->shear_shift;
+	    }
+	  for (;x [iz] >= lz;)
+	    {
+	      x [iz] -= lz;
+	      x [ix] -= sys->shear_shift;
+	    }
+	}
+      else
+	{
+	  for (;x [iz] < 0.0;) x [iz] += lz;
+	  for (;x [iz] >= lz;) x [iz] -= lz;
+	}
     }
 }
 
@@ -67,7 +99,7 @@ check_periodic (struct stokes * sys,
  *  angle [np * 3] : angle to check; the range is [0, 2\pi)
  */
 void
-check_angle (struct stokes * sys, double *angle)
+check_angle (struct stokes *sys, double *angle)
 {
   int nm;
   int i;
@@ -88,7 +120,7 @@ check_angle (struct stokes * sys, double *angle)
  *  x [np * 2] : position to check; the range is [0, l[xy])
  */
 void
-check_periodic_2d (struct stokes * sys,
+check_periodic_2d (struct stokes *sys,
 		   double *x)
 {
   int i;
@@ -111,8 +143,24 @@ check_periodic_2d (struct stokes * sys,
       for (;x [ix] >= lx;) x [ix] -= lx;
 
       /* periodic condition in vertical */
-      for (;x [iy] < 0.0;) x [iy] += ly;
-      for (;x [iy] >= ly;) x [iy] -= ly;
+      if (sys->shear_mode == 1)
+	{
+	  for (;x [iy] < 0.0;)
+	    {
+	      x [iy] += ly;
+	      x [ix] += sys->shear_shift;
+	    }
+	  for (;x [iy] >= ly;)
+	    {
+	      x [iy] -= ly;
+	      x [ix] -= sys->shear_shift;
+	    }
+	}
+      else
+	{
+	  for (;x [iy] < 0.0;) x [iy] += ly;
+	  for (;x [iy] >= ly;) x [iy] -= ly;
+	}
     }
 }
 
@@ -123,7 +171,7 @@ check_periodic_2d (struct stokes * sys,
  *  angle [np] : angle to check; the range is [0, 2\pi)
  */
 void
-check_angle_2d (struct stokes * sys, double *angle)
+check_angle_2d (struct stokes *sys, double *angle)
 {
   int nm;
   int i;
