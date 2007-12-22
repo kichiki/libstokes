@@ -1,6 +1,6 @@
 /* lubrication routines -- atimes procedure
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.13 2007/12/05 03:45:17 kichiki Exp $
+ * $Id: lub.c,v 5.14 2007/12/22 17:34:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -279,6 +279,16 @@ calc_lub_3f (struct stokes *sys,
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
 
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
+
 			  if (sys->a == NULL)
 			    {
 			      // monodisperse
@@ -473,6 +483,16 @@ calc_lub_3ft (struct stokes * sys,
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
 
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
+
 			  if (sys->a == NULL)
 			    {
 			      // monodisperse
@@ -666,6 +686,16 @@ calc_lub_3fts (struct stokes * sys,
 		      for (iz = -imaxz; iz <= imaxz; iz++)
 			{
 			  tmp_pos[2] = sys->pos[j3 + 2] + sys->lz * (double)iz;
+
+			  /* shift for shear */
+			  if (sys->shear_mode == 1)
+			    {
+			      tmp_pos[0] += (double)iy * sys->shear_shift;
+			    }
+			  else if (sys->shear_mode == 2)
+			    {
+			      tmp_pos[0] += (double)iz * sys->shear_shift;
+			    }
 
 			  if (sys->a == NULL)
 			    {
