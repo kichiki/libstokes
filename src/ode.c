@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.6 2007/12/05 03:47:25 kichiki Exp $
+ * $Id: ode.c,v 1.7 2007/12/22 17:35:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +29,6 @@
 #include "ewald-3ft-matrix.h"
 #include "ewald-3fts-matrix.h"
 #include "bonds.h" // struct bonds
-#include "coll.h"
-#include "periodicity.h" // check_periodic()
 
 
 #include "ode.h"
@@ -39,7 +37,7 @@
 /* wrapper for solving mob and mix problems in ODE routines
  */
 void
-solve_mix_3all (struct stokes * sys,
+solve_mix_3all (struct stokes *sys,
 		int flag_lub,
 		int flag_mat,
 		const double *fm, const double *tm, const double *em,
@@ -242,6 +240,7 @@ dydt_relax_bond (double t, const double *y, double *f,
 
 
   stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_shear_shift (ode->sys, t);
 
   bonds_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
 
@@ -327,6 +326,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_shear_shift (ode->sys, t);
 
   if (ode->bonds->n > 0)
     {
@@ -430,6 +430,7 @@ dydt_hydro (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_shear_shift (ode->sys, t);
 
   if (ode->bonds->n > 0)
     {
