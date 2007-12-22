@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.2 2007/12/13 05:58:38 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.3 2007/12/22 18:22:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -127,8 +127,9 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 		      1.0e-6, // ode_eps,
 		      0, // n_minv, // n of chebyshev for minv
 		      0, // n_lub,  // n of chebyshev for lub
-		      0, // BD_scheme, (0=mid, 1=BB, 2=BM, 3=JGdP)
+		      0, // BD_scheme, (0=mid, 1=BB, 2=BM, 3=JGdP, 4=siPC)
 		      100, // BB_n,
+		      1.0,  // double rmin
 		      1.0e-12 //dt_lim
 		      );
   CHECK_MALLOC (BD, "check_BD_evolve_JGdP00");
@@ -185,20 +186,22 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
   /**
    * BD explicit schemes
    */
-  double dt_mid  = BD_evolve_mid    (BD, x_mid,  q_mid,  dt);
-  double dt_BB   = BD_evolve_BB03   (BD, x_BB,   q_BB,   dt);
-  double dt_BM   = BD_evolve_BM97   (BD, x_BM,   q_BM,   dt);
+  double t = 0.0;
+  double dt_mid  = BD_evolve_mid    (t, BD, x_mid,  q_mid,  dt);
+  double dt_BB   = BD_evolve_BB03   (t, BD, x_BB,   q_BB,   dt);
+  double dt_BM   = BD_evolve_BM97   (t, BD, x_BM,   q_BM,   dt);
 
   /**
    * BD implicit scheme
    */
+  BD->scheme = 3; // JGdP
   struct BD_imp *BDimp = BD_imp_init (BD,
 				      1000,  // itmax
 				      1.0e-6 // eps
 				      );
   CHECK_MALLOC (BDimp, "check_BD_evolve_JGdP00");
 
-  double dt_JGdP = BD_evolve_JGdP00 (BDimp, x_JGdP, q_JGdP, dt);
+  double dt_JGdP = BD_evolve_JGdP00 (t, BDimp, x_JGdP, q_JGdP, dt);
 
   check += compare_max (dt, dt_mid,  "dt_mid",  verbose, tiny, &max);
   check += compare_max (dt, dt_BB,   "dt_BB",   verbose, tiny, &max);
@@ -468,8 +471,9 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 		      1.0e-6, // ode_eps,
 		      0, // n_minv, // n of chebyshev for minv
 		      0, // n_lub,  // n of chebyshev for lub
-		      0, // BD_scheme, (0=mid, 1=BB, 2=BM, 3=JGdP)
+		      0, // BD_scheme, (0=mid, 1=BB, 2=BM, 3=JGdP, 4=siPC)
 		      100, // BB_n,
+		      1.0,  // double rmin
 		      1.0e-12 //dt_lim
 		      );
   CHECK_MALLOC (BD, "check_BD_imp_ode_evolve");
@@ -491,16 +495,19 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   double *y_BB   = (double *)malloc (sizeof (double) * n);
   double *y_BM   = (double *)malloc (sizeof (double) * n);
   double *y_JGdP = (double *)malloc (sizeof (double) * n);
+  double *y_siPC = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y_mid,  "check_BD_imp_ode_evolve");
   CHECK_MALLOC (y_BB,   "check_BD_imp_ode_evolve");
   CHECK_MALLOC (y_BM,   "check_BD_imp_ode_evolve");
   CHECK_MALLOC (y_JGdP, "check_BD_imp_ode_evolve");
+  CHECK_MALLOC (y_siPC, "check_BD_imp_ode_evolve");
   for (i = 0; i < np3; i ++)
     {
       y_mid [i] = pos[i];
       y_BB  [i] = pos[i];
       y_BM  [i] = pos[i];
       y_JGdP[i] = pos[i];
+      y_siPC[i] = pos[i];
     }
   if (version > 0 && flag_Q != 0)
     {
@@ -510,6 +517,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 	  y_BB  [np3 + i] = 0.0;
 	  y_BM  [np3 + i] = 0.0;
 	  y_JGdP[np3 + i] = 0.0;
+	  y_siPC[np3 + i] = 0.0;
 	}
       // set Q4 = 1 as an initial condition
       for (i = 0; i < np; i ++)
@@ -518,6 +526,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 	  y_BB  [np3 + i*4+3] = 1.0;
 	  y_BM  [np3 + i*4+3] = 1.0;
 	  y_JGdP[np3 + i*4+3] = 1.0;
+	  y_siPC[np3 + i*4+3] = 1.0;
 	}
     }
 
@@ -544,24 +553,43 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   /**
    * BD implicit scheme
    */
-  struct BD_imp *BDimp = BD_imp_init (BD,
-				      1000,  // itmax
-				      1.0e-6 // eps
-				      );
+  struct BD_imp *BDimp = NULL;
+  BD->scheme = 3; // JGdP
+  BDimp = BD_imp_init (BD,
+		       1000,  // itmax
+		       1.0e-6 // eps
+		       );
   CHECK_MALLOC (BDimp, "check_BD_imp_ode_evolve");
 
   double t_JGdP = 0.0;
   double dt_JGdP = h;
   BD_imp_ode_evolve (BDimp, &t_JGdP, t_out, &dt_JGdP, y_JGdP);
+  BD_imp_free (BDimp);
+
+
+  BD->scheme = 4; // siPC
+  BDimp = BD_imp_init (BD,
+		       1000,  // itmax
+		       1.0e-6 // eps
+		       );
+  CHECK_MALLOC (BDimp, "check_BD_imp_ode_evolve");
+
+  double t_siPC = 0.0;
+  double dt_siPC = h;
+  BD_imp_ode_evolve (BDimp, &t_siPC, t_out, &dt_siPC, y_siPC);
+  BD_imp_free (BDimp);
+
 
   check += compare_max (dt_JGdP, dt_mid, "dt_mid",  verbose, tiny, &max);
   check += compare_max (dt_JGdP, dt_BB,  "dt_BB",   verbose, tiny, &max);
   check += compare_max (dt_JGdP, dt_BM,  "dt_BM",   verbose, tiny, &max);
+  check += compare_max (dt_JGdP, dt_siPC,"dt_siPC", verbose, tiny, &max);
 
   check += compare_max (t_out, t_mid,  "t_mid",  verbose, tiny, &max);
   check += compare_max (t_out, t_BB,   "t_BB",   verbose, tiny, &max);
   check += compare_max (t_out, t_BM,   "t_BM",   verbose, tiny, &max);
   check += compare_max (t_out, t_JGdP, "t_JGdP", verbose, tiny, &max);
+  check += compare_max (t_out, t_siPC, "t_siPC", verbose, tiny, &max);
 
   // the error is estimated relative to the radius of particle
   for (i = 0; i < np; i ++)
@@ -603,6 +631,18 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 
       sprintf (label, "BM [%d] z", i);
       check += compare_max (y_BM[i3+2]-y_JGdP[i3+2]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+
+      sprintf (label, "siPC [%d] x", i);
+      check += compare_max (y_siPC[i3]-y_JGdP[i3]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+
+      sprintf (label, "siPC [%d] y", i);
+      check += compare_max (y_siPC[i3+1]-y_JGdP[i3+1]+1.0, 1.0,
+			    label, verbose, tiny, &max);
+
+      sprintf (label, "siPC [%d] z", i);
+      check += compare_max (y_siPC[i3+2]-y_JGdP[i3+2]+1.0, 1.0,
 			    label, verbose, tiny, &max);
     }
   if (version > 0 && flag_Q != 0)
@@ -659,6 +699,22 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 	  sprintf (label, "BM [%d] Q4", i);
 	  check += compare_max (y_BM[i4+3]-y_JGdP[i4+3]+1.0, 1.0,
 				label, verbose, tiny, &max);
+
+	  sprintf (label, "siPC [%d] Q1", i);
+	  check += compare_max (y_siPC[i4]-y_JGdP[i4]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "siPC [%d] Q2", i);
+	  check += compare_max (y_siPC[i4+1]-y_JGdP[i4+1]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "siPC [%d] Q3", i);
+	  check += compare_max (y_siPC[i4+2]-y_JGdP[i4+2]+1.0, 1.0,
+				label, verbose, tiny, &max);
+
+	  sprintf (label, "siPC [%d] Q4", i);
+	  check += compare_max (y_siPC[i4+3]-y_JGdP[i4+3]+1.0, 1.0,
+				label, verbose, tiny, &max);
 	}
     }
 
@@ -674,7 +730,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   free (y_BB);
   free (y_BM);
   free (y_JGdP);
-  BD_imp_free (BDimp);
+  free (y_siPC);
 
   if (verbose != 0)
     {
