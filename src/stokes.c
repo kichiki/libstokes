@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.26 2007/12/05 03:44:22 kichiki Exp $
+ * $Id: stokes.c,v 2.27 2007/12/22 04:33:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,13 +33,48 @@
  * those are called only from the top level routine stokes_init().
  */
 static void
-stokes_ewald_table_free (struct stokes * sys)
+stokes_ewald_table_init (struct stokes *sys)
+{
+  // table for lattice summation
+  sys->flag_table = 0;
+
+  // real space
+  sys->nr = 0;
+  sys->rlx = NULL;
+  sys->rly = NULL;
+  sys->rlz = NULL;
+  sys->rmx = NULL;
+  sys->rmy = NULL;
+  sys->rmz = NULL;
+
+  // reciprocal space
+  sys->nk = 0;
+  sys->ex = NULL;
+  sys->ey = NULL;
+  sys->ez = NULL;
+  sys->k  = NULL;
+  sys->k1 = NULL;
+  sys->k2 = NULL;
+  sys->k3 = NULL;
+  sys->ya = NULL;
+  sys->yb = NULL;
+  sys->yc = NULL;
+  sys->yg = NULL;
+  sys->yh = NULL;
+  sys->ym = NULL;
+}
+
+static void
+stokes_ewald_table_free (struct stokes *sys)
 {
   if (sys == NULL) return;
 
   if (sys->rlx != NULL) free (sys->rlx);
   if (sys->rly != NULL) free (sys->rly);
   if (sys->rlz != NULL) free (sys->rlz);
+  if (sys->rmx != NULL) free (sys->rmx);
+  if (sys->rmy != NULL) free (sys->rmy);
+  if (sys->rmz != NULL) free (sys->rmz);
 
   if (sys->ex != NULL) free (sys->ex);
   if (sys->ey != NULL) free (sys->ey);
@@ -55,43 +90,30 @@ stokes_ewald_table_free (struct stokes * sys)
   if (sys->yh != NULL) free (sys->yh);
   if (sys->ym != NULL) free (sys->ym);
 
-  sys->rlx = NULL;
-  sys->rly = NULL;
-  sys->rlz = NULL;
-
-  sys->ex = NULL;
-  sys->ey = NULL;
-  sys->ez = NULL;
-  sys->k  = NULL;
-  sys->k1 = NULL;
-  sys->k2 = NULL;
-  sys->k3 = NULL;
-  sys->ya = NULL;
-  sys->yb = NULL;
-  sys->yc = NULL;
-  sys->yg = NULL;
-  sys->yh = NULL;
-  sys->ym = NULL;
-
-  sys->nr = 0;
-  sys->nk = 0;
-  sys->flag_table = 0;
+  stokes_ewald_table_init (sys);
 }
 
 static void
 ewald_r_append (struct stokes * e,
-		double rlx, double rly, double rlz)
+		double rlx, double rly, double rlz,
+		int rmx, int rmy, int rmz)
 {
   e->nr ++;
 
-  e->rlx = (double *) realloc (e->rlx, sizeof (double) * e->nr);
-  e->rly = (double *) realloc (e->rly, sizeof (double) * e->nr);
-  e->rlz = (double *) realloc (e->rlz, sizeof (double) * e->nr);
+  e->rlx = (double *)realloc (e->rlx, sizeof (double) * e->nr);
+  e->rly = (double *)realloc (e->rly, sizeof (double) * e->nr);
+  e->rlz = (double *)realloc (e->rlz, sizeof (double) * e->nr);
+  e->rmx = (int *)realloc (e->rmx, sizeof (int) * e->nr);
+  e->rmy = (int *)realloc (e->rmy, sizeof (int) * e->nr);
+  e->rmz = (int *)realloc (e->rmz, sizeof (int) * e->nr);
 
   int i = e->nr - 1;
   e->rlx [i] = rlx;
   e->rly [i] = rly;
   e->rlz [i] = rlz;
+  e->rmx [i] = rmx;
+  e->rmy [i] = rmy;
+  e->rmz [i] = rmz;
 }
 
 static void
@@ -149,7 +171,7 @@ ewald_k_append (struct stokes * e,
  *  (struct stokes *) sys : 
  */
 static void
-stokes_ewald_table_make (struct stokes * sys, double ewald_eps)
+stokes_ewald_table_make (struct stokes *sys, double ewald_eps)
 {
   double ya; 
   double yb;
@@ -203,7 +225,8 @@ stokes_ewald_table_make (struct stokes * sys, double ewald_eps)
 	      if (rr <= rmax + rl)
 		{
 		  ewald_r_append (sys,
-				  rlx, rly, rlz);
+				  rlx, rly, rlz,
+				  m1, m2, m3);
 		}
 	    }
 	}
@@ -335,6 +358,11 @@ stokes_init (void)
   sys->Ei[3] = 0.0;
   sys->Ei[4] = 0.0;
 
+  /* auxiliary imposed flow parameters for simple shear */
+  sys->shear_mode = 0; // imposed flow is given by Ui,Oi,Ei.
+  sys->shear_rate = 0.0;
+  sys->shear_shift = 0.0;
+
   /* # of cell in real space */
   sys->rmax2 = 0.0;
   sys->rmaxx = 0;
@@ -372,27 +400,7 @@ stokes_init (void)
   sys->self_m = 0.0;
 
   // table for lattice summation
-  sys->flag_table = 0;
-  // real space
-  sys->nr = 0;
-  sys->rlx = NULL;
-  sys->rly = NULL;
-  sys->rlz = NULL;
-  // reciprocal space
-  sys->nk = 0;
-  sys->ex = NULL;
-  sys->ey = NULL;
-  sys->ez = NULL;
-  sys->k  = NULL;
-  sys->k1 = NULL;
-  sys->k2 = NULL;
-  sys->k3 = NULL;
-  sys->ya = NULL;
-  sys->yb = NULL;
-  sys->yc = NULL;
-  sys->yg = NULL;
-  sys->yh = NULL;
-  sys->ym = NULL;
+  stokes_ewald_table_init (sys);
 
   /* for lubrication */
   sys->lubmin2 = 0.0;
@@ -411,7 +419,7 @@ stokes_init (void)
 }
 
 void
-stokes_free (struct stokes * sys)
+stokes_free (struct stokes *sys)
 {
   if (sys != NULL)
     {
@@ -427,27 +435,10 @@ stokes_free (struct stokes * sys)
 
       stokes_unset_slip (sys);
 
-      if (sys->rlx != NULL) free (sys->rlx);
-      if (sys->rly != NULL) free (sys->rly);
-      if (sys->rlz != NULL) free (sys->rlz);
-
-      if (sys->ex != NULL) free (sys->ex);
-      if (sys->ey != NULL) free (sys->ey);
-      if (sys->ez != NULL) free (sys->ez);
-      if (sys->k  != NULL) free (sys->k);
-      if (sys->k1 != NULL) free (sys->k1);
-      if (sys->k2 != NULL) free (sys->k2);
-      if (sys->k3 != NULL) free (sys->k3);
-      if (sys->ya != NULL) free (sys->ya);
-      if (sys->yb != NULL) free (sys->yb);
-      if (sys->yc != NULL) free (sys->yc);
-      if (sys->yg != NULL) free (sys->yg);
-      if (sys->yh != NULL) free (sys->yh);
-      if (sys->ym != NULL) free (sys->ym);
-
+      if (sys->flag_table != 0) stokes_ewald_table_free (sys);
       if (sys->ex_lub != NULL) list_ex_free (sys->ex_lub);
-
       if (sys->it != NULL) iter_free (sys->it);
+
       free (sys);
     }
 }
@@ -457,7 +448,7 @@ stokes_free (struct stokes * sys)
  * (becuase np is necessary for ex_lub).
  */
 void
-stokes_set_np (struct stokes * sys,
+stokes_set_np (struct stokes *sys,
 	       int np, int nm)
 {
   sys->np = np;
@@ -473,7 +464,7 @@ stokes_set_np (struct stokes * sys,
 }
 
 void
-stokes_set_Ui (struct stokes * sys,
+stokes_set_Ui (struct stokes *sys,
 	       double uix, double uiy, double uiz)
 {
   sys->Ui[0] = uix;
@@ -481,7 +472,7 @@ stokes_set_Ui (struct stokes * sys,
   sys->Ui[2] = uiz;
 }
 void
-stokes_set_Oi (struct stokes * sys,
+stokes_set_Oi (struct stokes *sys,
 	       double oix, double oiy, double oiz)
 {
   sys->Oi[0] = oix;
@@ -489,7 +480,7 @@ stokes_set_Oi (struct stokes * sys,
   sys->Oi[2] = oiz;
 }
 void
-stokes_set_Ei (struct stokes * sys,
+stokes_set_Ei (struct stokes *sys,
 	       double eixx, double eixy, double eixz,
 	       double eiyz, double eiyy)
 {
@@ -500,8 +491,96 @@ stokes_set_Ei (struct stokes * sys,
   sys->Ei[4] = eiyy;
 }
 
+/* set auxiliary imposed flow parameters for simple shear
+ * and overwrite the imposed parameters Ui, Oi, Ei.
+ * INPUT
+ *  shear_mode : 0 (x = flow dir, y = grad dir)
+ *               1 (x = flow dir, z = grad dir)
+ *  shear_rate :
+ * OUTPUT
+ *  sys : struct stokes
+ */
 void
-stokes_set_l (struct stokes * sys,
+stokes_set_shear (struct stokes *sys,
+		  int shear_mode,
+		  double shear_rate)
+{
+  sys->shear_mode = shear_mode;
+  sys->shear_rate = shear_rate;
+
+  sys->Ui[0] = 0.0;
+  sys->Ui[1] = 0.0;
+  sys->Ui[2] = 0.0;
+
+  sys->Oi[0] = 0.0;
+  sys->Oi[1] = 0.0;
+  sys->Oi[2] = 0.0;
+
+  sys->Ei[0] = 0.0;
+  sys->Ei[1] = 0.0;
+  sys->Ei[2] = 0.0;
+  sys->Ei[3] = 0.0;
+  sys->Ei[4] = 0.0;
+
+  if (shear_mode == 1)
+    {
+      sys->Oi[2] = -0.5 * shear_rate; // z component
+      sys->Ei[1] = +0.5 * shear_rate; // xy component
+    }
+  else if (shear_mode == 2)
+    {
+      sys->Oi[1] = +0.5 * shear_rate; // y component
+      sys->Ei[2] = +0.5 * shear_rate; // xz component
+    }
+  else if (shear_mode != 0)
+    {
+      fprintf (stderr, "stokes_set_shear(): invalid shear_mode %d\n",
+	       shear_mode);
+    }
+}
+
+/* set shear_shift at the given time t
+ * INPUT
+ *  t : time 
+ *  sys : struct stokes
+ * OUTPUT
+ *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
+ */
+void
+stokes_set_shear_shift (struct stokes *sys,
+			double t)
+{
+  if (sys->periodic == 0) return;
+  else if (sys->shear_mode == 0) return;
+  else if (sys->shear_mode == 1)
+    {
+      sys->shear_shift = sys->ly * sys->shear_rate * t;
+      for (;
+	   sys->shear_shift <  -0.5*(sys->lx);
+	   sys->shear_shift += sys->lx);
+      for (;
+	   sys->shear_shift >= +0.5*(sys->lx);
+	   sys->shear_shift -= sys->lx);
+    }
+  else if (sys->shear_mode == 2)
+    {
+      sys->shear_shift = sys->lz * sys->shear_rate * t;
+      for (;
+	   sys->shear_shift <  -0.5*(sys->lx);
+	   sys->shear_shift += sys->lx);
+      for (;
+	   sys->shear_shift >= +0.5*(sys->lx);
+	   sys->shear_shift -= sys->lx);
+    }
+  else
+    {
+      fprintf (stderr, "stokes_set_shear(): invalid shear_mode %d\n",
+	       sys->shear_mode);
+    }
+}
+
+void
+stokes_set_l (struct stokes *sys,
 	      double lx, double ly, double lz)
 {
   sys->pivol = M_PI / lx / ly / lz;
@@ -594,7 +673,7 @@ ewald_recip (double k, double xi)
 }
 
 void
-stokes_set_xi (struct stokes * sys,
+stokes_set_xi (struct stokes *sys,
 	       double xi, double ewald_eps)
 {
   sys->ewald_eps = ewald_eps;
@@ -657,7 +736,7 @@ stokes_set_xi (struct stokes * sys,
 
 
 double
-xi_by_tratio (struct stokes * sys,
+xi_by_tratio (struct stokes *sys,
 	      double tratio)
 {
   double xi;

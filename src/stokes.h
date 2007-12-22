@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.24 2007/12/05 03:44:39 kichiki Exp $
+ * $Id: stokes.h,v 1.25 2007/12/22 04:34:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,6 +66,18 @@ struct stokes {
   double Oi[3];
   double Ei[5];
 
+  /* auxiliary imposed-flow parameters for simple shear */
+  int shear_mode; /* 0 : imposed flow is given by Ui,Oi,Ei.
+		   * 1 : x = flow dir, y = grad dir
+		   * 2 : x = flow dir, z = grad dir
+		   */
+  double shear_rate;
+  double shear_shift; /* shift of the periodic cell (H.rate.t) at the time t
+		       * which is in [0, L)
+		       * H : cell size in the grad dir
+		       * L : cell size in the flow dir
+		       */
+
   /**
    * periodic parameters
    */
@@ -96,6 +108,9 @@ struct stokes {
   double * rlx;
   double * rly;
   double * rlz;
+  int * rmx;
+  int * rmy;
+  int * rmz;
   // reciprocal space
   int nk; // number of lattice points
   double * ex;
@@ -164,6 +179,30 @@ void
 stokes_set_Ei (struct stokes * sys,
 	       double eixx, double eixy, double eixz,
 	       double eiyz, double eiyy);
+
+/* set auxiliary imposed flow parameters for simple shear
+ * and overwrite the imposed parameters Ui, Oi, Ei.
+ * INPUT
+ *  shear_mode : 1 (x = flow dir, y = grad dir)
+ *               2 (x = flow dir, z = grad dir)
+ *  shear_rate :
+ * OUTPUT
+ *  sys : struct stokes
+ */
+void
+stokes_set_shear (struct stokes *sys,
+		  int shear_mode,
+		  double shear_rate);
+/* set shear_shift at the given time t
+ * INPUT
+ *  t : time 
+ *  sys : struct stokes
+ * OUTPUT
+ *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
+ */
+void
+stokes_set_shear_shift (struct stokes *sys,
+			double t);
 
 void
 stokes_set_l (struct stokes * sys,
