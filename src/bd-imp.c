@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.3 2007/12/12 06:27:19 kichiki Exp $
+ * $Id: bd-imp.c,v 1.4 2007/12/22 04:30:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -93,8 +93,15 @@ BD_imp_init (struct BD_params *BD,
   BDimp->F = (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
   CHECK_MALLOC (BDimp->F, "BD_imp_init");
 
-  BDimp->F->f = BD_imp_JGdP00_func;
-  if (BDimp->BD->sys->version == 0)
+  if      (BD->scheme == 3) BDimp->F->f = BD_imp_JGdP00_func;
+  else if (BD->scheme == 4) BDimp->F->f = BD_imp_PC_func;
+  else
+    {
+      fprintf (stderr, "# BD_imp_init: invalid scheme %d\n", BD->scheme);
+      exit (1);
+    }
+
+  if (BD->sys->version == 0)
     {
       BDimp->F->n = nm * 3;
     }
@@ -111,13 +118,30 @@ BD_imp_init (struct BD_params *BD,
   CHECK_MALLOC (BDimp->guess, "BD_imp_init");
 
   // working area
-  BDimp->FTS = FTS_init (BDimp->BD->sys);
+  BDimp->FTS = FTS_init (BD->sys);
   CHECK_MALLOC (BDimp->FTS, "BD_imp_init");
 
   BDimp->pos = (double *)malloc (sizeof (double) * nm * 3);
   CHECK_MALLOC (BDimp->pos, "BD_imp_init");
   BDimp->q   = (double *)malloc (sizeof (double) * nm * 4);
   CHECK_MALLOC (BDimp->q,   "BD_imp_init");
+
+  // for predictor-corrector algorithm
+  BDimp->flag_PC = 0; // uP[] and oP[] is not set
+  if (BD->scheme != 4)
+    {
+      BDimp->xP = NULL;
+      BDimp->qP = NULL;
+      BDimp->uP = NULL;
+      BDimp->dQdtP = NULL;
+    }
+  else
+    {
+      BDimp->xP = (double *)malloc (sizeof (double) * nm * 3);
+      BDimp->qP = (double *)malloc (sizeof (double) * nm * 4);
+      BDimp->uP = (double *)malloc (sizeof (double) * nm * 3);
+      BDimp->dQdtP = (double *)malloc (sizeof (double) * nm * 4);
+    }
 
   return (BDimp);
 }
@@ -139,6 +163,11 @@ BD_imp_free (struct BD_imp *BDimp)
   if (BDimp->FTS != NULL) FTS_free (BDimp->FTS);
   if (BDimp->pos != NULL) free (BDimp->pos);
   if (BDimp->q   != NULL) free (BDimp->q);
+
+  if (BDimp->xP != NULL) free (BDimp->xP);
+  if (BDimp->qP != NULL) free (BDimp->qP);
+  if (BDimp->uP != NULL) free (BDimp->uP);
+  if (BDimp->dQdtP != NULL) free (BDimp->dQdtP);
 
   free (BDimp);
 }
@@ -183,6 +212,9 @@ BD_imp_set_xq (struct BD_imp *BDimp,
    */
   stokes_set_pos_mobile (BDimp->BD->sys, x);
   calc_brownian_force (BDimp->BD, BDimp->z);
+
+  // now the predictor in BDimp is obsolete (if set)
+  BDimp->flag_PC = 0;
 }
 
 /* set the time step,
@@ -204,13 +236,16 @@ BD_imp_set_dt (struct BD_imp *BDimp,
 }
 
 
-/*
+/**
+ * semi-implicit algorithm by
+ * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
+ */
+/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
  * INTPUT
  *  x[n] : = (x[nm*3])          for F version
  *         = (x[nm*3], q[nm*4]) for FT and FTS versions
  *  p    : (struct BD_imp *)
  * OUTPUT
- *  f[n] := -x + x0 + dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  */
 int
@@ -360,11 +395,6 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
   for (i = 0; i < nm3; i ++)
     {
       double fi = 
-	/*
-	- BDimp->pos[i]
-	+ BDimp->x0[i]
-	+ BDimp->dt * BDimp->FTS->u[i];
-	*/
 	BDimp->pos[i] - BDimp->x0[i]
 	- BDimp->dt * BDimp->FTS->u[i];
       gsl_vector_set (f, i, fi);
@@ -382,11 +412,6 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
 	  for (ii = 0; ii < 4; ii ++)
 	    {
 	      double fi =
-		/*
-		- BDimp->q[iq + ii]
-		+ BDimp->q0[iq + ii]
-		+ BDimp->dt * dQdt[ii];
-		*/
 		BDimp->q[iq + ii] - BDimp->q0[iq + ii]
 		- BDimp->dt * dQdt[ii];
 	      gsl_vector_set (f, nm3 + iq + ii, fi);
@@ -459,6 +484,7 @@ BD_imp_get_root (const struct BD_imp *BDimp,
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
+ *  t       : current time
  *  BDimp   : struct BD_imp
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
@@ -471,17 +497,27 @@ BD_imp_get_root (const struct BD_imp *BDimp,
  *  returned value : the integrated time duration
  */
 double
-BD_evolve_JGdP00 (struct BD_imp *BDimp,
+BD_evolve_JGdP00 (double t,
+		  struct BD_imp *BDimp,
 		  double *x, double *q,
 		  double dt)
 {
+  double dt_local = dt;
+  struct overlap ol;
+
+  // set sys->shear_shift if necessary
+  // JGdP is 1-step scheme so that we only need to set "shift" once
+  stokes_set_shear_shift (BDimp->BD->sys, t);
+
   /**
    * update BD_imp data
    */
+ BD_evolve_JGdP_REDO:
   BD_imp_set_xq (BDimp, x, q);
-  if (dt != BDimp->dt)
+ BD_evolve_JGdP_REDO_scale:
+  if (dt_local != BDimp->dt)
     {
-      BD_imp_set_dt (BDimp, dt);
+      BD_imp_set_dt (BDimp, dt_local);
     }
 
   /**
@@ -510,22 +546,447 @@ BD_evolve_JGdP00 (struct BD_imp *BDimp,
   gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
   BD_imp_get_root (BDimp, root, x, q);
 
-  /** check
-  int i;
-  for (i = 0; i < F->n; i ++)
+  /* it looks like the "root" is just a pointer, so we don't need to free it.
+  gsl_vector_free (root);
+  */
+
+  /* dt-ajustment process -- overlap check */
+  if (BDimp->BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BDimp->BD->sys, x, BDimp->BD->rmin, &ol) > 0)
     {
-      fprintf (stdout, "#JGdP00 solution x[%d] = %e %e %e\n",
-	       i,
-	       x[i], 
-	       gsl_vector_get (guess, i),
-	       fabs (x[i] - gsl_vector_get (guess, i)));
+      //dt_local = reset_dt_by_ol (BDimp->BD->sys, dt_local, x, &ol);
+      dt_local *= 0.5;
+      if (dt_local < BDimp->BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  fprintf (stderr, "# JGdP: overlap. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  // reset dt to the original step
+	  dt_local = dt;
+	  goto BD_evolve_JGdP_REDO;
+	}
+      else
+	{
+	  //fact = BD_params_get_fact (BD, dt_local);
+	  /* adjustment of BDimp->fact is done by BD_imp_set_dt() above
+	   * just after the BD_evolve_JGdP_REDO_scale
+	   */
+	  fprintf (stderr, "# JGdP: overlap. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  goto BD_evolve_JGdP_REDO_scale;
+	}
     }
-  **/
 
-  //gsl_vector_free (root); // don't we need that?
-
-  return (dt);
+  return (dt_local);
 }
+
+
+/**
+ * semi-implicit predictor-corrector algorithm
+ */
+/* set the predictor for the configuration (BDimp->x0, BDimp->q0).
+ * this must be called after setting both BD_imp_set_xq() and BD_imp_set_dt().
+ */
+void
+BD_imp_set_P (struct BD_imp *BDimp)
+{
+  if (BDimp->flag_PC == 1) return;
+
+  struct BD_params *BD = BDimp->BD;
+
+  // for temporary use
+  struct FTS *FTS = BDimp->FTS;
+
+  int nm = BDimp->BD->sys->nm;
+  int nm3 = nm * 3;
+  int nm4 = nm * 4;
+  int nm5 = nm * 5;
+  int i;
+
+  // set force (and torque)
+  if (BD->sys->version == 0) // F version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	}
+    }
+  else // FT and FTS version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	}
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
+	}
+      if (BD->sys->version == 2)
+	{
+	  // FTS version
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      FTS->e[i] = BD->E[i];
+	    }
+	}
+    }
+  // BD->sys->pos is already definted above
+  stokes_set_pos_mobile (BD->sys, BDimp->x0);
+  solve_mix_3all (BD->sys,
+		  BD->flag_lub, BD->flag_mat,
+		  FTS->f,    FTS->t,  FTS->e,
+		  BD->uf,    BD->of,  BD->ef,
+		  BDimp->uP, FTS->o,  FTS->s,
+		  FTS->ff,   FTS->tf, FTS->sf);
+  for (i = 0; i < nm3; i ++)
+    {
+      BDimp->xP[i] = BDimp->x0[i] + BDimp->dt * BDimp->uP[i];
+    }
+  if (BD->sys->version > 0)
+    {
+      // FT or FTS version
+      for (i = 0; i < nm; i ++)
+	{
+	  int ix = i * 3;
+	  int iq = i * 4;
+	  quaternion_dQdt (BDimp->q0 + iq, FTS->o + ix,
+			   BDimp->dQdtP + iq);
+	}
+      for (i = 0; i < nm4; i ++)
+	{
+	  BDimp->qP[i] = BDimp->q0[i] + BDimp->dt * BDimp->dQdtP[i];
+	}
+    }
+
+  BDimp->flag_PC = 1;
+}
+
+/* form the nonlinear equations for semi-implicit predictor-corrector
+ * INTPUT
+ *  x[n] : = (x[nm*3])          for F version
+ *         = (x[nm*3], q[nm*4]) for FT and FTS versions
+ *  p    : (struct BD_imp *)
+ * OUTPUT
+ *  f[n] := x - x0
+ *        - (dt/2) * (U^pr
+ *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  where U^pr is the predictor obtained by Euler scheme as 
+ *   U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
+ */
+int
+BD_imp_PC_func (const gsl_vector *x, void *p,
+		gsl_vector *f)
+{
+  struct BD_imp *BDimp = (struct BD_imp *)p;
+  struct BD_params *BD = BDimp->BD;
+  struct stokes *sys = BD->sys;
+
+  int i;
+
+  int nm = sys->nm;
+  int nm3 = nm * 3;
+  int nm4 = nm3 + nm;
+  int nm5 = nm4 + nm;
+
+  /**
+   * set the forces for x0[] (and independent of the config)
+   */
+  // set force (and torque)
+  if (sys->version == 0) // F version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	}
+    }
+  else // FT and FTS version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
+	}
+      for (i = 0; i < nm3; i ++)
+	{
+	  BDimp->FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
+	}
+      if (sys->version == 2)
+	{
+	  // FTS version
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      BDimp->FTS->e[i] = BD->E[i];
+	    }
+	}
+    }
+
+  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
+  for (i = 0; i < nm3; i ++)
+    {
+      BDimp->pos[i] = gsl_vector_get (x, i);
+    }
+  if (sys->version > 0)
+    {
+      for (i = 0; i < nm4; i ++)
+	{
+	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
+	}
+    }
+
+  /**
+   * set the force for x[]
+   * F^P should be evaluated for the new config x[]
+   */
+  stokes_set_pos_mobile (sys, BDimp->pos); // first nm3 is the position
+
+  if (BD->bonds->n > 0)
+    {
+      // calc bond (spring) force
+      bonds_calc_force (BD->bonds, sys,
+			BDimp->FTS->f, 1/* add */);
+    }
+  if (BD->ev != NULL)
+    {
+      // calc EV force
+      EV_calc_force (BD->ev, sys,
+		     BDimp->FTS->f, 1/* add */);
+    }
+
+  /**
+   * solve (u, o) with F^P(x) for the configuration to xP[] -- the predictor
+   */
+  // reset the configuration to xP[]
+  stokes_set_pos_mobile (sys, BDimp->xP);
+  solve_mix_3all (sys,
+		  BD->flag_lub, BD->flag_mat,
+		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
+		  BD->uf, BD->of, BD->ef,
+		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
+		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
+  /* note that FTS->[u,o] are in the labo frame */
+
+  /**
+   * adjust the imposed flow with the new config x[].
+   *
+   * now FTS->u = U (in the labo frame)
+   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   * so that FTS->u += (u(x) - u(x0))
+   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   *                   ^^^^
+   * note that only u depends on the position (not o (nor e))
+   * thereofre, there is no correction
+   * (that is, the components in (u(x) - u(x0)) are zero)
+   */
+  for (i = 0; i < nm; i ++)
+    {
+      int ix = i*3;
+      int iy = ix + 1;
+      int iz = ix + 2;
+
+      double dx = BDimp->pos[ix] - BDimp->xP[ix];
+      double dy = BDimp->pos[iy] - BDimp->xP[iy];
+      double dz = BDimp->pos[iz] - BDimp->xP[iz];
+
+      // O\times (x - x0)
+      double uOx = sys->Oi[1] * dz - sys->Oi[2] * dy;
+      double uOy = sys->Oi[2] * dx - sys->Oi[0] * dz;
+      double uOz = sys->Oi[0] * dy - sys->Oi[1] * dx;
+
+      // E.(x - x0)
+      double Ezz =
+	- sys->Ei[0]
+	- sys->Ei[4];
+      double uEx
+	= sys->Ei[0] * dx // xx . x
+	+ sys->Ei[1] * dy // xy . y
+	+ sys->Ei[2] * dz;// xz . z
+      double uEy
+	= sys->Ei[1] * dx // yx . x
+	+ sys->Ei[4] * dy // yy . y
+	+ sys->Ei[3] * dz;// yz . z
+      double uEz
+	= sys->Ei[2] * dx // zx . x
+	+ sys->Ei[3] * dy // zy . y
+	+ Ezz        * dz;// zz . z
+
+      BDimp->FTS->u [ix] += uOx + uEx;
+      BDimp->FTS->u [iy] += uOy + uEy;
+      BDimp->FTS->u [iz] += uOz + uEz;
+    }
+  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
+
+  /**
+   * form the vector f[] for the root-finding routines
+   */
+  for (i = 0; i < nm3; i ++)
+    {
+      double fi = 
+	BDimp->pos[i] - BDimp->x0[i]
+	- 0.5 * BDimp->dt * (BDimp->uP[i] + BDimp->FTS->u[i]);
+      gsl_vector_set (f, i, fi);
+    }
+  if (sys->version > 0)
+    {
+      // FT or FTS version
+      for (i = 0; i < nm; i ++)
+	{
+	  int ix = i * 3;
+	  int iq = i * 4;
+	  double dQdt[4];
+	  quaternion_dQdt (BDimp->q + iq, BDimp->FTS->o + ix, dQdt);
+	  int ii;
+	  for (ii = 0; ii < 4; ii ++)
+	    {
+	      double fi =
+		BDimp->q[iq + ii] - BDimp->q0[iq + ii]
+		- 0.5 * BDimp->dt * (BDimp->dQdtP[iq + ii] + dQdt[ii]);
+	      gsl_vector_set (f, nm3 + iq + ii, fi);
+	    }
+	}
+    }
+
+  return (GSL_SUCCESS);
+}
+
+/* evolve position of particles by semi-implicit predictor-corrector
+ * INPUT
+ *  t       : current time
+ *  BDimp   : struct BD_imp
+ *  x[nm*3] : positions of particles   at t = t0
+ *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
+ *            if NULL is given, just ignored.
+ *  dt      : time step (scaled by a/U)
+ * OUTPUT
+ *  x[nm*3] : updated positions of particles at t = t0 + dt
+ *  q[nm*4] : quaternions of particles       at t = t0 + dt
+ *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
+ */
+double
+BD_evolve_imp_PC (double t,
+		  struct BD_imp *BDimp,
+		  double *x, double *q,
+		  double dt)
+{
+  double dt_local = dt;
+  struct overlap ol;
+
+  /**
+   * update BD_imp data
+   */
+ BD_evolve_imp_PC_REDO:
+  // set sys->shear_shift if necessary
+  // at the predictor step
+  stokes_set_shear_shift (BDimp->BD->sys, t);
+  BD_imp_set_xq (BDimp, x, q);
+ BD_evolve_imp_PC_REDO_scale:
+  if (dt_local != BDimp->dt)
+    {
+      BD_imp_set_dt (BDimp, dt_local);
+    }
+  // set the predictor in BDimp->uP[] and BDimp->qP[]
+  BD_imp_set_P (BDimp);
+
+  /* dt-ajustment process -- overlap check */
+  if (BDimp->BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BDimp->BD->sys, BDimp->xP, BDimp->BD->rmin, &ol) > 0)
+    {
+      //dt_local = reset_dt_by_ol (BDimp->BD->sys, dt_local, x, &ol);
+      dt_local *= 0.5;
+      if (dt_local < BDimp->BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  fprintf (stderr, "# imp_PC: overlap in the predictor step. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  // reset dt to the original step
+	  dt_local = dt;
+	  goto BD_evolve_imp_PC_REDO;
+	}
+      else
+	{
+	  //fact = BD_params_get_fact (BD, dt_local);
+	  /* adjustment of BDimp->fact is done by BD_imp_set_dt() above
+	   * just after the BD_evolve_JGdP_REDO_scale
+	   */
+	  fprintf (stderr, "# imp_PC: overlap in the predictor step. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  goto BD_evolve_imp_PC_REDO_scale;
+	}
+    }
+
+
+  /**
+   * set the initial guess
+   */
+  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
+  gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
+
+  // set sys->shear_shift if necessary
+  // at the corrector step
+  stokes_set_shear_shift (BDimp->BD->sys, t + dt_local);
+
+  int status;
+  int iter = 0;
+  do
+    {
+      iter++;
+      status = gsl_multiroot_fsolver_iterate (BDimp->S);
+
+      if (status)   /* check if solver is stuck */
+	break;
+
+      status = gsl_multiroot_test_residual (BDimp->S->f, BDimp->eps);
+    }
+  while (status == GSL_CONTINUE && iter < BDimp->itmax);
+
+  /**
+   * retreive the solution
+   */
+  gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
+  BD_imp_get_root (BDimp, root, x, q);
+
+  /* it looks like the "root" is just a pointer, so we don't need to free it.
+  gsl_vector_free (root);
+  */
+
+  /* dt-ajustment process -- overlap check */
+  if (BDimp->BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
+      && check_overlap (BDimp->BD->sys, x, BDimp->BD->rmin, &ol) > 0)
+    {
+      //dt_local = reset_dt_by_ol (BDimp->BD->sys, dt_local, x, &ol);
+      dt_local *= 0.5;
+      if (dt_local < BDimp->BD->dt_lim)
+	{
+	  // just reject the random force z[]
+	  /* BD->pos is still set by the initial config x[] */
+	  fprintf (stderr, "# imp_PC: overlap in the corrector step. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  // reset dt to the original step
+	  dt_local = dt;
+	  goto BD_evolve_imp_PC_REDO;
+	}
+      else
+	{
+	  //fact = BD_params_get_fact (BD, dt_local);
+	  /* adjustment of BDimp->fact is done by BD_imp_set_dt() above
+	   * just after the BD_evolve_JGdP_REDO_scale
+	   */
+	  fprintf (stderr, "# imp_PC: overlap in the corrector step. "
+		   "dt = %e > %e => reconstruct FB\n",
+		   dt_local, BDimp->BD->dt_lim);
+	  goto BD_evolve_imp_PC_REDO_scale;
+	}
+    }
+
+  return (dt_local);
+}
+
 
 
 /* wrapper for BD_imp_evolve()
@@ -571,9 +1032,24 @@ BD_imp_ode_evolve (struct BD_imp *BDimp,
 	  dt_local = t_out - (*t);
 	}
 
-      double dt_done = BD_evolve_JGdP00 (BDimp, x, q, dt_local);
+      double dt_done;
+      switch (BD->scheme)
+	{
+	case 3:
+	  dt_done = BD_evolve_JGdP00 (*t, BDimp, x, q, dt_local);
+	  break;
 
-      //(*t) += dt_local;
+	case 4:
+	  dt_done = BD_evolve_imp_PC (*t, BDimp, x, q, dt_local);
+	  break;
+
+	default:
+	  fprintf (stderr, "# BD_imp_ode_evolve: invalid scheme %d\n",
+		   BD->scheme);
+	  exit (1);
+	  break;
+	}
+
       (*t) += dt_done;
     }
   while ((*t) < t_out);

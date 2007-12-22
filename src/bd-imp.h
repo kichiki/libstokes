@@ -1,7 +1,7 @@
 /* header file for bd-imp.c --
  * implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.h,v 1.2 2007/12/12 06:27:43 kichiki Exp $
+ * $Id: bd-imp.h,v 1.3 2007/12/22 04:30:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,13 @@ struct BD_imp {
   struct FTS *FTS;
   double *pos;
   double *q;
+
+  // for predictor-corrector algorithm
+  int flag_PC;
+  double *xP;
+  double *qP;
+  double *uP;
+  double *dQdtP;
 };
 
 
@@ -76,13 +83,16 @@ void
 BD_imp_set_dt (struct BD_imp *BDimp,
 	       double dt);
 
-/*
+/**
+ * semi-implicit algorithm by
+ * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
+ */
+/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
  * INTPUT
  *  x[n] : = (x[nm*3])          for F version
  *         = (x[nm*3], q[nm*4]) for FT and FTS versions
  *  p    : (struct BD_imp *)
  * OUTPUT
- *  f[n] := -x + x0 + dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
  */
 int
@@ -97,7 +107,6 @@ BD_imp_set_guess (const struct BD_imp *BDimp,
 		  const double *x,
 		  const double *q,
 		  gsl_vector *guess);
-
 void
 BD_imp_get_root (const struct BD_imp *BDimp,
 		 gsl_vector *root,
@@ -107,6 +116,7 @@ BD_imp_get_root (const struct BD_imp *BDimp,
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
+ *  t       : current time
  *  BDimp   : struct BD_imp
  *  x[nm*3] : positions of particles   at t = t0
  *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
@@ -119,9 +129,56 @@ BD_imp_get_root (const struct BD_imp *BDimp,
  *  returned value : the integrated time duration
  */
 double
-BD_evolve_JGdP00 (struct BD_imp *BDimp,
+BD_evolve_JGdP00 (double t,
+		  struct BD_imp *BDimp,
 		  double *x, double *q,
 		  double dt);
+
+/**
+ * semi-implicit predictor-corrector algorithm
+ */
+/* set the predictor for the configuration (BDimp->x0, BDimp->q0).
+ * this must be called after setting both BD_imp_set_xq() and BD_imp_set_dt().
+ */
+void
+BD_imp_set_P (struct BD_imp *BDimp);
+
+/* form the nonlinear equations for semi-implicit predictor-corrector
+ * INTPUT
+ *  x[n] : = (x[nm*3])          for F version
+ *         = (x[nm*3], q[nm*4]) for FT and FTS versions
+ *  p    : (struct BD_imp *)
+ * OUTPUT
+ *  f[n] := x - x0
+ *        - (dt/2) * (U^pr
+ *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  where U^pr is the predictor obtained by Euler scheme as 
+ *   U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
+ */
+int
+BD_imp_PC_func (const gsl_vector *x, void *p,
+		gsl_vector *f);
+
+/* evolve position of particles by semi-implicit predictor-corrector
+ * INPUT
+ *  t       : current time
+ *  BDimp   : struct BD_imp
+ *  x[nm*3] : positions of particles   at t = t0
+ *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
+ *            if NULL is given, just ignored.
+ *  dt      : time step (scaled by a/U)
+ * OUTPUT
+ *  x[nm*3] : updated positions of particles at t = t0 + dt
+ *  q[nm*4] : quaternions of particles       at t = t0 + dt
+ *            (only if q[] is given for FT and FTS)
+ *  returned value : the integrated time duration
+ */
+double
+BD_evolve_imp_PC (double t,
+		  struct BD_imp *BDimp,
+		  double *x, double *q,
+		  double dt);
+
 
 /* wrapper for BD_imp_evolve()
  * INPUT
