@@ -1,6 +1,6 @@
 /* ODE utility routines for angle by quaternion
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.c,v 1.3 2007/12/05 03:48:13 kichiki Exp $
+ * $Id: ode-quaternion.c,v 1.4 2007/12/22 17:35:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -190,6 +190,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_shear_shift (ode->sys, t);
 
   if (ode->bonds->n > 0)
     {
@@ -300,6 +301,7 @@ dydt_Q_hydro_st (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
+  stokes_set_shear_shift (ode->sys, t);
 
   if (ode->bonds->n > 0)
     {
