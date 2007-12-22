@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.8 2007/12/06 02:28:39 kichiki Exp $
+ * $Id: brownian.h,v 1.9 2007/12/22 04:31:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,8 +63,18 @@ struct BD_params
   int scheme;  /* 0 : the mid-point algorithm
 		* 1 : Banchio-Brady (2003)
 		* 2 : Ball-Melrose (1997)
+		* 3 : Jendrejack et al (2000)
+		* 4 : semi-implicit predictor-corrector
+		* note that, for 3 and 4, BD_imp_ode_evolve() should be used.
 		*/
   double BB_n; // step parameter for BB03 algorithm
+
+  double rmin;   /* minimum distance for dt-adjustment
+		  * if (r < rmin*(ai+aj)), dt is adjusted
+		  * rmin == 0 corresponds to "no dt-adjustment"
+		  * rmin == 1 corresponds to dt-adjustment for overlap
+		  * NOTE: if sys->rmin is defined, dt-adjustment is ignored.
+		  */
   double dt_lim; /* lower bound to shrink dt to prevent overlaps
 		  * set "dt" if you don't want to adjust dt but just reject
 		  */
@@ -100,6 +110,7 @@ struct BD_params
  *  (int) n_lub
  *  (int) scheme
  *  (double) BB_n
+ *  (double) rmin
  *  (double) dt_lim
  * OUTPUT :
  *  (struct ode_params) params
@@ -126,10 +137,36 @@ BD_params_init (struct stokes *sys,
 		int    n_lub,
 		int    scheme,
 		double BB_n,
+		double rmin,
 		double dt_lim);
 
 void
 BD_params_free (struct BD_params *BD);
+
+
+/* for check_overlap()
+ */
+struct overlap {
+  double r2; // square of distance for the overlapping pair
+  double a2; // (a_i + a_j)^2 for the overlapping pair
+  int i; // particle index
+  int j; // particle index
+  int k; // lattice index
+};
+
+/* return numbers of overlapping pairs
+ * INPUT
+ *  rmin : factor to judge "overlap"
+ *         where (r2 <= rmin * a2) are overlapping
+ *         rmin == 1 => contact point is the condition
+ *         rmin == 0 => all pairs are NOT overlapping
+ * OUTPUT
+ *  returned value : number of "overlapping" pairs (r2 <= rmin * a2)
+ *                   (0 == no "overlapping" pairs)
+ */
+int
+check_overlap (struct stokes *sys, const double *pos, double rmin,
+	       struct overlap *ol);
 
 
 /* calculate y = A.x for Brownian force, where A = M^inf
@@ -307,6 +344,7 @@ BD_ode_evolve (struct BD_params *BD,
 
 /* evolve position of particles -- the mid-point scheme
  * INPUT
+ *  t       : current time
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
  *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
@@ -320,13 +358,15 @@ BD_ode_evolve (struct BD_params *BD,
  *  returned value : the integrated time duration
  */
 double
-BD_evolve_mid (struct BD_params *BD,
+BD_evolve_mid (double t,
+	       struct BD_params *BD,
 	       double *x, double *q,
 	       double dt);
 
 /* evolve position of particles -- Banchio-Brady scheme
  * reference : Banchio and Brady (2003) Phys. Fluids
  * INPUT
+ *  t       : current time
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
  *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
@@ -340,13 +380,15 @@ BD_evolve_mid (struct BD_params *BD,
  *  returned value : the integrated time duration
  */
 double
-BD_evolve_BB03 (struct BD_params *BD,
+BD_evolve_BB03 (double t,
+		struct BD_params *BD,
 		double *x, double *q,
 		double dt);
 
 /* evolve position of particles -- Ball-Melrose scheme
  * reference : Ball and Melrose (1997)
  * INPUT
+ *  t       : current time
  *  BD      : struct BD_params (sys, rng, flag_lub, flag_mat,
  *                              flag_Q, F, T, E, peclet are used.)
  *  x[nm*3] : positions of particles   at t = t0
@@ -360,7 +402,8 @@ BD_evolve_BB03 (struct BD_params *BD,
  *  returned value : the integrated time duration
  */
 double
-BD_evolve_BM97 (struct BD_params *BD,
+BD_evolve_BM97 (double t,
+		struct BD_params *BD,
 		double *x, double *q,
 		double dt);
 
