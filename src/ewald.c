@@ -1,6 +1,6 @@
 /* utility for Ewald summation calculation
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald.c,v 1.10 2007/11/07 04:40:32 kichiki Exp $
+ * $Id: ewald.c,v 1.11 2007/12/22 18:11:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -674,6 +674,17 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 	      double xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
 	      double yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
 	      double zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
+
+	      // shift for shear
+	      if (sys->shear_mode == 1)
+		{
+		  xx += (double)sys->rmy[m] * sys->shear_shift;
+		}
+	      else if (sys->shear_mode == 2)
+		{
+		  xx += (double)sys->rmz[m] * sys->shear_shift;
+		}
+
 	      double rr = xx * xx + yy * yy + zz * zz;
 
 	      if (rr == 0.0) continue; // to exclude the self part
@@ -782,7 +793,8 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
   sys->cpu2 = cpu - cpu0;
   cpu0 = cpu;
 
-  /* Second Ewald part ( reciprocal space ) */
+  /* Second Ewald part ( reciprocal space )
+   * -- table version
   for (i = 0; i < sys->np; i++)
     {
       int ix = i * 3;
@@ -902,6 +914,161 @@ atimes_ewald_3all (int n, const double *x, double *y, void * user_data)
 				     0.0, sf * yg,
 				     cf * yh,
 				     0.0, cf * ym, 0.0);
+		}
+	    }
+	}
+    }
+   */
+
+  /* Second Ewald part ( reciprocal space ) */
+  int m1, m2, m3;
+  double k0x = 2.0 * M_PI / sys->lx;
+  double k0y = 2.0 * M_PI / sys->ly;
+  double k0z = 2.0 * M_PI / sys->lz;
+  double sl = sys->shear_shift / sys->lx;
+  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
+    {
+      double k1 = k0x * (double) m1;
+      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
+	{
+	  double k2 = k0y * (double) m2;
+	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
+	    {
+	      double k3 = k0z * (double) m3;
+	      if (m1 != 0 || m2 != 0 || m3 != 0)
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      k2 = k0y * ((double)m2 - sl * (double)m1);
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      k3 = k0z * ((double)m3 - sl * (double)m1);
+		    }
+
+		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
+		  double k = sqrt (kk);
+
+		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
+
+		  double k4z = kk / 4.0 / sys->xi2;
+		  double kexp = sys->pivol
+		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
+		    / kk * exp (- k4z);
+
+		  double ex = k1 / k;
+		  double ey = k2 / k;
+		  double ez = k3 / k;
+
+		  for (i = 0; i < sys->np; i++)
+		    {
+		      int ix = i * 3;
+		      int iy = ix + 1;
+		      int iz = ix + 2;
+		      for (j = 0; j < sys->np; j++)
+			{
+			  int jx = j * 3;
+			  int jy = jx + 1;
+			  int jz = jx + 2;
+
+			  if (sys->slip == NULL // no-slip
+			      && sys->a == NULL) // monodisperse
+			    {
+			      ya = 6.0 * (1.0 - kk / 3.0) * kexp;
+			      yb = 3.0 * k * kexp;
+			      yc = 3.0 / 2.0 * kk * kexp;
+			      yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
+			      yh = 3.0 / 2.0 * kk * kexp;
+			      ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
+			    }
+			  else // slip or no-slip polydisperse
+			    {
+			      double aa;
+			      double aa3;
+			      double aa2;
+			      if (sys->a == NULL) aa = 1.0;
+			      else                aa = sys->a [i];
+			      aa2 = aa * aa;
+			      aa3 = aa2 * aa;
+
+			      // a^2 in nabla^2 term
+			      double a2a;
+			      double a2b;
+			      if (sys->slip == NULL) // no-slip
+				{
+				  a2a = aa2;
+
+				  if (sys->a == NULL) a2b = 1.0;
+				  else                a2b = sys->a [j];
+				  a2b *= a2b;
+				}
+			      else // slip
+				{
+				  a2a = sys->slip_a [i];
+				  a2a *= a2a;
+
+				  a2b = sys->slip_a [j];
+				  a2b *= a2b;
+				}
+
+			      ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0)
+				* kexp;
+			      yb = aa2 * 3.0 * k * kexp;
+			      yc = aa3 * 3.0 / 2.0 * kk * kexp;
+			      yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0))
+				* k * kexp;
+			      yh = aa3 * 3.0 / 2.0 * kk * kexp;
+			      ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0)
+				* kk * kexp;
+			      // in SD scaling
+			    }
+      
+			  double xx = sys->pos [jx] - sys->pos [ix];
+			  double yy = sys->pos [jy] - sys->pos [iy];
+			  double zz = sys->pos [jz] - sys->pos [iz];
+
+			  double cf = cos (+ k1 * xx
+					   + k2 * yy
+					   + k3 * zz);
+
+			  // note that interaction (i,j) should be
+			  // for (U[i], F[j])
+			  if (sys->version == 0) // F version
+			    {
+			      matrix_f_atimes (x + j*3, y + i*3,
+					       ex, ey, ez,
+					       0.0, cf * ya);
+			    }
+			  else if (sys->version == 1) // FT version
+			    {
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
+
+			      matrix_ft_atimes (x + j*6, y + i*6,
+						ex, ey, ez,
+						0.0, cf * ya,
+						sf * yb,
+						0.0, cf * yc);
+			    }
+			  else // FTS version
+			    {
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
+
+			      matrix_fts_atimes (x + j*11, y + i*11,
+						 ex, ey, ez,
+						 0.0, cf * ya,
+						 sf * yb,
+						 0.0, cf * yc,
+						 0.0, sf * yg,
+						 cf * yh,
+						 0.0, cf * ym, 0.0);
+			    }
+			}
+		    }
 		}
 	    }
 	}
@@ -1098,6 +1265,17 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 	      double xx = sys->pos [jx] - sys->pos [ix] + sys->rlx [m];
 	      double yy = sys->pos [jy] - sys->pos [iy] + sys->rly [m];
 	      double zz = sys->pos [jz] - sys->pos [iz] + sys->rlz [m];
+
+	      // shift for shear
+	      if (sys->shear_mode == 1)
+		{
+		  xx += (double)sys->rmy[m] * sys->shear_shift;
+		}
+	      else if (sys->shear_mode == 2)
+		{
+		  xx += (double)sys->rmz[m] * sys->shear_shift;
+		}
+
 	      double rr = xx * xx + yy * yy + zz * zz;
 
 	      if (rr == 0.0) continue; // to exclude the self part
@@ -1208,7 +1386,8 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
   sys->cpu2 = cpu - cpu0;
   cpu0 = cpu;
 
-  /* Second Ewald part ( reciprocal space ) */
+  /* Second Ewald part ( reciprocal space )
+   * -- table version
   for (i = 0; i < sys->np; i++)
     {
       int ix = i * 3;
@@ -1330,6 +1509,162 @@ make_matrix_mob_ewald_3all (struct stokes * sys, double * mat)
 				 cf * yh,
 				 0.0, cf * ym, 0.0,
 				 n, mat);
+		}
+	    }
+	}
+    }
+   */
+
+  /* Second Ewald part ( reciprocal space )  */
+  int m1, m2, m3;
+  double k0x = 2.0 * M_PI / sys->lx;
+  double k0y = 2.0 * M_PI / sys->ly;
+  double k0z = 2.0 * M_PI / sys->lz;
+  double sl = sys->shear_shift / sys->lx;
+  for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
+    {
+      double k1 = k0x * (double) m1;
+      for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
+	{
+	  double k2 = k0y * (double) m2;
+	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
+	    {
+	      double k3 = k0z * (double) m3;
+	      if (m1 != 0 || m2 != 0 || m3 != 0)
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      k2 = k0y * ((double)m2 - sl * (double)m1);
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      k3 = k0z * ((double)m3 - sl * (double)m1);
+		    }
+
+		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
+		  double k = sqrt (kk);
+
+		  if (sys->kmax != 0.0 && k > sys->kmax) continue;
+
+		  double k4z = kk / 4.0 / sys->xi2;
+		  double kexp = sys->pivol
+		    * (1.0 + k4z * (1.0 + 2.0 * k4z))
+		    / kk * exp (- k4z);
+
+		  double ex = k1 / k;
+		  double ey = k2 / k;
+		  double ez = k3 / k;
+
+		  for (i = 0; i < sys->np; i++)
+		    {
+		      int ix = i * 3;
+		      int iy = ix + 1;
+		      int iz = ix + 2;
+		      for (j = 0; j < sys->np; j++)
+			{
+			  int jx = j * 3;
+			  int jy = jx + 1;
+			  int jz = jx + 2;
+
+			  if (sys->slip == NULL // no-slip
+			      && sys->a == NULL) // monodisperse
+			    {
+			      ya = 6.0 * (1.0 - kk / 3.0) * kexp;
+			      yb = 3.0 * k * kexp;
+			      yc = 3.0 / 2.0 * kk * kexp;
+			      yg = 3.0 * (1.0 - 4.0 / 15.0 * kk) * k * kexp;
+			      yh = 3.0 / 2.0 * kk * kexp;
+			      ym = 3.0 * (1.0 - kk / 5.0) * kk * kexp;
+			    }
+			  else // slip or no-slip polydisperse
+			    {
+			      double aa;
+			      double aa3;
+			      double aa2;
+			      if (sys->a == NULL) aa = 1.0;
+			      else                aa = sys->a [i];
+			      aa2 = aa * aa;
+			      aa3 = aa2 * aa;
+
+			      // a^2 in nabla^2 term
+			      double a2a;
+			      double a2b;
+			      if (sys->slip == NULL) // no-slip
+				{
+				  a2a = aa2;
+
+				  if (sys->a == NULL) a2b = 1.0;
+				  else                a2b = sys->a [j];
+				  a2b *= a2b;
+				}
+			      else // slip
+				{
+				  a2a = sys->slip_a [i];
+				  a2a *= a2a;
+
+				  a2b = sys->slip_a [j];
+				  a2b *= a2b;
+				}
+
+			      ya = aa * 6.0 * (1.0 - kk * (a2a+a2b) / 6.0)
+				* kexp;
+			      yb = aa2 * 3.0 * k * kexp;
+			      yc = aa3 * 3.0 / 2.0 * kk * kexp;
+			      yg = aa2 * 3.0 * (1.0 - kk * (a2a/10.0 + a2b/6.0))
+				* k * kexp;
+			      yh = aa3 * 3.0 / 2.0 * kk * kexp;
+			      ym = aa3 * 3.0 * (1.0 - kk * (a2a+a2b) / 10.0)
+				* kk * kexp;
+			      // in SD scaling
+			    }
+      
+			  double xx = sys->pos [jx] - sys->pos [ix];
+			  double yy = sys->pos [jy] - sys->pos [iy];
+			  double zz = sys->pos [jz] - sys->pos [iz];
+
+			  double cf = cos (+ k1 * xx
+					   + k2 * yy
+					   + k3 * zz);
+
+			  if (sys->version == 0) // F version
+			    {
+			      matrix_f_ij (i, j,
+					   ex, ey, ez,
+					   0.0, cf * ya,
+					   n, mat);
+			    }
+			  else if (sys->version == 1) // FT version
+			    {
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
+
+			      matrix_ft_ij (i, j,
+					    ex, ey, ez,
+					    0.0, cf * ya,
+					    sf * yb,
+					    0.0, cf * yc,
+					    n, mat);
+			    }
+			  else // FTS version
+			    {
+			      double sf = - sin (+ k1 * xx
+						 + k2 * yy
+						 + k3 * zz);
+
+			      matrix_fts_ij (i, j,
+					     ex, ey, ez,
+					     0.0, cf * ya,
+					     sf * yb,
+					     0.0, cf * yc,
+					     0.0, sf * yg,
+					     cf * yh,
+					     0.0, cf * ym, 0.0,
+					     n, mat);
+			    }
+			}
+		    }
 		}
 	    }
 	}
@@ -1515,6 +1850,16 @@ atimes_ewald_3all_notbl (int n, const double *x,
 		    {
 		      double rlz = sys->lz * (double) m3;
   
+		      // shift for shear
+		      if (sys->shear_mode == 1)
+			{
+			  rlx += (double)m2 * sys->shear_shift;
+			}
+		      else if (sys->shear_mode == 2)
+			{
+			  rlx += (double)m3 * sys->shear_shift;
+			}
+
 		      double xx = sys->pos [jx] - sys->pos [ix] + rlx;
 		      double yy = sys->pos [jy] - sys->pos [iy] + rly;
 		      double zz = sys->pos [jz] - sys->pos [iz] + rlz;
@@ -1634,17 +1979,31 @@ atimes_ewald_3all_notbl (int n, const double *x,
   cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
+  double k0x = 2.0 * M_PI / sys->lx;
+  double k0y = 2.0 * M_PI / sys->ly;
+  double k0z = 2.0 * M_PI / sys->lz;
+  double sl = sys->shear_shift / sys->lx;
   for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      double k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      double k1 = k0x * (double) m1;
       for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  double k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  double k2 = k0y * (double) m2;
 	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      double k3 = 2.0 * M_PI * (double) m3 / sys->lz;
+	      double k3 = k0z * (double) m3;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      k2 = k0y * ((double)m2 - sl * (double)m1);
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      k3 = k0z * ((double)m3 - sl * (double)m1);
+		    }
+
 		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
 		  double k = sqrt (kk);
 
@@ -1730,9 +2089,11 @@ atimes_ewald_3all_notbl (int n, const double *x,
 					   + k2 * yy
 					   + k3 * zz);
 
+			  // note that interaction (i,j) should be
+			  // for (U[i], F[j])
 			  if (sys->version == 0) // F version
 			    {
-			      matrix_f_atimes (x + i*3, y + j*3,
+			      matrix_f_atimes (x + j*3, y + i*3,
 					       ex, ey, ez,
 					       0.0, cf * ya);
 			    }
@@ -1742,7 +2103,7 @@ atimes_ewald_3all_notbl (int n, const double *x,
 						 + k2 * yy
 						 + k3 * zz);
 
-			      matrix_ft_atimes (x + i*6, y + j*6,
+			      matrix_ft_atimes (x + j*6, y + i*6,
 						ex, ey, ez,
 						0.0, cf * ya,
 						sf * yb,
@@ -1754,7 +2115,7 @@ atimes_ewald_3all_notbl (int n, const double *x,
 						 + k2 * yy
 						 + k3 * zz);
 
-			      matrix_fts_atimes (x + i*11, y + j*11,
+			      matrix_fts_atimes (x + j*11, y + i*11,
 						 ex, ey, ez,
 						 0.0, cf * ya,
 						 sf * yb,
@@ -1965,6 +2326,16 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
 		    {
 		      double rlz = sys->lz * (double) m3;
   
+		      // shift for shear
+		      if (sys->shear_mode == 1)
+			{
+			  rlx += (double)m2 * sys->shear_shift;
+			}
+		      else if (sys->shear_mode == 2)
+			{
+			  rlx += (double)m3 * sys->shear_shift;
+			}
+
 		      double xx = sys->pos [jx] - sys->pos [ix] + rlx;
 		      double yy = sys->pos [jy] - sys->pos [iy] + rly;
 		      double zz = sys->pos [jz] - sys->pos [iz] + rlz;
@@ -2085,17 +2456,31 @@ make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat)
   cpu0 = cpu;
 
   /* Second Ewald part ( reciprocal space ) */
+  double k0x = 2.0 * M_PI / sys->lx;
+  double k0y = 2.0 * M_PI / sys->ly;
+  double k0z = 2.0 * M_PI / sys->lz;
+  double sl = sys->shear_shift / sys->lx;
   for (m1 = - sys->kmaxx; m1 <= sys->kmaxx; m1++)
     {
-      double k1 = 2.0 * M_PI * (double) m1 / sys->lx;
+      double k1 = k0x * (double) m1;
       for (m2 = - sys->kmaxy; m2 <= sys->kmaxy; m2++)
 	{
-	  double k2 = 2.0 * M_PI * (double) m2 / sys->ly;
+	  double k2 = k0y * (double) m2;
 	  for (m3 = - sys->kmaxz; m3 <= sys->kmaxz; m3++)
 	    {
-	      double k3 = 2.0 * M_PI * (double) m3 / sys->lz;
+	      double k3 = k0z * (double) m3;
 	      if (m1 != 0 || m2 != 0 || m3 != 0)
 		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      k2 = k0y * ((double)m2 - sl * (double)m1);
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      k3 = k0z * ((double)m3 - sl * (double)m1);
+		    }
+
 		  double kk = k1 * k1 + k2 * k2 + k3 * k3;
 		  double k = sqrt (kk);
 
