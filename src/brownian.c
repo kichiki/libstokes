@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.14 2007/12/22 04:31:20 kichiki Exp $
+ * $Id: brownian.c,v 1.15 2007/12/26 06:35:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -223,6 +223,21 @@ BD_params_free (struct BD_params *BD)
   if (BD->a_minv != NULL) free (BD->a_minv);
   if (BD->a_lub  != NULL) free (BD->a_lub);
   free (BD);
+}
+
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  BD->t0, BD->s0 :
+ */
+void
+BD_set_shear_shift_ref (struct BD_params *BD,
+			double t0, double s0)
+{
+  BD->t0 = t0;
+  BD->s0 = s0;
 }
 
 static double
@@ -1876,7 +1891,8 @@ BD_evolve_mid (double t,
   // set configuration for calc_brownian_force()
   stokes_set_pos_mobile (BD->sys, x);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t);
+  stokes_set_shear_shift (BD->sys, t,
+			  BD->t0, BD->s0);
  BD_evolve_mid_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -1985,7 +2001,8 @@ BD_evolve_mid (double t,
   // set the intermediate configuration
   stokes_set_pos_mobile (BD->sys, xmid);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t + dt_local * 0.5);
+  stokes_set_shear_shift (BD->sys, t + dt_local * 0.5,
+			  BD->t0, BD->s0);
 
   // set force (and torque) for xmid[]
   if (BD->sys->version == 0) // F version
@@ -2169,7 +2186,8 @@ BD_evolve_BB03 (double t,
   // (re-)set brownian force
   stokes_set_pos_mobile (BD->sys, x);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t);
+  stokes_set_shear_shift (BD->sys, t,
+			  BD->t0, BD->s0);
  BD_evolve_BB03_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -2277,7 +2295,8 @@ BD_evolve_BB03 (double t,
   // set the intermediate configuration
   stokes_set_pos_mobile (BD->sys, xBB);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t + dt_local / BD->BB_n);
+  stokes_set_shear_shift (BD->sys, t + dt_local / BD->BB_n,
+			  BD->t0, BD->s0);
 
   // calc dydt with the same Brownian force
   solve_mix_3all (BD->sys,
@@ -2469,7 +2488,8 @@ BD_evolve_BM97 (double t,
   // (re-)set brownian force
   stokes_set_pos_mobile (BD->sys, x);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t);
+  stokes_set_shear_shift (BD->sys, t,
+			  BD->t0, BD->s0);
  BD_evolve_BM97_REDO_FB:
   calc_brownian_force (BD, z);
   // now, F^B_n = fact * z[i]
@@ -2566,7 +2586,8 @@ BD_evolve_BM97 (double t,
   // set the intermediate configuration
   stokes_set_pos_mobile (BD->sys, xBM);
   // set sys->shear_shift if necessary
-  stokes_set_shear_shift (BD->sys, t + dt_local);
+  stokes_set_shear_shift (BD->sys, t + dt_local,
+			  BD->t0, BD->s0);
 
   /* now BD->F[i] etc. are independent of the configuration,
    * we just skip the update the force f[].

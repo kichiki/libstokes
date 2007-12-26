@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.9 2007/12/22 04:31:43 kichiki Exp $
+ * $Id: brownian.h,v 1.10 2007/12/26 06:36:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,10 @@ struct BD_params
   int flag_mat;
   int flag_lub;
   int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
+
+  // auxiliary imposed-flow parameters for simple shear
+  double t0; // reference time for s0
+  double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 
   // currently the following parameters are just place holders
   double st;
@@ -143,6 +147,16 @@ BD_params_init (struct stokes *sys,
 void
 BD_params_free (struct BD_params *BD);
 
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  BD->t0, BD->s0 :
+ */
+void
+BD_set_shear_shift_ref (struct BD_params *BD,
+			double t0, double s0);
 
 /* for check_overlap()
  */
