@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.27 2007/12/22 04:33:52 kichiki Exp $
+ * $Id: stokes.c,v 2.28 2007/12/26 06:33:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -539,44 +539,66 @@ stokes_set_shear (struct stokes *sys,
     }
 }
 
-/* set shear_shift at the given time t
+/* get shear_shift at the given time t
  * INPUT
- *  t : time 
  *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
  * OUTPUT
- *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
+ *  returned value : shift in the range [-lx/2, lx/2)
  */
-void
-stokes_set_shear_shift (struct stokes *sys,
-			double t)
+double
+stokes_get_shear_shift (struct stokes *sys,
+			double t,
+			double t0, double s0)
 {
-  if (sys->periodic == 0) return;
-  else if (sys->shear_mode == 0) return;
+  double shift = 0.0;
+  if (sys->periodic == 0) return (shift);
+  else if (sys->shear_mode == 0) return (shift);
   else if (sys->shear_mode == 1)
     {
-      sys->shear_shift = sys->ly * sys->shear_rate * t;
+      shift = s0 + sys->ly * sys->shear_rate * (t - t0);
       for (;
-	   sys->shear_shift <  -0.5*(sys->lx);
-	   sys->shear_shift += sys->lx);
+	   shift <  -0.5*(sys->lx);
+	   shift += sys->lx);
       for (;
-	   sys->shear_shift >= +0.5*(sys->lx);
-	   sys->shear_shift -= sys->lx);
+	   shift >= +0.5*(sys->lx);
+	   shift -= sys->lx);
     }
   else if (sys->shear_mode == 2)
     {
-      sys->shear_shift = sys->lz * sys->shear_rate * t;
+      shift = s0 + sys->lz * sys->shear_rate * (t - t0);
       for (;
-	   sys->shear_shift <  -0.5*(sys->lx);
-	   sys->shear_shift += sys->lx);
+	   shift <  -0.5*(sys->lx);
+	   shift += sys->lx);
       for (;
-	   sys->shear_shift >= +0.5*(sys->lx);
-	   sys->shear_shift -= sys->lx);
+	   shift >= +0.5*(sys->lx);
+	   shift -= sys->lx);
     }
   else
     {
       fprintf (stderr, "stokes_set_shear(): invalid shear_mode %d\n",
 	       sys->shear_mode);
     }
+  return (shift);
+}
+
+/* set shear_shift at the given time t
+ * INPUT
+ *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
+ * OUTPUT
+ *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
+ */
+void
+stokes_set_shear_shift (struct stokes *sys,
+			double t,
+			double t0, double s0)
+{
+  sys->shear_shift = stokes_get_shear_shift (sys, t, t0, s0);
 }
 
 void

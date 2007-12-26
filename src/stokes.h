@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.25 2007/12/22 04:34:12 kichiki Exp $
+ * $Id: stokes.h,v 1.26 2007/12/26 06:34:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -193,16 +193,32 @@ void
 stokes_set_shear (struct stokes *sys,
 		  int shear_mode,
 		  double shear_rate);
+/* get shear_shift at the given time t
+ * INPUT
+ *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
+ * OUTPUT
+ *  returned value : shift in the range [-lx/2, lx/2)
+ */
+double
+stokes_get_shear_shift (struct stokes *sys,
+			double t,
+			double t0, double s0);
 /* set shear_shift at the given time t
  * INPUT
- *  t : time 
  *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
  * OUTPUT
  *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
  */
 void
 stokes_set_shear_shift (struct stokes *sys,
-			double t);
+			double t,
+			double t0, double s0);
 
 void
 stokes_set_l (struct stokes * sys,
