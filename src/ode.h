@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.h,v 1.4 2007/12/05 03:47:49 kichiki Exp $
+ * $Id: ode.h,v 1.5 2007/12/26 06:34:54 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,6 +47,10 @@ struct ode_params
   double st;
   struct bonds *bonds;
   double gamma;
+
+  // auxiliary imposed-flow parameters for simple shear
+  double t0; // reference time for s0
+  double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 };
 
 
@@ -83,6 +87,17 @@ ode_params_init (struct stokes *sys,
 
 void 
 ode_params_free (struct ode_params *params);
+
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  ode->t0, ode->s0 :
+ */
+void
+ode_set_shear_shift_ref (struct ode_params *ode,
+			 double t0, double s0);
 
 
 /* calc dydt for gsl_odeiv ONLY with bond interactions for relaxation
@@ -155,20 +170,6 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 int
 dydt_hydro (double t, const double *y, double *dydt,
 	    void *params);
-
-
-/** test routines **/
-
-void
-ODE_st_euler (double t, int n, double *y,
-	      double t_out,
-	      int (*f_dydt)(double, const double *, double *, void *),
-	      void *params);
-
-void
-ODE_plain_euler (double t, int n, double *y,
-		 double t_out,
-		 void *params);
 
 
 #endif /* !_ODE_H_ */
