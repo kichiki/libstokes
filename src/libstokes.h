@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.49 2007/12/22 04:35:14 kichiki Exp $
+ * $Id: libstokes.h,v 1.50 2007/12/26 06:36:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -195,16 +195,32 @@ void
 stokes_set_shear (struct stokes *sys,
 		  int shear_mode,
 		  double shear_rate);
+/* get shear_shift at the given time t
+ * INPUT
+ *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
+ * OUTPUT
+ *  returned value : shift in the range [-lx/2, lx/2)
+ */
+double
+stokes_get_shear_shift (struct stokes *sys,
+			double t,
+			double t0, double s0);
 /* set shear_shift at the given time t
  * INPUT
- *  t : time 
  *  sys : struct stokes
+ *  t   : current time 
+ *  t0  : time of the reference
+ *  s0  : shift at t0
  * OUTPUT
  *  sys->shear_shift : set and place in the range [-lx/2, lx/2)
  */
 void
 stokes_set_shear_shift (struct stokes *sys,
-			double t);
+			double t,
+			double t0, double s0);
 
 void
 stokes_set_l (struct stokes * sys,
@@ -410,6 +426,11 @@ struct stokes_nc {
   int a_id;
   int af_id;
 
+  /* auxiliary imposed-flow parameters for simple shear */
+  int shear_mode_id;
+  int shear_rate_id;
+  int shear_shift_id;
+
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
   int flag_ui0;
@@ -484,6 +505,11 @@ stokes_nc_x_init (const char * filename, int np);
  *              1 = polydisperse (set particle radius)
  *  flag_it   : 0 = constant imposed flow
  *              1 = time-changing imposed flow
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *               NOTE: shear_rate and shear_shift[t] are defined only for
+ *               shear_mode = 1 or 2.
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
@@ -506,7 +532,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
 		int flag_Q,
-		int flag_it);
+		int flag_it,
+		int shear_mode);
 
 /* close (and write if necessary) NetCDF file for libstokes
  */
@@ -515,6 +542,11 @@ stokes_nc_free (struct stokes_nc * nc);
 
 
 /** set nc data **/
+/* set shear_rate (just a scalar)
+ */
+void
+stokes_nc_set_shear_rate (struct stokes_nc *nc,
+			  double shear_rate);
 /* set l = (lx, ly, lz)
  */
 void
@@ -621,6 +653,12 @@ stokes_nc_set_af (struct stokes_nc * nc,
 void
 stokes_nc_set_time (struct stokes_nc * nc,
 		    int step, double time);
+/* set shear_shift[time]
+ */
+void
+stokes_nc_set_shear_shift (struct stokes_nc *nc,
+			   int step,
+			   double shear_shift);
 /* set ui[time][vec] at time (step)
  */
 void
@@ -745,6 +783,10 @@ stokes_nc_set_sf (struct stokes_nc * nc,
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *  shear_rate : defined only for shear_mode = 1 or 2.
  */
 struct stokes_nc *
 stokes_nc_set_by_params (const char *out_file,
@@ -754,7 +796,8 @@ stokes_nc_set_by_params (const char *out_file,
 			 const double *F,  const double *T,  const double *E,
 			 const double *uf, const double *of, const double *ef,
 			 const double *xf,
-			 const double *lat);
+			 const double *lat,
+			 int shear_mode, double shear_rate);
 
 /* check stokes_nc data with the parameters
  * INPUT
@@ -764,6 +807,7 @@ stokes_nc_set_by_params (const char *out_file,
  *             :   np, nm
  *             :   a[np] (if NULL, monodisperse mode)
  *             :   periodic
+ *             :   shear_mode, shear_rate
  *  flag_Q     :
  *  Ui, Oi, Ei :
  *  F,  T,  E  :
@@ -1232,6 +1276,10 @@ struct ode_params
   double st;
   struct bonds *bonds;
   double gamma;
+
+  // auxiliary imposed-flow parameters for simple shear
+  double t0; // reference time for s0
+  double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 };
 
 
@@ -1268,6 +1316,17 @@ ode_params_init (struct stokes *sys,
 
 void 
 ode_params_free (struct ode_params *params);
+
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  ode->t0, ode->s0 :
+ */
+void
+ode_set_shear_shift_ref (struct ode_params *ode,
+			 double t0, double s0);
 
 
 /* calc dydt for gsl_odeiv ONLY with bond interactions for relaxation
@@ -1340,6 +1399,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 int
 dydt_hydro (double t, const double *y, double *dydt,
 	    void *params);
+
 
 /* from ode-quaternion.h */
 /* calc dydt for center and angle by gsl_odeiv with hydrodynamics
@@ -1418,6 +1478,10 @@ struct BD_params
   int flag_mat;
   int flag_lub;
   int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
+
+  // auxiliary imposed-flow parameters for simple shear
+  double t0; // reference time for s0
+  double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 
   // currently the following parameters are just place holders
   double st;
@@ -1521,6 +1585,16 @@ BD_params_init (struct stokes *sys,
 void
 BD_params_free (struct BD_params *BD);
 
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  BD->t0, BD->s0 :
+ */
+void
+BD_set_shear_shift_ref (struct BD_params *BD,
+			double t0, double s0);
 
 /* wrapper for BD_evolve()
  * INPUT
