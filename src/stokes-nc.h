@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.11 2007/05/15 07:54:34 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.12 2007/12/26 06:33:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -94,6 +94,11 @@ struct stokes_nc {
   int a_id;
   int af_id;
 
+  /* auxiliary imposed-flow parameters for simple shear */
+  int shear_mode_id;
+  int shear_rate_id;
+  int shear_shift_id;
+
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
   int flag_ui0;
@@ -168,6 +173,11 @@ stokes_nc_x_init (const char * filename, int np);
  *              1 = polydisperse (set particle radius)
  *  flag_it   : 0 = constant imposed flow
  *              1 = time-changing imposed flow
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *               NOTE: shear_rate and shear_shift[t] are defined only for
+ *               shear_mode = 1 or 2.
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
@@ -190,7 +200,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
 		int flag_Q,
-		int flag_it);
+		int flag_it,
+		int shear_mode);
 
 /* close (and write if necessary) NetCDF file for libstokes
  */
@@ -199,6 +210,11 @@ stokes_nc_free (struct stokes_nc * nc);
 
 
 /** set nc data **/
+/* set shear_rate (just a scalar)
+ */
+void
+stokes_nc_set_shear_rate (struct stokes_nc *nc,
+			  double shear_rate);
 /* set l = (lx, ly, lz)
  */
 void
@@ -305,6 +321,12 @@ stokes_nc_set_af (struct stokes_nc * nc,
 void
 stokes_nc_set_time (struct stokes_nc * nc,
 		    int step, double time);
+/* set shear_shift[time]
+ */
+void
+stokes_nc_set_shear_shift (struct stokes_nc *nc,
+			   int step,
+			   double shear_shift);
 /* set ui[time][vec] at time (step)
  */
 void
@@ -429,6 +451,10 @@ stokes_nc_set_sf (struct stokes_nc * nc,
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *  shear_rate : defined only for shear_mode = 1 or 2.
  */
 struct stokes_nc *
 stokes_nc_set_by_params (const char *out_file,
@@ -438,7 +464,8 @@ stokes_nc_set_by_params (const char *out_file,
 			 const double *F,  const double *T,  const double *E,
 			 const double *uf, const double *of, const double *ef,
 			 const double *xf,
-			 const double *lat);
+			 const double *lat,
+			 int shear_mode, double shear_rate);
 
 /* check stokes_nc data with the parameters
  * INPUT
@@ -448,6 +475,7 @@ stokes_nc_set_by_params (const char *out_file,
  *             :   np, nm
  *             :   a[np] (if NULL, monodisperse mode)
  *             :   periodic
+ *             :   shear_mode, shear_rate
  *  flag_Q     :
  *  Ui, Oi, Ei :
  *  F,  T,  E  :

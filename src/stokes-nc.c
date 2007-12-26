@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.13 2007/10/03 03:31:51 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.14 2007/12/26 06:32:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@
 
 
 void
-stokes_nc_error (int status, const char * message, const char * varname)
+stokes_nc_error (int status, const char *message, const char *varname)
 {
   if (varname != NULL)
     {
@@ -48,8 +48,8 @@ stokes_nc_error (int status, const char * message, const char * varname)
 
 
 void
-stokes_nc_print_actives (struct stokes_nc * nc,
-			 FILE * out)
+stokes_nc_print_actives (struct stokes_nc *nc,
+			 FILE *out)
 {
   fprintf (out, "    | x | u o e | f t s | ui oi ei\n");
   fprintf (out, "----+---+-------+-------+----------\n");
@@ -99,16 +99,30 @@ stokes_nc_print_actives (struct stokes_nc * nc,
 	   nc->flag_a);
   fprintf (out, "af  | %d |\n",
 	   nc->flag_af);
+
+  // (int)shear_mode
+  int shear_mode;
+  int status;
+  status = nc_get_var1_int (nc->id, nc->shear_mode_id, NULL,
+			    &shear_mode);
+  if (status != NC_NOERR)
+    {
+      fprintf (stderr,
+	       "# stokes_nc_print_actives() : nc_get_var1_int() failed"
+	       " for shear_mode\n");
+    }
+  fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "shear_mode      | %d \n", shear_mode);
 }
 
 
 /* init a variable x[time][p][vec]
  */
 static void
-stokes_nc_init_t_p_vec (struct stokes_nc * nc,
-			const char * name,
-			const char * longname,
-			int * var_id)
+stokes_nc_init_t_p_vec (struct stokes_nc *nc,
+			const char *name,
+			const char *longname,
+			int *var_id)
 {
   int status;
   int dimids[3];
@@ -136,10 +150,10 @@ stokes_nc_init_t_p_vec (struct stokes_nc * nc,
  * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_t_p_stt (struct stokes_nc * nc,
-			const char * name,
-			const char * longname,
-			int * var_id)
+stokes_nc_init_t_p_stt (struct stokes_nc *nc,
+			const char *name,
+			const char *longname,
+			int *var_id)
 {
   int status;
   int dimids[3];
@@ -167,10 +181,10 @@ stokes_nc_init_t_p_stt (struct stokes_nc * nc,
 /* init a variable x[time][p][quat]
  */
 static void
-stokes_nc_init_t_p_quat (struct stokes_nc * nc,
-			 const char * name,
-			 const char * longname,
-			 int * var_id)
+stokes_nc_init_t_p_quat (struct stokes_nc *nc,
+			 const char *name,
+			 const char *longname,
+			 int *var_id)
 {
   int status;
   int dimids[3];
@@ -198,10 +212,10 @@ stokes_nc_init_t_p_quat (struct stokes_nc * nc,
 /* init a variable x[time][pf][vec]
  */
 static void
-stokes_nc_init_t_pf_vec (struct stokes_nc * nc,
-			 const char * name,
-			 const char * longname,
-			 int * var_id)
+stokes_nc_init_t_pf_vec (struct stokes_nc *nc,
+			 const char *name,
+			 const char *longname,
+			 int *var_id)
 {
   int status;
   int dimids[3];
@@ -229,10 +243,10 @@ stokes_nc_init_t_pf_vec (struct stokes_nc * nc,
  * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_t_pf_stt (struct stokes_nc * nc,
-			 const char * name,
-			 const char * longname,
-			 int * var_id)
+stokes_nc_init_t_pf_stt (struct stokes_nc *nc,
+			 const char *name,
+			 const char *longname,
+			 int *var_id)
 {
   int status;
   int dimids[3];
@@ -260,10 +274,10 @@ stokes_nc_init_t_pf_stt (struct stokes_nc * nc,
 /* init a variable x[p][vec]
  */
 static void
-stokes_nc_init_p_vec (struct stokes_nc * nc,
-		      const char * name,
-		      const char * longname,
-		      int * var_id)
+stokes_nc_init_p_vec (struct stokes_nc *nc,
+		      const char *name,
+		      const char *longname,
+		      int *var_id)
 {
   int status;
   int dimids[2];
@@ -290,10 +304,10 @@ stokes_nc_init_p_vec (struct stokes_nc * nc,
  * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_p_stt (struct stokes_nc * nc,
-		      const char * name,
-		      const char * longname,
-		      int * var_id)
+stokes_nc_init_p_stt (struct stokes_nc *nc,
+		      const char *name,
+		      const char *longname,
+		      int *var_id)
 {
   int status;
   int dimids[2];
@@ -320,10 +334,10 @@ stokes_nc_init_p_stt (struct stokes_nc * nc,
 /* init a variable x[pf][vec]
  */
 static void
-stokes_nc_init_pf_vec (struct stokes_nc * nc,
-		       const char * name,
-		       const char * longname,
-		       int * var_id)
+stokes_nc_init_pf_vec (struct stokes_nc *nc,
+		       const char *name,
+		       const char *longname,
+		       int *var_id)
 {
   int status;
   int dimids[2];
@@ -350,10 +364,10 @@ stokes_nc_init_pf_vec (struct stokes_nc * nc,
  * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_pf_stt (struct stokes_nc * nc,
-		       const char * name,
-		       const char * longname,
-		       int * var_id)
+stokes_nc_init_pf_stt (struct stokes_nc *nc,
+		       const char *name,
+		       const char *longname,
+		       int *var_id)
 {
   int status;
   int dimids[2];
@@ -380,10 +394,10 @@ stokes_nc_init_pf_stt (struct stokes_nc * nc,
 /* init a variable x[vec]
  */
 static void
-stokes_nc_init_vec (struct stokes_nc * nc,
-		    const char * name,
-		    const char * longname,
-		    int * var_id)
+stokes_nc_init_vec (struct stokes_nc *nc,
+		    const char *name,
+		    const char *longname,
+		    int *var_id)
 {
   int status;
 
@@ -407,10 +421,10 @@ stokes_nc_init_vec (struct stokes_nc * nc,
  * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_stt (struct stokes_nc * nc,
-		    const char * name,
-		    const char * longname,
-		    int * var_id)
+stokes_nc_init_stt (struct stokes_nc *nc,
+		    const char *name,
+		    const char *longname,
+		    int *var_id)
 {
   int status;
 
@@ -433,10 +447,10 @@ stokes_nc_init_stt (struct stokes_nc * nc,
 /* init a variable x[p]
  */
 static void
-stokes_nc_init_p (struct stokes_nc * nc,
-		  const char * name,
-		  const char * longname,
-		  int * var_id)
+stokes_nc_init_p (struct stokes_nc *nc,
+		  const char *name,
+		  const char *longname,
+		  int *var_id)
 {
   int status;
 
@@ -459,10 +473,10 @@ stokes_nc_init_p (struct stokes_nc * nc,
 /* init a variable x[pf]
  */
 static void
-stokes_nc_init_pf (struct stokes_nc * nc,
-		   const char * name,
-		   const char * longname,
-		   int * var_id)
+stokes_nc_init_pf (struct stokes_nc *nc,
+		   const char *name,
+		   const char *longname,
+		   int *var_id)
 {
   int status;
 
@@ -486,10 +500,10 @@ stokes_nc_init_pf (struct stokes_nc * nc,
 /* init a variable x[time][vec]
  */
 static void
-stokes_nc_init_t_vec (struct stokes_nc * nc,
-		      const char * name,
-		      const char * longname,
-		      int * var_id)
+stokes_nc_init_t_vec (struct stokes_nc *nc,
+		      const char *name,
+		      const char *longname,
+		      int *var_id)
 {
   int status;
   int dimids[2];
@@ -516,10 +530,10 @@ stokes_nc_init_t_vec (struct stokes_nc * nc,
 * (stt = symmetric traceless tensor)
  */
 static void
-stokes_nc_init_t_stt (struct stokes_nc * nc,
-		      const char * name,
-		      const char * longname,
-		      int * var_id)
+stokes_nc_init_t_stt (struct stokes_nc *nc,
+		      const char *name,
+		      const char *longname,
+		      int *var_id)
 {
   int status;
   int dimids[2];
@@ -542,6 +556,84 @@ stokes_nc_init_t_stt (struct stokes_nc * nc,
 	(status, "at nc_put_att() in stokes_nc_init_t_stt", name);
     }
 }
+/* init a variable x[time]
+ */
+static void
+stokes_nc_init_t (struct stokes_nc *nc,
+		  const char *name,
+		  const char *longname,
+		  int *var_id)
+{
+  int status;
+
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 1, &nc->time_dim, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_t", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_t", name);
+    }
+}
+/* init a variable x (just a scalar)
+ */
+static void
+stokes_nc_init_scalar (struct stokes_nc *nc,
+		       const char *name,
+		       const char *longname,
+		       int *var_id)
+{
+  int status;
+
+  status = nc_def_var
+    (nc->id, name, NC_DOUBLE, 0, NULL, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_scalar", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_scalar", name);
+    }
+}
+/* init a variable x (just a scalar) with NC_INT
+ */
+static void
+stokes_nc_init_scalar_int (struct stokes_nc *nc,
+			   const char *name,
+			   const char *longname,
+			   int *var_id)
+{
+  int status;
+
+  status = nc_def_var
+    (nc->id, name, NC_INT, 0, NULL, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_scalar_int", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_scalar_int", name);
+    }
+}
 
 /* initialize NetCDF file for libstokes (internal use only)
  * INPUT
@@ -549,11 +641,16 @@ stokes_nc_init_t_stt (struct stokes_nc * nc,
  *       (note that np in NetCDF is only MOBILE particles)
  *  nf : number of fixed particles
  *  flag_* : active/inactive flags for each entry
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *               NOTE: shear_rate and shear_shift[t] are defined only for
+ *               shear_mode = 1 or 2.
  * OUTPUT
  *  (returned value) : ncid
  */
 static struct stokes_nc *
-stokes_nc_init_ (const char * filename, int nm, int nf,
+stokes_nc_init_ (const char *filename, int nm, int nf,
 		 int flag_ui0,
 		 int flag_oi0,
 		 int flag_ei0,
@@ -590,7 +687,8 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 		 int flag_tf,
 		 int flag_sf,
 		 int flag_a,
-		 int flag_af)
+		 int flag_af,
+		 int shear_mode)
 {
   struct stokes_nc *nc
     = (struct stokes_nc *)malloc (sizeof (struct stokes_nc));
@@ -754,6 +852,21 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 
 
   /* data of imposed flow */
+  /* shear_mode */
+  stokes_nc_init_scalar_int (nc, "shear_mode",
+			     "shear mode",
+			     &nc->shear_mode_id);
+  if (shear_mode != 0)
+    {
+      /* shear_rate */
+      stokes_nc_init_scalar (nc, "shear_rate",
+			     "shear rate",
+			     &nc->shear_rate_id);
+      /* shift[t] */
+      stokes_nc_init_t (nc, "shear_shift",
+			"cell shift for shear boundary condition",
+			&nc->shear_shift_id);
+    }
   /* Ui0 */
   if (flag_ui0 != 0)
     {
@@ -1111,6 +1224,15 @@ stokes_nc_init_ (const char * filename, int nm, int nf,
 	}
     }
 
+  /* shear_mode */
+  status = nc_put_var1_int (nc->id, nc->shear_mode_id, NULL, &shear_mode);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_var1() for shear_mode in stokes_nc_init", NULL);
+    }
+
   return (nc);
 }
 
@@ -1161,7 +1283,8 @@ stokes_nc_x_init (const char * filename, int np)
 			  0, // tf
 			  0, // sf
 			  0, // a
-			  0);// af
+			  0, // af
+			  0);// shear_mode
 }
 
 /* initialize NetCDF file for libstokes
@@ -1173,6 +1296,11 @@ stokes_nc_x_init (const char * filename, int np)
  *              1 = polydisperse (set particle radius)
  *  flag_it   : 0 = constant imposed flow
  *              1 = time-changing imposed flow
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *               NOTE: shear_rate and shear_shift[t] are defined only for
+ *               shear_mode = 1 or 2.
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
@@ -1195,7 +1323,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 		int version,
 		int flag_poly,
 		int flag_Q,
-		int flag_it)
+		int flag_it,
+		int shear_mode)
 {
   int flag_ui0 = 0;
   int flag_oi0 = 0;
@@ -1340,19 +1469,20 @@ stokes_nc_init (const char *filename, int np, int nf,
 			  flag_xf,
 			  flag_uf,  flag_of,  flag_ef,
 			  flag_ff,  flag_tf,  flag_sf,
-			  flag_a,   flag_af);
+			  flag_a,   flag_af,
+			  shear_mode);
 }
 
 
 /* close (and write if necessary) NetCDF file for libstokes
  */
 void
-stokes_nc_free (struct stokes_nc * nc)
+stokes_nc_free (struct stokes_nc *nc)
 {
   if (nc == NULL) return;
 
-  int status;
   /* close: save new netCDF dataset */
+  int status;
   status = nc_close (nc->id);
   if (status != NC_NOERR)
     {
@@ -1364,11 +1494,26 @@ stokes_nc_free (struct stokes_nc * nc)
 }
 
 /** set nc data **/
+/* set shear_rate (just a scalar)
+ */
+void
+stokes_nc_set_shear_rate (struct stokes_nc *nc,
+			  double shear_rate)
+{
+  int status;
+  status = nc_put_var1_double (nc->id, nc->shear_rate_id, NULL, &shear_rate);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_shear_rate", NULL);
+    }
+}
 /* set l = (lx, ly, lz)
  */
 void
-stokes_nc_set_l (struct stokes_nc * nc,
-		 const double * l)
+stokes_nc_set_l (struct stokes_nc *nc,
+		 const double *l)
 {
   size_t start[1];
   size_t count[1];
@@ -1390,7 +1535,7 @@ stokes_nc_set_l (struct stokes_nc * nc,
 /* set ui0[vec]
  */
 void
-stokes_nc_set_ui0 (struct stokes_nc * nc,
+stokes_nc_set_ui0 (struct stokes_nc *nc,
 		   const double * ui0)
 {
   size_t start[1];
@@ -1413,7 +1558,7 @@ stokes_nc_set_ui0 (struct stokes_nc * nc,
 /* set oi[vec]
  */
 void
-stokes_nc_set_oi0 (struct stokes_nc * nc,
+stokes_nc_set_oi0 (struct stokes_nc *nc,
 		   const double * oi0)
 {
   size_t start[1];
@@ -1436,7 +1581,7 @@ stokes_nc_set_oi0 (struct stokes_nc * nc,
 /* set ei0[stt]
  */
 void
-stokes_nc_set_ei0 (struct stokes_nc * nc,
+stokes_nc_set_ei0 (struct stokes_nc *nc,
 		   const double * ei0)
 {
   size_t start[1];
@@ -1460,7 +1605,7 @@ stokes_nc_set_ei0 (struct stokes_nc * nc,
 /* set x0[np][vec]
  */
 void
-stokes_nc_set_x0 (struct stokes_nc * nc,
+stokes_nc_set_x0 (struct stokes_nc *nc,
 		  const double * x0)
 {
   size_t start[2];
@@ -1485,7 +1630,7 @@ stokes_nc_set_x0 (struct stokes_nc * nc,
 /* set u0[np][vec]
  */
 void
-stokes_nc_set_u0 (struct stokes_nc * nc,
+stokes_nc_set_u0 (struct stokes_nc *nc,
 		  const double * u0)
 {
   size_t start[2];
@@ -1509,7 +1654,7 @@ stokes_nc_set_u0 (struct stokes_nc * nc,
 /* set o0[np][vec]
  */
 void
-stokes_nc_set_o0 (struct stokes_nc * nc,
+stokes_nc_set_o0 (struct stokes_nc *nc,
 		  const double * o0)
 {
   size_t start[2];
@@ -1533,7 +1678,7 @@ stokes_nc_set_o0 (struct stokes_nc * nc,
 /* set e0[np][stt]
  */
 void
-stokes_nc_set_e0 (struct stokes_nc * nc,
+stokes_nc_set_e0 (struct stokes_nc *nc,
 		  const double * e0)
 {
   size_t start[2];
@@ -1557,7 +1702,7 @@ stokes_nc_set_e0 (struct stokes_nc * nc,
 /* set f0[np][vec]
  */
 void
-stokes_nc_set_f0 (struct stokes_nc * nc,
+stokes_nc_set_f0 (struct stokes_nc *nc,
 		  const double * f0)
 {
   size_t start[2];
@@ -1581,7 +1726,7 @@ stokes_nc_set_f0 (struct stokes_nc * nc,
 /* set t0[np][vec]
  */
 void
-stokes_nc_set_t0 (struct stokes_nc * nc,
+stokes_nc_set_t0 (struct stokes_nc *nc,
 		  const double * t0)
 {
   size_t start[2];
@@ -1605,7 +1750,7 @@ stokes_nc_set_t0 (struct stokes_nc * nc,
 /* set s0[np][stt]
  */
 void
-stokes_nc_set_s0 (struct stokes_nc * nc,
+stokes_nc_set_s0 (struct stokes_nc *nc,
 		  const double * s0)
 {
   size_t start[2];
@@ -1629,7 +1774,7 @@ stokes_nc_set_s0 (struct stokes_nc * nc,
 /* set xf0[npf][vec]
  */
 void
-stokes_nc_set_xf0 (struct stokes_nc * nc,
+stokes_nc_set_xf0 (struct stokes_nc *nc,
 		   const double * xf0)
 {
   size_t start[2];
@@ -1654,7 +1799,7 @@ stokes_nc_set_xf0 (struct stokes_nc * nc,
 /* set uf0[npf][vec]
  */
 void
-stokes_nc_set_uf0 (struct stokes_nc * nc,
+stokes_nc_set_uf0 (struct stokes_nc *nc,
 		   const double * uf0)
 {
   size_t start[2];
@@ -1678,7 +1823,7 @@ stokes_nc_set_uf0 (struct stokes_nc * nc,
 /* set of0[npf][vec]
  */
 void
-stokes_nc_set_of0 (struct stokes_nc * nc,
+stokes_nc_set_of0 (struct stokes_nc *nc,
 		   const double * of0)
 {
   size_t start[2];
@@ -1702,7 +1847,7 @@ stokes_nc_set_of0 (struct stokes_nc * nc,
 /* set ef0[npf][stt]
  */
 void
-stokes_nc_set_ef0 (struct stokes_nc * nc,
+stokes_nc_set_ef0 (struct stokes_nc *nc,
 		   const double * ef0)
 {
   size_t start[2];
@@ -1726,7 +1871,7 @@ stokes_nc_set_ef0 (struct stokes_nc * nc,
 /* set ff0[npf][vec]
  */
 void
-stokes_nc_set_ff0 (struct stokes_nc * nc,
+stokes_nc_set_ff0 (struct stokes_nc *nc,
 		   const double * ff0)
 {
   size_t start[2];
@@ -1750,7 +1895,7 @@ stokes_nc_set_ff0 (struct stokes_nc * nc,
 /* set tf0[npf][vec]
  */
 void
-stokes_nc_set_tf0 (struct stokes_nc * nc,
+stokes_nc_set_tf0 (struct stokes_nc *nc,
 		   const double * tf0)
 {
   size_t start[2];
@@ -1774,7 +1919,7 @@ stokes_nc_set_tf0 (struct stokes_nc * nc,
 /* set sf0[npf][stt]
  */
 void
-stokes_nc_set_sf0 (struct stokes_nc * nc,
+stokes_nc_set_sf0 (struct stokes_nc *nc,
 		   const double * sf0)
 {
   size_t start[2];
@@ -1798,7 +1943,7 @@ stokes_nc_set_sf0 (struct stokes_nc * nc,
 /* set a[np]
  */
 void
-stokes_nc_set_a (struct stokes_nc * nc,
+stokes_nc_set_a (struct stokes_nc *nc,
 		 const double * a)
 {
   size_t start[1];
@@ -1821,7 +1966,7 @@ stokes_nc_set_a (struct stokes_nc * nc,
 /* set af[npf]
  */
 void
-stokes_nc_set_af (struct stokes_nc * nc,
+stokes_nc_set_af (struct stokes_nc *nc,
 		  const double * af)
 {
   size_t start[1];
@@ -1845,7 +1990,7 @@ stokes_nc_set_af (struct stokes_nc * nc,
 /* set time (step)
  */
 void
-stokes_nc_set_time (struct stokes_nc * nc,
+stokes_nc_set_time (struct stokes_nc *nc,
 		    int step, double time)
 {
   int status;
@@ -1861,11 +2006,30 @@ stokes_nc_set_time (struct stokes_nc * nc,
 	 "at nc_put_vara_double() for time in stokes_nc_set_time", NULL);
     }
 }
+/* set shear_shift[time]
+ */
+void
+stokes_nc_set_shear_shift (struct stokes_nc *nc,
+			   int step,
+			   double shear_shift)
+{
+  size_t index[1]; // where to put the value
+  index[0] = step;
+
+  int status;
+  status = nc_put_var1_double (nc->id, nc->shear_shift_id, index, &shear_shift);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_shear_shift", NULL);
+    }
+}
 
 /* set ui[time][vec] at time (step)
  */
 void
-stokes_nc_set_ui (struct stokes_nc * nc,
+stokes_nc_set_ui (struct stokes_nc *nc,
 		  int step,
 		  const double * ui)
 {
@@ -1891,7 +2055,7 @@ stokes_nc_set_ui (struct stokes_nc * nc,
 /* set oi[time][vec] at time (step)
  */
 void
-stokes_nc_set_oi (struct stokes_nc * nc,
+stokes_nc_set_oi (struct stokes_nc *nc,
 		  int step,
 		  const double * oi)
 {
@@ -1917,7 +2081,7 @@ stokes_nc_set_oi (struct stokes_nc * nc,
 /* set ei[time][stt] at time (step)
  */
 void
-stokes_nc_set_ei (struct stokes_nc * nc,
+stokes_nc_set_ei (struct stokes_nc *nc,
 		  int step,
 		  const double * ei)
 {
@@ -1943,7 +2107,7 @@ stokes_nc_set_ei (struct stokes_nc * nc,
 /* set x at time (step)
  */
 void
-stokes_nc_set_x (struct stokes_nc * nc,
+stokes_nc_set_x (struct stokes_nc *nc,
 		 int step,
 		 const double * x)
 {
@@ -1971,7 +2135,7 @@ stokes_nc_set_x (struct stokes_nc * nc,
 /* set q at time (step)
  */
 void
-stokes_nc_set_q (struct stokes_nc * nc,
+stokes_nc_set_q (struct stokes_nc *nc,
 		 int step,
 		 const double * q)
 {
@@ -1999,7 +2163,7 @@ stokes_nc_set_q (struct stokes_nc * nc,
 /* set u at time (step)
  */
 void
-stokes_nc_set_u (struct stokes_nc * nc,
+stokes_nc_set_u (struct stokes_nc *nc,
 		 int step,
 		 const double * u)
 {
@@ -2026,7 +2190,7 @@ stokes_nc_set_u (struct stokes_nc * nc,
 /* set o at time (step)
  */
 void
-stokes_nc_set_o (struct stokes_nc * nc,
+stokes_nc_set_o (struct stokes_nc *nc,
 		 int step,
 		 const double * o)
 {
@@ -2053,7 +2217,7 @@ stokes_nc_set_o (struct stokes_nc * nc,
 /* set e at time (step)
  */
 void
-stokes_nc_set_e (struct stokes_nc * nc,
+stokes_nc_set_e (struct stokes_nc *nc,
 		 int step,
 		 const double * e)
 {
@@ -2080,7 +2244,7 @@ stokes_nc_set_e (struct stokes_nc * nc,
 /* set f at time (step)
  */
 void
-stokes_nc_set_f (struct stokes_nc * nc,
+stokes_nc_set_f (struct stokes_nc *nc,
 		 int step,
 		 const double * f)
 {
@@ -2107,7 +2271,7 @@ stokes_nc_set_f (struct stokes_nc * nc,
 /* set t at time (step)
  */
 void
-stokes_nc_set_t (struct stokes_nc * nc,
+stokes_nc_set_t (struct stokes_nc *nc,
 		 int step,
 		 const double * t)
 {
@@ -2134,7 +2298,7 @@ stokes_nc_set_t (struct stokes_nc * nc,
 /* set s at time (step)
  */
 void
-stokes_nc_set_s (struct stokes_nc * nc,
+stokes_nc_set_s (struct stokes_nc *nc,
 		 int step,
 		 const double * s)
 {
@@ -2162,7 +2326,7 @@ stokes_nc_set_s (struct stokes_nc * nc,
 /* set xf at time (step)
  */
 void
-stokes_nc_set_xf (struct stokes_nc * nc,
+stokes_nc_set_xf (struct stokes_nc *nc,
 		  int step,
 		  const double * xf)
 {
@@ -2190,7 +2354,7 @@ stokes_nc_set_xf (struct stokes_nc * nc,
 /* set uf at time (step)
  */
 void
-stokes_nc_set_uf (struct stokes_nc * nc,
+stokes_nc_set_uf (struct stokes_nc *nc,
 		  int step,
 		  const double * uf)
 {
@@ -2217,7 +2381,7 @@ stokes_nc_set_uf (struct stokes_nc * nc,
 /* set of at time (step)
  */
 void
-stokes_nc_set_of (struct stokes_nc * nc,
+stokes_nc_set_of (struct stokes_nc *nc,
 		  int step,
 		  const double * of)
 {
@@ -2244,7 +2408,7 @@ stokes_nc_set_of (struct stokes_nc * nc,
 /* set ef at time (step)
  */
 void
-stokes_nc_set_ef (struct stokes_nc * nc,
+stokes_nc_set_ef (struct stokes_nc *nc,
 		  int step,
 		  const double * ef)
 {
@@ -2271,7 +2435,7 @@ stokes_nc_set_ef (struct stokes_nc * nc,
 /* set ff at time (step)
  */
 void
-stokes_nc_set_ff (struct stokes_nc * nc,
+stokes_nc_set_ff (struct stokes_nc *nc,
 		  int step,
 		  const double * ff)
 {
@@ -2298,7 +2462,7 @@ stokes_nc_set_ff (struct stokes_nc * nc,
 /* set tf at time (step)
  */
 void
-stokes_nc_set_tf (struct stokes_nc * nc,
+stokes_nc_set_tf (struct stokes_nc *nc,
 		  int step,
 		  const double * tf)
 {
@@ -2325,7 +2489,7 @@ stokes_nc_set_tf (struct stokes_nc * nc,
 /* set sf at time (step)
  */
 void
-stokes_nc_set_sf (struct stokes_nc * nc,
+stokes_nc_set_sf (struct stokes_nc *nc,
 		  int step,
 		  const double * sf)
 {
@@ -2365,6 +2529,10 @@ stokes_nc_set_sf (struct stokes_nc * nc,
  *  uf, of, ef : used only for the mix problem
  *  xf         : position of the fixed particles
  *  lat[3]     : used only for the periodic case
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *  shear_rate : defined only for shear_mode = 1 or 2.
  */
 struct stokes_nc *
 stokes_nc_set_by_params (const char *out_file,
@@ -2374,7 +2542,8 @@ stokes_nc_set_by_params (const char *out_file,
 			 const double *F,  const double *T,  const double *E,
 			 const double *uf, const double *of, const double *ef,
 			 const double *xf,
-			 const double *lat)
+			 const double *lat,
+			 int shear_mode, double shear_rate)
 {
   int nm = sys->nm;
   int nf = sys->np - nm;
@@ -2383,8 +2552,12 @@ stokes_nc_set_by_params (const char *out_file,
   if (sys->a != NULL) flag_poly = 1;
 
   // create new stokes_nc
-  struct stokes_nc *nc = stokes_nc_init (out_file, nm, nf,
-					 sys->version, flag_poly, flag_Q, 0);
+  struct stokes_nc *nc
+    = stokes_nc_init (out_file, nm, nf,
+		      sys->version, flag_poly, flag_Q, 0,
+		      shear_mode);
+  CHECK_MALLOC (nc, "stokes_nc_set_by_params");
+
   stokes_nc_set_ui0 (nc, Ui);
   stokes_nc_set_oi0 (nc, Oi);
   stokes_nc_set_ei0 (nc, Ei);
@@ -2447,6 +2620,11 @@ stokes_nc_set_by_params (const char *out_file,
       stokes_nc_set_xf0 (nc, xf);
     }
 
+  if (shear_mode != 0)
+    {
+      stokes_nc_set_shear_rate (nc, shear_rate);
+    }
+
   return (nc);
 }
 
@@ -2484,6 +2662,7 @@ comp_array (const double *x, const double *y, int n, double tiny)
  *             :   np, nm
  *             :   a[np] (if NULL, monodisperse mode)
  *             :   periodic
+ *             :   shear_mode, shear_rate
  *  flag_Q     :
  *  Ui, Oi, Ei :
  *  F,  T,  E  :
@@ -2671,6 +2850,42 @@ stokes_nc_check_params (const struct stokes_nc *nc,
       if (comp_array (lat, check_array, 3, tiny) != 0)
 	{
 	  fprintf (stderr, "l mismatch\n");
+	  check ++;
+	}
+    }
+
+  // auxiliary imposed-flow parameters for simple shear
+  if (sys->shear_mode != 0)
+    {
+      // (int)shear_mode
+      int check_int;
+      int status;
+      status = nc_get_var1_int (nc->id, nc->shear_mode_id, NULL,
+				&check_int);
+      if (status != NC_NOERR)
+	{
+	  fprintf (stderr,
+		   "at nc_get_var1_int() for shear_mode"
+		   " in stokes_nc_check_params\n");
+	}
+      if (sys->shear_mode != check_int)
+	{
+	  fprintf (stderr, "shear_mode mismatch\n");
+	  check ++;
+	}
+
+      // shear_rate
+      status = nc_get_var1_double (nc->id, nc->shear_rate_id, NULL,
+				   check_array);
+      if (status != NC_NOERR)
+	{
+	  fprintf (stderr,
+		   "at nc_get_var1_double() for shear_rate"
+		   " in stokes_nc_check_params\n");
+	}
+      if (comp_array (&(sys->shear_rate), check_array, 1, tiny) != 0)
+	{
+	  fprintf (stderr, "shear_rate mismatch\n");
 	  check ++;
 	}
     }
