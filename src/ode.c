@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.7 2007/12/22 17:35:15 kichiki Exp $
+ * $Id: ode.c,v 1.8 2007/12/26 06:34:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -216,6 +216,20 @@ ode_params_free (struct ode_params *params)
   if (params != NULL) free (params);
 }
 
+/* set the reference for cell-shift (shear_mode = 1 and 2)
+ * INTPUT
+ *  t0 : reference time for s0
+ *  s0 : cell shift at time t0 (for shear_mode = 1 or 2)
+ * OUTPUT
+ *  ode->t0, ode->s0 :
+ */
+void
+ode_set_shear_shift_ref (struct ode_params *ode,
+			 double t0, double s0)
+{
+  ode->t0 = t0;
+  ode->s0 = s0;
+}
 
 /* calc dydt for gsl_odeiv ONLY with bond interactions for relaxation
  * this is equivalent to dydt_relax_bond with a constant friction, where
@@ -240,7 +254,7 @@ dydt_relax_bond (double t, const double *y, double *f,
 
 
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_shear_shift (ode->sys, t);
+  stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
   bonds_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
 
@@ -326,7 +340,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_shear_shift (ode->sys, t);
+  stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
   if (ode->bonds->n > 0)
     {
@@ -430,7 +444,7 @@ dydt_hydro (double t, const double *y, double *dydt,
 
   // set the current configuration into struct stokes "sys"
   stokes_set_pos_mobile (ode->sys, y);
-  stokes_set_shear_shift (ode->sys, t);
+  stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
   if (ode->bonds->n > 0)
     {
