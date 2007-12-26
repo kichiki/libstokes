@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.17 2007/12/13 05:58:59 kichiki Exp $
+ * $Id: test-all.c,v 1.18 2007/12/26 06:58:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,8 +28,10 @@
 #include "check-minv.h" // check_matrix_mob_nonewald_fts(), check_minv_fts()
 #include "check-minv-poly.h" // check_scalars_minv_[f,ft,fts]_poly_...()
 #include "check-lub-poly.h" // check_lub_fts_2b_poly()
+#include "check-mob-fts.h" // check_mob_fts ()
 #include "check-ewald.h" // check_atimes_ewald_3all_SC ()
 #include "check-ewald-poly.h" // check_atimes_ewald_3all_poly_SC_...()
+#include "check-ewald-shear.h" // check_atimes_3all_ewald_shear()
 #include "check-ode-quaternion.h" // check_quaternion_Winv()
 #include "check-twobody-slip.h" // check_twobody_slip_with_noslip()
 
@@ -59,7 +61,7 @@ main (int argc, char** argv)
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
   check += check_dsaupd_c (100, 1, 3.1e-15);
-  check += check_dnaupd_c (10, 1, 1.2e-15);
+  check += check_dnaupd_c (10, 1, 1.5e-15);
   check += check_dnaupd_c (100, 1, 1.2e-15);
   check += check_bd (50, 100, 2.005, 1, 8.0e-10);
   check += check_bd (100, 100, 2.005, 1, 2.0e-15);
@@ -117,6 +119,10 @@ main (int argc, char** argv)
   check += check_matrix_lub_fts_2b_poly (r, 1, 1.0e-5);
   check += check_atimes_matrix_lub_fts_2b_poly (r, a1, a2, 1, 1.0e-15);
 
+  // check-mob-fts.c
+  check += check_mob_fts (1, 7.0e-12);
+  check += check_mob_lub_fts (1, 3.3e-11);
+
   // check-ewald.c
   int version = 2; // FTS
   double phi = 0.2;
@@ -134,7 +140,7 @@ main (int argc, char** argv)
 					      ewald_eps, 1, 4.0e-15);
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      10.0, // ewald_tr
-					      ewald_eps, 1, 2.0e-14);
+					      ewald_eps, 1, 2.3e-14);
 
   check += check_make_matrix_mob_ewald_3all_poly_SC_1
     (version, phi, 4.0, // ewald_tr
@@ -169,6 +175,29 @@ main (int argc, char** argv)
      phi, ewald_tr, ewald_eps,
      1, 2.0e-14);
 
+  // check-ewald-shear.c
+  check += check_atimes_3all_ewald_shear
+    (0, // F version
+     1, // (x=flow, y=grad)
+     0.2, // phi
+     1.0, // ewald_tr
+     1.0e-12, // ewald_eps,
+     1, 6.0e-14);
+  check += check_atimes_3all_ewald_shear
+    (1, // FT version
+     1, // (x=flow, y=grad)
+     0.4, // phi
+     1.0, // ewald_tr
+     1.0e-12, // ewald_eps,
+     1, 2.0e-13);
+  check += check_atimes_3all_ewald_shear
+    (2, // FT version
+     2, // (x=flow, z=grad)
+     0.5, // phi
+     1.0, // ewald_tr
+     1.0e-12, // ewald_eps,
+     1, 5.0e-12);
+
   // check-ode-quaternion.c
   check += check_quaternion_Winv (1, 3.0e-16);
 
@@ -185,7 +214,7 @@ main (int argc, char** argv)
   check += check_cheb_lub  (10, 1, 6.2e-15);
 
   // check-brownian.c -- serious tests for calc_brownian_force()
-  check += check_minv_FU (1, 1.5e-10);
+  check += check_minv_FU (1, 1.6e-10);
   check += check_lub_FU (1, 2.6e-13);
   check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
   check += check_inv_by_submatrices (50, 50, 1, 1.2e-10);

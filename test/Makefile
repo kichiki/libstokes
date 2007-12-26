@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2007/12/12 06:32:31 kichiki Exp $
+# $Id: Makefile,v 1.16 2007/12/26 06:57:58 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -57,8 +57,10 @@ test-all-OBJ =\
 	check-minv.o	\
 	check-minv-poly.o	\
 	check-lub-poly.o	\
+	check-mob-fts.o		\
 	check-ewald.o		\
 	check-ewald-poly.o	\
+	check-ewald-shear.o	\
 	check-ode-quaternion.o	\
 	check-twobody-slip.o	\
 	check-dsaupd_c.o	\
