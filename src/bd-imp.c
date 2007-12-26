@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.4 2007/12/22 04:30:32 kichiki Exp $
+ * $Id: bd-imp.c,v 1.5 2007/12/26 06:36:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -507,7 +507,8 @@ BD_evolve_JGdP00 (double t,
 
   // set sys->shear_shift if necessary
   // JGdP is 1-step scheme so that we only need to set "shift" once
-  stokes_set_shear_shift (BDimp->BD->sys, t);
+  stokes_set_shear_shift (BDimp->BD->sys, t,
+			  BDimp->BD->t0, BDimp->BD->s0);
 
   /**
    * update BD_imp data
@@ -879,7 +880,8 @@ BD_evolve_imp_PC (double t,
  BD_evolve_imp_PC_REDO:
   // set sys->shear_shift if necessary
   // at the predictor step
-  stokes_set_shear_shift (BDimp->BD->sys, t);
+  stokes_set_shear_shift (BDimp->BD->sys, t,
+			  BDimp->BD->t0, BDimp->BD->s0);
   BD_imp_set_xq (BDimp, x, q);
  BD_evolve_imp_PC_REDO_scale:
   if (dt_local != BDimp->dt)
@@ -928,7 +930,8 @@ BD_evolve_imp_PC (double t,
 
   // set sys->shear_shift if necessary
   // at the corrector step
-  stokes_set_shear_shift (BDimp->BD->sys, t + dt_local);
+  stokes_set_shear_shift (BDimp->BD->sys, t + dt_local,
+			  BDimp->BD->t0, BDimp->BD->s0);
 
   int status;
   int iter = 0;
