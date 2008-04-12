@@ -1,6 +1,6 @@
 /* Brownian dynamics code
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.15 2007/12/26 06:35:42 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: brownian.c,v 1.16 2008/04/12 18:22:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -283,15 +283,7 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
 		{
 		  fprintf (stderr, "# overlap %d - %d (0) %e\n",
 			   i, j, r2);
-		  if (flag == 0)
-		    {
-		      ol->r2 = r2;
-		      ol->a2 = a2;
-		      ol->i  = i;
-		      ol->j  = j;
-		      ol->k  = 0;
-		    }
-		  else if (r2 < ol->r2)
+		  if (flag == 0 || r2 < ol->r2)
 		    {
 		      ol->r2 = r2;
 		      ol->a2 = a2;
@@ -307,30 +299,32 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
 	      int k;
 	      for (k = 1; k < 27; k ++) // excluding the primary cell (k=0)
 		{
-		  double xx = x - sys->llx[k];
-		  double yy = y - sys->lly[k];
-		  double zz = z - sys->llz[k];
+		  double xx = x + (double)sys->ilx[k] * sys->lx;
+		  double yy = y + (double)sys->ily[k] * sys->ly;
+		  double zz = z + (double)sys->ilz[k] * sys->lz;
+
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      xx += (double)sys->ilz[k] * sys->shear_shift;
+		    }
 
 		  r2 = xx*xx + yy*yy + zz*zz;
 		  if (r2 < rmin * a2)
 		    {
 		      fprintf (stderr, "# overlap %d - %d (%d) %e\n",
 			       i, j, k, r2);
-		      if (flag == 0)
+		      if (flag == 0 || r2 < ol->r2)
 			{
 			  ol->r2 = r2;
 			  ol->a2 = a2;
 			  ol->i  = i;
 			  ol->j  = j;
-			  ol->k  = 0;
-			}
-		      else if (r2 < ol->r2)
-			{
-			  ol->r2 = r2;
-			  ol->a2 = a2;
-			  ol->i  = i;
-			  ol->j  = j;
-			  ol->k  = 0;
+			  ol->k  = k;
 			}
 		      flag ++;
 		    }
@@ -787,12 +781,12 @@ check_symmetric (int n, const double *m, double tiny)
 void
 BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
 {
-  int np5  = np * 5;
   int np6  = np * 6;
+  int np5  = np * 5;
   double *a = (double *)malloc (sizeof (double) * np6 * np6);
   double *b = (double *)malloc (sizeof (double) * np6 * np5);
   double *c = (double *)malloc (sizeof (double) * np5 * np6);
-  double *d = (double *)malloc (sizeof (double) * np6 * np6);
+  double *d = (double *)malloc (sizeof (double) * np5 * np5);
   double *x = (double *)malloc (sizeof (double) * np5 * np6);
   CHECK_MALLOC (a, "BD_minv_FU_in_FTS");
   CHECK_MALLOC (b, "BD_minv_FU_in_FTS");
@@ -1307,6 +1301,20 @@ calc_brownian_force (struct BD_params *BD,
 	  fprintf (stderr, "minv : how about in dpotf2() : %d\n", status);
 	  if (status != 0)
 	    {
+	      // CHECK estimate all eigenvalues by dgeev
+	      double *wr = (double *)malloc (sizeof (double) * n);
+	      double *wi = (double *)malloc (sizeof (double) * n);
+	      double *ev = (double *)malloc (sizeof (double) * n * n);
+	      dgeev_wrap (n, minv, wr, wi, ev);
+	      for (i = 0; i < n; i ++)
+		{
+		  fprintf (stderr, "# dgeev : w[%d] = %f + i %f\n",
+			   i, wr[i], wi[i]);
+		}
+	      free (wr);
+	      free (wi);
+	      free (ev);
+
 	      status = BD_sqrt_by_dgeev (n, minv, l);
 	      fprintf (stderr,
 		       "minv : how about in sqrt_by_dgeev() : %d\n",
@@ -1781,9 +1789,10 @@ BD_ode_evolve (struct BD_params *BD,
 
 /*
  * INPUT
- *  sys : struct stokes
- *        (llx, lly, llz) are used.
+ *  sys  : struct stokes
+ *  dt0  : the initial time step
  *  x0[] : initial configuration
+ *  ol   : struct overlap
  */
 static double
 reset_dt_by_ol (struct stokes *sys,
