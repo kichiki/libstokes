@@ -1,6 +1,6 @@
 /* bond interaction between particles
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.9 2007/12/06 02:26:39 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bonds.c,v 1.10 2008/04/12 18:24:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,8 +28,9 @@
 struct bond_pairs *
 bond_pairs_init (void)
 {
-  struct bond_pairs *pairs = NULL;
-  pairs = (struct bond_pairs *)malloc (sizeof (struct bond_pairs));
+  struct bond_pairs *pairs
+    = (struct bond_pairs *)malloc (sizeof (struct bond_pairs));
+  CHECK_MALLOC (pairs, "bond_pairs_init");
 
   pairs->n = 0;
   pairs->ia = NULL;
@@ -273,25 +274,47 @@ bonds_set_force_ij (struct bonds *bonds,
 /* search the closest image in 27 periodic images
  * INPUT
  *  sys : struct stokes
- *  x, y, z : relative distance for the pair
+ *  x, y, z : relative distance for the pair in the primary cell
  * OUTPUT
  *  k : image index in [0, 27)
+ *  x, y, z : relative distance for the closest pair
  */
 static int
 search_close_image (struct stokes *sys,
-		    double x, double y, double z)
+		    double *x, double *y, double *z)
 {
   int k0 = 0;
-  double r2 = x*x + y*y + z*z;
+  double x0 = (*x);
+  double y0 = (*y);
+  double z0 = (*z);
+  double r2 = x0*x0 + y0*y0 + z0*z0;
 
   int k;
   for (k = 1; k < 27; k ++)
     {
-      double xx = x - sys->llx[k];
-      double yy = y - sys->lly[k];
-      double zz = z - sys->llz[k];
+      double xx = x0 + (double)sys->ilx[k] * sys->lx;
+      double yy = y0 + (double)sys->ily[k] * sys->ly;
+      double zz = z0 + (double)sys->ilz[k] * sys->lz;
+
+      // shift for shear
+      if (sys->shear_mode == 1)
+	{
+	  xx += (double)sys->ily[k] * sys->shear_shift;
+	}
+      else if (sys->shear_mode == 2)
+	{
+	  xx += (double)sys->ilz[k] * sys->shear_shift;
+	}
+
       double rr2 = xx*xx + yy*yy + zz*zz;
-      if (rr2 < r2) k0 = k;
+      if (rr2 < r2)
+	{
+	  k0 = k;
+	  (*x) = xx;
+	  (*y) = yy;
+	  (*z) = zz;
+	  r2 = rr2;
+	}
     }
 
   return (k0);
@@ -300,7 +323,7 @@ search_close_image (struct stokes *sys,
 
 /*
  * INPUT
- *  bonds      : struct bond
+ *  bonds      : struct bonds
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -341,25 +364,14 @@ bonds_calc_force (struct bonds *bonds,
 	  double y = sys->pos [ia3+1] - sys->pos [ib3+1];
 	  double z = sys->pos [ia3+2] - sys->pos [ib3+2];
 
-	  if (sys->periodic == 0)
+	  if (sys->periodic != 0)
 	    {
-	      bonds_set_force_ij (bonds, sys,
-				  i,
-				  ia, ib, x, y, z,
-				  f);
+	      search_close_image (sys, &x, &y, &z);
 	    }
-	  else
-	    {
-	      int k = search_close_image (sys, x, y, z);
-	      double xx = x - sys->llx[k];
-	      double yy = y - sys->lly[k];
-	      double zz = z - sys->llz[k];
-
-	      bonds_set_force_ij (bonds, sys,
-				  i,
-				  ia, ib, xx, yy, zz,
-				  f);
-	    }
+	  bonds_set_force_ij (bonds, sys,
+			      i,
+			      ia, ib, x, y, z,
+			      f);
 	}
     }
 }
