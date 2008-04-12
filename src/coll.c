@@ -1,6 +1,6 @@
 /* collision handling routines
- * Copyright (C) 1995-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: coll.c,v 1.4 2007/05/04 01:19:53 kichiki Exp $
+ * Copyright (C) 1995-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: coll.c,v 1.5 2008/04/12 18:23:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,9 +68,21 @@ collide_particles (struct stokes *sys,
 
 	  for (k = 0; k < 27; ++k)
 	    {
-	      xx = x [ix] - x [jx] - sys->llx [k];
-	      yy = x [iy] - x [jy] - sys->lly [k];
-	      zz = x [iz] - x [jz] - sys->llz [k];
+	      xx = x [ix] - x [jx]  + (double)sys->ilx[k] * sys->lx;
+	      yy = x [iy] - x [jy]  + (double)sys->ily[k] * sys->ly;
+	      zz = x [iz] - x [jz]  + (double)sys->ilz[k] * sys->lz;
+	      if (k > 0) // periodic images
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      xx += (double)sys->ilz[k] * sys->shear_shift;
+		    }
+		}
 
 	      vx = v [ix] - v [jx];
 	      vy = v [iy] - v [jy];
@@ -90,6 +102,7 @@ collide_particles (struct stokes *sys,
 		  v [jy] -= - yy * B;
 		  v [jz] -= - zz * B;
 		}
+	      if (sys->periodic == 0) break;
 	    }
 	}
 
@@ -102,9 +115,22 @@ collide_particles (struct stokes *sys,
 
 	  for (k = 0; k < 27; ++k)
 	    {
-	      xx = x [ix] - x [jx] - sys->llx [k];
-	      yy = x [iy] - x [jy] - sys->lly [k];
-	      zz = x [iz] - x [jz] - sys->llz [k];
+	      xx = x [ix] - x [jx]  + (double)sys->ilx[k] * sys->lx;
+	      yy = x [iy] - x [jy]  + (double)sys->ily[k] * sys->ly;
+	      zz = x [iz] - x [jz]  + (double)sys->ilz[k] * sys->lz;
+	      if (k > 0) // periodic images
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      xx += (double)sys->ilz[k] * sys->shear_shift;
+		    }
+
+		}
 
 	      vx = v [ix];
 	      vy = v [iy];
@@ -121,6 +147,7 @@ collide_particles (struct stokes *sys,
 		  v [iy] += - 2.0 * yy * B;
 		  v [iz] += - 2.0 * zz * B;
 		}
+	      if (sys->periodic == 0) break;
 	    }
 	}
     }
@@ -317,8 +344,17 @@ collide_particles_2d (struct stokes *sys,
 
 	  for (k = 0; k < 9; ++k)
 	    {
-	      xx = x [ix] - x [jx] - sys->llx [k];
-	      yy = x [iy] - x [jy] - sys->lly [k];
+	      xx = x [ix] - x [jx]  + (double)sys->ilx[k] * sys->lx;
+	      yy = x [iy] - x [jy]  + (double)sys->ily[k] * sys->ly;
+
+	      if (k > 0) // periodic images
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		}
 
 	      vx = v [ix] - v [jx];
 	      vy = v [iy] - v [jy];
@@ -335,6 +371,7 @@ collide_particles_2d (struct stokes *sys,
 		  v [jx] -= - xx * B;
 		  v [jy] -= - yy * B;
 		}
+	      if (sys->periodic == 0) break;
 	    }
 	}
 
@@ -346,8 +383,17 @@ collide_particles_2d (struct stokes *sys,
 
 	  for (k = 0; k < 9; ++k)
 	    {
-	      xx = x [ix] - x [jx] - sys->llx [k];
-	      yy = x [iy] - x [jy] - sys->lly [k];
+	      xx = x [ix] - x [jx]  + (double)sys->ilx[k] * sys->lx;
+	      yy = x [iy] - x [jy]  + (double)sys->ily[k] * sys->ly;
+
+	      if (k > 0) // periodic images
+		{
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		}
 
 	      vx = v [ix];
 	      vy = v [iy];
@@ -362,6 +408,7 @@ collide_particles_2d (struct stokes *sys,
 		  v [ix] += - 2.0 * xx * B;
 		  v [iy] += - 2.0 * yy * B;
 		}
+	      if (sys->periodic == 0) break;
 	    }
 	}
     }
