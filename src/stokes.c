@@ -1,6 +1,6 @@
 /* structure for system parameters of stokes library.
- * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.c,v 2.28 2007/12/26 06:33:48 kichiki Exp $
+ * Copyright (C) 2001-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.c,v 2.29 2008/04/12 18:21:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -389,9 +389,9 @@ stokes_init (void)
   int i;
   for (i = 0; i < 27; i ++)
     {
-      sys->llx [i] = 0.0;
-      sys->lly [i] = 0.0;
-      sys->llz [i] = 0.0;
+      sys->ilx [i] = 0;
+      sys->ily [i] = 0;
+      sys->ilz [i] = 0;
     }
 
   // self part
@@ -611,38 +611,41 @@ stokes_set_l (struct stokes *sys,
   sys->ly = ly;
   sys->lz = lz;
 
+  /* initialize integer table for ilx[27], ily[27], ilz[27], which gives
+   * ll[xyz][i] = l[xyz] * (double)il[xyz][i]
+   */
   /* 0 is always the primary cell */
-  sys->llx [ 0] = 0.0; sys->lly [ 0] = 0.0; sys->llz [ 0] = 0.0;
-  sys->llx [ 1] = -lx; sys->lly [ 1] = 0.0; sys->llz [ 1] = 0.0;
-  sys->llx [ 2] = 0.0; sys->lly [ 2] = -ly; sys->llz [ 2] = 0.0;
-  sys->llx [ 3] = +lx; sys->lly [ 3] = 0.0; sys->llz [ 3] = 0.0;
-  sys->llx [ 4] = 0.0; sys->lly [ 4] = +ly; sys->llz [ 4] = 0.0;
-  sys->llx [ 5] = -lx; sys->lly [ 5] = -ly; sys->llz [ 5] = 0.0;
-  sys->llx [ 6] = -lx; sys->lly [ 6] = +ly; sys->llz [ 6] = 0.0;
-  sys->llx [ 7] = +lx; sys->lly [ 7] = -ly; sys->llz [ 7] = 0.0;
-  sys->llx [ 8] = +lx; sys->lly [ 8] = +ly; sys->llz [ 8] = 0.0;
+  sys->ilx [ 0] =  0; sys->ily [ 0] =  0; sys->ilz [ 0] =  0;
+  sys->ilx [ 1] = -1; sys->ily [ 1] =  0; sys->ilz [ 1] =  0;
+  sys->ilx [ 2] =  0; sys->ily [ 2] = -1; sys->ilz [ 2] =  0;
+  sys->ilx [ 3] = +1; sys->ily [ 3] =  0; sys->ilz [ 3] =  0;
+  sys->ilx [ 4] =  0; sys->ily [ 4] = +1; sys->ilz [ 4] =  0;
+  sys->ilx [ 5] = -1; sys->ily [ 5] = -1; sys->ilz [ 5] =  0;
+  sys->ilx [ 6] = -1; sys->ily [ 6] = +1; sys->ilz [ 6] =  0;
+  sys->ilx [ 7] = +1; sys->ily [ 7] = -1; sys->ilz [ 7] =  0;
+  sys->ilx [ 8] = +1; sys->ily [ 8] = +1; sys->ilz [ 8] =  0;
   /* up to 8, the monolayer (xy plain)
    * note: y is the vertical direction for 2D monolayer case! */
 
-  sys->llx [ 9] = 0.0; sys->lly [ 9] = 0.0; sys->llz [ 9] = - lz;
-  sys->llx [10] = -lx; sys->lly [10] = 0.0; sys->llz [10] = - lz;
-  sys->llx [11] = 0.0; sys->lly [11] = -ly; sys->llz [11] = - lz;
-  sys->llx [12] = +lx; sys->lly [12] = 0.0; sys->llz [12] = - lz;
-  sys->llx [13] = 0.0; sys->lly [13] = +ly; sys->llz [13] = - lz;
-  sys->llx [14] = -lx; sys->lly [14] = -ly; sys->llz [14] = - lz;
-  sys->llx [15] = -lx; sys->lly [15] = +ly; sys->llz [15] = - lz;
-  sys->llx [16] = +lx; sys->lly [16] = -ly; sys->llz [16] = - lz;
-  sys->llx [17] = +lx; sys->lly [17] = +ly; sys->llz [17] = - lz;
+  sys->ilx [ 9] =  0; sys->ily [ 9] =  0; sys->ilz [ 9] = -1;
+  sys->ilx [10] = -1; sys->ily [10] =  0; sys->ilz [10] = -1;
+  sys->ilx [11] =  0; sys->ily [11] = -1; sys->ilz [11] = -1;
+  sys->ilx [12] = +1; sys->ily [12] =  0; sys->ilz [12] = -1;
+  sys->ilx [13] =  0; sys->ily [13] = +1; sys->ilz [13] = -1;
+  sys->ilx [14] = -1; sys->ily [14] = -1; sys->ilz [14] = -1;
+  sys->ilx [15] = -1; sys->ily [15] = +1; sys->ilz [15] = -1;
+  sys->ilx [16] = +1; sys->ily [16] = -1; sys->ilz [16] = -1;
+  sys->ilx [17] = +1; sys->ily [17] = +1; sys->ilz [17] = -1;
 
-  sys->llx [18] = 0.0; sys->lly [18] = 0.0; sys->llz [18] = + lz;
-  sys->llx [19] = -lx; sys->lly [19] = 0.0; sys->llz [19] = + lz;
-  sys->llx [20] = 0.0; sys->lly [20] = -ly; sys->llz [20] = + lz;
-  sys->llx [21] = +lx; sys->lly [21] = 0.0; sys->llz [21] = + lz;
-  sys->llx [22] = 0.0; sys->lly [22] = +ly; sys->llz [22] = + lz;
-  sys->llx [23] = -lx; sys->lly [23] = -ly; sys->llz [23] = + lz;
-  sys->llx [24] = -lx; sys->lly [24] = +ly; sys->llz [24] = + lz;
-  sys->llx [25] = +lx; sys->lly [25] = -ly; sys->llz [25] = + lz;
-  sys->llx [26] = +lx; sys->lly [26] = +ly; sys->llz [26] = + lz;
+  sys->ilx [18] =  0; sys->ily [18] =  0; sys->ilz [18] = +1;
+  sys->ilx [19] = -1; sys->ily [19] =  0; sys->ilz [19] = +1;
+  sys->ilx [20] =  0; sys->ily [20] = -1; sys->ilz [20] = +1;
+  sys->ilx [21] = +1; sys->ily [21] =  0; sys->ilz [21] = +1;
+  sys->ilx [22] =  0; sys->ily [22] = +1; sys->ilz [22] = +1;
+  sys->ilx [23] = -1; sys->ily [23] = -1; sys->ilz [23] = +1;
+  sys->ilx [24] = -1; sys->ily [24] = +1; sys->ilz [24] = +1;
+  sys->ilx [25] = +1; sys->ily [25] = -1; sys->ilz [25] = +1;
+  sys->ilx [26] = +1; sys->ily [26] = +1; sys->ilz [26] = +1;
 }
 
 /** copied from PBC/ewald-3.c 1.6 2001/02/06 03:47:16 ichiki Exp **/
@@ -1252,7 +1255,7 @@ stokes_copy (struct stokes *s0)
   if (s->periodic == 1)
     {
       stokes_set_l (s, s0->lx, s0->ly, s0->lz);
-      /* this also set llx, lly, llz and pivol */
+      /* this also set ilx, ily, ilz and pivol */
 
       stokes_set_xi (s, s0->xi, s0->ewald_eps);
       /* this set ewald_eps, xi (and others), self_[acm], rmax*, kmax*, 

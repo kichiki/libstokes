@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
- * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.26 2007/12/26 06:34:09 kichiki Exp $
+ * Copyright (C) 2001-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes.h,v 1.27 2008/04/12 18:21:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -94,7 +94,8 @@ struct stokes {
   double pivol;
 
   double lx, ly, lz;
-  double llx[27], lly[27], llz[27]; /* for regist and lub */
+  int ilx[27], ily[27], ilz[27];
+  // note: ll[xyz][i] = l[xyz] * (double)il[xyz][i]
 
   // self part
   double self_a;
