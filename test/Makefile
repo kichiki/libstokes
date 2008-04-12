@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.16 2007/12/26 06:57:58 kichiki Exp $
+# $Id: Makefile,v 1.17 2008/04/12 19:19:00 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -24,7 +24,7 @@ CFLAGS	     = \
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.3 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 
@@ -73,7 +73,8 @@ test-all-OBJ =\
 	check-bd-imp.o		\
 	check-sqrt-dgeev.o	\
 	check-matrix.o		\
-	check-list-ex.o
+	check-list-ex.o		\
+	check-angles.o
 
 
 test-all:	$(test-all-OBJ)
