@@ -1,6 +1,6 @@
 /* excluded-volume interactions
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.c,v 1.2 2007/10/27 03:19:53 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: excluded-volume.c,v 1.3 2008/04/12 18:23:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -251,9 +251,19 @@ EV_calc_force (struct EV *ev,
 	      int k;
 	      for (k = 1; k < 27; k ++) // excluding the primary cell (k=0)
 		{
-		  double xx = x - sys->llx[k];
-		  double yy = y - sys->lly[k];
-		  double zz = z - sys->llz[k];
+		  double xx = x + (double)sys->ilx[k] * sys->lx;
+		  double yy = y + (double)sys->ily[k] * sys->ly;
+		  double zz = z + (double)sys->ilz[k] * sys->lz;
+
+		  // shift for shear
+		  if (sys->shear_mode == 1)
+		    {
+		      xx += (double)sys->ily[k] * sys->shear_shift;
+		    }
+		  else if (sys->shear_mode == 2)
+		    {
+		      xx += (double)sys->ilz[k] * sys->shear_shift;
+		    }
 
 		  r2 = xx*xx + yy*yy + zz*zz;
 		  if (r2 < ev->r2)
