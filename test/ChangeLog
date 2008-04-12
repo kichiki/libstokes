@@ -1,0 +1,403 @@
+2008-04-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.17 2008/04/12 19:19:00 kichiki Exp
+	* test-all.c: 1.19 2008/04/12 19:18:29 kichiki Exp
+	add check-angles.c.
+
+	* check-angles.scm: 1.1 2008/04/12 19:17:23 kichiki Exp
+	* check-angles.h: 1.1 2008/04/12 19:16:56 kichiki Exp
+	* check-angles.c: 1.1 2008/04/12 19:16:31 kichiki Exp
+	added.
+
+2007-12-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.16 2007/12/26 06:57:58 kichiki Exp
+	* test-all.c: 1.18 2007/12/26 06:58:22 kichiki Exp
+	-- the following has been done on 2007-12-21 --
+	add check-mob-fts.c and check-ewald-shear.c stuff.
+
+2007-12-21  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-ewald.c: 1.4 2007/12/22 18:26:18 kichiki Exp
+	minor style update.
+
+	* check-ewald-shear.h: 1.1 2007/12/22 18:24:47 kichiki Exp
+	* check-ewald-shear.c: 1.1 2007/12/22 18:24:23 kichiki Exp
+	added.
+
+	* check-mob-fts.h: 1.1 2007/12/22 18:24:00 kichiki Exp
+	* check-mob-fts.c: 1.1 2007/12/22 18:23:35 kichiki Exp
+	added.
+
+	* check-bd-imp.c: 1.3 2007/12/22 18:22:39 kichiki Exp
+	-- the following has been done on 2007-12-18 --
+	update for new BD_params with 'rmin'.
+	add check for siPC.
+
+	* check-brownian.c: 1.8 2007/12/22 18:21:34 kichiki Exp
+	-- the following has been done on 2007-12-18 --
+	update for new BD_params with 'rmin'.
+
+2007-12-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-all.c: 1.17 2007/12/13 05:58:59 kichiki Exp
+	check-bd-imp.c is done.
+
+	* check-bd-imp.c: 1.2 2007/12/13 05:58:38 kichiki Exp
+	(check_BD_evolve_JGdP00, check_BD_imp_ode_evolve): 
+	bug fixed on the initialization of quaternion.
+
+2007-12-11  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-dnaupd_c.c: 1.4 2007/12/12 06:34:18 kichiki Exp
+	(check_dnaupd_c): modify the output format.
+
+	* check-dsaupd_c.c: 1.4 2007/12/12 06:33:33 kichiki Exp
+	(check_dsaupd_c): modify the output format.
+
+	* Makefile: 1.15 2007/12/12 06:32:31 kichiki Exp
+	* test-all.c: 1.16 2007/12/12 06:32:14 kichiki Exp
+	add check-bd-imp.c.
+
+	* check-bd-imp.h: 1.1 2007/12/12 06:31:52 kichiki Exp
+	* check-bd-imp.c: 1.1 2007/12/12 06:31:28 kichiki Exp
+	added.
+
+	* check.c: 1.3 2007/12/12 06:30:57 kichiki Exp
+	change the printf format.
+
+2007-12-05  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-brownian.c: 1.7 2007/12/06 02:30:09 kichiki Exp
+	(check_lub_FU): update for the new BD_params_init(), where 
+	struct bonds *bonds is necessary to define BD->flag_lub_B.
+
+2007-12-04  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-brownian.c: 1.6 2007/12/05 03:54:36 kichiki Exp
+	update.
+
+	* Makefile: 1.14 2007/12/05 03:54:09 kichiki Exp
+	* test-all.c: 1.15 2007/12/05 03:53:50 kichiki Exp
+	-- the following has been done on 2007-12-03 --
+	add check-list-ex.c.
+
+	* check-list-ex.h: 1.1 2007/12/05 03:53:28 kichiki Exp
+	* check-list-ex.c: 1.1 2007/12/05 03:53:06 kichiki Exp
+	-- the following has been done on 2007-12-03 --
+	added.
+
+2007-12-01  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.13 2007/12/01 18:35:18 kichiki Exp
+	add check-lapack-solve-lin.c.
+
+	* test-all.c: 1.14 2007/12/01 18:34:49 kichiki Exp
+	add check-lapack-solve-lin.c.
+	adjust the tolerance.
+
+	* check-minv.c: 1.2 2007/12/01 18:33:09 kichiki Exp
+	* check-sqrt-dgeev.c: 1.2 2007/12/01 18:32:48 kichiki Exp
+	* check-brownian.c: 1.5 2007/12/01 18:32:24 kichiki Exp
+	* check-dpotrf_c.c: 1.2 2007/12/01 18:32:03 kichiki Exp
+	* check-twobody-slip.c: 1.2 2007/12/01 18:31:41 kichiki Exp
+	* check-ode-quaternion.c: 1.2 2007/12/01 18:31:18 kichiki Exp
+	* check-ewald-poly.c: 1.4 2007/12/01 18:30:57 kichiki Exp
+	* check-ewald.c: 1.3 2007/12/01 18:30:37 kichiki Exp
+	* check-lub-poly.c: 1.6 2007/12/01 18:30:16 kichiki Exp
+	* check-minv-poly.c: 1.3 2007/12/01 18:29:53 kichiki Exp
+	* check-poly.c: 1.5 2007/12/01 18:29:32 kichiki Exp
+	* check-twobody.c: 1.3 2007/12/01 18:29:09 kichiki Exp
+	* check-solve-gen-linear.c: 1.5 2007/12/01 18:28:46 kichiki Exp
+	* check-matrix.c: 1.3 2007/12/01 18:28:25 kichiki Exp
+	* check-mul-matrices.c: 1.3 2007/12/01 18:28:04 kichiki Exp
+	* check-dgeev_c.c: 1.2 2007/12/01 18:27:44 kichiki Exp
+	* check-bd.c: 1.3 2007/12/01 18:27:25 kichiki Exp
+	* check-dnaupd_c.c: 1.3 2007/12/01 18:27:06 kichiki Exp
+	* check-dsaupd_c.c: 1.3 2007/12/01 18:26:46 kichiki Exp
+	* check-chebyshev.c: 1.3 2007/12/01 18:26:27 kichiki Exp
+	-- the following has been done on 2007-11-30 --
+	use compare_max() instead of compare() to check the max error.
+
+	* check-lapack-inv.c: 1.3 2007/12/01 18:25:38 kichiki Exp
+	-- the following has been done on 2007-11-30 --
+	a minor style change.
+
+	* check-lapack-solve-lin.h: 1.1 2007/12/01 18:24:39 kichiki Exp
+	* check-lapack-solve-lin.c: 1.1 2007/12/01 18:24:14 kichiki Exp
+	-- the following has been done on 2007-11-28 --
+	added.
+
+	* check.h: 1.2 2007/12/01 18:23:19 kichiki Exp
+	* check.c: 1.2 2007/12/01 18:23:00 kichiki Exp
+	-- the following has been done on 2007-11-28 --
+	(compare_max): added.
+
+2007-11-27  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-brownian.c: 1.4 2007/11/28 03:42:38 kichiki Exp
+	-- the following has been done for a while ago --
+	update the argument for BD_param_init().
+
+	* check-matrix.c: 1.2 2007/11/28 03:42:14 kichiki Exp
+	-- the following is done on 2007-11-14 --
+	(benchmark_dgemm): correct fprintf().
+
+2007-11-10  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.12 2007/11/10 23:12:43 kichiki Exp
+	link gsl library.
+
+	* check-brownian.c: 1.3 2007/11/10 23:06:49 kichiki Exp
+	(check_lub_FU, check_minv_FU): update BD_params_init().
+
+	* check-solve-gen-linear.c: 1.4 2007/11/10 23:10:21 kichiki Exp
+	-- the following is done on 2007-11-06 --
+	cut static function... it is now global in matrix.c, I guess.
+
+2007-11-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.11 2007/11/04 00:19:02 kichiki Exp
+	add check-matrix.c.
+
+	* test-all.c: 1.13 2007/11/04 00:18:25 kichiki Exp
+	add check-matrix.c and new check routines in check-brownian.c.
+
+	* check-brownian.h: 1.2 2007/11/04 00:17:31 kichiki Exp
+	* check-brownian.c: 1.2 2007/11/04 00:17:08 kichiki Exp
+	(check_minv_FU, check_lub_FU, benchmark_BD_minv_FU_in_FTS)
+	(check_inv_by_submatrices): added.
+
+	* check-matrix.h: 1.1 2007/11/03 22:55:16 kichiki Exp
+	* check-matrix.c: 1.1 2007/11/03 22:54:17 kichiki Exp
+	added.
+
+2007-10-31  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.10 2007/11/01 04:59:29 kichiki Exp
+	* test-all.c: 1.12 2007/11/01 04:59:05 kichiki Exp
+	add check-sqrt-dgeev.c.
+
+	* check-sqrt-dgeev.h: 1.1 2007/11/01 04:57:51 kichiki Exp
+	* check-sqrt-dgeev.c: 1.1 2007/11/01 04:57:14 kichiki Exp
+	added.
+
+2007-10-27  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.9 2007/10/27 23:12:13 kichiki Exp
+	* test-all.c: 1.11 2007/10/27 23:10:47 kichiki Exp
+	add check-dpotrf_c.c and check-brownian.c.
+
+	* check-brownian.h: 1.1 2007/10/27 23:09:56 kichiki Exp
+	* check-brownian.c: 1.1 2007/10/27 23:09:31 kichiki Exp
+	* check-dpotrf_c.h: 1.1 2007/10/27 23:09:07 kichiki Exp
+	* check-dpotrf_c.c: 1.1 2007/10/27 23:08:40 kichiki Exp
+	added.
+
+2007-09-29  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.8 2007/09/30 04:02:56 kichiki Exp
+	add check routines for Brownian dynamics, 
+	check-dsaupd_c.c, 
+	check-dnaupd_c.c, 
+	check-chebyshev.c, 
+	check-bd.c.
+	according to this, all ARPACK library.
+	-- the following is done on 2007-08-17 --
+	add check-twobody-slip.c.
+
+	* test-all.c: 1.10 2007/09/30 04:02:09 kichiki Exp
+	add Brownian dynamics stuff.
+	-- the next item is done on 2007-09-20 --
+	loose the criteria a little bit (for other environment).
+	-- the following is done on 2007-08-17 --
+	add check-twobody-slip.c.
+
+	* check-solve-gen-linear.h: 1.2 2007/09/30 04:00:50 kichiki Exp
+	* check-solve-gen-linear.c: 1.3 2007/09/30 04:00:21 kichiki Exp
+	* check-mul-matrices.h: 1.2 2007/09/30 03:59:58 kichiki Exp
+	* check-mul-matrices.c: 1.2 2007/09/30 03:59:37 kichiki Exp
+	* check-lapack-inv.h: 1.2 2007/09/30 03:59:15 kichiki Exp
+	* check-lapack-inv.c: 1.2 2007/09/30 03:58:48 kichiki Exp
+	style update.
+	add 'tiny' in the argument.
+	use compare() in check.c.
+
+	* check-dsaupd_c.c: 1.2 2007/09/30 03:54:47 kichiki Exp
+	* check-dnaupd_c.c: 1.2 2007/09/30 03:54:47 kichiki Exp
+	* check-chebyshev.c: 1.2 2007/09/30 03:54:47 kichiki Exp
+	* check-bd.c: 1.2 2007/09/30 03:54:47 kichiki Exp
+	minor style update.
+
+	* check-dgeev_c.h: 1.1 2007/09/30 03:50:58 kichiki Exp
+	* check-dgeev_c.c: 1.1 2007/09/30 03:50:57 kichiki Exp
+	* check-dsaupd_c.h: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-dsaupd_c.c: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-dnaupd_c.h: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-dnaupd_c.c: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-chebyshev.h: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-chebyshev.c: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-bd.h: 1.1 2007/09/29 20:28:17 kichiki Exp
+	* check-bd.c: 1.1 2007/09/29 20:28:16 kichiki Exp
+	imported from working directory.
+
+	* check-twobody-slip.h: 1.1 2007/09/30 04:04:29 kichiki Exp
+	* check-twobody-slip.c: 1.1 2007/09/30 04:04:06 kichiki Exp
+	-- the following is done on 2007-08-17 --
+	added.
+
+2007-08-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.5-RELEASE
+
+2007-05-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.7 2007/05/14 00:23:22 kichiki Exp
+	* test-all.c: 1.9 2007/05/14 00:21:35 kichiki Exp
+	add check-ode-quaternion.c.
+
+	* check-ode-quaternion.h: 1.1 2007/05/14 00:21:17 kichiki Exp
+	* check-ode-quaternion.c: 1.1 2007/05/14 00:20:51 kichiki Exp
+	added.
+
+2007-05-10  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-all.c: 1.8 2007/05/11 02:08:10 kichiki Exp
+	add the final message to see there is error or not.
+
+2007-05-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-solve-gen-linear.c: 1.2 2007/05/04 02:27:12 kichiki Exp
+	some minor style update.
+
+	* check-ewald-poly.c: 1.3 2007/05/04 02:26:16 kichiki Exp
+	* check-ewald.c: 1.2 2007/05/04 02:25:49 kichiki Exp
+	* check-lub-poly.c: 1.5 2007/05/04 02:25:22 kichiki Exp
+	use sys->lubmin2, squared value.
+
+2007-04-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* check-lub-poly.c: 1.4 2007/04/26 05:20:25 kichiki Exp
+	update for the new minv-poly.c using struct twobody_f.
+
+	* check-twobody.c: 1.2 2007/04/26 05:19:13 kichiki Exp
+	cut the local test routine 'twobody_lub_()'.
+	update for the new twobody.c.
+
+2007-04-24  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.6 2007/04/25 05:59:46 kichiki Exp
+	add check-twobody.c.
+
+	* test-all.c: 1.7 2007/04/25 05:57:30 kichiki Exp
+	add test in check-twobody.c.
+
+	* check-twobody.h: 1.1 2007/04/25 05:56:32 kichiki Exp
+	* check-twobody.c: 1.1 2007/04/25 05:56:11 kichiki Exp
+	added.
+
+	* check.h: 1.1 2007/04/25 05:51:21 kichiki Exp
+	* check.c: 1.1 2007/04/25 05:50:49 kichiki Exp
+	added.
+
+	* check-lub-poly.h: 1.2 2007/04/25 05:49:54 kichiki Exp
+	* check-lub-poly.c: 1.3 2007/04/25 05:49:11 kichiki Exp
+	(check_lub_scalars_poly): added.
+	(check_lub_fts_2b_poly): add ptime comparison.
+	(check_matrix_lub_fts_2b_poly): add ptime comparison.
+
+	* check-minv-poly.c: 1.2 2007/04/25 05:46:00 kichiki Exp
+	(check_scalars_minv_f_poly_with_equal): add ptime comparison.
+	(check_scalars_minv_ft_poly_with_equal): add ptime comparison.
+	(check_scalars_minv_fts_poly_with_equal): add ptime comparison.
+
+	* check-ewald-poly.c: 1.2 2007/04/25 05:44:31 kichiki Exp
+	(check_atimes_ewald_3all_poly_SC_1): add ptime comparison.
+	(check_atimes_ewald_3all_poly_SC_2): add ptime comparison.
+	(check_make_matrix_mob_ewald_3all_poly_SC_1): add ptime comparison.
+	(check_make_matrix_mob_ewald_3all_poly_SC_2): add ptime comparison.
+
+	* check-poly.c: 1.4 2007/04/25 05:39:46 kichiki Exp
+	(check_scalars_nonewald_poly): add ptime comparison.
+	(check_scalars_ewald_real_poly): add ptime comparison.
+
+2007-04-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.5 2007/04/20 02:06:01 kichiki Exp
+	* test-all.c: 1.6 2007/04/20 02:04:16 kichiki Exp
+	add checks in check-ewald.c and check-ewald-poly.c.
+
+	* check-lub-poly.c: 1.2 2007/04/20 02:03:25 kichiki Exp
+	change the name from 'lubcut' to 'lubmin'.
+
+	* check-ewald-poly.h: 1.1 2007/04/20 02:01:04 kichiki Exp
+	* check-ewald-poly.c: 1.1 2007/04/20 02:00:30 kichiki Exp
+	* check-ewald.h: 1.1 2007/04/20 02:00:00 kichiki Exp
+	* check-ewald.c: 1.1 2007/04/20 01:59:39 kichiki Exp
+	added.
+
+2007-04-17  Kengo Ichiki  <ichiki@tpr60>
+
+	* test-all.c: 1.5 2007/04/18 01:29:34 kichiki Exp
+	* check-poly.h: 1.3 2007/04/20 02:02:27 kichiki Exp
+	* check-poly.c: 1.3 2007/04/18 01:29:08 kichiki Exp
+	(check_scalars_ewald_real_poly): added.
+
+2007-04-13  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.4 2007/04/14 00:39:11 kichiki Exp
+	add tests in check-lub-poly.c.
+
+	* test-all.c: 1.4 2007/04/14 00:37:37 kichiki Exp
+	add tests in check-lub-poly.c.
+
+	* check-lub-poly.h: 1.1 2007/04/14 00:37:16 kichiki Exp
+	* check-lub-poly.c: 1.1 2007/04/14 00:36:45 kichiki Exp
+	added.
+
+2007-04-11  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.3 2007/04/12 05:35:27 kichiki Exp
+	updated.
+
+	* test-all.c: 1.3 2007/04/12 05:33:23 kichiki Exp
+	add some test suites for minv-poly.c.
+
+	* check-minv-poly.h: 1.1 2007/04/12 05:32:05 kichiki Exp
+	* check-minv-poly.c: 1.1 2007/04/12 05:31:36 kichiki Exp
+	added.
+	(scalars_minv_fts_poly_ana): not completed yet but only XC, ZM, and
+	YA11 and YA22 are implemented.
+
+	* check-minv.h: 1.1 2007/04/12 05:28:46 kichiki Exp
+	* check-minv.c: 1.1 2007/04/12 05:28:16 kichiki Exp
+	added.
+
+	* check-poly.h: 1.2 2007/04/12 05:26:42 kichiki Exp
+	* check-poly.c: 1.2 2007/04/12 05:26:22 kichiki Exp
+	(check_scalars_nonewald_poly_symmetry): moved from minv-poly.c.
+
+2007-04-02  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.2 2007/04/03 02:40:42 kichiki Exp
+	add check-poly.c.
+
+	* test-all.c: 1.2 2007/04/03 02:38:04 kichiki Exp
+	add check_scalars_nonewald_poly().
+
+	* check-poly.h: 1.1 2007/04/03 02:37:15 kichiki Exp
+	* check-poly.c: 1.1 2007/04/03 02:36:43 kichiki Exp
+	added.
+
+2007-03-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile: 1.1 2007/03/19 04:10:37 kichiki Exp
+	* test-all.c: 1.1 2007/03/19 04:22:01 kichiki Exp
+	* check-solve-gen-linear.h: 1.1 2007/03/19 02:59:18 kichiki Exp
+	* check-solve-gen-linear.c: 1.1 2007/03/19 02:57:58 kichiki Exp
+	* check-mul-matrices.h: 1.1 2007/03/19 02:56:50 kichiki Exp
+	* check-mul-matrices.c: 1.1 2007/03/19 02:55:29 kichiki Exp
+	* check-lapack-inv.h: 1.1 2007/03/19 02:51:59 kichiki Exp
+	* check-lapack-inv.c: 1.1 2007/03/19 02:51:07 kichiki Exp
+	added.
+
