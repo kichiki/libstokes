@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.20 2007/11/07 04:41:56 kichiki Exp $
+# $Id: Makefile.am,v 1.21 2008/04/12 18:19:05 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -61,6 +61,8 @@ libstokes_la_SOURCES = \
 	periodicity.c		\
 	bonds.c			\
 	bonds-guile.c		\
+	angles.c		\
+	angles-guile.c		\
 	ode.c			\
 	ode-quaternion.c	\
 	chebyshev.c		\
