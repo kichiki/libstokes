@@ -1,6 +1,6 @@
 /* guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.c,v 1.2 2008/04/16 00:38:43 kichiki Exp $
+ * $Id: angles-guile.c,v 1.3 2008/04/16 03:07:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,11 +17,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <stdio.h>
+#include <libguile.h>
 #include <math.h> // M_PI, sqrt()
 #include "memory-check.h" // macro CHECK_MALLOC
 
-#include <libguile.h>
-#include <guile/gh.h>
 #include "stokes-guile.h" // guile_load()
 #include "angles.h"
 

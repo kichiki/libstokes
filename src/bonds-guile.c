@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.5 2007/12/06 02:27:48 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bonds-guile.c,v 1.6 2008/04/16 03:07:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,9 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <stdio.h>
-
 #include <libguile.h>
-#include <guile/gh.h>
 #include "stokes.h" // struct stokes
 #include "stokes-guile.h" // ...
 #include "bonds.h"
