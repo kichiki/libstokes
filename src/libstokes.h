@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.51 2008/04/12 18:26:02 kichiki Exp $
+ * $Id: libstokes.h,v 1.52 2008/04/16 00:34:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1260,6 +1260,93 @@ EV_calc_force (struct EV *ev,
 
 
 /************************************
+ ** angle-interaction routines     **
+ ************************************/
+/* from angles.h */
+struct angle {
+  double k;  // potential factor
+  double t0; // natural angle (theta_0) in radian
+
+  // particle indices
+  int ia;
+  int ib;
+  int ic;
+};
+
+struct angles {
+  /* table for angle type */
+  int n;           // number of angles
+  struct angle *a; // angles
+};
+
+
+/**
+ * struct angles
+ */
+struct angles *
+angles_init (void);
+
+void
+angles_free (struct angles *ang);
+
+/*
+ * INPUT
+ *  ia, ib, ic : particle indices (ib is the center particle)
+ *  k  : potential factor
+ *  t0 : natural angle (in radian)
+ */
+void
+angles_add (struct angles *ang,
+	    int ia, int ib, int ic,
+	    double k, double t0);
+
+/*
+ * INPUT
+ *  ang        : struct angles
+ *  sys        : struct stokes (only nm and pos are used)
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+angles_calc_force (struct angles *ang,
+		   struct stokes *sys,
+		   double *f,
+		   int flag_add);
+
+/* from angles-guile.h */
+/* get angles from SCM
+ * in SCM, angles are given by something like
+ *  (define angles '(
+ *    (; angle type 1
+ *     10.0    ; 1) constant (k^{angle})
+ *     0.0     ; 2) angle in degree (theta_0)
+ *     ((0 1 2); 3) list of triplets
+ *      (1 2 3)
+ *      (2 3 4)
+ *     )
+ *    )
+ *    (; angle type 2
+ *     20.0    ; 1) constant (k^{angle})
+ *     90.0    ; 2) angle in degree (theta_0)
+ *     ((3 4 5); 3) list of triplets
+ *      (4 5 6)
+ *     )
+ *    )
+ *  ))
+ * INPUT
+ *  var : name of the variable.
+ *        in the above example, set "angles".
+ * OUTPUT
+ *  returned value : struct angles
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct angles *
+guile_get_angles (const char *var);
+
+
+/************************************
  ** routines for ODE integrator    **
  ************************************/
 /* from ode.h */
@@ -1484,11 +1571,12 @@ struct BD_params
   double t0; // reference time for s0
   double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 
-  // currently the following parameters are just place holders
-  double st;
+  double st; // currently this is just place holders
+
   struct bonds *bonds;
   double gamma;
   struct EV *ev;
+  struct angles *ang;
 
   int flag_Q;
 
@@ -1546,6 +1634,7 @@ struct BD_params
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
+ *  (struct angles *)ang
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -1573,6 +1662,7 @@ BD_params_init (struct stokes *sys,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
+		struct angles *ang,
 		int flag_Q,
 		double peclet,
 		double eps,
