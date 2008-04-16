@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.10 2007/12/26 06:36:02 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: brownian.h,v 1.11 2008/04/16 00:33:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,11 +45,12 @@ struct BD_params
   double t0; // reference time for s0
   double s0; // cell shift at time t0 (for shear_mode = 1 or 2)
 
-  // currently the following parameters are just place holders
-  double st;
+  double st; // currently this is just place holders
+
   struct bonds *bonds;
   double gamma;
   struct EV *ev;
+  struct angles *ang;
 
   int flag_Q;
 
@@ -107,6 +108,7 @@ struct BD_params
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
+ *  (struct angles *)ang
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -134,6 +136,7 @@ BD_params_init (struct stokes *sys,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
+		struct angles *ang,
 		int flag_Q,
 		double peclet,
 		double eps,
@@ -355,6 +358,19 @@ BD_ode_evolve (struct BD_params *BD,
 	       double *t, double t_out, double *dt,
 	       double *y);
 
+/* add interaction forces on each particle including
+ *   bond force F^bond(sys->pos[]) by bonds_calc_force()
+ *   EV force F^EV(sys->pos[]) by EV_calc_force()
+ * INPUT
+ *  BD : struct BD_params
+ *  pos[] : position for F^bond and F^EV
+ * OUTPUT
+ *  FTS : struct FTS
+ */
+void
+BD_add_FP (struct BD_params *BD,
+	   const double *pos,
+	   struct FTS *FTS);
 
 /* evolve position of particles -- the mid-point scheme
  * INPUT
