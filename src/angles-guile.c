@@ -1,6 +1,6 @@
 /* guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.c,v 1.1 2008/04/12 18:18:14 kichiki Exp $
+ * $Id: angles-guile.c,v 1.2 2008/04/16 00:38:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,7 @@
 
 #include <libguile.h>
 #include <guile/gh.h>
-#include "stokes-guile.h" // ...
+#include "stokes-guile.h" // guile_load()
 #include "angles.h"
 
 #include "angles-guile.h"
@@ -33,7 +33,7 @@
  *  (define angles '(
  *    (; angle type 1
  *     10.0    ; 1) constant (k^{angle})
- *     180.0   ; 2) angle in degree (theta_0)
+ *     0.0     ; 2) angle in degree (theta_0)
  *     ((0 1 2); 3) list of triplets
  *      (1 2 3)
  *      (2 3 4)

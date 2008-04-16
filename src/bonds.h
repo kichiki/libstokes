@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.6 2007/12/06 02:27:01 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bonds.h,v 1.7 2008/04/16 00:39:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,7 +115,7 @@ bonds_set_FENE (struct bonds *bonds,
 
 /*
  * INPUT
- *  bonds      : struct bond
+ *  bonds      : struct bonds
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force

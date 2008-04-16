@@ -1,6 +1,6 @@
 /* angle interaction between particles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles.c,v 1.1 2008/04/12 18:17:05 kichiki Exp $
+ * $Id: angles.c,v 1.2 2008/04/16 00:38:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -250,7 +250,7 @@ angles_calc_force (struct angles *ang,
 	{
 	  t = acos (ct);
 	  st = sqrt (1.0 - ct * ct);
-	  //double st = sin (t);
+	  // st = sin (t);
 	}
 
       double factor = - a->k * (t - a->t0) / st;
