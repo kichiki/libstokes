@@ -1,6 +1,6 @@
 /* test code for brownian.c
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.8 2007/12/22 18:21:34 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: check-brownian.c,v 1.9 2008/04/16 00:34:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -393,6 +393,7 @@ check_minv_FU (int verbose, double tiny)
      NULL, // struct bonds *bonds,
      0.0,  // double gamma,
      NULL, // struct EV *ev,
+     NULL, // struct angles *ang,
      0,    // int flag_Q,
      -1.0, // double peclet,
      0.0,  // double eps,
@@ -765,6 +766,7 @@ check_lub_FU (int verbose, double tiny)
      bonds,// struct bonds *bonds, <-- necessary to define BD->flag_lub
      0.0,  // double gamma,
      NULL, // struct EV *ev,
+     NULL, // struct angles *ang,
      0,    // int flag_Q,
      -1.0, // double peclet,
      0.0,  // double eps,

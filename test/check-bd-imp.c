@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.3 2007/12/22 18:22:39 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: check-bd-imp.c,v 1.4 2008/04/16 00:35:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,7 @@
 #include <brownian.h>
 #include <bd-imp.h>
 #include <bonds.h> // bonds_init(), bonds_free()
+#include <angles.h> // angles_init(), angles_free()
 
 
 
@@ -111,6 +112,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
     }
 
   struct bonds *bonds = bonds_init ();
+  struct angles *ang = angles_init ();
   struct BD_params *BD
     = BD_params_init (sys,
 		      0, // BD_seed,
@@ -122,6 +124,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 		      bonds,
 		      1.0, // gamma,
 		      NULL, // ev,
+		      ang,
 		      flag_Q,
 		      -1.0, // peclet,
 		      1.0e-6, // ode_eps,
@@ -348,6 +351,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
   free (T);
   free (E);
   bonds_free (bonds);
+  angles_free (ang);
   BD_params_free (BD);
   free (x_mid);
   free (x_BB);
@@ -455,6 +459,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
     }
 
   struct bonds *bonds = bonds_init ();
+  struct angles *ang = angles_init ();
   struct BD_params *BD
     = BD_params_init (sys,
 		      0, // BD_seed,
@@ -466,6 +471,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 		      bonds,
 		      1.0, // gamma,
 		      NULL, // ev,
+		      ang,
 		      flag_Q,
 		      -1.0, // peclet,
 		      1.0e-6, // ode_eps,
@@ -725,6 +731,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   free (T);
   free (E);
   bonds_free (bonds);
+  angles_free (ang);
   BD_params_free (BD);
   free (y_mid);
   free (y_BB);
