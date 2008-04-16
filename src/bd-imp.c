@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.5 2007/12/26 06:36:25 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bd-imp.c,v 1.6 2008/04/16 00:32:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -236,37 +236,31 @@ BD_imp_set_dt (struct BD_imp *BDimp,
 }
 
 
-/**
- * semi-implicit algorithm by
- * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
- */
-/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
- * INTPUT
- *  x[n] : = (x[nm*3])          for F version
- *         = (x[nm*3], q[nm*4]) for FT and FTS versions
- *  p    : (struct BD_imp *)
+/* calculate forces on each particle including
+ *   constant force in BDimp->BD->F[],T[]
+ *   Brownian force BDimp->fact * BDimp->z[],
+ *   bond force F^bond(pos[]) by ...
+ *   EV force F^EV(pos[]) by ...
+ * INPUT
+ *  pos[] : position for F^bond and F^EV
+ *  BDimp->BD->FTS->F[],T[],E[] for constant force
+ *  BDimp->fact, BDimp->z[] for F^B
  * OUTPUT
- *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
+ *  BDimp->FTS->f[],t[],e[]
  */
-int
-BD_imp_JGdP00_func (const gsl_vector *x, void *p,
-		    gsl_vector *f)
+void
+BD_imp_calc_forces (struct BD_imp *BDimp,
+		    const double *pos)
 {
-  struct BD_imp *BDimp = (struct BD_imp *)p;
   struct BD_params *BD = BDimp->BD;
   struct stokes *sys = BD->sys;
+  int nm3 = sys->nm * 3;
+  int nm5 = sys->nm * 5;
 
   int i;
-
-  int nm = sys->nm;
-  int nm3 = nm * 3;
-  int nm4 = nm3 + nm;
-  int nm5 = nm4 + nm;
-
   /**
-   * set the forces for x0[] (and independent of the config)
+   * set the constant force and F^B(x0)
    */
-  // set force (and torque)
   if (sys->version == 0) // F version
     {
       for (i = 0; i < nm3; i ++)
@@ -294,72 +288,41 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
 	}
     }
 
-  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
-  for (i = 0; i < nm3; i ++)
-    {
-      BDimp->pos[i] = gsl_vector_get (x, i);
-    }
-  if (sys->version > 0)
-    {
-      for (i = 0; i < nm4; i ++)
-	{
-	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
-	}
-    }
-
   /**
-   * set the force for x[]
-   * F^P should be evaluated for the new config x[]
+   * add interaction forces for pos[]
    */
-  stokes_set_pos_mobile (sys, BDimp->pos); // first nm3 is the position
+  BD_add_FP (BD, pos, BDimp->FTS);
+}
 
-  if (BD->bonds->n > 0)
-    {
-      // calc bond (spring) force
-      bonds_calc_force (BD->bonds, sys,
-			BDimp->FTS->f, 1/* add */);
-    }
-  if (BD->ev != NULL)
-    {
-      // calc EV force
-      EV_calc_force (BD->ev, sys,
-		     BDimp->FTS->f, 1/* add */);
-    }
+/* adjust the imposed flow with the new config x[].
+ *
+ * now FTS->u = U (in the labo frame)
+ *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+ * so that FTS->u += (u(x) - u(x0))
+ *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+ *                   ^^^^
+ * note that only u depends on the position (not o (nor e))
+ * thereofre, there is no correction
+ * (that is, the components in (u(x) - u(x0)) are zero)
+ */
+void
+BD_imp_adj_uinf (struct BD_imp *BDimp,
+		 double *x0, double *x)
+{
+  struct BD_params *BD = BDimp->BD;
+  struct stokes *sys = BD->sys;
+  int nm = sys->nm;
 
-  /**
-   * solve (u, o) with F^P(x) for the configuration to x0[]
-   */
-  // reset the configuration to x0[]
-  stokes_set_pos_mobile (sys, BDimp->x0);
-  solve_mix_3all (sys,
-		  BD->flag_lub, BD->flag_mat,
-		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
-		  BD->uf, BD->of, BD->ef,
-		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
-		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
-  /* note that FTS->[u,o] are in the labo frame */
-
-  /**
-   * adjust the imposed flow with the new config x[].
-   *
-   * now FTS->u = U (in the labo frame)
-   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   * so that FTS->u += (u(x) - u(x0))
-   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   *                   ^^^^
-   * note that only u depends on the position (not o (nor e))
-   * thereofre, there is no correction
-   * (that is, the components in (u(x) - u(x0)) are zero)
-   */
+  int i;
   for (i = 0; i < nm; i ++)
     {
       int ix = i*3;
       int iy = ix + 1;
       int iz = ix + 2;
 
-      double dx = BDimp->pos[ix] - BDimp->x0[ix];
-      double dy = BDimp->pos[iy] - BDimp->x0[iy];
-      double dz = BDimp->pos[iz] - BDimp->x0[iz];
+      double dx = x[ix] - x0[ix];
+      double dy = x[iy] - x0[iy];
+      double dz = x[iz] - x0[iz];
 
       // O\times (x - x0)
       double uOx = sys->Oi[1] * dz - sys->Oi[2] * dy;
@@ -387,6 +350,80 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
       BDimp->FTS->u [iy] += uOy + uEy;
       BDimp->FTS->u [iz] += uOz + uEz;
     }
+  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
+}
+
+/**
+ * semi-implicit algorithm by
+ * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
+ */
+/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
+ * INTPUT
+ *  x[n] : = (x[nm*3])          for F version
+ *         = (x[nm*3], q[nm*4]) for FT and FTS versions
+ *  p    : (struct BD_imp *)
+ * OUTPUT
+ *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
+ */
+int
+BD_imp_JGdP00_func (const gsl_vector *x, void *p,
+		    gsl_vector *f)
+{
+  struct BD_imp *BDimp = (struct BD_imp *)p;
+  struct BD_params *BD = BDimp->BD;
+  struct stokes *sys = BD->sys;
+
+  int i;
+
+  int nm = sys->nm;
+  int nm3 = nm * 3;
+  int nm4 = nm3 + nm;
+
+  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
+  for (i = 0; i < nm3; i ++)
+    {
+      BDimp->pos[i] = gsl_vector_get (x, i);
+    }
+  if (sys->version > 0)
+    {
+      for (i = 0; i < nm4; i ++)
+	{
+	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
+	}
+    }
+
+  /**
+   * set forces,
+   * where F^bond, F^EV are at the new position BDimp->pos[]
+   */
+  BD_imp_calc_forces (BDimp, BDimp->pos);
+
+  /**
+   * solve (u, o) with F^P(x) for the configuration to x0[]
+   */
+  // reset the configuration to x0[]
+  stokes_set_pos_mobile (sys, BDimp->x0);
+  solve_mix_3all (sys,
+		  BD->flag_lub, BD->flag_mat,
+		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
+		  BD->uf, BD->of, BD->ef,
+		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
+		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
+  /* note that FTS->[u,o] are in the labo frame */
+
+  /**
+   * adjust the imposed flow with the new config x[].
+   *
+   * now FTS->u = U (in the labo frame)
+   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   * so that FTS->u += (u(x) - u(x0))
+   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   *                   ^^^^
+   * note that only u depends on the position (not o (nor e))
+   * thereofre, there is no correction
+   * (that is, the components in (u(x) - u(x0)) are zero)
+   */
+  BD_imp_adj_uinf (BDimp, BDimp->x0, BDimp->pos);
   /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
 
   /**
@@ -604,37 +641,15 @@ BD_imp_set_P (struct BD_imp *BDimp)
   int nm = BDimp->BD->sys->nm;
   int nm3 = nm * 3;
   int nm4 = nm * 4;
-  int nm5 = nm * 5;
   int i;
 
-  // set force (and torque)
-  if (BD->sys->version == 0) // F version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
-	}
-    }
-  else // FT and FTS version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
-	}
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
-	}
-      if (BD->sys->version == 2)
-	{
-	  // FTS version
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      FTS->e[i] = BD->E[i];
-	    }
-	}
-    }
-  // BD->sys->pos is already definted above
+
+  /**
+   * set forces,
+   * where F^bond, F^EV are at the old position BDimp->x0[]
+   */
+  BD_imp_calc_forces (BDimp, BDimp->x0);
+
   stokes_set_pos_mobile (BD->sys, BDimp->x0);
   solve_mix_3all (BD->sys,
 		  BD->flag_lub, BD->flag_mat,
@@ -690,38 +705,6 @@ BD_imp_PC_func (const gsl_vector *x, void *p,
   int nm = sys->nm;
   int nm3 = nm * 3;
   int nm4 = nm3 + nm;
-  int nm5 = nm4 + nm;
-
-  /**
-   * set the forces for x0[] (and independent of the config)
-   */
-  // set force (and torque)
-  if (sys->version == 0) // F version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
-	}
-    }
-  else // FT and FTS version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  BDimp->FTS->f[i] = BD->F[i] + BDimp->fact * BDimp->z[i];
-	}
-      for (i = 0; i < nm3; i ++)
-	{
-	  BDimp->FTS->t[i] = BD->T[i] + BDimp->fact * BDimp->z[nm3 + i];
-	}
-      if (sys->version == 2)
-	{
-	  // FTS version
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      BDimp->FTS->e[i] = BD->E[i];
-	    }
-	}
-    }
 
   /* extract pos[nm3] and q[nm4] from gsl_vector *x */
   for (i = 0; i < nm3; i ++)
@@ -737,23 +720,10 @@ BD_imp_PC_func (const gsl_vector *x, void *p,
     }
 
   /**
-   * set the force for x[]
-   * F^P should be evaluated for the new config x[]
+   * set forces,
+   * where F^bond, F^EV are at the new position BDimp->pos[]
    */
-  stokes_set_pos_mobile (sys, BDimp->pos); // first nm3 is the position
-
-  if (BD->bonds->n > 0)
-    {
-      // calc bond (spring) force
-      bonds_calc_force (BD->bonds, sys,
-			BDimp->FTS->f, 1/* add */);
-    }
-  if (BD->ev != NULL)
-    {
-      // calc EV force
-      EV_calc_force (BD->ev, sys,
-		     BDimp->FTS->f, 1/* add */);
-    }
+  BD_imp_calc_forces (BDimp, BDimp->pos);
 
   /**
    * solve (u, o) with F^P(x) for the configuration to xP[] -- the predictor
@@ -780,42 +750,7 @@ BD_imp_PC_func (const gsl_vector *x, void *p,
    * thereofre, there is no correction
    * (that is, the components in (u(x) - u(x0)) are zero)
    */
-  for (i = 0; i < nm; i ++)
-    {
-      int ix = i*3;
-      int iy = ix + 1;
-      int iz = ix + 2;
-
-      double dx = BDimp->pos[ix] - BDimp->xP[ix];
-      double dy = BDimp->pos[iy] - BDimp->xP[iy];
-      double dz = BDimp->pos[iz] - BDimp->xP[iz];
-
-      // O\times (x - x0)
-      double uOx = sys->Oi[1] * dz - sys->Oi[2] * dy;
-      double uOy = sys->Oi[2] * dx - sys->Oi[0] * dz;
-      double uOz = sys->Oi[0] * dy - sys->Oi[1] * dx;
-
-      // E.(x - x0)
-      double Ezz =
-	- sys->Ei[0]
-	- sys->Ei[4];
-      double uEx
-	= sys->Ei[0] * dx // xx . x
-	+ sys->Ei[1] * dy // xy . y
-	+ sys->Ei[2] * dz;// xz . z
-      double uEy
-	= sys->Ei[1] * dx // yx . x
-	+ sys->Ei[4] * dy // yy . y
-	+ sys->Ei[3] * dz;// yz . z
-      double uEz
-	= sys->Ei[2] * dx // zx . x
-	+ sys->Ei[3] * dy // zy . y
-	+ Ezz        * dz;// zz . z
-
-      BDimp->FTS->u [ix] += uOx + uEx;
-      BDimp->FTS->u [iy] += uOy + uEy;
-      BDimp->FTS->u [iz] += uOz + uEz;
-    }
+  BD_imp_adj_uinf (BDimp, BDimp->xP, BDimp->pos);
   /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
 
   /**
