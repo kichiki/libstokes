@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.16 2008/04/12 18:22:30 kichiki Exp $
+ * $Id: brownian.c,v 1.17 2008/04/16 00:33:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,6 +50,7 @@
 
 #include <bonds.h> // bonds_calc_force ()
 #include <excluded-volume.h> // EV_calc_force ()
+#include <angles.h> // angles_calc_force ()
 
 #include "brownian.h"
 
@@ -76,6 +77,7 @@
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
+ *  (struct angles *)ang
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -103,6 +105,7 @@ BD_params_init (struct stokes *sys,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
+		struct angles *ang,
 		int flag_Q,
 		double peclet,
 		double eps,
@@ -164,6 +167,7 @@ BD_params_init (struct stokes *sys,
   BD->bonds    = bonds;
   BD->gamma    = gamma;
   BD->ev       = ev;
+  BD->ang      = ang;
 
   BD->flag_Q   = flag_Q;
 
@@ -1842,6 +1846,97 @@ BD_params_get_fact (struct BD_params *BD,
   return (fact);
 }
 
+
+/* add interaction forces on each particle including
+ *   bond force F^bond(sys->pos[]) by bonds_calc_force()
+ *   EV force F^EV(sys->pos[]) by EV_calc_force()
+ * this is the position where new forces are added for Brownian Dynamics.
+ * INPUT
+ *  BD : struct BD_params
+ *  pos[] : position for F^bond and F^EV
+ * OUTPUT
+ *  FTS : struct FTS
+ */
+void
+BD_add_FP (struct BD_params *BD,
+	   const double *pos,
+	   struct FTS *FTS)
+{
+  stokes_set_pos_mobile (BD->sys, pos);
+
+  if (BD->bonds->n > 0)
+    {
+      // calc bond (spring) force
+      bonds_calc_force (BD->bonds, BD->sys,
+			FTS->f, 1/* add */);
+    }
+  if (BD->ev != NULL)
+    {
+      // calc EV force
+      EV_calc_force (BD->ev, BD->sys,
+		     FTS->f, 1/* add */);
+    }
+  if (BD->ang->n > 0)
+    {
+      // calc angle (bending) force
+      angles_calc_force (BD->ang, BD->sys,
+			 FTS->f, 1/* add */);
+    }
+}
+
+
+/* calculate forces on each particle including
+ *   constant force in BDimp->BD->F[],T[]
+ *   Brownian force BDimp->fact * BDimp->z[],
+ *   interaction forces by BD_add_FP().
+ * INPUT
+ *  BD : struct BD_params
+ *  z[] : random vector obtained by calc_brownian_force()
+ *  fact : FB factor for z[] evaluated by BD_params_get_fact()
+ * OUTPUT
+ *  FTS : struct FTS
+ */
+static void
+BD_calc_forces (struct BD_params *BD,
+		double *z, double fact,
+		struct FTS *FTS)
+{
+  int nm3 = BD->sys->nm * 3;
+  int nm5 = BD->sys->nm * 5;
+
+  int i;
+  if (BD->sys->version == 0) // F version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i] + fact * z[i];
+	}
+    }
+  else // FT and FTS version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i] + fact * z[i];
+	}
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
+	}
+      if (BD->sys->version == 2)
+	{
+	  // FTS version
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      FTS->e[i] = BD->E[i];
+	    }
+	}
+    }
+
+  // interaction forces depending on the configuration by sys->pos[]
+  BD_add_FP (BD, BD->sys->pos, FTS);
+}
+
+
 /* evolve position of particles -- the mid-point scheme
  * INPUT
  *  t       : current time
@@ -1880,7 +1975,6 @@ BD_evolve_mid (double t,
 
   int nm3 = BD->sys->nm * 3;
   int nm4 = nm3 + BD->sys->nm;
-  int nm5 = nm4 + BD->sys->nm;
 
   // to keep the initial configuration for re-do.
   double *xmid = (double *)malloc (sizeof (double) * nm3);
@@ -1925,44 +2019,7 @@ BD_evolve_mid (double t,
    * 1 : solve for the initial configuration *
    *******************************************/
   // set force (and torque)
-  if (BD->sys->version == 0) // F version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-    }
-  else // FT and FTS version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
-	}
-      if (BD->sys->version == 2)
-	{
-	  // FTS version
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      FTS->e[i] = BD->E[i];
-	    }
-	}
-    }
-  if (BD->bonds->n > 0)
-    {
-      // calc bond (spring) force
-      bonds_calc_force (BD->bonds, BD->sys,
-			FTS->f, 1/* add */);
-    }
-  if (BD->ev != NULL)
-    {
-      // calc EV force
-      EV_calc_force (BD->ev, BD->sys,
-		     FTS->f, 1/* add */);
-    }
+  BD_calc_forces (BD, z, fact, FTS);
 
   // calc dydt
   // BD->sys->pos is already definted above
@@ -2014,44 +2071,7 @@ BD_evolve_mid (double t,
 			  BD->t0, BD->s0);
 
   // set force (and torque) for xmid[]
-  if (BD->sys->version == 0) // F version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-    }
-  else // FT and FTS version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
-	}
-      if (BD->sys->version == 2)
-	{
-	  // FTS version
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      FTS->e[i] = BD->E[i];
-	    }
-	}
-    }
-  if (BD->bonds->n > 0)
-    {
-      // calc force on the mobile particles
-      bonds_calc_force (BD->bonds, BD->sys,
-			FTS->f, 1/* add */);
-    }
-  if (BD->ev != NULL)
-    {
-      // calc EV force
-      EV_calc_force (BD->ev, BD->sys,
-		     FTS->f, 1/* add */);
-    }
+  BD_calc_forces (BD, z, fact, FTS);
 
   // calc dydt
   solve_mix_3all (BD->sys,
@@ -2219,7 +2239,7 @@ BD_evolve_BB03 (double t,
   /*****************************
    * 1 : solve stochastic part *
    *****************************/
-  // set force (and torque)
+  // set force only by the Brownian force
   if (BD->sys->version == 0) // F version
     {
       for (i = 0; i < nm3; i ++)
@@ -2334,9 +2354,47 @@ BD_evolve_BB03 (double t,
   /********************************
    * 2 : solve deterministic part *
    ********************************/
+  // set force except for the Brownian force
+  if (BD->sys->version == 0) // F version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i];
+	}
+    }
+  else // FT and FTS version
+    {
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->f[i] = BD->F[i];
+	}
+      for (i = 0; i < nm3; i ++)
+	{
+	  FTS->t[i] = BD->T[i];
+	}
+      if (BD->sys->version == 2)
+	{
+	  // FTS version
+	  for (i = 0; i < nm5; i ++)
+	    {
+	      FTS->e[i] = BD->E[i];
+	    }
+	}
+    }
+
+  // (re-)set brownian force
+  //stokes_set_pos_mobile (BD->sys, x);
+  // set in the BD_add_FP() below.
+
+  // (re-)set sys->shear_shift if necessary
+  stokes_set_shear_shift (BD->sys, t,
+			  BD->t0, BD->s0);
+  // interaction forces
+  BD_add_FP (BD, x, FTS);
+
   solve_mix_3all (BD->sys,
 		  BD->flag_lub, BD->flag_mat,
-		  BD->F,   BD->T,   BD->E,
+		  FTS->f,  FTS->t,  FTS->e,
 		  BD->uf,  BD->of,  BD->ef,
 		  FTS->u,  FTS->o,  FTS->s,
 		  FTS->ff, FTS->tf, FTS->sf);
@@ -2468,7 +2526,6 @@ BD_evolve_BM97 (double t,
 
   int nm3 = BD->sys->nm * 3;
   int nm4 = nm3 + BD->sys->nm;
-  int nm5 = nm4 + BD->sys->nm;
 
   // for the intermediate configurations
   double *xBM = (double *)malloc (sizeof (double) * nm3);
@@ -2523,32 +2580,7 @@ BD_evolve_BM97 (double t,
    * 1 : solve for the initial configuration *
    *******************************************/
   // set force (and torque)
-  if (BD->sys->version == 0) // F version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-    }
-  else // FT and FTS version
-    {
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->f[i] = BD->F[i] + fact * z[i];
-	}
-      for (i = 0; i < nm3; i ++)
-	{
-	  FTS->t[i] = BD->T[i] + fact * z[nm3 + i];
-	}
-      if (BD->sys->version == 2)
-	{
-	  // FTS version
-	  for (i = 0; i < nm5; i ++)
-	    {
-	      FTS->e[i] = BD->E[i];
-	    }
-	}
-    }
+  BD_calc_forces (BD, z, fact, FTS);
 
   // calc dydt
   // BD->sys->pos is already definted above
@@ -2598,13 +2630,9 @@ BD_evolve_BM97 (double t,
   stokes_set_shear_shift (BD->sys, t + dt_local,
 			  BD->t0, BD->s0);
 
-  /* now BD->F[i] etc. are independent of the configuration,
-   * we just skip the update the force f[].
-  for (i = 0; i < n; i ++)
-    {
-      FTS->f[i] = BD->F[i] + fact * z[i];
-    }
-  */
+  // set force (and torque) for new position xBM[]
+  BD_calc_forces (BD, z, fact, FTS);
+
   solve_mix_3all (BD->sys,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
