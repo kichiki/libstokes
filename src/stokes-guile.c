@@ -1,6 +1,6 @@
 /* guile interface for libstokes
- * Copyright (C) 2006 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-guile.c,v 5.3 2007/11/30 06:39:45 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-guile.c,v 5.4 2008/04/16 03:06:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,9 +17,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 #include <stdio.h>
-
 #include <libguile.h>
-#include <guile/gh.h>
 
 
 /* this utility function (original name is does_scm_symbol_exist)
@@ -91,13 +89,6 @@ guile_get_int (const char * var, int i0)
   i = i0;
   if (guile_check_symbol (var) != 0) // true == found
     {
-      /*
-      scm_param = gh_eval_str (var);
-      if (gh_number_p (scm_param))
-	{
-	  i = gh_scm2int (scm_param);
-	}
-      */
       scm_symbol = scm_c_lookup (var);
       scm_param = scm_variable_ref (scm_symbol);
       if (scm_number_p (scm_param))
@@ -125,13 +116,6 @@ guile_get_double (const char * var, double d0)
   d = d0;
   if (guile_check_symbol (var) != 0) // true == found
     {
-      /*
-      scm_param = gh_eval_str (var);
-      if (gh_number_p (scm_param))
-	{
-	  d = gh_scm2double (scm_param);
-	}
-      */
       scm_symbol = scm_c_lookup (var);
       scm_param = scm_variable_ref (scm_symbol);
       if (scm_number_p (scm_param))
@@ -179,9 +163,9 @@ guile_get_doubles (const char * var, int n, double * x)
 	    }
 	  return (1); // success
 	}
-      else if (SCM_VECTORP(scm_param))
+      else if (scm_is_vector(scm_param))
 	{
-	  len = SCM_VECTOR_LENGTH (scm_param);
+	  len = scm_c_vector_length (scm_param);
 	  if (len != n)
 	    {
 	      fprintf (stderr, "wrong size of %s in guile_get_doubles().\n",
@@ -231,9 +215,9 @@ guile_get_doubles_ (const char * var)
 				  "guile_get_doubles_");
 	    }
 	}
-      else if (SCM_VECTORP(scm_param))
+      else if (scm_is_vector(scm_param))
 	{
-	  len = SCM_VECTOR_LENGTH (scm_param);
+	  len = scm_c_vector_length (scm_param);
 	  x = (double *) malloc (sizeof (double) * len);
 	  for (i = 0; i < len; i ++)
 	    {
@@ -269,9 +253,9 @@ guile_get_length (const char * var)
 	  len = scm_num2ulong (scm_length (scm_param),
 			       0, "guile_get_length");
 	}
-      else if (SCM_VECTORP(scm_param))
+      else if (scm_is_vector(scm_param))
 	{
-	  len = SCM_VECTOR_LENGTH (scm_param);
+	  len = scm_c_vector_length (scm_param);
 	}
     }
 
@@ -283,15 +267,15 @@ guile_get_length (const char * var)
 char *
 guile_get_string (const char * var)
 {
+  SCM scm_symbol;
   SCM scm_param;
   char * str = NULL;
-  int str_len;
 
-
-  scm_param = gh_eval_str (var);
-  if (gh_string_p (scm_param))
+  scm_symbol = scm_c_lookup (var);
+  scm_param = scm_variable_ref (scm_symbol);
+  if (scm_is_string (scm_param))
     {
-      str = gh_scm2newstr (scm_param, &str_len);
+      str = scm_to_locale_string (scm_param);
     }
 
   return str;
