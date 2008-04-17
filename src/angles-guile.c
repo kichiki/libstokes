@@ -1,6 +1,6 @@
 /* guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.c,v 1.3 2008/04/16 03:07:34 kichiki Exp $
+ * $Id: angles-guile.c,v 1.4 2008/04/17 04:17:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,7 +33,9 @@
  *    (; angle type 1
  *     10.0    ; 1) constant (k^{angle})
  *     0.0     ; 2) angle in degree (theta_0)
- *     ((0 1 2); 3) list of triplets
+ *     0       ; 3) scale flag (0 == scaled)
+ *             ;    in this case, the above value for k is just used.
+ *     ((0 1 2); 4) list of triplets
  *      (1 2 3)
  *      (2 3 4)
  *     )
@@ -41,7 +43,10 @@
  *    (; angle type 2
  *     20.0    ; 1) constant (k^{angle})
  *     90.0    ; 2) angle in degree (theta_0)
- *     ((3 4 5); 3) list of triplets
+ *     1       ; 3) scale flag (1 == not scaled yet)
+ *             ;    in this case, the potential is given by 
+ *             ;    (k/2) * kT * (theta - theta_0)^2
+ *     ((3 4 5); 4) list of triplets
  *      (4 5 6)
  *     )
  *    )
@@ -99,10 +104,10 @@ guile_get_angles (const char *var)
       unsigned long angle_len
 	= scm_num2ulong (scm_length (scm_angle),
 			 0, "guile_get_angles");
-      if (angle_len != 3)
+      if (angle_len != 4)
 	{
 	  fprintf (stderr, "guile_get_angles:"
-		   " length of %d-th bond of %s is not 3\n",
+		   " length of %d-th bond of %s is not 4\n",
 		   i, var);
 	  angles_free (angles);
 	  return (NULL); // failed
@@ -119,7 +124,12 @@ guile_get_angles (const char *var)
       t0 = t0 * M_PI / 180.0;
 
       // 3rd element (2) of the list scm_angle
-      SCM scm_triplets = scm_list_ref (scm_angle, scm_int2num (2));
+      int scale = scm_num2int (scm_list_ref (scm_angle, scm_int2num (2)),
+			       0,
+			       "guile_get_bonds");
+
+      // 4th element (3) of the list scm_angle
+      SCM scm_triplets = scm_list_ref (scm_angle, scm_int2num (3));
       if (!SCM_NFALSEP (scm_list_p (scm_triplets)))
 	{
 	  // scm_triplets is not a list
@@ -174,7 +184,7 @@ guile_get_angles (const char *var)
 				0,
 				"guile_get_angles");
 
-	  angles_add (angles, ia, ib, ic, k, t0);
+	  angles_add (angles, ia, ib, ic, k, t0, scale);
 	}
     }
 
