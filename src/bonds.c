@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.10 2008/04/12 18:24:52 kichiki Exp $
+ * $Id: bonds.c,v 1.11 2008/04/17 04:16:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -114,7 +114,10 @@ bonds_free (struct bonds *bonds)
  *  bonds  : struct bonds
  *  type   : type of the spring
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
- *           1 == (p1, p2) = (N_{K,s}, b_{K})
+ *           1 == (p1, p2) = (N_{K,s}, b_{K}) or
+ *                (p1, p2) = (k, r0) for dWLC (type == 6).
+ *                in the latter case, potential is given by
+ *                (k/2) * (kT / r0^2) * (r-r0)^2
  *  p1, p2 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
@@ -153,12 +156,19 @@ bonds_add_type (struct bonds *bonds,
 
 /* set FENE spring parameters for run
  * INPUT
- *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used.
+ *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used
+ *          (bonds->fene[i] == 1 is expected), or 
+ *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
+ *            in this case, potential is given by
+ *            (k/2) * (kT / r0^2) * (r-r0)^2
  *  a     : length scale in the simulation
  *  pe    : peclet number
  * OUTPUT
  *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
  *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
+ *    for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
+ *  bonds->p2[] := Ls / a = r0 / a
  */
 void
 bonds_set_FENE (struct bonds *bonds,
@@ -169,12 +179,25 @@ bonds_set_FENE (struct bonds *bonds,
     {
       if (bonds->fene[i] == 1)
 	{
-	  // bond i is FENE spring
-	  double N_Ks = bonds->p1[i];
-	  double b_K  = bonds->p2[i];
-	  bonds->p1[i] = 3.0 * a / (pe * b_K);
-	  bonds->p2[i] = N_Ks * b_K / a;
+	  if (bonds->type[i] == 6)
+	    {
+	      // dWLC spring
+	      double k  = bonds->p1[i];
+	      double r0 = bonds->p2[i];
 
+	      // first scale r0
+	      r0 /= a;
+	      bonds->p1[i] = k / (pe * r0 * r0);
+	      bonds->p2[i] = r0;
+	    }
+	  else
+	    {
+	      // bond i is FENE spring
+	      double N_Ks = bonds->p1[i];
+	      double b_K  = bonds->p2[i];
+	      bonds->p1[i] = 3.0 * a / (pe * b_K);
+	      bonds->p2[i] = N_Ks * b_K / a;
+	    }
 	  // now, (p1, p2) = (A^{sp}, L_{s}).
 	  bonds->fene[i] = 0;
 	}
@@ -211,7 +234,7 @@ bonds_set_force_ij (struct bonds *bonds,
   double rLs2;
 
   int bond_type = bonds->type[bond_index];
-  if ((bond_type != 0 && bond_type != 5) // FENE chain
+  if ((bond_type != 0 && bond_type != 5 && bond_type != 6) // FENE chain
       && rLs >= 1.0)
     {
       fprintf (stderr, "bonds: extension %e exceeds the max %e for (%d,%d)\n",
@@ -246,6 +269,7 @@ bonds_set_force_ij (struct bonds *bonds,
       break;
 
     case 0: // Hookean
+    case 6: // dWLC
     default:
       fr = Asp * (r - Ls);
       break;

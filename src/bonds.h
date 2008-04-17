@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.7 2008/04/16 00:39:22 kichiki Exp $
+ * $Id: bonds.h,v 1.8 2008/04/17 04:17:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,11 @@ struct bonds {
 	       *     where for these FENE chains,
 	       *     p1 = N_{K,s} the Kuhn steps for a spring
 	       *     p2 = b_{K}   the Kuhn length [nm]
+	       * 6 : discrete Wormlike chain (dWLC), where
+	       *     p1 = k, dimensionless spring constant, 
+	       *     p2 = r0, the natural length [nm],
+	       *     the potential is given by
+	       *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
 	       */
   int *fene;   /* flag for the parameters p1 and p2
 		* 0 : (p1, p2) = (A^{sp}, L_{s})
@@ -89,7 +94,10 @@ bonds_free (struct bonds *bonds);
  *  bonds  : struct bonds
  *  type   : type of the spring
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
- *           1 == (p1, p2) = (N_{K,s}, b_{K})
+ *           1 == (p1, p2) = (N_{K,s}, b_{K}) or
+ *                (p1, p2) = (k, r0) for dWLC (type == 6).
+ *                in the latter case, potential is given by
+ *                (k/2) * (kT / r0^2) * (r-r0)^2
  *  p1, p2 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
@@ -102,12 +110,19 @@ bonds_add_type (struct bonds *bonds,
 
 /* set FENE spring parameters for run
  * INPUT
- *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used.
+ *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used
+ *          (bonds->fene[i] == 1 is expected), or 
+ *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
+ *            in this case, potential is given by
+ *            (k/2) * (kT / r0^2) * (r-r0)^2
  *  a     : length scale in the simulation
  *  pe    : peclet number
  * OUTPUT
  *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
  *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
+ *    for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
+ *  bonds->p2[] := Ls / a = r0 / a
  */
 void
 bonds_set_FENE (struct bonds *bonds,
