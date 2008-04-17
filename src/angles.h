@@ -1,7 +1,7 @@
 /* header file for angles.c --
  * angle interaction between particles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles.h,v 1.1 2008/04/12 18:17:30 kichiki Exp $
+ * $Id: angles.h,v 1.2 2008/04/17 04:18:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,10 @@
 struct angle {
   double k;  // potential factor
   double t0; // natural angle (theta_0) in radian
+  int scale; /* flag for the parameters (whether scaled or not)
+	      * 0 : (k, t0) is scaled.
+	      * 1 : (k, t0) is not scaled yet.
+	      */
 
   // particle indices
   int ia;
@@ -54,11 +58,26 @@ angles_free (struct angles *ang);
  *  ia, ib, ic : particle indices (ib is the center particle)
  *  k  : potential factor
  *  t0 : natural angle (in radian)
+ *  scale : flag for scale (0 == k is scaled,
+ *                          1 == k is not scaled yet.)
  */
 void
 angles_add (struct angles *ang,
 	    int ia, int ib, int ic,
-	    double k, double t0);
+	    double k, double t0, int scale);
+
+/* scale parameter by the Peclet number
+ * INPUT
+ *  ang : struct angles
+ *        (ang->a [n])->k is scaled as (k / pe)
+ *  a     : length scale in the simulation
+ *  pe    : peclet number
+ * OUTPUT
+ *  (ang->a [i])->k : scaled as (k / pe)
+ */
+void
+angles_scale_k (struct angles *ang,
+		double a, double pe);
 
 /*
  * INPUT
