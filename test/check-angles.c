@@ -1,6 +1,6 @@
 /* test code for angles.c and angles-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-angles.c,v 1.1 2008/04/12 19:16:31 kichiki Exp $
+ * $Id: check-angles.c,v 1.2 2008/04/17 04:20:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -109,6 +109,14 @@ check_guile_get_angles (int verbose, double tiny)
 			    verbose, tiny, &max);
       check += compare_max (a->t0, M_PI, " t0[0]",
 			    verbose, tiny, &max);
+      if (a->scale != 0)
+	{
+	  if (verbose != 0)
+	    {
+	      fprintf (stdout, " scale[%d] = %d != 0\n", i, a->scale);
+	    }
+	  check ++;
+	}
     }
   // for the second angle (2 triplets)
   for (;
@@ -119,6 +127,14 @@ check_guile_get_angles (int verbose, double tiny)
 			    verbose, tiny, &max);
       check += compare_max (a->t0, 0.5*M_PI, " t0[1]",
 			    verbose, tiny, &max);
+      if (a->scale != 1)
+	{
+	  if (verbose != 0)
+	    {
+	      fprintf (stdout, " scale[%d] = %d != 0\n", i, a->scale);
+	    }
+	  check ++;
+	}
     }
 
   angles_free (ang);
@@ -181,7 +197,7 @@ check_angles_calc_force (double k, double t0,
   struct angles *ang = angles_init ();
   CHECK_MALLOC (ang, "check_angles_calc_force");
 
-  angles_add (ang, 0, 1, 2, k, t0);
+  angles_add (ang, 0, 1, 2, k, t0, 0);
 
   int i;
   for (i = 1; i < 100; i ++)
