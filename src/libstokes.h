@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.52 2008/04/16 00:34:06 kichiki Exp $
+ * $Id: libstokes.h,v 1.53 2008/04/17 04:19:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -989,6 +989,11 @@ struct bonds {
 	       *     where for these FENE chains,
 	       *     p1 = N_{K,s} the Kuhn steps for a spring
 	       *     p2 = b_{K}   the Kuhn length [nm]
+	       * 6 : discrete Wormlike chain (dWLC), where
+	       *     p1 = k, dimensionless spring constant, 
+	       *     p2 = r0, the natural length [nm],
+	       *     the potential is given by
+	       *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
 	       */
   int *fene;   /* flag for the parameters p1 and p2
 		* 0 : (p1, p2) = (A^{sp}, L_{s})
@@ -1007,6 +1012,7 @@ struct list_ex {
   int *n;  // n[np] : number of excluded particles for each particles
   int **i; // i[j][k] : k-th particle index to exclude for particle j.
 };
+
 
 
 void
@@ -1033,7 +1039,10 @@ bonds_free (struct bonds *bonds);
  *  bonds  : struct bonds
  *  type   : type of the spring
  *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
- *           1 == (p1, p2) = (N_{K,s}, b_{K})
+ *           1 == (p1, p2) = (N_{K,s}, b_{K}) or
+ *                (p1, p2) = (k, r0) for dWLC (type == 6).
+ *                in the latter case, potential is given by
+ *                (k/2) * (kT / r0^2) * (r-r0)^2
  *  p1, p2 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
@@ -1046,12 +1055,19 @@ bonds_add_type (struct bonds *bonds,
 
 /* set FENE spring parameters for run
  * INPUT
- *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used.
+ *  bonds : p1 (N_{K,s}) and p2 (b_{K}) are used
+ *          (bonds->fene[i] == 1 is expected), or 
+ *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
+ *            in this case, potential is given by
+ *            (k/2) * (kT / r0^2) * (r-r0)^2
  *  a     : length scale in the simulation
  *  pe    : peclet number
  * OUTPUT
  *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
  *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
+ *    for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
+ *  bonds->p2[] := Ls / a = r0 / a
  */
 void
 bonds_set_FENE (struct bonds *bonds,
@@ -1059,7 +1075,7 @@ bonds_set_FENE (struct bonds *bonds,
 
 /*
  * INPUT
- *  bonds      : struct bond
+ *  bonds      : struct bonds
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -1266,6 +1282,10 @@ EV_calc_force (struct EV *ev,
 struct angle {
   double k;  // potential factor
   double t0; // natural angle (theta_0) in radian
+  int scale; /* flag for the parameters (whether scaled or not)
+	      * 0 : (k, t0) is scaled.
+	      * 1 : (k, t0) is not scaled yet.
+	      */
 
   // particle indices
   int ia;
@@ -1294,11 +1314,26 @@ angles_free (struct angles *ang);
  *  ia, ib, ic : particle indices (ib is the center particle)
  *  k  : potential factor
  *  t0 : natural angle (in radian)
+ *  scale : flag for scale (0 == k is scaled,
+ *                          1 == k is not scaled yet.)
  */
 void
 angles_add (struct angles *ang,
 	    int ia, int ib, int ic,
-	    double k, double t0);
+	    double k, double t0, int scale);
+
+/* scale parameter by the Peclet number
+ * INPUT
+ *  ang : struct angles
+ *        (ang->a [n])->k is scaled as (k / pe)
+ *  a     : length scale in the simulation
+ *  pe    : peclet number
+ * OUTPUT
+ *  (ang->a [i])->k : scaled as (k / pe)
+ */
+void
+angles_scale_k (struct angles *ang,
+		double a, double pe);
 
 /*
  * INPUT
@@ -1315,6 +1350,7 @@ angles_calc_force (struct angles *ang,
 		   double *f,
 		   int flag_add);
 
+
 /* from angles-guile.h */
 /* get angles from SCM
  * in SCM, angles are given by something like
@@ -1322,7 +1358,9 @@ angles_calc_force (struct angles *ang,
  *    (; angle type 1
  *     10.0    ; 1) constant (k^{angle})
  *     0.0     ; 2) angle in degree (theta_0)
- *     ((0 1 2); 3) list of triplets
+ *     0       ; 3) scale flag (0 == scaled)
+ *             ;    in this case, the above value for k is just used.
+ *     ((0 1 2); 4) list of triplets
  *      (1 2 3)
  *      (2 3 4)
  *     )
@@ -1330,7 +1368,10 @@ angles_calc_force (struct angles *ang,
  *    (; angle type 2
  *     20.0    ; 1) constant (k^{angle})
  *     90.0    ; 2) angle in degree (theta_0)
- *     ((3 4 5); 3) list of triplets
+ *     1       ; 3) scale flag (1 == not scaled yet)
+ *             ;    in this case, the potential is given by 
+ *             ;    (k/2) * kT * (theta - theta_0)^2
+ *     ((3 4 5); 4) list of triplets
  *      (4 5 6)
  *     )
  *    )
