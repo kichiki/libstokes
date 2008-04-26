@@ -1,7 +1,7 @@
-/* header file for ev-dh-guile.c --
+/* header file for check-ev-dh-guile.c --
  * test code for ev-dh-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ev-dh-guile.h,v 1.1 2008/04/26 05:05:10 kichiki Exp $
+ * $Id: check-ev-dh-guile.h,v 1.2 2008/04/26 17:36:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
