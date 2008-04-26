@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.6 2008/04/16 03:07:15 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.7 2008/04/26 19:10:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,6 +57,7 @@
  *   3 : Cohen's Pade approximation
  *   4 : Warner spring
  *   5 : Hookean spring (Asp * r / Ls)
+ *   6 : Hookean spring for dWLC
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
