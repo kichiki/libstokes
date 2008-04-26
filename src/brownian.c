@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.17 2008/04/16 00:33:16 kichiki Exp $
+ * $Id: brownian.c,v 1.18 2008/04/26 19:09:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,7 @@
 #include <bonds.h> // bonds_calc_force ()
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
+#include <ev-dh.h> // EV_DH_calc_force ()
 
 #include "brownian.h"
 
@@ -78,6 +79,7 @@
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
+ *  (struct EV_DH *)ev_dh
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -106,6 +108,7 @@ BD_params_init (struct stokes *sys,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
+		struct EV_DH *ev_dh,
 		int flag_Q,
 		double peclet,
 		double eps,
@@ -168,6 +171,7 @@ BD_params_init (struct stokes *sys,
   BD->gamma    = gamma;
   BD->ev       = ev;
   BD->ang      = ang;
+  BD->ev_dh    = ev_dh;
 
   BD->flag_Q   = flag_Q;
 
@@ -1881,6 +1885,12 @@ BD_add_FP (struct BD_params *BD,
       // calc angle (bending) force
       angles_calc_force (BD->ang, BD->sys,
 			 FTS->f, 1/* add */);
+    }
+  if (BD->ev_dh != NULL)
+    {
+      // calc EV_DH force
+      EV_DH_calc_force (BD->ev_dh, BD->sys,
+			FTS->f, 1/* add */);
     }
 }
 
