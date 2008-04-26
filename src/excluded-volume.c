@@ -1,6 +1,6 @@
 /* excluded-volume interactions
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.c,v 1.3 2008/04/12 18:23:56 kichiki Exp $
+ * $Id: excluded-volume.c,v 1.4 2008/04/26 17:46:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -230,7 +230,8 @@ EV_calc_force (struct EV *ev,
     {
       int ia3 = i * 3;
       int j;
-      for (j = 0; j < sys->np; j ++)
+      // loop for each pair (i <= j)
+      for (j = i; j < sys->np; j ++)
 	{
 	  int ib3 = j * 3;
 	  x = sys->pos [ia3+0] - sys->pos [ib3+0];
