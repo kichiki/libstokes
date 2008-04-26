@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.11 2008/04/16 00:33:42 kichiki Exp $
+ * $Id: brownian.h,v 1.12 2008/04/26 19:09:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,7 @@ struct BD_params
   double gamma;
   struct EV *ev;
   struct angles *ang;
+  struct EV_DH *ev_dh;
 
   int flag_Q;
 
@@ -109,6 +110,7 @@ struct BD_params
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
+ *  (struct EV_DH *)ev_dh
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -137,6 +139,7 @@ BD_params_init (struct stokes *sys,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
+		struct EV_DH *ev_dh,
 		int flag_Q,
 		double peclet,
 		double eps,
