@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.7 2008/04/26 19:10:37 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.8 2008/04/26 19:37:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,8 +32,8 @@
  *     0         ; 1) spring type
  *     (         ; 2) spring parameters (list with 3 elements)
  *      0        ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
- *      1.0      ;    p1   = A^{sp}, scaled spring constant  (for fene == 0)
- *      2.1)     ;    p2   = L_{s} / a, scaled max extension (for fene == 0)
+ *      1.0      ;    p1   = A^{sp}, scaled spring constant
+ *      2.1)     ;    p2   = L_{s} / a, scaled max extension
  *     ((0 1)    ; 3) list of pairs
  *      (1 2)
  *      (2 3))
@@ -43,8 +43,11 @@
  *     2         ; 1) spring type
  *     (         ; 2) spring parameters (list with 3 elements)
  *      1        ;    fene = 1 means (p1, p2) = (N_{K,s}, b_{K})
- *      19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring (for fene = 1)
- *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length          (for fene = 1)
+ *      19.8     ;    p1 = N_{K,s}, the Kuhn steps for a spring
+ *      106.0)   ;    p2 = b_{K} [nm], the Kuhn length
+ *               ;    note that, for dWLC (type == 6),
+ *               ;    (p1, p2) = (k, r0 [nm]), where the potential is
+ *               ;    (k/2) * (kT / r0^2) * (r-r0)^2
  *     ((4 5)    ; 3) list of pairs
  *      (5 6)
  *      (6 7))
