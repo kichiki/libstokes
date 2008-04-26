@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.18 2008/04/26 05:07:30 kichiki Exp $
+# $Id: Makefile,v 1.19 2008/04/26 17:38:16 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -84,6 +84,7 @@ test-all-OBJ =\
 	check-matrix.o		\
 	check-list-ex.o		\
 	check-angles.o		\
+	check-ev-dh.o		\
 	check-ev-dh-guile.o
 
 
