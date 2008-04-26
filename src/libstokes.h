@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.53 2008/04/17 04:19:19 kichiki Exp $
+ * $Id: libstokes.h,v 1.54 2008/04/26 05:18:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1385,6 +1385,102 @@ angles_calc_force (struct angles *ang,
  */
 struct angles *
 guile_get_angles (const char *var);
+
+
+/*************************************
+ ** excluded-volume by Debye-Huckel **
+ *************************************/
+/* from ev-dh.h */
+struct EV_DH {
+  /* system parameters */
+  double r2;    /* square of the max distance for F^{EV}
+	         * scaled by the characteristic length */
+  double a_sys; /* := (1/pe)(1/kT)(e^2/4pi e0)(1/a) dimensionless number */
+  double rd;    /* debye length scaled by the characteristic length */
+
+  /* parameters for each chain */
+  /* currently this is implemented particle-wise for simplicity */
+  int n;
+  double *nu; /* nu := (nu) l0 / e, the dimensionless charge density, where
+	       *       (nu) is the line density of charge [e/nm]
+	       *       l0   is the bond length [nm]
+	       *       e    is the elementary charge [C] */
+};
+
+
+/* initialize struct EV
+ * INPUT
+ *  a  : characteristic length (in the same dimension for rd below, usually nm)
+ *  pe : peclet number
+ *  rd : Debye length (in the same dimension for a above, usually nm)
+ *  T  : temperature in Kelvin.
+ *  e  : dielectric constant of the solution
+ *  r2 : square of the max distance for F^{EV_DH}
+ *       (in the same dimension squared for a above, usually nm^2)
+ *  np : number of particles
+ * OUTPUT
+ *  returned value : struct EV_DH,
+ *      where only the system parameters (a_sys, rd) are defined.
+ *      nu[i] is zero cleared.
+ */
+struct EV_DH *
+EV_DH_init (double a, double pe, double rd, double T, double e,
+	    double r2,
+	    int np);
+
+void
+EV_DH_free (struct EV_DH *ev_dh);
+
+/*
+ * INPUT
+ *  ev_dh      : struct EV_DH
+ *  sys        : struct stokes (only nm and pos are used)
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+EV_DH_calc_force (struct EV_DH *ev_dh,
+		  struct stokes *sys,
+		  double *f,
+		  int flag_add);
+
+/* from ev-dh-guile.h */
+/* get ev_dh from SCM
+ * in SCM, angles are given by something like
+ *  (define ev-dh '(
+ *    ; system parameters
+ *    4.0      ; 1) max distance for EV_DH interaction [nm]
+ *    298.0    ; 2) temperature [K]
+ *    80.0     ; 3) dielectric constant of the solution
+ *    3.07     ; 4) Debye length [nm]
+ *    (        ; 5) list of chain types
+ *     (; chain type 1
+ *      2.43    ; 1) nu [e/nm]
+ *      5.00    ; 2) l0 [nm]
+ *      (0 1 2) ; 3) list of particles
+ *     )
+ *     (; chain type 2
+ *      2.00    ; 1) nu [e/nm]
+ *      4.00    ; 2) l0 [nm]
+ *      (3 4)   ; 3) list of particles
+ *     )
+ *    )
+ *  ))
+ * INPUT
+ *  var : name of the variable.
+ *        in the above example, set "ev-dh".
+ *  a   : the characteristic length [nm]
+ *  pe  : peclet number
+ *  np  : number of particles used for ev_dh_init()
+ * OUTPUT
+ *  returned value : struct EV_DH
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct EV_DH *
+EV_DH_guile_get (const char *var,
+		 double a, double pe, int np);
 
 
 /************************************
