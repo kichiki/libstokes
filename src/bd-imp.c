@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.6 2008/04/16 00:32:48 kichiki Exp $
+ * $Id: bd-imp.c,v 1.7 2008/04/26 18:08:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,9 +25,6 @@
 #include <stokes.h> // stokes_set_pos()
 #include <ode.h> // solve_mix_3all()
 #include <ode-quaternion.h> // quaternion_dQdt()
-
-#include <bonds.h> // bonds_calc_force ()
-#include <excluded-volume.h> // EV_calc_force ()
 
 #include <brownian.h> // struct BD_params
 
