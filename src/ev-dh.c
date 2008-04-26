@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.c,v 1.2 2008/04/26 05:09:39 kichiki Exp $
+ * $Id: ev-dh.c,v 1.3 2008/04/26 17:45:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,7 +152,8 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
     {
       int ia3 = i * 3;
       int j;
-      for (j = 0; j < sys->np; j ++)
+      // loop for each pair (i <= j)
+      for (j = i; j < sys->np; j ++)
 	{
 	  int ib3 = j * 3;
 	  x = sys->pos [ia3+0] - sys->pos [ib3+0];
