@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.54 2008/04/26 05:18:22 kichiki Exp $
+ * $Id: libstokes.h,v 1.55 2008/04/26 19:11:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1189,6 +1189,7 @@ list_ex_check (struct list_ex *ex, int i, int j);
  *   3 : Cohen's Pade approximation
  *   4 : Warner spring
  *   5 : Hookean spring (Asp * r / Ls)
+ *   6 : Hookean spring for dWLC
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
@@ -1714,6 +1715,7 @@ struct BD_params
   double gamma;
   struct EV *ev;
   struct angles *ang;
+  struct EV_DH *ev_dh;
 
   int flag_Q;
 
@@ -1772,6 +1774,7 @@ struct BD_params
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
+ *  (struct EV_DH *)ev_dh
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -1800,6 +1803,7 @@ BD_params_init (struct stokes *sys,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
+		struct EV_DH *ev_dh,
 		int flag_Q,
 		double peclet,
 		double eps,
