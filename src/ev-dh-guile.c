@@ -1,6 +1,6 @@
 /* guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.1 2008/04/26 04:33:47 kichiki Exp $
+ * $Id: ev-dh-guile.c,v 1.2 2008/04/26 05:10:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -92,8 +92,8 @@ EV_DH_guile_get (const char *var,
   // 1st element (0) of the list scm_angle
   double rmax = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (0)),
 			     "EV_DH_guile_get");
-  rmax /= a;
   double r2 = rmax * rmax;
+  // note that r2 should be dimensional for EV_DH_init()
 
   // 2nd element (1) of the list scm_angle
   double T = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (1)),
@@ -104,7 +104,7 @@ EV_DH_guile_get (const char *var,
   // 4th element (3) of the list scm_ev_dh
   double rd = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (3)),
 			   "EV_DH_guile_get");
-  rd /= a;
+  // note that rd should be dimensional for EV_DH_init()
 
   struct EV_DH *ev_dh = EV_DH_init (a, pe, rd, T, e, r2, np);
   CHECK_MALLOC (ev_dh, "EV_DH_guile_get");
@@ -162,7 +162,7 @@ EV_DH_guile_get (const char *var,
 
       // 3rd element (2) of the list scm_chain
       SCM scm_particles
-	= scm_list_ref (scm_chain, scm_int2num (1));
+	= scm_list_ref (scm_chain, scm_int2num (2));
       if (!SCM_NFALSEP (scm_list_p (scm_particles)))
 	{
 	  // scm_particles is not a list
