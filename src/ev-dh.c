@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.c,v 1.1 2008/04/26 04:33:05 kichiki Exp $
+ * $Id: ev-dh.c,v 1.2 2008/04/26 05:09:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,12 +27,13 @@
 
 /* initialize struct EV
  * INPUT
- *  a  : characteristic length (in the same dimension for rd below)
+ *  a  : characteristic length (in the same dimension for rd below, usually nm)
  *  pe : peclet number
- *  rd : Debye length (in the same dimension for a above)
+ *  rd : Debye length (in the same dimension for a above, usually nm)
  *  T  : temperature in Kelvin.
  *  e  : dielectric constant of the solution
  *  r2 : square of the max distance for F^{EV_DH}
+ *       (in the same dimension squared for a above, usually nm^2)
  *  np : number of particles
  * OUTPUT
  *  returned value : struct EV_DH,
@@ -47,7 +48,7 @@ EV_DH_init (double a, double pe, double rd, double T, double e,
   struct EV_DH *ev_dh = (struct EV_DH *)malloc (sizeof (struct EV_DH));
   CHECK_MALLOC (ev_dh, "EV_DH_init");
 
-  ev_dh->r2 = r2;
+  ev_dh->r2 = r2 / (a * a);
 
   // Boltzmann constant
   double kB = 1.3806504e-23; // [N m / K]

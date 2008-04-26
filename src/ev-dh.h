@@ -1,7 +1,7 @@
 /* header file for ev-dh.c --
  * excluded-volume interactions
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.h,v 1.1 2008/04/26 04:33:26 kichiki Exp $
+ * $Id: ev-dh.h,v 1.2 2008/04/26 05:10:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,12 +42,13 @@ struct EV_DH {
 
 /* initialize struct EV
  * INPUT
- *  a  : characteristic length (in the same dimension for rd below)
+ *  a  : characteristic length (in the same dimension for rd below, usually nm)
  *  pe : peclet number
- *  rd : Debye length (in the same dimension for a above)
+ *  rd : Debye length (in the same dimension for a above, usually nm)
  *  T  : temperature in Kelvin.
  *  e  : dielectric constant of the solution
  *  r2 : square of the max distance for F^{EV_DH}
+ *       (in the same dimension squared for a above, usually nm^2)
  *  np : number of particles
  * OUTPUT
  *  returned value : struct EV_DH,
