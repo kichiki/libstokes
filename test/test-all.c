@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.19 2008/04/12 19:18:29 kichiki Exp $
+ * $Id: test-all.c,v 1.20 2008/04/26 05:06:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,7 @@
 
 #include "check-list-ex.h"
 #include "check-angles.h"
+#include "check-ev-dh-guile.h"
 
 
 /* main program */
@@ -348,6 +349,9 @@ main (int argc, char** argv)
   check += check_angles_calc_force (1.0, 180.0, 1, 2.0e-13);
   check += check_angles_calc_force (2.0, 170.0, 1, 2.0e-13);
   check += check_angles_calc_force (3.0, 90.0,  1, 2.0e-13);
+
+  // check-ev-dh-guile.c
+  check += check_EV_DH_guile_get (1, 0.0);
 
 
   fprintf (stdout,
