@@ -1,10 +1,19 @@
-# $Id: Makefile,v 1.17 2008/04/12 19:19:00 kichiki Exp $
+# $Id: Makefile,v 1.18 2008/04/26 05:07:30 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
 LD           = libtool --mode=link --tag=CC $(CC)
 
+OPTS = \
+	-pipe -O3 -march=prescott -fomit-frame-pointer\
+	-mfpmath=sse -ffast-math
+
 SRC_DIR = ../src
+
+RYUON_INC = -I/usr/local/include
+RYUON_LIB = -L/usr/local/lib
+#RYUON_INC = -I/home/ichiki/RYUON/include
+#RYUON_LIB = -L/home/ichiki/RYUON/lib
 
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
@@ -14,9 +23,9 @@ GUILE_LIB = `guile-config link`
 
 CFLAGS	     = \
 	-Wall		\
+	$(OPTS)		\
 	-I$(SRC_DIR)	\
-	-pipe -O3 -march=prescott -fomit-frame-pointer\
-	-mfpmath=sse -ffast-math\
+	$(RYUON_INC)	\
 	$(GUILE_INC)	\
 	$(GSL_INC)
 
@@ -32,7 +41,7 @@ LDFLAGS      =
 LIBS         = \
 	../src/libstokes.la	\
 	-lm			\
-	-L/usr/local/lib -liter	\
+	$(RYUON_LIB) -liter	\
 	$(ATLAS_LIBS)		\
 	-lnetcdf		\
 	$(GUILE_LIB)		\
@@ -74,7 +83,8 @@ test-all-OBJ =\
 	check-sqrt-dgeev.o	\
 	check-matrix.o		\
 	check-list-ex.o		\
-	check-angles.o
+	check-angles.o		\
+	check-ev-dh-guile.o
 
 
 test-all:	$(test-all-OBJ)
