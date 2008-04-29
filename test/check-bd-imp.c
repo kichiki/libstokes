@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.4 2008/04/16 00:35:17 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.5 2008/04/29 03:37:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -118,6 +118,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 		      0, // BD_seed,
 		      F, T, E,
 		      NULL, NULL, NULL, // uf, of, ef,
+		      0, // int flag_noHI,
 		      flag_lub,
 		      flag_mat,
 		      0.0, // st,
@@ -125,6 +126,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 		      1.0, // gamma,
 		      NULL, // ev,
 		      ang,
+		      NULL, // ev_dh,
 		      flag_Q,
 		      -1.0, // peclet,
 		      1.0e-6, // ode_eps,
@@ -465,6 +467,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 		      0, // BD_seed,
 		      F, T, E,
 		      NULL, NULL, NULL, // uf, of, ef,
+		      0, // int flag_noHI,
 		      flag_lub,
 		      flag_mat,
 		      0.0, // st,
@@ -472,6 +475,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 		      1.0, // gamma,
 		      NULL, // ev,
 		      ang,
+		      NULL, // ev_dh,
 		      flag_Q,
 		      -1.0, // peclet,
 		      1.0e-6, // ode_eps,
