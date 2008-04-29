@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.8 2007/12/26 06:34:32 kichiki Exp $
+ * $Id: ode.c,v 1.9 2008/04/29 03:21:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,21 +29,22 @@
 #include "ewald-3ft-matrix.h"
 #include "ewald-3fts-matrix.h"
 #include "bonds.h" // struct bonds
-
+#include "noHI.h" // solve_mix_3[f|ft|fts]_noHI()
 
 #include "ode.h"
 
 
-/* wrapper for solving mob and mix problems in ODE routines
+/* old wrapper for solving mob and mix problems in ODE routines
+ * without flag_noHI in the argument
  */
-void
-solve_mix_3all (struct stokes *sys,
-		int flag_lub,
-		int flag_mat,
-		const double *fm, const double *tm, const double *em,
-		const double *uf, const double *of, const double *ef,
-		double *um, double *om, double *sm,
-		double *ff, double *tf, double *sf)
+static void
+solve_mix_3all_HI (struct stokes *sys,
+		   int flag_lub,
+		   int flag_mat,
+		   const double *fm, const double *tm, const double *em,
+		   const double *uf, const double *of, const double *ef,
+		   double *um, double *om, double *sm,
+		   double *ff, double *tf, double *sf)
 {
   if (sys->version == 0) // F version
     {
@@ -156,6 +157,70 @@ solve_mix_3all (struct stokes *sys,
 	    }
 	}
     }
+}
+
+
+/* wrapper for solving mob and mix problems in ODE routines
+ * INPUT
+ *  sys : struct stokes
+ *  flag_noHI : 0 == with hydrodynamic interaction
+ *              1 == without hydrodynamic interaction
+ *  flag_lub  : 0 == without lubrication
+ *              1 == with lubrication
+ *  flag_mat  : 0 == O(N^3) approach using matrix explicitly
+ *              1 == O(N^2) approach using matrix implicitly
+ *  fm, tm, em : F, T, and E for mobile particles (given parameters)
+ *  uf, of, ef : U, O, and E for fixed particles (given parameters)
+ * OUTPUT
+ *  um, om, sm : U, O, and S for mobile particles
+ *  ff, tf, sf : F, T, and S for fixed particles
+ */
+void
+solve_mix_3all (struct stokes *sys,
+		int flag_noHI,
+		int flag_lub,
+		int flag_mat,
+		const double *fm, const double *tm, const double *em,
+		const double *uf, const double *of, const double *ef,
+		double *um, double *om, double *sm,
+		double *ff, double *tf, double *sf)
+{
+  if (flag_noHI == 0)
+    {
+      // with HI
+      solve_mix_3all_HI (sys, flag_lub, flag_mat,
+			 fm, tm, em, uf, of, ef,
+			 um, om, sm, ff, tf, sf);
+    }
+  else
+    {
+      // without HI
+      if (sys->version == 0)
+	{
+	  // F version
+	  solve_mix_3f_noHI
+	    (sys,
+	     fm, uf,
+	     um, ff);
+	}
+      else if (sys->version == 1)
+	{
+	  // FT version
+	  solve_mix_3ft_noHI
+	    (sys,
+	     fm, tm, uf, of,
+	     um, om, ff, tf);
+	}
+      else
+	{
+	  // FTS version
+	  solve_mix_3fts_noHI
+	    (sys,
+	     fm, tm, em, uf, of, ef,
+	     um, om, sm, ff, tf, sf);
+	}
+    }
+
 }
 
 /* set the parameters to struct ode_params
@@ -351,6 +416,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 
   // calculate the terminal velocity V[]
   solve_mix_3all (ode->sys,
+		  0, // with HI
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  V, O, S, ff, tf, sf);
@@ -455,6 +521,7 @@ dydt_hydro (double t, const double *y, double *dydt,
 
   // set dydt = U = R^-1 . F
   solve_mix_3all (ode->sys,
+		  0, // with HI
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  dydt, O, S, ff, tf, sf);
