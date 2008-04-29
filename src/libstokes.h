@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.57 2008/04/26 19:57:47 kichiki Exp $
+ * $Id: libstokes.h,v 1.58 2008/04/29 03:20:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1704,6 +1704,7 @@ struct BD_params
   double *of;
   double *ef;
 
+  int flag_noHI;
   int flag_mat;
   int flag_lub;
   int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
@@ -1766,8 +1767,9 @@ struct BD_params
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
- *  (int) flag_mat
+ *  (int) flag_noHI
  *  (int) flag_lub
+ *  (int) flag_mat
  *        NOTE, flag_lub_B is used for calc_brownian_force() where
  *        lub among ONLY mobile particles are taken.
  *        therefore, check for the existance of mobile pair(s)
@@ -1799,6 +1801,7 @@ BD_params_init (struct stokes *sys,
 		double *uf,
 		double *of,
 		double *ef,
+		int flag_noHI,
 		int flag_lub,
 		int flag_mat,
 		double st,
