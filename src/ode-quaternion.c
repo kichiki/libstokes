@@ -1,6 +1,6 @@
 /* ODE utility routines for angle by quaternion
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.c,v 1.5 2007/12/26 06:35:19 kichiki Exp $
+ * $Id: ode-quaternion.c,v 1.6 2008/04/29 03:23:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -201,6 +201,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
 
   // set dydt = U = R^-1 . F
   solve_mix_3all (ode->sys,
+		  0, // with HI
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  dydt, O, S, ff, tf, sf);
@@ -312,6 +313,7 @@ dydt_Q_hydro_st (double t, const double *y, double *dydt,
 
   // calculate the terminal velocity V[]
   solve_mix_3all (ode->sys,
+		  0, // with HI
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  V, O, S, ff, tf, sf);
