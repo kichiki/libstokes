@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.7 2008/04/26 18:08:00 kichiki Exp $
+ * $Id: bd-imp.c,v 1.8 2008/04/29 03:25:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -401,6 +401,7 @@ BD_imp_JGdP00_func (const gsl_vector *x, void *p,
   // reset the configuration to x0[]
   stokes_set_pos_mobile (sys, BDimp->x0);
   solve_mix_3all (sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
 		  BD->uf, BD->of, BD->ef,
@@ -649,6 +650,7 @@ BD_imp_set_P (struct BD_imp *BDimp)
 
   stokes_set_pos_mobile (BD->sys, BDimp->x0);
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,    FTS->t,  FTS->e,
 		  BD->uf,    BD->of,  BD->ef,
@@ -728,6 +730,7 @@ BD_imp_PC_func (const gsl_vector *x, void *p,
   // reset the configuration to xP[]
   stokes_set_pos_mobile (sys, BDimp->xP);
   solve_mix_3all (sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
 		  BD->uf, BD->of, BD->ef,
