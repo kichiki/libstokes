@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.18 2008/04/26 19:09:49 kichiki Exp $
+ * $Id: brownian.c,v 1.19 2008/04/29 03:23:54 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,8 +68,9 @@
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
- *  (int) flag_mat
+ *  (int) flag_noHI
  *  (int) flag_lub
+ *  (int) flag_mat
  *        NOTE, flag_lub_B is used for calc_brownian_force() where
  *        lub among ONLY mobile particles are taken.
  *        therefore, check for the existance of mobile pair(s)
@@ -101,6 +102,7 @@ BD_params_init (struct stokes *sys,
 		double *uf,
 		double *of,
 		double *ef,
+		int flag_noHI,
 		int flag_lub,
 		int flag_mat,
 		double st,
@@ -135,8 +137,10 @@ BD_params_init (struct stokes *sys,
   BD->of = of;
   BD->ef = ef;
 
-  BD->flag_lub = flag_lub;
+  BD->flag_noHI = flag_noHI;
+  BD->flag_mat = flag_mat;
 
+  BD->flag_lub = flag_lub;
   /* BD->flag_lub_B is used for calc_brownian_force() where, 
    * lubrication among mobile particles are taken into account.
    * So, we need to check there is "at least" one mobile particle
@@ -165,7 +169,6 @@ BD_params_init (struct stokes *sys,
 	}
     }
 
-  BD->flag_mat = flag_mat;
   BD->st       = st;
   BD->bonds    = bonds;
   BD->gamma    = gamma;
@@ -1269,6 +1272,17 @@ calc_brownian_force (struct BD_params *BD,
 		     double *z)
 {
   int n = BD_get_n (BD->sys);
+  int i;
+
+  if (BD->flag_noHI == 1)
+    {
+      for (i = 0; i < n; i ++)
+	{
+	  z[i] = KIrand_Gaussian (BD->rng);
+	}
+      // done
+      return;
+    }
 
   // this is ordered particle-wise
   double *zp = (double *)malloc (sizeof (double) * n);
@@ -1279,7 +1293,6 @@ calc_brownian_force (struct BD_params *BD,
    */
   double *y_minv = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y_minv, "calc_brownian_force");
-  int i;
   for (i = 0; i < n; i ++)
     {
       y_minv[i] = KIrand_Gaussian (BD->rng);
@@ -2034,6 +2047,7 @@ BD_evolve_mid (double t,
   // calc dydt
   // BD->sys->pos is already definted above
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f, FTS->t, FTS->e,
 		  BD->uf, BD->of, BD->ef,
@@ -2085,6 +2099,7 @@ BD_evolve_mid (double t,
 
   // calc dydt
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f, FTS->t, FTS->e,
 		  BD->uf, BD->of, BD->ef,
@@ -2291,6 +2306,7 @@ BD_evolve_BB03 (double t,
    */
   // BD->sys->pos is already definted above
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
 		  FTS->uf, FTS->of, FTS->ef,
@@ -2339,6 +2355,7 @@ BD_evolve_BB03 (double t,
 
   // calc dydt with the same Brownian force
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
 		  FTS->uf, FTS->of, FTS->ef,
@@ -2403,6 +2420,7 @@ BD_evolve_BB03 (double t,
   BD_add_FP (BD, x, FTS);
 
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
 		  BD->uf,  BD->of,  BD->ef,
@@ -2595,6 +2613,7 @@ BD_evolve_BM97 (double t,
   // calc dydt
   // BD->sys->pos is already definted above
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
 		  BD->uf,  BD->of,  BD->ef,
@@ -2644,6 +2663,7 @@ BD_evolve_BM97 (double t,
   BD_calc_forces (BD, z, fact, FTS);
 
   solve_mix_3all (BD->sys,
+		  BD->flag_noHI,
 		  BD->flag_lub, BD->flag_mat,
 		  FTS->f,  FTS->t,  FTS->e,
 		  BD->uf,  BD->of,  BD->ef,

@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.12 2008/04/26 19:09:17 kichiki Exp $
+ * $Id: brownian.h,v 1.13 2008/04/29 03:25:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,6 +37,7 @@ struct BD_params
   double *of;
   double *ef;
 
+  int flag_noHI;
   int flag_mat;
   int flag_lub;
   int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
@@ -99,8 +100,9 @@ struct BD_params
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
- *  (int) flag_mat
+ *  (int) flag_noHI
  *  (int) flag_lub
+ *  (int) flag_mat
  *        NOTE, flag_lub_B is used for calc_brownian_force() where
  *        lub among ONLY mobile particles are taken.
  *        therefore, check for the existance of mobile pair(s)
@@ -132,6 +134,7 @@ BD_params_init (struct stokes *sys,
 		double *uf,
 		double *of,
 		double *ef,
+		int flag_noHI,
 		int flag_lub,
 		int flag_mat,
 		double st,
@@ -360,6 +363,12 @@ void
 BD_ode_evolve (struct BD_params *BD,
 	       double *t, double t_out, double *dt,
 	       double *y);
+
+/* return factor for BD->z[]
+ */
+double
+BD_params_get_fact (struct BD_params *BD,
+		    double dt);
 
 /* add interaction forces on each particle including
  *   bond force F^bond(sys->pos[]) by bonds_calc_force()
