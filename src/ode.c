@@ -1,6 +1,6 @@
 /* ODE utility routines
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.9 2008/04/29 03:21:59 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ode.c,v 1.10 2008/04/29 03:29:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -232,6 +232,7 @@ solve_mix_3all (struct stokes *sys,
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
+ *  (int) flag_noHI
  *  (int) flag_mat
  *  (int) flag_lub
  *  (double) stokes
@@ -248,6 +249,7 @@ ode_params_init (struct stokes *sys,
 		 double *uf,
 		 double *of,
 		 double *ef,
+		 int flag_noHI,
 		 int flag_lub,
 		 int flag_mat,
 		 double st,
@@ -265,6 +267,7 @@ ode_params_init (struct stokes *sys,
   params->uf        = uf;
   params->of        = of;
   params->ef        = ef;
+  params->flag_noHI = flag_noHI;
   params->flag_lub  = flag_lub;
   params->flag_mat  = flag_mat;
   params->st        = st;
@@ -416,7 +419,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
 
   // calculate the terminal velocity V[]
   solve_mix_3all (ode->sys,
-		  0, // with HI
+		  ode->flag_noHI,
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  V, O, S, ff, tf, sf);
@@ -521,7 +524,7 @@ dydt_hydro (double t, const double *y, double *dydt,
 
   // set dydt = U = R^-1 . F
   solve_mix_3all (ode->sys,
-		  0, // with HI
+		  ode->flag_noHI,
 		  ode->flag_lub, ode->flag_mat,
 		  fm, ode->T, ode->E, ode->uf, ode->of, ode->ef,
 		  dydt, O, S, ff, tf, sf);

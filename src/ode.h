@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.h,v 1.6 2008/04/29 03:22:32 kichiki Exp $
+ * $Id: ode.h,v 1.7 2008/04/29 03:30:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@ struct ode_params
   double *uf;
   double *of;
   double *ef;
+  int flag_noHI;
   int flag_mat;
   int flag_lub;
   double st;
@@ -93,6 +94,7 @@ ode_params_init (struct stokes *sys,
 		 double *uf,
 		 double *of,
 		 double *ef,
+		 int flag_noHI,
 		 int flag_lub,
 		 int flag_mat,
 		 double st,
