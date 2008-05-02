@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
- * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.14 2007/12/26 06:32:53 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc.c,v 5.15 2008/05/02 03:37:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -103,7 +103,8 @@ stokes_nc_print_actives (struct stokes_nc *nc,
   // (int)shear_mode
   int shear_mode;
   int status;
-  status = nc_get_var1_int (nc->id, nc->shear_mode_id, NULL,
+  int index = 0;
+  status = nc_get_var1_int (nc->id, nc->shear_mode_id, &index,
 			    &shear_mode);
   if (status != NC_NOERR)
     {
