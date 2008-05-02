@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.13 2008/04/29 03:25:03 kichiki Exp $
+ * $Id: brownian.h,v 1.14 2008/05/02 03:47:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ struct BD_params
   int flag_noHI;
   int flag_mat;
   int flag_lub;
-  int flag_lub_B; // for calc_brownian_force(), lub among mobile particles
+  int flag_lub_B; // for BD_calc_FB(), lub among mobile particles
 
   // auxiliary imposed-flow parameters for simple shear
   double t0; // reference time for s0
@@ -103,7 +103,7 @@ struct BD_params
  *  (int) flag_noHI
  *  (int) flag_lub
  *  (int) flag_mat
- *        NOTE, flag_lub_B is used for calc_brownian_force() where
+ *        NOTE, flag_lub_B is used for BD_calc_FB() where
  *        lub among ONLY mobile particles are taken.
  *        therefore, check for the existance of mobile pair(s)
  *        not excluded by sys->ex_lub for flag_lub_B.
@@ -196,7 +196,7 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
  * so that give 1/sqrt(x) for chebyshev.
  * Note that for FTS version, A = M_{UF} - M_{US}.(M_{ES})^{-1}.M_{EF}.
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
+ *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
  *  x[n] : U (and O)
  *  user_data : (struct BD_params) *BD
@@ -281,8 +281,8 @@ BD_sqrt_by_dgeev (int n, const double *a, double *s);
  *         (different strage from FTS where f,t,s are ordered particle-wise).
  */
 void
-calc_brownian_force (struct BD_params *BD,
-		     double *z);
+BD_calc_FB (struct BD_params *BD,
+	    double *z);
 
 
 /*

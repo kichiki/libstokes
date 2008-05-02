@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.19 2008/04/29 03:23:54 kichiki Exp $
+ * $Id: brownian.c,v 1.20 2008/05/02 03:47:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,7 +71,7 @@
  *  (int) flag_noHI
  *  (int) flag_lub
  *  (int) flag_mat
- *        NOTE, flag_lub_B is used for calc_brownian_force() where
+ *        NOTE, flag_lub_B is used for BD_calc_FB() where
  *        lub among ONLY mobile particles are taken.
  *        therefore, check for the existance of mobile pair(s)
  *        not excluded by sys->ex_lub for flag_lub_B.
@@ -141,7 +141,7 @@ BD_params_init (struct stokes *sys,
   BD->flag_mat = flag_mat;
 
   BD->flag_lub = flag_lub;
-  /* BD->flag_lub_B is used for calc_brownian_force() where, 
+  /* BD->flag_lub_B is used for BD_calc_FB() where, 
    * lubrication among mobile particles are taken into account.
    * So, we need to check there is "at least" one mobile particle
    * not excluded for lub calculation to set BD->flag_lub_B = 1. */
@@ -352,7 +352,7 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
  * so that give 1/sqrt(x) for chebyshev.
  * Note that for FTS version, A = M_{UF} - M_{US}.(M_{ES})^{-1}.M_{EF}.
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
+ *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
  *  x[n] : U (and O)
  *  user_data : (struct BD_params) *BD
@@ -382,7 +382,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 		   n, nm);
 	  exit (1);
 	}
-      // resistance problem in F version
+      // mobility problem in F version
       if (BD->sys->np == nm)
 	{
 	  atimes_3all (n, x, y, (void *)BD->sys);
@@ -423,7 +423,7 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 		   n, nm);
 	  exit (1);
 	}
-      // resistance problem in FT version
+      // mobility problem in FT version
       if (BD->sys->np == nm)
 	{
 	  atimes_3all (n, x, y, (void *)BD->sys);
@@ -1268,7 +1268,7 @@ BD_sqrt_by_dgeev (int n, const double *a, double *s)
  *         (different strage from FTS where f,t,s are ordered particle-wise).
  */
 void
-calc_brownian_force (struct BD_params *BD,
+BD_calc_FB (struct BD_params *BD,
 		     double *z)
 {
   int n = BD_get_n (BD->sys);
@@ -1286,13 +1286,13 @@ calc_brownian_force (struct BD_params *BD,
 
   // this is ordered particle-wise
   double *zp = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (zp, "calc_brownian_force");
+  CHECK_MALLOC (zp, "BD_calc_FB");
 
   /**
    * M^{-1} part
    */
   double *y_minv = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y_minv, "calc_brownian_force");
+  CHECK_MALLOC (y_minv, "BD_calc_FB");
   for (i = 0; i < n; i ++)
     {
       y_minv[i] = KIrand_Gaussian (BD->rng);
@@ -1304,6 +1304,8 @@ calc_brownian_force (struct BD_params *BD,
       // matrix version
       double *minv = (double *)malloc (sizeof (double) * n * n);
       double *l    = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (minv, "BD_calc_FB");
+      CHECK_MALLOC (l,    "BD_calc_FB");
       BD_matrix_minv_FU (BD, minv);
       // check
       status = dpotrf_wrap (n, minv, l);
@@ -1423,8 +1425,8 @@ calc_brownian_force (struct BD_params *BD,
     {
       double *y_lub = (double *)malloc (sizeof (double) * n);
       double *z_lub = (double *)malloc (sizeof (double) * n);
-      CHECK_MALLOC (y_lub, "calc_brownian_force");
-      CHECK_MALLOC (z_lub, "calc_brownian_force");
+      CHECK_MALLOC (y_lub, "BD_calc_FB");
+      CHECK_MALLOC (z_lub, "BD_calc_FB");
       int i;
       for (i = 0; i < n; i ++)
 	{
@@ -1436,6 +1438,8 @@ calc_brownian_force (struct BD_params *BD,
 	  // matrix version
 	  double *lub = (double *)malloc (sizeof (double) * n * n);
 	  double *l   = (double *)malloc (sizeof (double) * n * n);
+	  CHECK_MALLOC (lub, "BD_calc_FB");
+	  CHECK_MALLOC (l,   "BD_calc_FB");
 	  BD_matrix_lub_FU (BD, lub);
 	  // check
 	  status = dpotrf_wrap (n, lub, l);
@@ -1914,7 +1918,7 @@ BD_add_FP (struct BD_params *BD,
  *   interaction forces by BD_add_FP().
  * INPUT
  *  BD : struct BD_params
- *  z[] : random vector obtained by calc_brownian_force()
+ *  z[] : random vector obtained by BD_calc_FB()
  *  fact : FB factor for z[] evaluated by BD_params_get_fact()
  * OUTPUT
  *  FTS : struct FTS
@@ -2014,13 +2018,13 @@ BD_evolve_mid (double t,
   int i;
 
  BD_evolve_mid_REDO:
-  // set configuration for calc_brownian_force()
+  // set configuration for BD_calc_FB()
   stokes_set_pos_mobile (BD->sys, x);
   // set sys->shear_shift if necessary
   stokes_set_shear_shift (BD->sys, t,
 			  BD->t0, BD->s0);
  BD_evolve_mid_REDO_FB:
-  calc_brownian_force (BD, z);
+  BD_calc_FB (BD, z);
   // now, F^B_n = fact * z[i]
 
  BD_evolve_mid_REDO_scale:
@@ -2243,7 +2247,7 @@ BD_evolve_BB03 (double t,
   stokes_set_shear_shift (BD->sys, t,
 			  BD->t0, BD->s0);
  BD_evolve_BB03_REDO_FB:
-  calc_brownian_force (BD, z);
+  BD_calc_FB (BD, z);
   // now, F^B_n = fact * z[i]
 
  BD_evolve_BB03_REDO_scale:
@@ -2585,7 +2589,7 @@ BD_evolve_BM97 (double t,
   stokes_set_shear_shift (BD->sys, t,
 			  BD->t0, BD->s0);
  BD_evolve_BM97_REDO_FB:
-  calc_brownian_force (BD, z);
+  BD_calc_FB (BD, z);
   // now, F^B_n = fact * z[i]
 
 

@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.8 2008/04/29 03:25:25 kichiki Exp $
+ * $Id: bd-imp.c,v 1.9 2008/05/02 03:47:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -208,7 +208,7 @@ BD_imp_set_xq (struct BD_imp *BDimp,
    * update the brownian force by the new config x[]
    */
   stokes_set_pos_mobile (BDimp->BD->sys, x);
-  calc_brownian_force (BDimp->BD, BDimp->z);
+  BD_calc_FB (BDimp->BD, BDimp->z);
 
   // now the predictor in BDimp is obsolete (if set)
   BDimp->flag_PC = 0;
