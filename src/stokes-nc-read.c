@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
- * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.9 2007/10/04 02:44:11 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc-read.c,v 5.10 2008/05/02 03:37:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -256,6 +256,7 @@ stokes_nc_open_ (const char * filename, int omode)
 	  stokes_nc_error
 	    (status, "at nc_inq_var() in stokes_nc_open", NULL);
 	}
+      //fprintf (stdout, "# name = %s\n", name);
       /* dimension data */
       if (strcmp ("p", name) == 0)
 	{
@@ -323,6 +324,39 @@ stokes_nc_open_ (const char * filename, int omode)
 	    }
 	}
       /* system data */
+      else if (strcmp ("shear_mode", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 0)
+	    {
+	      fprintf (stderr, "invalid data for variable shear_mode"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->shear_mode_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("shear_rate", name) == 0)
+	{
+	  if (xtype != NC_DOUBLE ||
+	      nd != 0)
+	    {
+	      fprintf (stderr, "invalid data for variable shear_rate"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->shear_rate_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("shear_shift", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->time_dim,
+			     &(nc->shear_shift_id),
+			     &flag_dummy);
+	}
       else if (strcmp ("l", name) == 0)
 	{
 	  stokes_nc_check_1 (i, xtype, nd, d_ids,
