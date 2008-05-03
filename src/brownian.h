@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.14 2008/05/02 03:47:37 kichiki Exp $
+ * $Id: brownian.h,v 1.15 2008/05/03 02:26:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -198,10 +198,10 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
  * INPUT
  *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
+ *  x[n] : F (and T) in Global scaling, rather than Particle-wise scaling
  *  user_data : (struct BD_params) *BD
  * OUTPUT
- *  y[n] : F (and T)
+ *  y[n] : U (and O) in Global scaling, rather than Particle-wise scaling
  */
 void
 BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data);
@@ -213,12 +213,12 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data);
  * (in other words, F for the fixed particles is set by zero,
  *  and E is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
+ *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
+ *  x[n] : U (and O) in Global scaling, rather than Particle-wise scaling
  *  user_data : (struct BD_params) *BD
  * OUTPUT
- *  y[n] : F (and T)
+ *  y[n] : F (and T) in Global scaling, rather than Particle-wise scaling
  */
 void
 BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data);
@@ -244,7 +244,7 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU);
  * INPUT
  *  BD   : struct BD_params
  * OUTPUT
- *  minv : (M^inf)^{-1} in UF part
+ *  minv : UF part of (M^inf)^{-1} in Global scaling not Particle-wise.
  */
 void
 BD_matrix_minv_FU (struct BD_params *BD, double *minv);
@@ -254,12 +254,9 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv);
  * (in other words, F for the fixed particles is set by zero,
  *  and S is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
- *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
- *  user_data : (struct BD_params) *BD
+ *  BD   : struct BD_params
  * OUTPUT
- *  y[n] : F (and T)
+ *  lub  : UF part of L in Global scaling not Particle-wise.
  */
 void
 BD_matrix_lub_FU (struct BD_params *BD, double *lub);

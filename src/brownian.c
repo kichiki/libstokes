@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.20 2008/05/02 03:47:12 kichiki Exp $
+ * $Id: brownian.c,v 1.21 2008/05/03 02:26:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -347,6 +347,205 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
 }
 
 
+static void
+BD_scale_G_to_P_ft (struct BD_params *BD,
+		    const double *ft_G,
+		    double *ft_P)
+{
+  int nm  = BD->sys->nm;
+  if (BD->sys->version == 0)
+    {
+      // F version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  int ix = i * 3;
+	  int iy = ix + 1;
+	  int iz = ix + 2;
+	  ft_P[ix] = ft_G[ix];
+	  ft_P[iy] = ft_G[iy];
+	  ft_P[iz] = ft_G[iz];
+	}
+    }
+  else
+    {
+      // FT or FTS version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+
+	  int ifx = i * 6;
+	  int ify = ifx + 1;
+	  int ifz = ifx + 2;
+	  int itx = ifx + 3;
+	  int ity = ifx + 4;
+	  int itz = ifx + 5;
+
+	  ft_P[ifx] = ft_G[ifx];
+	  ft_P[ify] = ft_G[ify];
+	  ft_P[ifz] = ft_G[ifz];
+
+	  ft_P[itx] = ft_G[itx] / a;
+	  ft_P[ity] = ft_G[ity] / a;
+	  ft_P[itz] = ft_G[itz] / a;
+	}
+    }
+}
+static void
+BD_scale_P_to_G_ft (struct BD_params *BD,
+		    const double *ft_P,
+		    double *ft_G)
+{
+  int nm  = BD->sys->nm;
+  if (BD->sys->version == 0)
+    {
+      // F version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  int ix = i * 3;
+	  int iy = ix + 1;
+	  int iz = ix + 2;
+	  ft_G[ix] = ft_P[ix];
+	  ft_G[iy] = ft_P[iy];
+	  ft_G[iz] = ft_P[iz];
+	}
+    }
+  else
+    {
+      // FT or FTS version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+
+	  int ifx = i * 6;
+	  int ify = ifx + 1;
+	  int ifz = ifx + 2;
+	  int itx = ifx + 3;
+	  int ity = ifx + 4;
+	  int itz = ifx + 5;
+
+	  ft_G[ifx] = ft_P[ifx];
+	  ft_G[ify] = ft_P[ify];
+	  ft_G[ifz] = ft_P[ifz];
+
+	  ft_G[itx] = ft_P[itx] * a;
+	  ft_G[ity] = ft_P[ity] * a;
+	  ft_G[itz] = ft_P[itz] * a;
+	}
+    }
+}
+static void
+BD_scale_G_to_P_uo (struct BD_params *BD,
+		    const double *uo_G,
+		    double *uo_P)
+{
+  int nm  = BD->sys->nm;
+  if (BD->sys->version == 0)
+    {
+      // F version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+
+	  int ix = i * 3;
+	  int iy = ix + 1;
+	  int iz = ix + 2;
+	  uo_P[ix] = uo_G[ix] * a;
+	  uo_P[iy] = uo_G[iy] * a;
+	  uo_P[iz] = uo_G[iz] * a;
+	}
+    }
+  else
+    {
+      // FT or FTS version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+	  double a2 = a * a;
+
+	  int iux = i * 6;
+	  int iuy = iux + 1;
+	  int iuz = iux + 2;
+	  int iox = iux + 3;
+	  int ioy = iux + 4;
+	  int ioz = iux + 5;
+
+	  uo_P[iux] = uo_G[iux] * a;
+	  uo_P[iuy] = uo_G[iuy] * a;
+	  uo_P[iuz] = uo_G[iuz] * a;
+
+	  uo_P[iox] = uo_G[iox] * a2;
+	  uo_P[ioy] = uo_G[ioy] * a2;
+	  uo_P[ioz] = uo_G[ioz] * a2;
+	}
+    }
+}
+static void
+BD_scale_P_to_G_uo (struct BD_params *BD,
+		    const double *uo_P,
+		    double *uo_G)
+{
+  int nm  = BD->sys->nm;
+  if (BD->sys->version == 0)
+    {
+      // F version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+
+	  int ix = i * 3;
+	  int iy = ix + 1;
+	  int iz = ix + 2;
+	  uo_G[ix] = uo_P[ix] / a;
+	  uo_G[iy] = uo_P[iy] / a;
+	  uo_G[iz] = uo_P[iz] / a;
+	}
+    }
+  else
+    {
+      // FT or FTS version
+      int i;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+	  double a2 = a * a;
+
+	  int iux = i * 6;
+	  int iuy = iux + 1;
+	  int iuz = iux + 2;
+	  int iox = iux + 3;
+	  int ioy = iux + 4;
+	  int ioz = iux + 5;
+
+	  uo_G[iux] = uo_P[iux] / a;
+	  uo_G[iuy] = uo_P[iuy] / a;
+	  uo_G[iuz] = uo_P[iuz] / a;
+
+	  uo_G[iox] = uo_P[iox] / a2;
+	  uo_G[ioy] = uo_P[ioy] / a2;
+	  uo_G[ioz] = uo_P[ioz] / a2;
+	}
+    }
+}
+
 
 /* calculate y = A.x for Brownian force, where A = M^inf
  * so that give 1/sqrt(x) for chebyshev.
@@ -354,10 +553,10 @@ check_overlap (struct stokes *sys, const double *pos, double rmin,
  * INPUT
  *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
+ *  x[n] : F (and T) in Global scaling, rather than Particle-wise scaling
  *  user_data : (struct BD_params) *BD
  * OUTPUT
- *  y[n] : F (and T)
+ *  y[n] : U (and O) in Global scaling, rather than Particle-wise scaling
  */
 void
 BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
@@ -373,6 +572,13 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
   int i;
 
+  // convert from Global scaling to Particle-wise scaling
+  double *x_P = (double *)malloc (sizeof (double) * n);
+  double *y_P = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (x_P, "BD_atimes_mob_FU");
+  CHECK_MALLOC (y_P, "BD_atimes_mob_FU");
+  BD_scale_G_to_P_ft (BD, x, x_P);
+
   if (BD->sys->version == 0)
     {
       // F version
@@ -385,7 +591,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
       // mobility problem in F version
       if (BD->sys->np == nm)
 	{
-	  atimes_3all (n, x, y, (void *)BD->sys);
+	  //atimes_3all (n, x, y, (void *)BD->sys);
+	  atimes_3all (n, x_P, y_P, (void *)BD->sys);
 	}
       else
 	{
@@ -397,7 +604,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      f[i] = x[i];
+	      //f[i] = x[i];
+	      f[i] = x_P[i];
 	    }
 	  for (; i < np3; i ++)
 	    {
@@ -408,7 +616,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      y[i] = u[i];
+	      //y[i] = u[i];
+	      y_P[i] = u[i];
 	    }
 	  free (f);
 	  free (u);
@@ -426,7 +635,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
       // mobility problem in FT version
       if (BD->sys->np == nm)
 	{
-	  atimes_3all (n, x, y, (void *)BD->sys);
+	  //atimes_3all (n, x, y, (void *)BD->sys);
+	  atimes_3all (n, x_P, y_P, (void *)BD->sys);
 	}
       else
 	{
@@ -438,7 +648,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      ft[i] = x[i];
+	      //ft[i] = x[i];
+	      ft[i] = x_P[i];
 	    }
 	  for (; i < np6; i ++)
 	    {
@@ -449,7 +660,8 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      y[i] = uo[i];
+	      //y[i] = uo[i];
+	      y_P[i] = uo[i];
 	    }
 	  free (ft);
 	  free (uo);
@@ -484,8 +696,10 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
 		{
-		  f[i*3+ii] = x[i*6+  ii];
-		  t[i*3+ii] = x[i*6+3+ii];
+		  //f[i*3+ii] = x[i*6+  ii];
+		  //t[i*3+ii] = x[i*6+3+ii];
+		  f[i*3+ii] = x_P[i*6+  ii];
+		  t[i*3+ii] = x_P[i*6+3+ii];
 		}
 	      for (ii = 0; ii < 5; ii ++)
 		{
@@ -500,8 +714,10 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
 		{
-		  y[i*6+  ii] = u[i*3+ii];
-		  y[i*6+3+ii] = o[i*3+ii];
+		  //y[i*6+  ii] = u[i*3+ii];
+		  //y[i*6+3+ii] = o[i*3+ii];
+		  y_P[i*6+  ii] = u[i*3+ii];
+		  y_P[i*6+3+ii] = o[i*3+ii];
 		}
 	    }
 	  free (f);
@@ -545,8 +761,10 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
 		{
-		  f[i*3+ii] = x[i*6+  ii];
-		  t[i*3+ii] = x[i*6+3+ii];
+		  //f[i*3+ii] = x[i*6+  ii];
+		  //t[i*3+ii] = x[i*6+3+ii];
+		  f[i*3+ii] = x_P[i*6+  ii];
+		  t[i*3+ii] = x_P[i*6+3+ii];
 		}
 	    }
 	  for (i = 0; i < nm5; i ++)
@@ -570,8 +788,10 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
 	    {
 	      for (ii = 0; ii < 3; ii ++)
 		{
-		  y[i*6+  ii] = u[i*3+ii];
-		  y[i*6+3+ii] = o[i*3+ii];
+		  //y[i*6+  ii] = u[i*3+ii];
+		  //y[i*6+3+ii] = o[i*3+ii];
+		  y_P[i*6+  ii] = u[i*3+ii];
+		  y_P[i*6+3+ii] = o[i*3+ii];
 		}
 	    }
 	  free (f);
@@ -594,6 +814,11 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
       fprintf (stderr, "invalid version %d\n", BD->sys->version);
       exit (1);
     }
+
+  // convert from Particle-wise scaling to Global scaling
+  BD_scale_P_to_G_uo (BD, y_P, y);
+  free (x_P);
+  free (y_P);
 }
 
 /* calculate y = A.x for Brownian force, where A = L (lubrication)
@@ -602,12 +827,12 @@ BD_atimes_mob_FU (int n, const double *x, double *y, void *user_data)
  * (in other words, F for the fixed particles is set by zero,
  *  and E is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
+ *  n    : dimension (n = 3*nm for F, n = 6*nm for FT and FTS)
  *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
+ *  x[n] : U (and O) in Global scaling, rather than Particle-wise scaling
  *  user_data : (struct BD_params) *BD
  * OUTPUT
- *  y[n] : F (and T)
+ *  y[n] : F (and T) in Global scaling, rather than Particle-wise scaling
  */
 void
 BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
@@ -621,6 +846,13 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
   int i;
 
+  // convert from Global scaling to Particle-wise scaling
+  double *x_P = (double *)malloc (sizeof (double) * n);
+  double *y_P = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (x_P, "BD_atimes_mob_FU");
+  CHECK_MALLOC (y_P, "BD_atimes_mob_FU");
+  BD_scale_G_to_P_uo (BD, x, x_P);
+
   if (BD->sys->version == 0)
     {
       // F version
@@ -633,7 +865,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
       // resistance problem in F version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  calc_lub_3f (BD->sys, x, y);
+	  //calc_lub_3f (BD->sys, x, y);
+	  calc_lub_3f (BD->sys, x_P, y_P);
 	}
       else
 	{
@@ -645,7 +878,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      u[i] = x[i];
+	      //u[i] = x[i];
+	      u[i] = x_P[i];
 	    }
 	  for (; i < np3; i ++)
 	    {
@@ -656,7 +890,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm3; i ++)
 	    {
-	      y[i] = f[i];
+	      //y[i] = f[i];
+	      y_P[i] = f[i];
 	    }
 	  free (u);
 	  free (f);
@@ -674,7 +909,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
       // resistance problem in FT version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  calc_lub_3ft (BD->sys, x, y);
+	  //calc_lub_3ft (BD->sys, x, y);
+	  calc_lub_3ft (BD->sys, x_P, y_P);
 	}
       else
 	{
@@ -686,7 +922,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      uo[i] = x[i];
+	      //uo[i] = x[i];
+	      uo[i] = x_P[i];
 	    }
 	  for (; i < np6; i ++)
 	    {
@@ -697,7 +934,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      y[i] = ft[i];
+	      //y[i] = ft[i];
+	      y_P[i] = ft[i];
 	    }
 	  free (uo);
 	  free (ft);
@@ -721,7 +959,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
       // and extract F and T
       if (BD->sys->np == BD->sys->nm)
 	{
-	  calc_lub_3ft (sys_ft, x, y);
+	  //calc_lub_3ft (sys_ft, x, y);
+	  calc_lub_3ft (sys_ft, x_P, y_P);
 	}
       else
 	{
@@ -733,7 +972,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      uo[i] = x[i];
+	      //uo[i] = x[i];
+	      uo[i] = x_P[i];
 	    }
 	  for (; i < np6; i ++)
 	    {
@@ -745,7 +985,8 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
 
 	  for (i = 0; i < nm6; i ++)
 	    {
-	      y[i] = ft[i];
+	      //y[i] = ft[i];
+	      y_P[i] = ft[i];
 	    }
 	  free (uo);
 	  free (ft);
@@ -758,6 +999,11 @@ BD_atimes_lub_FU (int n, const double *x, double *y, void *user_data)
       fprintf (stderr, "invalid version %d\n", BD->sys->version);
       exit (1);
     }
+
+  // convert from Particle-wise scaling to Global scaling
+  BD_scale_P_to_G_ft (BD, y_P, y);
+  free (x_P);
+  free (y_P);
 }
 
 void
@@ -777,6 +1023,106 @@ check_symmetric (int n, const double *m, double tiny)
 	}
     }
   fprintf (stderr, "# YES, symmetric!\n");
+}
+
+static void
+BD_scale_P_to_G_res (struct BD_params *BD,
+		     const double *r_P,
+		     double *r_G)
+{
+  int nm  = BD->sys->nm;
+  if (BD->sys->version == 0)
+    {
+      // F version
+      int i;
+      int nn = (nm * 3) * (nm * 3);
+      for (i = 0; i < nn; i ++)
+	{
+	  r_G[i] = r_P[i];
+	}
+    }
+  else
+    {
+      int n = nm * 6;
+      // FT or FTS version
+      int i, j;
+      for (i = 0; i < nm; i ++)
+	{
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+	  double a2 = a * a;
+
+	  int ifx = i * 6;
+	  int ify = ifx + 1;
+	  int ifz = ifx + 2;
+	  int itx = ifx + 3;
+	  int ity = ifx + 4;
+	  int itz = ifx + 5;
+
+	  for (j = 0; j < nm; j ++)
+	    {
+	      int jfx = j * 6;
+	      int jfy = jfx + 1;
+	      int jfz = jfx + 2;
+	      int jtx = jfx + 3;
+	      int jty = jfx + 4;
+	      int jtz = jfx + 5;
+
+	      // A part
+	      r_G[ifx * n + jfx] = r_P[ifx * n + jfx];
+	      r_G[ifx * n + jfy] = r_P[ifx * n + jfy];
+	      r_G[ifx * n + jfz] = r_P[ifx * n + jfz];
+
+	      r_G[ify * n + jfx] = r_P[ify * n + jfx];
+	      r_G[ify * n + jfy] = r_P[ify * n + jfy];
+	      r_G[ify * n + jfz] = r_P[ify * n + jfz];
+
+	      r_G[ifz * n + jfx] = r_P[ifz * n + jfx];
+	      r_G[ifz * n + jfy] = r_P[ifz * n + jfy];
+	      r_G[ifz * n + jfz] = r_P[ifz * n + jfz];
+
+	      // tilde(B) part
+	      r_G[ifx * n + jtx] = r_P[ifx * n + jtx] / a;
+	      r_G[ifx * n + jty] = r_P[ifx * n + jty] / a;
+	      r_G[ifx * n + jtz] = r_P[ifx * n + jtz] / a;
+
+	      r_G[ify * n + jtx] = r_P[ify * n + jtx] / a;
+	      r_G[ify * n + jty] = r_P[ify * n + jty] / a;
+	      r_G[ify * n + jtz] = r_P[ify * n + jtz] / a;
+
+	      r_G[ifz * n + jtx] = r_P[ifz * n + jtx] / a;
+	      r_G[ifz * n + jty] = r_P[ifz * n + jty] / a;
+	      r_G[ifz * n + jtz] = r_P[ifz * n + jtz] / a;
+
+	      // B part
+	      r_G[itx * n + jfx] = r_P[itx * n + jfx] / a;
+	      r_G[itx * n + jfy] = r_P[itx * n + jfy] / a;
+	      r_G[itx * n + jfz] = r_P[itx * n + jfz] / a;
+
+	      r_G[ity * n + jfx] = r_P[ity * n + jfx] / a;
+	      r_G[ity * n + jfy] = r_P[ity * n + jfy] / a;
+	      r_G[ity * n + jfz] = r_P[ity * n + jfz] / a;
+
+	      r_G[itz * n + jfx] = r_P[itz * n + jfx] / a;
+	      r_G[itz * n + jfy] = r_P[itz * n + jfy] / a;
+	      r_G[itz * n + jfz] = r_P[itz * n + jfz] / a;
+
+	      // C part
+	      r_G[itx * n + jtx] = r_P[itx * n + jtx] / a2;
+	      r_G[itx * n + jty] = r_P[itx * n + jty] / a2;
+	      r_G[itx * n + jtz] = r_P[itx * n + jtz] / a2;
+
+	      r_G[ity * n + jtx] = r_P[ity * n + jtx] / a2;
+	      r_G[ity * n + jty] = r_P[ity * n + jty] / a2;
+	      r_G[ity * n + jtz] = r_P[ity * n + jtz] / a2;
+
+	      r_G[itz * n + jtx] = r_P[itz * n + jtx] / a2;
+	      r_G[itz * n + jty] = r_P[itz * n + jty] / a2;
+	      r_G[itz * n + jtz] = r_P[itz * n + jtz] / a2;
+	    }
+	}
+    }
 }
 
 /* calc (M^{-1})_{FU} in FTS version
@@ -838,7 +1184,7 @@ BD_minv_FU_in_FTS (int np, const double *m, double *minv_FU)
  * INPUT
  *  BD   : struct BD_params
  * OUTPUT
- *  minv : (M^inf)^{-1} in UF part
+ *  minv : UF part of (M^inf)^{-1} in Global scaling not Particle-wise.
  */
 void
 BD_matrix_minv_FU (struct BD_params *BD, double *minv)
@@ -850,6 +1196,8 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
   int np6 = BD->sys->np * 6;
   int np11 = BD->sys->np * 11;
 
+  double *minv_P = NULL;
+
   int n;
   int i, j;
   int ii, jj;
@@ -857,12 +1205,16 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
     {
       // F version
       n = nm3;
+      minv_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (minv_P, "BD_matrix_minv_FU");
 
       // resistance problem in F version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_mob_3all (BD->sys, minv);
-	  lapack_inv_ (n, minv);
+	  //make_matrix_mob_3all (BD->sys, minv);
+	  //lapack_inv_ (n, minv);
+	  make_matrix_mob_3all (BD->sys, minv_P);
+	  lapack_inv_ (n, minv_P);
 	}
       else
 	{
@@ -882,7 +1234,9 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
 		    {
 		      for (jj = 0; jj < 3; jj ++)
 			{
-			  minv [(i*3+ii)*n+(j*3+jj)]
+			  //minv [(i*3+ii)*n+(j*3+jj)]
+			  //  = m[(i*3+ii)*np3+(j*3+jj)];
+			  minv_P [(i*3+ii)*n+(j*3+jj)]
 			    = m[(i*3+ii)*np3+(j*3+jj)];
 			}
 		    }
@@ -895,12 +1249,16 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
     {
       // FT version
       n = 2 * nm3;
+      minv_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (minv_P, "BD_matrix_minv_FU");
 
       // resistance problem in FT version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_mob_3all (BD->sys, minv);
-	  lapack_inv_ (n, minv);
+	  //make_matrix_mob_3all (BD->sys, minv);
+	  //lapack_inv_ (n, minv);
+	  make_matrix_mob_3all (BD->sys, minv_P);
+	  lapack_inv_ (n, minv_P);
 	}
       else
 	{
@@ -919,7 +1277,9 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
 		    {
 		      for (jj = 0; jj < 6; jj ++)
 			{
-			  minv [(i*6+ii)*n+(j*6+jj)]
+			  //minv [(i*6+ii)*n+(j*6+jj)]
+			  //  = m[(i*6+ii)*np6+(j*6+jj)];
+			  minv_P [(i*6+ii)*n+(j*6+jj)]
 			    = m[(i*6+ii)*np6+(j*6+jj)];
 			}
 		    }
@@ -932,6 +1292,8 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
     {
       // FTS version
       n = 2 * nm3;
+      minv_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (minv_P, "BD_matrix_minv_FU");
 
       // resistance problem in FTS version with E = 0
       double *m  = (double *)malloc (sizeof (double) * np11 * np11);
@@ -951,8 +1313,10 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
 		{
 		  for (jj = 0; jj < 6; jj ++)
 		    {
-		      minv [(i*6+ii)*n+(j*6+jj)]
-			= mi[(i*6+ii)*np6+(j*6+jj)];
+		      //minv [(i*6+ii)*n+(j*6+jj)]
+		      //  = mi[(i*6+ii)*np6+(j*6+jj)];
+		      minv_P [(i*6+ii)*n+(j*6+jj)]
+		        = mi[(i*6+ii)*np6+(j*6+jj)];
 		    }
 		}
 	    }
@@ -965,18 +1329,19 @@ BD_matrix_minv_FU (struct BD_params *BD, double *minv)
       fprintf (stderr, "invalid version %d\n", BD->sys->version);
       exit (1);
     }
+
+  // convert from Particle-wise scaling to Global scaling
+  BD_scale_P_to_G_res (BD, minv_P, minv);
+  free (minv_P);
 }
 
 /* make lubrication matrix L in UF part (for mobile particles)
  * (in other words, F for the fixed particles is set by zero,
  *  and S is also set by zero for FTS case).
  * INPUT
- *  n    : dimension (n = 3 for F, n = 6 for FT and FTS)
- *         S component is not included (because it is not random variable.)
- *  x[n] : U (and O)
- *  user_data : (struct BD_params) *BD
+ *  BD   : struct BD_params
  * OUTPUT
- *  y[n] : F (and T)
+ *  lub  : UF part of L in Global scaling not Particle-wise.
  */
 void
 BD_matrix_lub_FU (struct BD_params *BD, double *lub)
@@ -989,6 +1354,8 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
   int np9 = np3 * np3;
   int np36 = np6 * np6;
 
+  double *lub_P = NULL;
+
   int n;
   int i, j;
   int ii, jj;
@@ -996,11 +1363,14 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
     {
       // F version
       n = nm3;
+      lub_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (lub_P, "BD_matrix_lub_FU");
 
       // resistance problem in F version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_lub_3f (BD->sys, lub);
+	  //make_matrix_lub_3f (BD->sys, lub);
+	  make_matrix_lub_3f (BD->sys, lub_P);
 	}
       else
 	{
@@ -1019,7 +1389,9 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
 		    {
 		      for (jj = 0; jj < 3; jj ++)
 			{
-			  lub [(i*3+ii)*n+(j*3+jj)]
+			  //lub [(i*3+ii)*n+(j*3+jj)]
+			  //  = m[(i*3+ii)*np3+(j*3+jj)];
+			  lub_P [(i*3+ii)*n+(j*3+jj)]
 			    = m[(i*3+ii)*np3+(j*3+jj)];
 			}
 		    }
@@ -1032,11 +1404,14 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
     {
       // FT version
       n = 2 * nm3;
+      lub_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (lub_P, "BD_matrix_lub_FU");
 
       // resistance problem in FT version
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_lub_3ft (BD->sys, lub);
+	  //make_matrix_lub_3ft (BD->sys, lub);
+	  make_matrix_lub_3ft (BD->sys, lub_P);
 	}
       else
 	{
@@ -1054,7 +1429,9 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
 		    {
 		      for (jj = 0; jj < 6; jj ++)
 			{
-			  lub [(i*6+ii)*n+(j*6+jj)]
+			  //lub [(i*6+ii)*n+(j*6+jj)]
+			  //  = m[(i*6+ii)*np6+(j*6+jj)];
+			  lub_P [(i*6+ii)*n+(j*6+jj)]
 			    = m[(i*6+ii)*np6+(j*6+jj)];
 			}
 		    }
@@ -1067,6 +1444,8 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
     {
       // FTS version
       n = 2 * nm3;
+      lub_P = (double *)malloc (sizeof (double) * n * n);
+      CHECK_MALLOC (lub_P, "BD_matrix_lub_FU");
 
       // make struct stokes in FT version
       struct stokes *sys_ft = stokes_copy(BD->sys);
@@ -1076,7 +1455,8 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
       // resistance problem in FTS version with E = 0
       if (BD->sys->np == BD->sys->nm)
 	{
-	  make_matrix_lub_3ft (sys_ft, lub);
+	  //make_matrix_lub_3ft (sys_ft, lub);
+	  make_matrix_lub_3ft (sys_ft, lub_P);
 	}
       else
 	{
@@ -1094,7 +1474,9 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
 		    {
 		      for (jj = 0; jj < 6; jj ++)
 			{
-			  lub [(i*6+ii)*n+(j*6+jj)]
+			  //lub [(i*6+ii)*n+(j*6+jj)]
+			  //  = m[(i*6+ii)*np6+(j*6+jj)];
+			  lub_P [(i*6+ii)*n+(j*6+jj)]
 			    = m[(i*6+ii)*np6+(j*6+jj)];
 			}
 		    }
@@ -1109,6 +1491,10 @@ BD_matrix_lub_FU (struct BD_params *BD, double *lub)
       fprintf (stderr, "invalid version %d\n", BD->sys->version);
       exit (1);
     }
+
+  // convert from Particle-wise scaling to Global scaling
+  BD_scale_P_to_G_res (BD, lub_P, lub);
+  free (lub_P);
 }
 
 static void
@@ -1276,9 +1662,46 @@ BD_calc_FB (struct BD_params *BD,
 
   if (BD->flag_noHI == 1)
     {
-      for (i = 0; i < n; i ++)
+      for (i = 0; i < BD->sys->nm; i ++)
 	{
-	  z[i] = KIrand_Gaussian (BD->rng);
+	  double as;
+	  if (BD->sys->a == NULL) as = 1.0;
+	  else                    as = sqrt (BD->sys->a[i]);
+
+	  if (BD->sys->version == 0)
+	    {
+	      int ix = i * 3;
+	      int iy = ix + 1;
+	      int iz = ix + 2;
+
+	      z[ix] = KIrand_Gaussian (BD->rng) / as;
+	      z[iy] = KIrand_Gaussian (BD->rng) / as;
+	      z[iz] = KIrand_Gaussian (BD->rng) / as;
+	    }
+	  else
+	    {
+	      double as3 = as * as * as;
+	      // sqrt(3/4) = 0.8660254037844386
+	      as3 /= 0.8660254037844386;
+	      /* now as3 = sqrt (a^3 / (3/4))
+	       * => 1/as3 = sqrt ((3/4) / a^3)
+	       */
+
+	      int ifx = i * 6;
+	      int ify = ifx + 1;
+	      int ifz = ifx + 2;
+	      int itx = ifx + 3;
+	      int ity = ifx + 4;
+	      int itz = ifx + 5;
+
+	      z[ifx] = KIrand_Gaussian (BD->rng) / as;
+	      z[ify] = KIrand_Gaussian (BD->rng) / as;
+	      z[ifz] = KIrand_Gaussian (BD->rng) / as;
+
+	      z[itx] = KIrand_Gaussian (BD->rng) / as3;
+	      z[ity] = KIrand_Gaussian (BD->rng) / as3;
+	      z[itz] = KIrand_Gaussian (BD->rng) / as3;
+	    }
 	}
       // done
       return;
