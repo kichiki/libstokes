@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.21 2008/05/03 02:26:15 kichiki Exp $
+ * $Id: brownian.c,v 1.22 2008/05/03 15:44:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1034,11 +1034,31 @@ BD_scale_P_to_G_res (struct BD_params *BD,
   if (BD->sys->version == 0)
     {
       // F version
-      int i;
-      int nn = (nm * 3) * (nm * 3);
-      for (i = 0; i < nn; i ++)
+      int n = nm * 3;
+      int i, j;
+      for (i = 0; i < nm; i ++)
 	{
-	  r_G[i] = r_P[i];
+	  double a;
+	  if (BD->sys->a == NULL) a = 1.0;
+	  else                    a = BD->sys->a[i];
+
+	  int ifx = i * 3;
+	  int ify = ifx + 1;
+	  int ifz = ifx + 2;
+
+	  for (j = 0; j < n; j ++)
+	    {
+	      // A part
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
+	    }
 	}
     }
   else
@@ -1052,6 +1072,7 @@ BD_scale_P_to_G_res (struct BD_params *BD,
 	  if (BD->sys->a == NULL) a = 1.0;
 	  else                    a = BD->sys->a[i];
 	  double a2 = a * a;
+	  double a3 = a * a2;
 
 	  int ifx = i * 6;
 	  int ify = ifx + 1;
@@ -1060,66 +1081,51 @@ BD_scale_P_to_G_res (struct BD_params *BD,
 	  int ity = ifx + 4;
 	  int itz = ifx + 5;
 
-	  for (j = 0; j < nm; j ++)
+	  for (j = 0; j < n; j ++)
 	    {
-	      int jfx = j * 6;
-	      int jfy = jfx + 1;
-	      int jfz = jfx + 2;
-	      int jtx = jfx + 3;
-	      int jty = jfx + 4;
-	      int jtz = jfx + 5;
-
 	      // A part
-	      r_G[ifx * n + jfx] = r_P[ifx * n + jfx];
-	      r_G[ifx * n + jfy] = r_P[ifx * n + jfy];
-	      r_G[ifx * n + jfz] = r_P[ifx * n + jfz];
-
-	      r_G[ify * n + jfx] = r_P[ify * n + jfx];
-	      r_G[ify * n + jfy] = r_P[ify * n + jfy];
-	      r_G[ify * n + jfz] = r_P[ify * n + jfz];
-
-	      r_G[ifz * n + jfx] = r_P[ifz * n + jfx];
-	      r_G[ifz * n + jfy] = r_P[ifz * n + jfy];
-	      r_G[ifz * n + jfz] = r_P[ifz * n + jfz];
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a;
 
 	      // tilde(B) part
-	      r_G[ifx * n + jtx] = r_P[ifx * n + jtx] / a;
-	      r_G[ifx * n + jty] = r_P[ifx * n + jty] / a;
-	      r_G[ifx * n + jtz] = r_P[ifx * n + jtz] / a;
-
-	      r_G[ify * n + jtx] = r_P[ify * n + jtx] / a;
-	      r_G[ify * n + jty] = r_P[ify * n + jty] / a;
-	      r_G[ify * n + jtz] = r_P[ify * n + jtz] / a;
-
-	      r_G[ifz * n + jtx] = r_P[ifz * n + jtx] / a;
-	      r_G[ifz * n + jty] = r_P[ifz * n + jty] / a;
-	      r_G[ifz * n + jtz] = r_P[ifz * n + jtz] / a;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a2;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a2;
+	      r_G[ifx * n + j] = r_P[ifx * n + j] * a2;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a2;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a2;
+	      r_G[ify * n + j] = r_P[ify * n + j] * a2;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a2;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a2;
+	      r_G[ifz * n + j] = r_P[ifz * n + j] * a2;
 
 	      // B part
-	      r_G[itx * n + jfx] = r_P[itx * n + jfx] / a;
-	      r_G[itx * n + jfy] = r_P[itx * n + jfy] / a;
-	      r_G[itx * n + jfz] = r_P[itx * n + jfz] / a;
-
-	      r_G[ity * n + jfx] = r_P[ity * n + jfx] / a;
-	      r_G[ity * n + jfy] = r_P[ity * n + jfy] / a;
-	      r_G[ity * n + jfz] = r_P[ity * n + jfz] / a;
-
-	      r_G[itz * n + jfx] = r_P[itz * n + jfx] / a;
-	      r_G[itz * n + jfy] = r_P[itz * n + jfy] / a;
-	      r_G[itz * n + jfz] = r_P[itz * n + jfz] / a;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a2;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a2;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a2;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a2;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a2;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a2;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a2;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a2;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a2;
 
 	      // C part
-	      r_G[itx * n + jtx] = r_P[itx * n + jtx] / a2;
-	      r_G[itx * n + jty] = r_P[itx * n + jty] / a2;
-	      r_G[itx * n + jtz] = r_P[itx * n + jtz] / a2;
-
-	      r_G[ity * n + jtx] = r_P[ity * n + jtx] / a2;
-	      r_G[ity * n + jty] = r_P[ity * n + jty] / a2;
-	      r_G[ity * n + jtz] = r_P[ity * n + jtz] / a2;
-
-	      r_G[itz * n + jtx] = r_P[itz * n + jtx] / a2;
-	      r_G[itz * n + jty] = r_P[itz * n + jty] / a2;
-	      r_G[itz * n + jtz] = r_P[itz * n + jtz] / a2;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a3;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a3;
+	      r_G[itx * n + j] = r_P[itx * n + j] * a3;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a3;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a3;
+	      r_G[ity * n + j] = r_P[ity * n + j] * a3;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a3;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a3;
+	      r_G[itz * n + j] = r_P[itz * n + j] * a3;
 	    }
 	}
     }
