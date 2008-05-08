@@ -1,6 +1,6 @@
 /* guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.2 2008/04/26 05:10:52 kichiki Exp $
+ * $Id: ev-dh-guile.c,v 1.3 2008/05/08 02:41:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -82,7 +82,12 @@ EV_DH_guile_get (const char *var,
   unsigned long len
     = scm_num2ulong (scm_length (scm_ev_dh),
 		     0, "EV_DH_guile_get");
-  if (len != 5)
+  if (len == 0)
+    {
+      // null is given
+      return (NULL);
+    }
+  else if (len != 5)
     {
       fprintf (stderr, "EV_DH_guile_get:"
 	       " length of %s is not 5\n", var);
