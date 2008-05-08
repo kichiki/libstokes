@@ -1,6 +1,6 @@
 /* Solvers for no-hydrodynamic interaction problems
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: noHI.c,v 1.1 2008/04/29 03:21:03 kichiki Exp $
+ * $Id: noHI.c,v 1.2 2008/05/08 02:42:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@
  *  ff [nf * 3] :
  */
 void
-solve_mix_3f_noHI (struct stokes * sys,
+solve_mix_3f_noHI (struct stokes *sys,
 		   const double *f,
 		   const double *uf,
 		   double *u,
@@ -99,7 +99,7 @@ solve_mix_3f_noHI (struct stokes * sys,
  *  tf [nf * 3] :
  */
 void
-solve_mix_3ft_noHI (struct stokes * sys,
+solve_mix_3ft_noHI (struct stokes *sys,
 		    const double *f, const double *t,
 		    const double *uf, const double *of,
 		    double *u, double *o,
@@ -169,7 +169,7 @@ solve_mix_3ft_noHI (struct stokes * sys,
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts_noHI (struct stokes * sys,
+solve_mix_3fts_noHI (struct stokes *sys,
 		     const double *f, const double *t, const double *e,
 		     const double *uf, const double *of, const double *ef,
 		     double *u, double *o, double *s,
