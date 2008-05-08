@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.11 2008/05/02 03:43:28 kichiki Exp $
+ * $Id: ode.c,v 1.12 2008/05/08 02:44:24 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -230,15 +230,13 @@ scaling_G_to_P_tm (struct stokes *sys,
   int i;
   for (i = 0; i < sys->nm; i ++)
     {
-      double a = sys->a[i];
-
       int ix = i*3;
       int iy = ix + 1;
       int iz = ix + 2;
 
-      tm_P[ix] = tm_G[ix] / a;
-      tm_P[iy] = tm_G[iy] / a;
-      tm_P[iz] = tm_G[iz] / a;
+      tm_P[ix] = tm_G[ix];
+      tm_P[iy] = tm_G[iy];
+      tm_P[iz] = tm_G[iz];
     }
 }
 static void
@@ -255,7 +253,8 @@ scaling_G_to_P_em (struct stokes *sys,
   int i;
   for (i = 0; i < sys->nm; i ++)
     {
-      double a2 = sys->a[i] * sys->a[i];
+      double a = sys->a[i];
+      double a3 = a * a * a;
 
       int i1 = i*5;
       int i2 = i1 + 1;
@@ -263,11 +262,11 @@ scaling_G_to_P_em (struct stokes *sys,
       int i4 = i1 + 3;
       int i5 = i1 + 4;
 
-      em_P[i1] = em_G[i1] * a2;
-      em_P[i2] = em_G[i2] * a2;
-      em_P[i3] = em_G[i3] * a2;
-      em_P[i4] = em_G[i4] * a2;
-      em_P[i5] = em_G[i5] * a2;
+      em_P[i1] = em_G[i1] * a3;
+      em_P[i2] = em_G[i2] * a3;
+      em_P[i3] = em_G[i3] * a3;
+      em_P[i4] = em_G[i4] * a3;
+      em_P[i5] = em_G[i5] * a3;
     }
 }
 static void
@@ -303,15 +302,16 @@ scaling_G_to_P_of (struct stokes *sys,
   int i;
   for (i = sys->nm; i < sys->np; i ++)
     {
-      double a2 = sys->a[i] * sys->a[i];
+      double a = sys->a[i];
+      double a3 = a * a * a;
 
       int ix = i*3;
       int iy = ix + 1;
       int iz = ix + 2;
 
-      of_P[ix] = of_G[ix] * a2;
-      of_P[iy] = of_G[iy] * a2;
-      of_P[iz] = of_G[iz] * a2;
+      of_P[ix] = of_G[ix] * a3;
+      of_P[iy] = of_G[iy] * a3;
+      of_P[iz] = of_G[iz] * a3;
     }
 }
 static void
@@ -328,7 +328,8 @@ scaling_G_to_P_ef (struct stokes *sys,
   int i;
   for (i = sys->nm; i < sys->np; i ++)
     {
-      double a2 = sys->a[i] * sys->a[i];
+      double a = sys->a[i];
+      double a3 = a * a * a;
 
       int i1 = i*5;
       int i2 = i1 + 1;
@@ -336,11 +337,11 @@ scaling_G_to_P_ef (struct stokes *sys,
       int i4 = i1 + 3;
       int i5 = i1 + 4;
 
-      ef_P[i1] = ef_G[i1] * a2;
-      ef_P[i2] = ef_G[i2] * a2;
-      ef_P[i3] = ef_G[i3] * a2;
-      ef_P[i4] = ef_G[i4] * a2;
-      ef_P[i5] = ef_G[i5] * a2;
+      ef_P[i1] = ef_G[i1] * a3;
+      ef_P[i2] = ef_G[i2] * a3;
+      ef_P[i3] = ef_G[i3] * a3;
+      ef_P[i4] = ef_G[i4] * a3;
+      ef_P[i5] = ef_G[i5] * a3;
     }
 }
 
@@ -403,15 +404,16 @@ scaling_P_to_G_om (struct stokes *sys,
   int i;
   for (i = 0; i < sys->nm; i ++)
     {
-      double a2 = sys->a[i] * sys->a[i];
+      double a = sys->a[i];
+      double a3 = a * a * a;
 
       int ix = i*3;
       int iy = ix + 1;
       int iz = ix + 2;
 
-      om_G[ix] = om_P[ix] / a2;
-      om_G[iy] = om_P[iy] / a2;
-      om_G[iz] = om_P[iz] / a2;
+      om_G[ix] = om_P[ix] / a3;
+      om_G[iy] = om_P[iy] / a3;
+      om_G[iz] = om_P[iz] / a3;
     }
 }
 static void
@@ -428,19 +430,17 @@ scaling_P_to_G_sm (struct stokes *sys,
   int i;
   for (i = 0; i < sys->nm; i ++)
     {
-      double a = sys->a[i];
-
       int i1 = i*5;
       int i2 = i1 + 1;
       int i3 = i1 + 2;
       int i4 = i1 + 3;
       int i5 = i1 + 4;
 
-      sm_G[i1] = sm_P[i1] * a;
-      sm_G[i2] = sm_P[i2] * a;
-      sm_G[i3] = sm_P[i3] * a;
-      sm_G[i4] = sm_P[i4] * a;
-      sm_G[i5] = sm_P[i5] * a;
+      sm_G[i1] = sm_P[i1];
+      sm_G[i2] = sm_P[i2];
+      sm_G[i3] = sm_P[i3];
+      sm_G[i4] = sm_P[i4];
+      sm_G[i5] = sm_P[i5];
     }
 }
 static void
@@ -474,15 +474,13 @@ scaling_P_to_G_tf (struct stokes *sys,
   int i;
   for (i = sys->nm; i < sys->np; i ++)
     {
-      double a = sys->a[i];
-
       int ix = i*3;
       int iy = ix + 1;
       int iz = ix + 2;
 
-      tf_G[ix] = tf_P[ix] * a;
-      tf_G[iy] = tf_P[iy] * a;
-      tf_G[iz] = tf_P[iz] * a;
+      tf_G[ix] = tf_P[ix];
+      tf_G[iy] = tf_P[iy];
+      tf_G[iz] = tf_P[iz];
     }
 }
 static void
@@ -499,19 +497,17 @@ scaling_P_to_G_sf (struct stokes *sys,
   int i;
   for (i = sys->nm; i < sys->np; i ++)
     {
-      double a = sys->a[i];
-
       int i1 = i*5;
       int i2 = i1 + 1;
       int i3 = i1 + 2;
       int i4 = i1 + 3;
       int i5 = i1 + 4;
 
-      sf_G[i1] = sf_P[i1] * a;
-      sf_G[i2] = sf_P[i2] * a;
-      sf_G[i3] = sf_P[i3] * a;
-      sf_G[i4] = sf_P[i4] * a;
-      sf_G[i5] = sf_P[i5] * a;
+      sf_G[i1] = sf_P[i1];
+      sf_G[i2] = sf_P[i2];
+      sf_G[i3] = sf_P[i3];
+      sf_G[i4] = sf_P[i4];
+      sf_G[i5] = sf_P[i5];
     }
 }
 /* convert Global (G) scaling to Particle-wise (P) scaling
