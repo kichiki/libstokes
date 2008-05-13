@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.11 2008/04/17 04:16:42 kichiki Exp $
+ * $Id: bonds.c,v 1.12 2008/05/13 01:09:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -161,18 +161,18 @@ bonds_add_type (struct bonds *bonds,
  *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
  *            in this case, potential is given by
  *            (k/2) * (kT / r0^2) * (r-r0)^2
- *  a     : length scale in the simulation
- *  pe    : peclet number
+ *  length : length scale in the simulation
+ *  peclet : peclet number
  * OUTPUT
- *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
- *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
- *    for dWLC spring, the conversions are given by 
- *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
- *  bonds->p2[] := Ls / a = r0 / a
+ *  bonds->p1[] := A^{sp} = 3 length / (peclet b_{K})
+ *  bonds->p2[] := Ls / length = N_{K,s} b_{K} / length
+ *    or, for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/length)^2)
+ *  bonds->p2[] := Ls / length = r0 / length
  */
 void
 bonds_set_FENE (struct bonds *bonds,
-		double a, double pe)
+		double length, double peclet)
 {
   int i;
   for (i = 0; i < bonds->n; i ++)
@@ -186,8 +186,8 @@ bonds_set_FENE (struct bonds *bonds,
 	      double r0 = bonds->p2[i];
 
 	      // first scale r0
-	      r0 /= a;
-	      bonds->p1[i] = k / (pe * r0 * r0);
+	      r0 /= length;
+	      bonds->p1[i] = k / (peclet * r0 * r0);
 	      bonds->p2[i] = r0;
 	    }
 	  else
@@ -195,8 +195,8 @@ bonds_set_FENE (struct bonds *bonds,
 	      // bond i is FENE spring
 	      double N_Ks = bonds->p1[i];
 	      double b_K  = bonds->p2[i];
-	      bonds->p1[i] = 3.0 * a / (pe * b_K);
-	      bonds->p2[i] = N_Ks * b_K / a;
+	      bonds->p1[i] = 3.0 * length / (peclet * b_K);
+	      bonds->p2[i] = N_Ks * b_K / length;
 	    }
 	  // now, (p1, p2) = (A^{sp}, L_{s}).
 	  bonds->fene[i] = 0;

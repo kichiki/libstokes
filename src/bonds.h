@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.8 2008/04/17 04:17:06 kichiki Exp $
+ * $Id: bonds.h,v 1.9 2008/05/13 01:09:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,18 +115,18 @@ bonds_add_type (struct bonds *bonds,
  *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
  *            in this case, potential is given by
  *            (k/2) * (kT / r0^2) * (r-r0)^2
- *  a     : length scale in the simulation
- *  pe    : peclet number
+ *  length : length scale in the simulation
+ *  peclet : peclet number
  * OUTPUT
- *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
- *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
- *    for dWLC spring, the conversions are given by 
- *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
- *  bonds->p2[] := Ls / a = r0 / a
+ *  bonds->p1[] := A^{sp} = 3 length / (peclet b_{K})
+ *  bonds->p2[] := Ls / length = N_{K,s} b_{K} / length
+ *    or, for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/length)^2)
+ *  bonds->p2[] := Ls / length = r0 / length
  */
 void
 bonds_set_FENE (struct bonds *bonds,
-		double a, double pe);
+		double length, double peclet);
 
 /*
  * INPUT
