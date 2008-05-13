@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.23 2008/04/29 03:23:03 kichiki Exp $
+# $Id: Makefile.am,v 1.24 2008/05/13 01:12:51 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -73,6 +73,7 @@ libstokes_la_SOURCES = \
 	dpotrf_c.c		\
 	KIrand.c		\
 	excluded-volume.c	\
+	excluded-volume-guile.c	\
 	ev-dh.c			\
 	ev-dh-guile.c		\
 	brownian.c		\
