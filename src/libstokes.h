@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.60 2008/05/02 03:48:24 kichiki Exp $
+ * $Id: libstokes.h,v 1.61 2008/05/13 01:13:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1060,18 +1060,18 @@ bonds_add_type (struct bonds *bonds,
  *          p1 (k) and p2 (r0) are used for dWLC spring (type == 6).
  *            in this case, potential is given by
  *            (k/2) * (kT / r0^2) * (r-r0)^2
- *  a     : length scale in the simulation
- *  pe    : peclet number
+ *  length : length scale in the simulation
+ *  peclet : peclet number
  * OUTPUT
- *  bonds->p1[] := A^{sp} = 3a / pe b_{K}
- *  bonds->p2[] := Ls / a = N_{K,s} b_{K} / a 
- *    for dWLC spring, the conversions are given by 
- *  bonds->p1[] := A^{sp} = k / (pe * (r0/a)^2)
- *  bonds->p2[] := Ls / a = r0 / a
+ *  bonds->p1[] := A^{sp} = 3 length / (peclet b_{K})
+ *  bonds->p2[] := Ls / length = N_{K,s} b_{K} / length
+ *    or, for dWLC spring, the conversions are given by 
+ *  bonds->p1[] := A^{sp} = k / (pe * (r0/length)^2)
+ *  bonds->p2[] := Ls / length = r0 / length
  */
 void
 bonds_set_FENE (struct bonds *bonds,
-		double a, double pe);
+		double length, double peclet);
 
 /*
  * INPUT
@@ -1207,11 +1207,15 @@ struct EV {
 
   /* table for chain type */
   int n;     // number of chain types
-  double *l; // characteristic distance = (1/3) N_{K,s} b_{K}^2
-  double *A; /* prefactor = (9/2) A^{sp} z', where
-	      *   A^{sp} = 3 a / Pe b_{K},
-	      *   z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
-	      *      = (3 / 2 pi b_{K}^2)^{3/2} v
+  double *l; /* := sqrt((2/3) hat(ls)^2) */
+  double *A; /* := (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
+	      * where
+	      *   ls^2     = N_Ks * b_K^2 / 3 (dimensional, so as b_K)
+	      *   hat(ls)  = ls / length      (dimensionless)
+	      *   hat(v)   = v / length^3     (dimensionless)
+	      * with which the force F^EV is given by 
+	      *   F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
+	      * (note: r_{ij} is also dimensionless scaled by length)
 	      */
 
   /* table for particles */
@@ -1223,22 +1227,27 @@ struct EV {
 /* initialize struct EV
  * INPUT
  *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
- *  a, pe  : parameters for bonds parameters
+ *  length : unit of length given by "length" in SCM (dimensional number)
+ *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
  *  np     : number of particles
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
- *      ev->l[i] characteristic distance = (1/3) N_{K,s} b_{K}^2,
- *      ev->A[i] prefactor = (9/2) A^{sp} z',
- *    and
- *      A^{sp} = 3 a / Pe b_{K},
- *      z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
- *         = (3 / 2 pi b_{K}^2)^{3/2} v.
+ *      ev->l[i] = sqrt((2/3) hat(ls)^2)
+ *      ev->A[i] = (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
+ *    where
+ *      ls^2     = N_Ks * b_K^2 / 3 (dimensional, so as b_K)
+ *      hat(ls)  = ls / length      (dimensionless)
+ *      hat(v)   = v / length^3     (dimensionless)
+ *    with which the force F^EV is given by 
+ *      F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
+ *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds, double a, double pe,
+EV_init (const struct bonds *bonds,
+	 double length, double peclet,
 	 double r2, const double *v,
 	 int np);
 
@@ -1277,6 +1286,34 @@ EV_calc_force (struct EV *ev,
 	       struct stokes *sys,
 	       double *f,
 	       int flag_add);
+
+
+/* from excluded-volume-guile.h */
+/* get ev-v from SCM and set struct EV
+ * in SCM, ev-v is a list of parameter v [nm^3] or [micro m^3]
+ * (depending on the dimension of the parameter "length")
+ * for each spring:
+ *  (define ev-v '(
+ *   0.0012 ; for the spring 1
+ *   0.002  ; for the spring 2
+ *  ))
+ * INPUT
+ *  var : name of the variable.
+ *        in the above example, set "ev-v".
+ *  bonds : struct bonds
+ *  length : unit length given by "length" in SCM (dimensional value)
+ *  peclet : peclet number
+ *  ev_r2  : square of max distance for EV interaction
+ *  np     : number of particles (beads)
+ * OUTPUT
+ *  returned value : struct EV
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct EV *
+guile_get_ev_v (const char *var,
+		const struct bonds *bonds,
+		double length, double peclet,
+		double ev_r2, int np);
 
 
 /************************************
