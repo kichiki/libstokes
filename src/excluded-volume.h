@@ -1,7 +1,7 @@
 /* header file for excluded-volume.c --
  * excluded-volume interactions
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.h,v 1.2 2007/10/27 03:20:15 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: excluded-volume.h,v 1.3 2008/05/13 01:10:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,11 +26,15 @@ struct EV {
 
   /* table for chain type */
   int n;     // number of chain types
-  double *l; // characteristic distance = (1/3) N_{K,s} b_{K}^2
-  double *A; /* prefactor = (9/2) A^{sp} z', where
-	      *   A^{sp} = 3 a / Pe b_{K},
-	      *   z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
-	      *      = (3 / 2 pi b_{K}^2)^{3/2} v
+  double *l; /* := sqrt((2/3) hat(ls)^2) */
+  double *A; /* := (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
+	      * where
+	      *   ls^2     = N_Ks * b_K^2 / 3 (dimensional, so as b_K)
+	      *   hat(ls)  = ls / length      (dimensionless)
+	      *   hat(v)   = v / length^3     (dimensionless)
+	      * with which the force F^EV is given by 
+	      *   F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
+	      * (note: r_{ij} is also dimensionless scaled by length)
 	      */
 
   /* table for particles */
@@ -45,22 +49,27 @@ struct EV {
 /* initialize struct EV
  * INPUT
  *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
- *  a, pe  : parameters for bonds parameters
+ *  length : unit of length given by "length" in SCM (dimensional number)
+ *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
  *  np     : number of particles
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
- *      ev->l[i] characteristic distance = (1/3) N_{K,s} b_{K}^2,
- *      ev->A[i] prefactor = (9/2) A^{sp} z',
- *    and
- *      A^{sp} = 3 a / Pe b_{K},
- *      z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
- *         = (3 / 2 pi b_{K}^2)^{3/2} v.
+ *      ev->l[i] = sqrt((2/3) hat(ls)^2)
+ *      ev->A[i] = (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
+ *    where
+ *      ls^2     = N_Ks * b_K^2 / 3 (dimensional, so as b_K)
+ *      hat(ls)  = ls / length      (dimensionless)
+ *      hat(v)   = v / length^3     (dimensionless)
+ *    with which the force F^EV is given by 
+ *      F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
+ *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds, double a, double pe,
+EV_init (const struct bonds *bonds,
+	 double length, double peclet,
 	 double r2, const double *v,
 	 int np);
 

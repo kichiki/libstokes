@@ -1,6 +1,6 @@
 /* excluded-volume interactions
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.c,v 1.4 2008/04/26 17:46:19 kichiki Exp $
+ * $Id: excluded-volume.c,v 1.5 2008/05/13 01:10:18 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,22 +28,27 @@
 /* initialize struct EV
  * INPUT
  *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
- *  a, pe  : parameters for bonds parameters
+ *  length : unit of length given by "length" in SCM (dimensional number)
+ *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
  *  np     : number of particles
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
- *      ev->l[i] characteristic distance = sqrt{(1/3) N_{K,s} b_{K}^2},
- *      ev->A[i] prefactor = (9/2) A^{sp} z',
- *    and
- *      A^{sp} = 3 a / Pe b_{K},
- *      z' = (N_{K,s}/2 pi)^{3/2} (v/l_s^3)
- *         = (3 / 2 pi b_{K}^2)^{3/2} v.
+ *      ev->l[i] = sqrt((2/3) hat(ls)^2)
+ *      ev->A[i] = (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
+ *    where
+ *      ls^2     = N_Ks * b_K^2 / 3 (dimensional, so as b_K)
+ *      hat(ls)  = ls / length      (dimensionless)
+ *      hat(v)   = v / length^3     (dimensionless)
+ *    with which the force F^EV is given by 
+ *      F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
+ *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds, double a, double pe,
+EV_init (const struct bonds *bonds,
+	 double length, double peclet,
 	 double r2, const double *v,
 	 int np)
 {
@@ -55,44 +60,61 @@ EV_init (const struct bonds *bonds, double a, double pe,
   ev->l = (double *)malloc (sizeof (double) * ev->n);
   ev->A = (double *)malloc (sizeof (double) * ev->n);
   ev->ch = (int *)malloc (sizeof (int) * np);
-  CHECK_MALLOC (ev->l, "EV_init");
-  CHECK_MALLOC (ev->A, "EV_init");
+  CHECK_MALLOC (ev->l,  "EV_init");
+  CHECK_MALLOC (ev->A,  "EV_init");
   CHECK_MALLOC (ev->ch, "EV_init");
 
   /* make the table for each chain */
-  double N_Ks, b_K;
-  double Asp, Ls;
-  double zz;
-  double l, A;
-  double c = pow (1.5 / M_PI, 1.5); // (3 / 2 pi)^{3/2}
+  double length3 = length * length * length;
+  double pi_m32 = pow (M_PI, -1.5); // (1 / pi)^{3/2}
+
   int i;
   for (i = 0; i < ev->n; i ++)
     {
-      if (bonds->fene[i] == 0)
+      if (v[i] == 0.0)
 	{
-	  // given parameters
-	  N_Ks = bonds->p1[i];
-	  b_K  = bonds->p2[i];
-
-	  l = sqrt (N_Ks * b_K * b_K / 3.0);
-	  Asp = 3.0 * a / (pe * b_K);
-	  zz = c * v[i] / (b_K * b_K * b_K);
-	  A = 4.5 * Asp * zz;
+	  // no excluded-volume interaction for the spring "i"
+	  ev->l[i] = 0.0;
+	  ev->A[i] = 0.0;
+	}
+      else if (bonds->type[i] == 6)
+	{
+	  // EV cannot be defined for dWLC chain
+	  fprintf (stderr, "EV_init:"
+		   " EV for spring %d of dWLC chain couldn't define.\n",
+		   i);
+	  ev->l[i] = 0.0;
+	  ev->A[i] = 0.0;
 	}
       else
 	{
-	  // given parameters
-	  Asp = bonds->p1[i];
-	  Ls  = bonds->p2[i];
+	  double N_Ks, b_K;
+	  if (bonds->fene[i] == 1)
+	    {
+	      // given parameters
+	      N_Ks = bonds->p1[i];
+	      b_K  = bonds->p2[i];
 
-	  b_K = Asp * pe / (3.0 * a);
-	  N_Ks = Ls * a / b_K;
-	  l = sqrt (N_Ks * b_K * b_K / 3.0);
-	  zz = c * v[i] / (b_K * b_K * b_K);
-	  A = 4.5 * Asp * zz;
+	      b_K /= length; // dimensionless
+	    }
+	  else
+	    {
+	      // given parameters
+	      double Asp = bonds->p1[i];
+	      double Ls  = bonds->p2[i];
+
+	      b_K = 3.0 / (peclet * Asp); // dimensionless
+	      N_Ks = Ls / b_K;
+	    }
+
+	  double ls = sqrt (N_Ks * b_K * b_K / 3.0); // dimensionless
+	  ev->l[i] = ls / sqrt (1.5);
+	  ev->A[i] = pi_m32 / peclet
+	    * (v[i] / length3)
+	    * N_Ks * N_Ks
+	    * pow (ev->l[i], -5.0);
+	  // with these, F^EV(r) = A * r * exp (- r^2 / l^2)
 	}
-      ev->l[i] = l;
-      ev->A[i] = A;
     }
   
   /* make the particle table */
@@ -123,8 +145,8 @@ void
 EV_free (struct EV *ev)
 {
   if (ev == NULL) return;
-  if (ev->l != NULL) free (ev->l);
-  if (ev->A != NULL) free (ev->A);
+  if (ev->l  != NULL) free (ev->l);
+  if (ev->A  != NULL) free (ev->A);
   if (ev->ch != NULL) free (ev->ch);
   free (ev);
 }
@@ -167,16 +189,15 @@ EV_set_force_ij (struct stokes *sys,
 		 int i, int j, double r2, double x, double y, double z,
 		 double *f)
 {
-  double r = sqrt (r2);
-  double ex = x / r;
-  double ey = y / r;
-  double ez = z / r;
-
   // define fr
-  double fr, l, A;
+  double l, A;
   EV_get_coefficients (ev, i, j, &l, &A);
-  r /= l;
-  fr = A * r * exp (-1.5 * r * r);
+  double l2 = l * l; // where 1 / l2 = (3 / 2 ls^2)
+  double fr = A * exp (- r2 / l2);
+  /* NOTE: fr has "r" and the unit vector e has "1/r", so that
+   * here we implement fr' = A * exp (- rl2)
+   * and the vector f' = fr' * (x, y, z).
+   */
 
   /* F_a = fr * (R_a - R_b)/|R_a - R_b|
    * where fr > 0 corresponds to the repulsive
@@ -185,16 +206,16 @@ EV_set_force_ij (struct stokes *sys,
   if (i < sys->nm)
     {
       int i3 = i * 3;
-      f[i3+0] += fr * ex;
-      f[i3+1] += fr * ey;
-      f[i3+2] += fr * ez;
+      f[i3+0] += fr * x;
+      f[i3+1] += fr * y;
+      f[i3+2] += fr * z;
     }
   if (j < sys->nm)
     {
       int j3 = j * 3;
-      f[j3+0] += - fr * ex;
-      f[j3+1] += - fr * ey;
-      f[j3+2] += - fr * ez;
+      f[j3+0] += - fr * x;
+      f[j3+1] += - fr * y;
+      f[j3+2] += - fr * z;
     }
 }
 
