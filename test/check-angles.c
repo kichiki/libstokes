@@ -1,6 +1,6 @@
 /* test code for angles.c and angles-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-angles.c,v 1.2 2008/04/17 04:20:17 kichiki Exp $
+ * $Id: check-angles.c,v 1.3 2008/05/24 06:05:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,13 +30,13 @@
 /* check reading SCM script
  */
 int
-check_guile_get_angles (int verbose, double tiny)
+check_angles_guile_get (int verbose, double tiny)
 {
   if (verbose != 0)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_guile_get_angles : start\n");
+	       "check_angles_guile_get : start\n");
     }
 
   int check = 0;
@@ -47,7 +47,7 @@ check_guile_get_angles (int verbose, double tiny)
   // read a parameter file
   guile_load (filename);
 
-  struct angles *ang = guile_get_angles ("angles");
+  struct angles *ang = angles_guile_get ("angles");
   if (ang == NULL) // FALSE
     {
       fprintf (stdout, " fail to parse angles.\n");

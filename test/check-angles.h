@@ -1,7 +1,7 @@
 /* header file for check-angles.c --
  * test code for angles.c and angles-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-angles.h,v 1.1 2008/04/12 19:16:56 kichiki Exp $
+ * $Id: check-angles.h,v 1.2 2008/05/24 06:05:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@
 /* check reading SCM script
  */
 int
-check_guile_get_angles (int verbose, double tiny);
+check_angles_guile_get (int verbose, double tiny);
 
 /* check angle_calc_force()
  * INPUT
