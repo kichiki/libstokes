@@ -1,7 +1,7 @@
 /* header file for bonds-guile.c --
  * guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.h,v 1.7 2008/04/26 19:57:25 kichiki Exp $
+ * $Id: bonds-guile.h,v 1.8 2008/05/24 05:45:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@
  *                   if NULL is returned, it failed (not defined)
  */
 struct bonds *
-guile_get_bonds (const char * var);
+bonds_guile_get (const char * var);
 
 
 #endif /* !_BONDS_GUILE_H_ */

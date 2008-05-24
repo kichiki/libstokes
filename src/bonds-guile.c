@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.9 2008/04/26 19:57:05 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.10 2008/05/24 05:45:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,8 @@
  */
 #include <stdio.h>
 #include <libguile.h>
+#include "memory-check.h" // macro CHECK_MALLOC
+
 #include "stokes.h" // struct stokes
 #include "stokes-guile.h" // ...
 #include "bonds.h"
@@ -66,11 +68,11 @@
  *                   if NULL is returned, it failed (not defined)
  */
 struct bonds *
-guile_get_bonds (const char * var)
+bonds_guile_get (const char * var)
 {
   if (guile_check_symbol (var) == 0)
     {
-      fprintf (stderr, "guile_get_bonds: %s is not defined\n", var);
+      fprintf (stderr, "bonds_guile_get: %s is not defined\n", var);
       return (NULL);
     }
 
@@ -82,17 +84,22 @@ guile_get_bonds (const char * var)
 
   if (!SCM_NFALSEP (scm_list_p (scm_bonds)))
     {
-      fprintf (stderr, "guile_get_bonds: %s is not a list\n", var);
+      fprintf (stderr, "bonds_guile_get: %s is not a list\n", var);
       return (NULL);
     }
 
-
-  struct bonds *bonds = NULL;
-  bonds = bonds_init ();
-
   unsigned long len;
   len = scm_num2ulong (scm_length (scm_bonds),
-		       0, "guile_get_bonds");
+		       0, "bonds_guile_get");
+  if (len == 0)
+    {
+      // null is given
+      return (NULL);
+    }
+
+  struct bonds *bonds = bonds_init ();
+  CHECK_MALLOC (bonds, "bonds_guile_get");
+
   int i;
   for (i = 0; i < len; i ++)
     {
@@ -102,7 +109,7 @@ guile_get_bonds (const char * var)
       if (!SCM_NFALSEP (scm_list_p (scm_bond)))
 	{
 	  // scm_bond is not a list
-	  fprintf (stderr, "guile_get_bonds:"
+	  fprintf (stderr, "bonds_guile_get:"
 		   " %d-th bond of %s is not a list\n",
 		   i, var);
 	  bonds_free (bonds);
@@ -110,10 +117,10 @@ guile_get_bonds (const char * var)
 	}
       unsigned long bond_len;
       bond_len = scm_num2ulong (scm_length (scm_bond),
-				0, "guile_get_bonds");
+				0, "bonds_guile_get");
       if (bond_len != 4)
 	{
-	  fprintf (stderr, "guile_get_bonds:"
+	  fprintf (stderr, "bonds_guile_get:"
 		   " length of %d-th bond of %s is not 4\n",
 		   i, var);
 	  bonds_free (bonds);
@@ -123,24 +130,24 @@ guile_get_bonds (const char * var)
       // 1st element (0) of the list scm_bond
       int type = scm_num2int (scm_list_ref (scm_bond, scm_int2num (0)),
 			      0,
-			      "guile_get_bonds");
+			      "bonds_guile_get");
 
       // 2nd element (1) of the list scm_bond
       SCM scm_params = scm_list_ref (scm_bond, scm_int2num (1));
       if (!SCM_NFALSEP (scm_list_p (scm_params)))
 	{
 	  // scm_params is not a list
-	  fprintf (stderr, "guile_get_bonds:"
+	  fprintf (stderr, "bonds_guile_get:"
 		   " params of %d-th bond in %s is not a list\n",
 		   i, var);
 	  bonds_free (bonds);
 	  return (NULL); // failed
 	}
       unsigned long params_len
-	= scm_num2ulong (scm_length (scm_params), 0, "guile_get_bonds");
+	= scm_num2ulong (scm_length (scm_params), 0, "bonds_guile_get");
       if (params_len != 3)
 	{
-	  fprintf (stderr, "guile_get_bonds:"
+	  fprintf (stderr, "bonds_guile_get:"
 		   " params has wrong length %ld != 3\n",
 		   params_len);
 	  bonds_free (bonds);
@@ -148,17 +155,17 @@ guile_get_bonds (const char * var)
 	}
       int fene = scm_num2int (scm_list_ref (scm_params, scm_int2num (0)),
 			      0,
-			      "guile_get_bonds");
+			      "bonds_guile_get");
       double p1 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (1)),
-			       "guile_get_bonds");
+			       "bonds_guile_get");
       double p2 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (2)),
-			       "guile_get_bonds");
+			       "bonds_guile_get");
 
       // 4th element (3) of the list scm_bond
       // (3rd element will be taken later)
       int nex = scm_num2int (scm_list_ref (scm_bond, scm_int2num (3)),
 			     0,
-			     "guile_get_bonds");
+			     "bonds_guile_get");
 
       bonds_add_type (bonds, type, fene, p1, p2, nex);
 
@@ -168,7 +175,7 @@ guile_get_bonds (const char * var)
       if (!SCM_NFALSEP (scm_list_p (scm_pairs)))
 	{
 	  // scm_pairs is not a list
-	  fprintf (stderr, "guile_get_bonds:"
+	  fprintf (stderr, "bonds_guile_get:"
 		   " pairs of %d-th bond in %s is not a list\n",
 		   i, var);
 	  bonds_free (bonds);
@@ -177,7 +184,7 @@ guile_get_bonds (const char * var)
 
       unsigned long pairs_len;
       pairs_len = scm_num2ulong (scm_length (scm_pairs),
-				 0, "guile_get_bonds");
+				 0, "bonds_guile_get");
       int j;
       for (j = 0; j < pairs_len; j ++)
 	{
@@ -187,7 +194,7 @@ guile_get_bonds (const char * var)
 	  if (!SCM_NFALSEP (scm_list_p (scm_pair)))
 	    {
 	      // scm_pair is not a list
-	      fprintf (stderr, "guile_get_bonds:"
+	      fprintf (stderr, "bonds_guile_get:"
 		       " %d-th pair of %d-th bond of %s is not a list\n",
 		       j, i, var);
 	      bonds_free (bonds);
@@ -196,10 +203,10 @@ guile_get_bonds (const char * var)
 
 	  unsigned long pair_len;
 	  pair_len = scm_num2ulong (scm_length (scm_pair),
-				    0, "guile_get_bonds");
+				    0, "bonds_guile_get");
 	  if (pair_len != 2)
 	    {
-	      fprintf (stderr, "guile_get_bonds:"
+	      fprintf (stderr, "bonds_guile_get:"
 		       " length of %d-th pair of %d-th bond of %s is not 2\n",
 		       j, i, var);
 	      bonds_free (bonds);
@@ -210,11 +217,11 @@ guile_get_bonds (const char * var)
 	  ia = scm_num2int (scm_list_ref (scm_pair,
 					  scm_int2num (0)),
 			    0,
-			    "guile_get_bonds");
+			    "bonds_guile_get");
 	  ib = scm_num2int (scm_list_ref (scm_pair,
 					  scm_int2num (1)),
 			    0,
-			    "guile_get_bonds");
+			    "bonds_guile_get");
 
 	  bond_pairs_add (bonds->pairs [i], ia, ib);
 	}
