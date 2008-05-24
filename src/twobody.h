@@ -1,7 +1,7 @@
 /* header file for [XYZ][ABCGHM].c and
  * RYUON-twobody : exact 2-body resistance scalar functions
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody.h,v 1.8 2007/08/17 04:21:09 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: twobody.h,v 1.9 2008/05/24 06:01:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -479,7 +479,7 @@ twobody_scale_SD (int version, double *two, double l);
  *             where aa and ab are radii for particles a(alpha) and b(beta)
  *             Note that the scalar functions are for "a-b" interaction.
  * OUTPUT
- *  two [22] : scalar functions in SD form
+ *  two [22] : scalar functions in the dimensional form
  */
 void
 twobody_scale (int version, double *two, double a1, double l);
