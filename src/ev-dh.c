@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.c,v 1.3 2008/04/26 17:45:37 kichiki Exp $
+ * $Id: ev-dh.c,v 1.4 2008/05/24 05:44:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,28 +27,27 @@
 
 /* initialize struct EV
  * INPUT
- *  a  : characteristic length (in the same dimension for rd below, usually nm)
- *  pe : peclet number
- *  rd : Debye length (in the same dimension for a above, usually nm)
- *  T  : temperature in Kelvin.
- *  e  : dielectric constant of the solution
- *  r2 : square of the max distance for F^{EV_DH}
- *       (in the same dimension squared for a above, usually nm^2)
- *  np : number of particles
+ *  length : characteristic length
+ *           (in the same dimension for rd below, usually nm)
+ *  peclet : peclet number
+ *  rd     : Debye length (in the same dimension for a above, usually nm)
+ *  T      : temperature in Kelvin.
+ *  e      : dielectric constant of the solution (dimensionless number)
+ *  eps    : to determine cut-off distance through eps = exp (-r_cutoff / rd) 
+ *  np     : number of particles
  * OUTPUT
  *  returned value : struct EV_DH,
  *      where only the system parameters (a_sys, rd) are defined.
  *      nu[i] is zero cleared.
  */
 struct EV_DH *
-EV_DH_init (double a, double pe, double rd, double T, double e,
-	    double r2,
+EV_DH_init (double length, double peclet,
+	    double rd, double T, double e,
+	    double eps,
 	    int np)
 {
   struct EV_DH *ev_dh = (struct EV_DH *)malloc (sizeof (struct EV_DH));
   CHECK_MALLOC (ev_dh, "EV_DH_init");
-
-  ev_dh->r2 = r2 / (a * a);
 
   // Boltzmann constant
   double kB = 1.3806504e-23; // [N m / K]
@@ -60,10 +59,14 @@ EV_DH_init (double a, double pe, double rd, double T, double e,
   double kT = kB * T; // [N m]
   double e2by4pie0 = ec * ec / (4.0 * M_PI * e * e0); // [N m^2]
 
-  ev_dh->a_sys = e2by4pie0 / (pe * kT * a); // dimensionless
-  ev_dh->rd    = rd / a; // dimensionless
+  ev_dh->a_sys = e2by4pie0 / (peclet * kT * length); // dimensionless
+  ev_dh->rd    = rd / length; // dimensionless
 
-  ev_dh->n     = np;
+  // set dv_dh->r2, the cut-off distance squared
+  double r_cutoff = - ev_dh->rd * log (eps); // dimensionless cut-off length
+  ev_dh->r2 = r_cutoff * r_cutoff;
+
+  ev_dh->n  = np;
   ev_dh->nu = (double *)malloc (sizeof (double) * np);
   CHECK_MALLOC (ev_dh->nu, "EV_DH_init");
 
@@ -150,15 +153,17 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
   double r2;
   for (i = 0; i < sys->nm; i ++)
     {
-      int ia3 = i * 3;
+      if (ev_dh->nu[i] == 0.0) continue;
+      int i3 = i * 3;
       int j;
       // loop for each pair (i <= j)
       for (j = i; j < sys->np; j ++)
 	{
-	  int ib3 = j * 3;
-	  x = sys->pos [ia3+0] - sys->pos [ib3+0];
-	  y = sys->pos [ia3+1] - sys->pos [ib3+1];
-	  z = sys->pos [ia3+2] - sys->pos [ib3+2];
+	  if (ev_dh->nu[j] == 0.0) continue;
+	  int j3 = j * 3;
+	  x = sys->pos [i3+0] - sys->pos [j3+0];
+	  y = sys->pos [i3+1] - sys->pos [j3+1];
+	  z = sys->pos [i3+2] - sys->pos [j3+2];
 
 	  if (i != j)
 	    {
