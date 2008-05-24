@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.21 2008/04/26 17:38:38 kichiki Exp $
+ * $Id: test-all.c,v 1.22 2008/05/24 06:08:26 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,8 +51,14 @@
 
 #include "check-list-ex.h"
 #include "check-angles.h"
-#include "check-ev-dh-guile.h"
 #include "check-ev-dh.h"
+#include "check-ev-dh-guile.h"
+#include "check-ev-LJ.h"
+#include "check-ev-LJ-guile.h"
+
+
+#include "check-confinement.h"
+#include "check-confinement-guile.h"
 
 
 /* main program */
@@ -346,15 +352,28 @@ main (int argc, char** argv)
   check += check_list_ex (1, 0.0);
 
   // check-angles.c
-  check += check_guile_get_angles (1, 0.0);
+  check += check_angles_guile_get (1, 0.0);
   check += check_angles_calc_force (1.0, 180.0, 1, 2.0e-13);
   check += check_angles_calc_force (2.0, 170.0, 1, 2.0e-13);
   check += check_angles_calc_force (3.0, 90.0,  1, 2.0e-13);
 
-  // check-ev-dh-guile.c
-  check += check_EV_DH_guile_get (1, 0.0);
   // check-ev-dh.c
   check += check_EV_DH_calc_force (3.0, 1, 0.0);
+  // check-ev-dh-guile.c
+  check += check_EV_DH_guile_get (1, 0.0);
+
+  // check-ev-LJ.c
+  check += check_EV_LJ_calc_force (3.0, 1, 0.0);
+  // check-ev-LJ-guile.c
+  check += check_EV_LJ_guile_get (1, 0.0);
+
+
+  // check-confinement.c
+  check += check_CF_init (1, 1.0e-15);
+  check += check_CF_sphere_calc_force (10.0, 1, 4.0e-14);
+  check += check_CF_sphere_calc_force (100.0, 1, 2.0e-13);
+  // check-confinement-guile.c
+  check += check_CF_guile_get (1, 0.0);
 
 
   fprintf (stdout,
