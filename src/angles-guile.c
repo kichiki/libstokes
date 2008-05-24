@@ -1,6 +1,6 @@
 /* guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.c,v 1.4 2008/04/17 04:17:34 kichiki Exp $
+ * $Id: angles-guile.c,v 1.5 2008/05/24 05:46:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,11 +59,11 @@
  *                   if NULL is returned, it failed (not defined)
  */
 struct angles *
-guile_get_angles (const char *var)
+angles_guile_get (const char *var)
 {
   if (guile_check_symbol (var) == 0)
     {
-      fprintf (stderr, "guile_get_angles: %s is not defined\n", var);
+      fprintf (stderr, "angles_guile_get: %s is not defined\n", var);
       return (NULL);
     }
 
@@ -75,17 +75,23 @@ guile_get_angles (const char *var)
 
   if (!SCM_NFALSEP (scm_list_p (scm_angles)))
     {
-      fprintf (stderr, "guile_get_angles: %s is not a list\n", var);
+      fprintf (stderr, "angles_guile_get: %s is not a list\n", var);
       return (NULL);
     }
 
 
-  struct angles *angles = angles_init ();
-  CHECK_MALLOC (angles, "guile_get_angles");
-
   unsigned long len
     = scm_num2ulong (scm_length (scm_angles),
-		     0, "guile_get_angles");
+		     0, "angles_guile_get");
+  if (len == 0)
+    {
+      // null is given
+      return (NULL);
+    }
+
+  struct angles *angles = angles_init ();
+  CHECK_MALLOC (angles, "angles_guile_get");
+
   int i;
   for (i = 0; i < len; i ++)
     {
@@ -95,7 +101,7 @@ guile_get_angles (const char *var)
       if (!SCM_NFALSEP (scm_list_p (scm_angle)))
 	{
 	  // scm_angle is not a list
-	  fprintf (stderr, "guile_get_angles:"
+	  fprintf (stderr, "angles_guile_get:"
 		   " %d-th bond of %s is not a list\n",
 		   i, var);
 	  angles_free (angles);
@@ -103,10 +109,10 @@ guile_get_angles (const char *var)
 	}
       unsigned long angle_len
 	= scm_num2ulong (scm_length (scm_angle),
-			 0, "guile_get_angles");
+			 0, "angles_guile_get");
       if (angle_len != 4)
 	{
-	  fprintf (stderr, "guile_get_angles:"
+	  fprintf (stderr, "angles_guile_get:"
 		   " length of %d-th bond of %s is not 4\n",
 		   i, var);
 	  angles_free (angles);
@@ -115,11 +121,11 @@ guile_get_angles (const char *var)
 
       // 1st element (0) of the list scm_angle
       double k = scm_num2dbl (scm_list_ref (scm_angle, scm_int2num (0)),
-			      "guile_get_angles");
+			      "angles_guile_get");
 
       // 2nd element (1) of the list scm_angle
       double t0 = scm_num2dbl (scm_list_ref (scm_angle, scm_int2num (1)),
-			       "guile_get_angles");
+			       "angles_guile_get");
       // convert degree to radian
       t0 = t0 * M_PI / 180.0;
 
@@ -133,7 +139,7 @@ guile_get_angles (const char *var)
       if (!SCM_NFALSEP (scm_list_p (scm_triplets)))
 	{
 	  // scm_triplets is not a list
-	  fprintf (stderr, "guile_get_angles:"
+	  fprintf (stderr, "angles_guile_get:"
 		   " pairs of %d-th bond in %s is not a list\n",
 		   i, var);
 	  angles_free (angles);
@@ -142,7 +148,7 @@ guile_get_angles (const char *var)
 
       unsigned long triplets_len;
       triplets_len = scm_num2ulong (scm_length (scm_triplets),
-				    0, "guile_get_angles");
+				    0, "angles_guile_get");
       int j;
       for (j = 0; j < triplets_len; j ++)
 	{
@@ -151,7 +157,7 @@ guile_get_angles (const char *var)
 	  if (!SCM_NFALSEP (scm_list_p (scm_triplet)))
 	    {
 	      // scm_triplet is not a list
-	      fprintf (stderr, "guile_get_angles:"
+	      fprintf (stderr, "angles_guile_get:"
 		       " %d-th pair of %d-th bond of %s is not a list\n",
 		       j, i, var);
 	      angles_free (angles);
@@ -160,10 +166,10 @@ guile_get_angles (const char *var)
 
 	  unsigned long triplet_len;
 	  triplet_len = scm_num2ulong (scm_length (scm_triplet),
-				       0, "guile_get_angles");
+				       0, "angles_guile_get");
 	  if (triplet_len != 3)
 	    {
-	      fprintf (stderr, "guile_get_angles:"
+	      fprintf (stderr, "angles_guile_get:"
 		       " length of %d-th triplet of %d-th bond of %s"
 		       " is not 3\n",
 		       j, i, var);
@@ -174,15 +180,15 @@ guile_get_angles (const char *var)
 	  int ia = scm_num2int (scm_list_ref (scm_triplet,
 					      scm_int2num (0)),
 				0,
-				"guile_get_angles");
+				"angles_guile_get");
 	  int ib = scm_num2int (scm_list_ref (scm_triplet,
 					      scm_int2num (1)),
 				0,
-				"guile_get_angles");
+				"angles_guile_get");
 	  int ic = scm_num2int (scm_list_ref (scm_triplet,
 					      scm_int2num (2)),
 				0,
-				"guile_get_angles");
+				"angles_guile_get");
 
 	  angles_add (angles, ia, ib, ic, k, t0, scale);
 	}

@@ -1,7 +1,7 @@
 /* header file for angles-guile.c --
  * guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.h,v 1.2 2008/04/17 04:18:02 kichiki Exp $
+ * $Id: angles-guile.h,v 1.3 2008/05/24 05:46:24 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@
  *                   if NULL is returned, it failed (not defined)
  */
 struct angles *
-guile_get_angles (const char *var);
+angles_guile_get (const char *var);
 
 
 #endif /* !_ANGLES_GUILE_H_ */
