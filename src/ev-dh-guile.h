@@ -1,7 +1,7 @@
 /* header file for ev-dh-guile.c --
  * guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.h,v 1.1 2008/04/26 04:34:07 kichiki Exp $
+ * $Id: ev-dh-guile.h,v 1.2 2008/05/24 05:41:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@
  * in SCM, angles are given by something like
  *  (define ev-dh '(
  *    ; system parameters
- *    4.0      ; 1) max distance for EV_DH interaction [nm]
+ *    1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
@@ -43,10 +43,10 @@
  *    )
  *  ))
  * INPUT
- *  var : name of the variable.
- *        in the above example, set "ev-dh".
- *  a   : the characteristic length [nm]
- *  pe  : peclet number
+ *  var    : name of the variable.
+ *           in the above example, set "ev-dh".
+ *  length : the characteristic length (dimensional, usually in nm)
+ *  peclet : peclet number
  *  np  : number of particles used for ev_dh_init()
  * OUTPUT
  *  returned value : struct EV_DH
@@ -54,7 +54,7 @@
  */
 struct EV_DH *
 EV_DH_guile_get (const char *var,
-		 double a, double pe, int np);
+		 double length, double peclet, int np);
 
 
 #endif /* !_EV_DH_GUILE_H_ */

@@ -1,6 +1,6 @@
 /* guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.3 2008/05/08 02:41:15 kichiki Exp $
+ * $Id: ev-dh-guile.c,v 1.4 2008/05/24 05:39:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@
  * in SCM, angles are given by something like
  *  (define ev-dh '(
  *    ; system parameters
- *    4.0      ; 1) max distance for EV_DH interaction [nm]
+ *    1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
@@ -48,10 +48,10 @@
  *    )
  *  ))
  * INPUT
- *  var : name of the variable.
- *        in the above example, set "ev-dh".
- *  a   : the characteristic length [nm]
- *  pe  : peclet number
+ *  var    : name of the variable.
+ *           in the above example, set "ev-dh".
+ *  length : the characteristic length (dimensional, usually in nm)
+ *  peclet : peclet number
  *  np  : number of particles used for ev_dh_init()
  * OUTPUT
  *  returned value : struct EV_DH
@@ -59,7 +59,7 @@
  */
 struct EV_DH *
 EV_DH_guile_get (const char *var,
-		 double a, double pe, int np)
+		 double length, double peclet, int np)
 {
   if (guile_check_symbol (var) == 0)
     {
@@ -95,11 +95,8 @@ EV_DH_guile_get (const char *var,
     }
 
   // 1st element (0) of the list scm_angle
-  double rmax = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (0)),
-			     "EV_DH_guile_get");
-  double r2 = rmax * rmax;
-  // note that r2 should be dimensional for EV_DH_init()
-
+  double eps = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (0)),
+			    "EV_DH_guile_get");
   // 2nd element (1) of the list scm_angle
   double T = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (1)),
 			  "EV_DH_guile_get");
@@ -111,7 +108,7 @@ EV_DH_guile_get (const char *var,
 			   "EV_DH_guile_get");
   // note that rd should be dimensional for EV_DH_init()
 
-  struct EV_DH *ev_dh = EV_DH_init (a, pe, rd, T, e, r2, np);
+  struct EV_DH *ev_dh = EV_DH_init (length, peclet, rd, T, e, eps, np);
   CHECK_MALLOC (ev_dh, "EV_DH_guile_get");
 
   // 5th element (4) of the list scm_ev_dh
