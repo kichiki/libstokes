@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
- * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.12 2007/12/26 06:33:17 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc.h,v 5.13 2008/05/24 05:42:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -392,7 +392,7 @@ stokes_nc_set_t (struct stokes_nc * nc,
 void
 stokes_nc_set_s (struct stokes_nc * nc,
 		 int step,
-		 const double * s);;
+		 const double * s);
 /* set xf at time (step)
  */
 void
