@@ -1,6 +1,6 @@
 /* test code for ev-dh.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ev-dh.c,v 1.1 2008/04/26 17:37:08 kichiki Exp $
+ * $Id: check-ev-dh.c,v 1.2 2008/05/24 06:04:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,15 +60,16 @@ check_EV_DH_calc_force (double r,
   sys->pos[5] = 0.0;
 
   // parameters
-  double a  = 1.0;
-  double pe = 1.0;
-  double rd = 3.07; // [nm]
-  double T  = 298.0; // [K]
-  double e  = 80.0;
+  double length = 1.0; // [nm]
+  double peclet = 1.0;
+  double rd     = 3.07; // [nm]
+  double T      = 298.0; // [K]
+  double e      = 80.0;
 
-  double r2 = 2.0 * (r * r); // set it large enough
+  double eps = 1.0e-6;
+  //double r2 = 2.0 * (r * r); // set it large enough
 
-  struct EV_DH *ev_dh = EV_DH_init (a, pe, rd, T, e, r2, n);
+  struct EV_DH *ev_dh = EV_DH_init (length, peclet, rd, T, e, eps, n);
   CHECK_MALLOC (ev_dh, "check_EV_DH_calc_force");
 
   double nu = 2.43; // [e/nm]
@@ -86,13 +87,13 @@ check_EV_DH_calc_force (double r,
   // permittivity of vacuum
   double e0 = 8.8541878176e-12; // [F / m] = [C^2 / N m^2]
 
-  double a_sys = ec * ec / (4.0 * M_PI * e * e0 * pe * kB * T * a);
-  double rda = rd / a;
+  double a_sys = ec * ec / (4.0 * M_PI * e * e0 * peclet * kB * T * length);
+  double hat_rd = rd / length;
   double nu2 = nu * nu * l0 * l0;
 
   check += compare_max (ev_dh->a_sys, a_sys, " a_sys",
 			verbose, tiny, &max);
-  check += compare_max (ev_dh->rd, rda, " rd",
+  check += compare_max (ev_dh->rd, hat_rd, " rd",
 			verbose, tiny, &max);
   check += compare_max (ev_dh->nu[0], nu * l0, " nu[0]",
 			verbose, tiny, &max);
@@ -100,7 +101,7 @@ check_EV_DH_calc_force (double r,
 			verbose, tiny, &max);
 
   // scalar part of the force is positive
-  double kr = r / rda;
+  double kr = r / hat_rd;
   double f_check = a_sys * nu2 / (r * r) * (1.0 + kr) * exp (- kr);
 
   /* note that F_j = f_check * (x_j - x_i)/|rij|

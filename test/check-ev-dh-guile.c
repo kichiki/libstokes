@@ -1,6 +1,6 @@
 /* test code for ev-dh-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ev-dh-guile.c,v 1.1 2008/04/26 05:04:45 kichiki Exp $
+ * $Id: check-ev-dh-guile.c,v 1.2 2008/05/24 06:04:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,8 +43,8 @@ check_EV_DH_guile_get (int verbose, double tiny)
   double max = 0.0;
 
 
-  double a = 2.0;
-  double pe = 1.0;
+  double length = 2.0;
+  double peclet = 1.0;
   int np = 5;
 
   char *filename = "check-ev-dh-guile.scm";
@@ -53,19 +53,20 @@ check_EV_DH_guile_get (int verbose, double tiny)
   guile_load (filename);
 
   struct EV_DH *ev_dh = EV_DH_guile_get ("ev-dh",
-					 a, pe, np);
+					 length, peclet, np);
   if (ev_dh == NULL) // FALSE
     {
       fprintf (stdout, " fail to parse ev_dh.\n");
       exit (1);
     }
 
-  double r_  = 4.0;
+  double eps = 1.0e-6;
   double T_  = 298.0;
   double e_  = 80.0;
   double rd_ = 3.07;
 
-  double r2_ = (r_ / a) * (r_ / a);
+  double r_  = - log (eps) * rd_ / length;
+  double r2_ = r_ * r_;
   check += compare_max (ev_dh->r2, r2_, " r2",
 			verbose, tiny, &max);
 
@@ -76,11 +77,11 @@ check_EV_DH_guile_get (int verbose, double tiny)
   // permittivity of vacuum
   double e0 = 8.8541878176e-12; // [F / m] = [C^2 / N m^2]
 
-  double a_sys_ = ec * ec / (4.0 * M_PI * e_ * e0 * pe * kB * T_ * a);
+  double a_sys_ = ec * ec / (4.0 * M_PI * e_ * e0 * peclet * kB * T_ * length);
   check += compare_max (ev_dh->a_sys, a_sys_, " a_sys",
 			verbose, tiny, &max);
   
-  rd_ /= a;
+  rd_ /= length;
   check += compare_max (ev_dh->rd, rd_, " rd",
 			verbose, tiny, &max);
 
