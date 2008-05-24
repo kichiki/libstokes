@@ -1,7 +1,7 @@
-; $Id: check-ev-dh-guile.scm,v 1.1 2008/04/26 05:05:54 kichiki Exp $
+; $Id: check-ev-dh-guile.scm,v 1.2 2008/05/24 06:11:09 kichiki Exp $
 (define ev-dh '(
   ; system parameters
-  4.0      ; 1) max distance for EV_DH interaction [nm]
+  1.0e-6   ; 1) epsilon for the cut-off distance for EV_DH interaction
   298.0    ; 2) temperature [K]
   80.0     ; 3) dielectric constant of the solution
   3.07     ; 4) Debye length [nm]
