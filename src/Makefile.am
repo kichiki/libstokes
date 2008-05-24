@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.24 2008/05/13 01:12:51 kichiki Exp $
+# $Id: Makefile.am,v 1.25 2008/05/24 05:48:21 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -58,6 +58,8 @@ libstokes_la_SOURCES = \
 	stokes-nc-read.c	\
 	stokes-guile.c		\
 	coll.c			\
+	confinement.c		\
+	confinement-guile.c	\
 	periodicity.c		\
 	bonds.c			\
 	bonds-guile.c		\
@@ -76,6 +78,8 @@ libstokes_la_SOURCES = \
 	excluded-volume-guile.c	\
 	ev-dh.c			\
 	ev-dh-guile.c		\
+	ev-LJ.c			\
+	ev-LJ-guile.c		\
 	brownian.c		\
 	bd-imp.c
 
