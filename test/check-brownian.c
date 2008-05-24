@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.10 2008/04/29 03:37:28 kichiki Exp $
+ * $Id: check-brownian.c,v 1.11 2008/05/24 06:09:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -396,6 +396,8 @@ check_minv_FU (int verbose, double tiny)
      NULL, // struct EV *ev,
      NULL, // struct angles *ang,
      NULL, // struct EV_DH *ev_dh,
+     NULL, // struct EV_LJ *ev_LJ,
+     NULL, // struct confinement *cf,
      0,    // int flag_Q,
      -1.0, // double peclet,
      0.0,  // double eps,
@@ -771,6 +773,8 @@ check_lub_FU (int verbose, double tiny)
      NULL, // struct EV *ev,
      NULL, // struct angles *ang,
      NULL, // struct EV_DH *ev_dh,
+     NULL, // struct EV_LJ *ev_LJ,
+     NULL, // struct confinement *cf,
      0,    // int flag_Q,
      -1.0, // double peclet,
      0.0,  // double eps,
