@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.61 2008/05/13 01:13:26 kichiki Exp $
+ * $Id: libstokes.h,v 1.62 2008/05/24 05:49:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -725,7 +725,7 @@ stokes_nc_set_t (struct stokes_nc * nc,
 void
 stokes_nc_set_s (struct stokes_nc * nc,
 		 int step,
-		 const double * s);;
+		 const double * s);
 /* set xf at time (step)
  */
 void
@@ -1198,7 +1198,7 @@ list_ex_check (struct list_ex *ex, int i, int j);
  *                   if NULL is returned, it failed (not defined)
  */
 struct bonds *
-guile_get_bonds (const char * var);
+bonds_guile_get (const char * var);
 
 
 /* from excluded-volume.h */
@@ -1310,10 +1310,10 @@ EV_calc_force (struct EV *ev,
  *                   if NULL is returned, it failed (not defined)
  */
 struct EV *
-guile_get_ev_v (const char *var,
-		const struct bonds *bonds,
-		double length, double peclet,
-		double ev_r2, int np);
+EV_guile_get (const char *var,
+	      const struct bonds *bonds,
+	      double length, double peclet,
+	      double ev_r2, int np);
 
 
 /************************************
@@ -1425,7 +1425,7 @@ angles_calc_force (struct angles *ang,
  *                   if NULL is returned, it failed (not defined)
  */
 struct angles *
-guile_get_angles (const char *var);
+angles_guile_get (const char *var);
 
 
 /*************************************
@@ -1451,22 +1451,23 @@ struct EV_DH {
 
 /* initialize struct EV
  * INPUT
- *  a  : characteristic length (in the same dimension for rd below, usually nm)
- *  pe : peclet number
- *  rd : Debye length (in the same dimension for a above, usually nm)
- *  T  : temperature in Kelvin.
- *  e  : dielectric constant of the solution
- *  r2 : square of the max distance for F^{EV_DH}
- *       (in the same dimension squared for a above, usually nm^2)
- *  np : number of particles
+ *  length : characteristic length
+ *           (in the same dimension for rd below, usually nm)
+ *  peclet : peclet number
+ *  rd     : Debye length (in the same dimension for a above, usually nm)
+ *  T      : temperature in Kelvin.
+ *  e      : dielectric constant of the solution (dimensionless number)
+ *  eps    : to determine cut-off distance through eps = exp (-r_cutoff / rd) 
+ *  np     : number of particles
  * OUTPUT
  *  returned value : struct EV_DH,
  *      where only the system parameters (a_sys, rd) are defined.
  *      nu[i] is zero cleared.
  */
 struct EV_DH *
-EV_DH_init (double a, double pe, double rd, double T, double e,
-	    double r2,
+EV_DH_init (double length, double peclet,
+	    double rd, double T, double e,
+	    double eps,
 	    int np);
 
 void
@@ -1492,7 +1493,7 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
  * in SCM, angles are given by something like
  *  (define ev-dh '(
  *    ; system parameters
- *    4.0      ; 1) max distance for EV_DH interaction [nm]
+ *    1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
@@ -1510,10 +1511,10 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
  *    )
  *  ))
  * INPUT
- *  var : name of the variable.
- *        in the above example, set "ev-dh".
- *  a   : the characteristic length [nm]
- *  pe  : peclet number
+ *  var    : name of the variable.
+ *           in the above example, set "ev-dh".
+ *  length : the characteristic length (dimensional, usually in nm)
+ *  peclet : peclet number
  *  np  : number of particles used for ev_dh_init()
  * OUTPUT
  *  returned value : struct EV_DH
@@ -1521,7 +1522,329 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
  */
 struct EV_DH *
 EV_DH_guile_get (const char *var,
-		 double a, double pe, int np);
+		 double length, double peclet, int np);
+
+
+/**************************************
+ ** excluded-volume by Lennard-Jones **
+ **************************************/
+/* from ev-LJ.h */
+struct EV_LJ {
+  /* LJ parameters, where the potential is given in DIMENSIONAL FORM as 
+   *  U(r) = e ((r0/r)^12 - 2(r0/r)^6)
+   * Note that r0 = 2^{1/6} sigma is the distance of potential minimum.
+   * The repulsive force is evaluated by taking r = r0 at the contact point.
+   * The parameters e and r0 should be dimensionless numbers defined by 
+   *         e = hat(e) for flag == 0, or
+   *         e = hat(e) / (peclet * hat(r0)) for flag == 1,
+   *         r0 = hat(r0) = "r0" / length
+   * where
+   *         hat(e)  = "e" / kT
+   *         hat(r0) = "r0" / length
+   * and "e" and "r0" are dimensional numbers.
+   * The dimensionless force (scalar part) is then given by
+   *  hat(F) = 12 e (r0/r)^7 ((r0/r)^6 - 1)
+   * where e is in the form of flag == 1.
+   */
+  /* parameters for each particle */
+  int n;      // number of particles
+  int    *flag;
+  double *e;  /* always dimensionless
+	       * either e/kT              for flag==0
+	       * or     e/(kT Pe hat(r0)) for flag==1
+	       */
+  double *r0; // always dimensionless (scaled by "length")
+};
+
+
+/* initialize struct EV_LJ
+ * INPUT
+ *  np     : number of particles
+ * OUTPUT
+ *  returned value : struct EV_LJ,
+ *      where LJ parameters are set by zero.
+ */
+struct EV_LJ *
+EV_LJ_init (int np);
+
+void
+EV_LJ_free (struct EV_LJ *ev_LJ);
+
+/* scale LJ parameter e for runs
+ * INPUT
+ *  ev_LJ  : struct EV_LJ
+ *  peclet : peclet number
+ */
+void
+EV_LJ_scale (struct EV_LJ *ev_LJ,
+	     double peclet);
+
+/*
+ * INPUT
+ *  ev_LJ      : struct EV_LJ
+ *  sys        : struct stokes (only nm and pos are used)
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+EV_LJ_calc_force (struct EV_LJ *ev_LJ,
+		  struct stokes *sys,
+		  double *f,
+		  int flag_add);
+
+/* from ev-LJ-guile.h */
+/* get ev-LJ from SCM
+ * in SCM, angles are given by something like
+ *  (define ev-LJ '(
+ *   (; LJ type 1
+ *    10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ; 2) LJ parameter r0 in "length" (so this is dimensionless value)
+ *    (    ; 3) list of particles
+ *     0 1 2
+ *    )
+ *   )
+ *   (; LJ type 2
+ *    8.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)
+ *    2.0  ; 2) LJ parameter r0 in "length" (so this is dimensionless value)
+ *    (    ; 3) list of particles
+ *     3 4
+ *    )
+ *   )
+ *  ))
+ * INPUT
+ *  var    : name of the variable.
+ *           in the above example, set "ev-dh".
+ *  peclet : peclet number
+ *  np  : number of particles used for ev_dh_init()
+ * OUTPUT
+ *  returned value : struct EV_LJ
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct EV_LJ *
+EV_LJ_guile_get (const char *var, int np);
+
+
+/*************************************
+ ** confinement forces              **
+ *************************************/
+/* from confinement.h */
+struct confinement {
+  int type; /* 0 : sphere
+	     *       R : radius of cavity centered at (0, 0, 0)
+	     * 1 : sphere + hole
+	     *       R : radius of cavity centered at (0, 0, 0)
+	     *       r : radius of the hole at (0, 0, 1) direction
+	     * 2 : cylinder
+	     *       r       : radius of the cylinder
+	     *       x, y, z : direction vector of the cylinder
+	     *       the cylinder center goes through (0, 0, 0) and (x, y, z).
+	     * 3 : dumbbell
+	     *       R  : left cavity radius centered at (center1, 0, 0)
+	     *       R2 : right cavity radius centered at (center2, 0, 0)
+	     *       L  : length of the cylinder
+	     *       r  : cylinder radius
+	     *       the origin is at the center of the cylinder
+	     * 4 : hex2d
+	     *       R : cavity radius
+	     *       r : cylinder radius
+	     *       L : lattice spacing
+	     * 5 == porous
+	     *       R : particle radius
+	     *       L : lattice spacing in x (2R for touching case)
+	     */
+  // primary parameters
+  double R;
+  double r;
+  double x, y, z;
+  double R2;
+  double L;
+
+  /* LJ parameters, where the potential is given in DIMENSIONAL FORM as 
+   *  U(r) = e ((r0/r)^12 - 2(r0/r)^6)
+   * Note that r0 = 2^{1/6} sigma is the distance of potential minimum.
+   * The repulsive force is evaluated by taking r = r0 at the contact point.
+   * The parameters e and r0 should be dimensionless numbers defined by 
+   *         e = hat(e) for flag_LJ == 0, or
+   *         e = hat(e) / (peclet * hat(r0)) for flag_LJ == 1,
+   *         r0 = hat(r0) = "r0" / length
+   * where
+   *         hat(e)  = "e" / kT
+   *         hat(r0) = "r0" / length
+   * and "e" and "r0" are dimensional numbers.
+   * The dimensionless force (scalar part) is then given by
+   *  hat(F) = 12 e (r0/r)^7 ((r0/r)^6 - 1)
+   * where e is in the form of flag_LJ == 1.
+   */
+  int flag_LJ;
+  double e;
+  double r0;
+
+  // derived parameters
+  double theta; // angle of the cylinder opening from the sphere center
+  double theta2; // angle of the cylinder opening on the right cavity
+
+  // for dumbbell
+  double center1; // x component of the center of left cavity
+  double center2; // x component of the center of right cavity
+
+  // for hex2d
+  double Lx; // = 0.5 * L;
+  double Ly; // = sqrt (3.0) * Lx;
+
+  // for porous
+  //         Lx = L
+  //         Ly = L * sqrt (3.0)
+  double Lz; // = L * sqrt (6.0) * 2.0 / 3.0;
+};
+
+
+/* initialize struct confinement
+ * INPUT
+ *  type : confinement type parameter (0 - 4)
+ *         0 == sphere
+ *               R : radius of cavity centered at (0, 0, 0)
+ *         1 == sphere + hole
+ *               R : radius of cavity centered at (0, 0, 0)
+ *               r : radius of the hole at (0, 0, 1) direction
+ *         2 == cylinder
+ *               r       : radius of the cylinder
+ *               x, y, z : direction vector of the cylinder
+ *               the cylinder center goes through (0, 0, 0) and (x, y, z).
+ *         3 == dumbbell
+ *               R  : left cavity radius centered at (center1, 0, 0)
+ *               R2 : right cavity radius centered at (center2, 0, 0)
+ *               L  : length of the cylinder
+ *               r  : cylinder radius
+ *               the origin is at the center of the cylinder
+ *         4 == hex2d
+ *               R : cavity radius
+ *               r : cylinder radius
+ *               L : lattice spacing
+ *         5 == porous
+ *               R : particle radius
+ *               L : lattice spacing in x (2R for touching case)
+ *  R       : cavity radius
+ *  r       : cylinder radius
+ *  x, y, z : cylinder direction (for type 2, cylinder)
+ *  R2      : right cavity radius (for type 3, dumbbell)
+ *  L       : lattice spacing (for type 4, hex2d)
+ *  Lennard-Jones parameters
+ *  flag_LJ : if 0, e = hat(e) = "e" / kT
+ *            if 1, e = hat(e) / (peclet * hat(r0))
+ *  e  : the dimensionless number defined by
+ *         e = hat(e) for flag_LJ == 0, or
+ *         e = hat(e) / (peclet * hat(r0)) for flag_LJ == 1,
+ *       where
+ *         hat(e)  = "e" / kT
+ *         hat(r0) = "r0" / length
+ *       note that "e" and "r0" are dimensional numbers.
+ *  r0 : the dimensionless number defined by
+ *         r0 = hat(r0) = "r0" / length
+ *       note that "r0" is a dimensional number.
+ */
+struct confinement *
+CF_init (int type,
+	 double R,
+	 double r,
+	 double x, double y, double z,
+	 double R2,
+	 double L,
+	 int flag_LJ,
+	 double e,
+	 double r0);
+
+void
+CF_free (struct confinement *cf);
+
+
+/* set LJ parameters for run
+ * INPUT
+ *  cf     : struct confinement
+ *  peclet : peclet number
+ * OUTPUT
+ *  cf->e  : defined as 
+ *             cf->e = hat(e)/(peclet * hat(r0))
+ *           where
+ *             hat(e)  = "e" / kT
+ *             hat(r0) = "r0" / length
+ *             "e" and "r0" are dimensional numbers
+ *           therefore, cf->flag-LJ is set by 1.
+ */
+void
+CF_set (struct confinement *cf,
+	double peclet);
+
+/* wrapper for confinement forces
+ * INPUT
+ *  c          : struct confinement
+ *  sys        : struct stokes (only nm and pos are used)
+ *  f [nm * 3] : force is assigned only for the mobile particles
+ *  flag_add   : if 0 is given, zero-clear and set the force
+ *               otherwise, add the bond force into f[]
+ * OUTPUT
+ */
+void
+CF_calc_force (struct confinement *cf,
+	       struct stokes *sys,
+	       double *f,
+	       int flag_add);
+
+/* from confinement-guile.h */
+/* get confinement from SCM
+ * in SCM, confinement is given by one of these:
+ * for spherical confinement,
+ *  (define confinement '(
+ *    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+ *    "sphere"
+ *    10.0 ;; radius of the cavity at (0, 0, 0)
+ *  ))
+ * for spherical confinement with a hole,
+ *  (define confinement '(
+ *    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+ *    "sphere+hole"
+ *    10.0 ;; radius of the cavity at (0, 0, 0)
+ *    1.0  ;; radius of the hole at (0, 0, 1) direction
+ *  ))
+ * for cylindrical confinement,
+ *  (define confinement '(
+ *    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+ *    "cylinder"    ;; the cylinder center goes through (0, 0, 0) and (x, y, z).
+ *    10.0          ;; radius of the cylinder
+ *    1.0  0.0  0.0 ;; direction vector (x, y, z) of the cylinder
+ *  ))
+ * for dumbbell confinement,
+ *  (define confinement '(
+ *    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+ *    "dumbbell" ;; the origin is at the center of the cylinder
+ *    10.0       ;; left cavity radius centered at (center1, 0, 0)
+ *    10.0       ;; right cavity radius centered at (center2, 0, 0)
+ *    2.0        ;; length of the cylinder
+ *    1.0        ;; cylinder radius
+ *  ))
+ * for 2D hexagonal confinement with cylinder pipe,
+ *  (define confinement '(
+ *    10.0 ;; LJ parameter epsilon in kT (so this is dimensionless value)
+ *    1.0  ;; LJ parameter r0 in "length" (so this is dimensionless value)
+ *    "hex2d"
+ *    10.0    ;; cavity radius
+ *    1.0     ;; cylinder radius
+ *    12.0    ;; lattice spacing
+ *  ))
+ * INPUT
+ *  var : name of the variable.
+ *        in the above example, set "confinement".
+ * OUTPUT
+ *  returned value : struct confinement
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct confinement *
+CF_guile_get (const char *var);
 
 
 /************************************
@@ -1759,6 +2082,8 @@ struct BD_params
   struct EV *ev;
   struct angles *ang;
   struct EV_DH *ev_dh;
+  struct EV_LJ *ev_LJ;
+  struct confinement *cf;
 
   int flag_Q;
 
@@ -1819,6 +2144,8 @@ struct BD_params
  *  (struct EV *)ev
  *  (struct angles *)ang
  *  (struct EV_DH *)ev_dh
+ *  (struct EV_LJ *)ev_LJ
+ *  (struct confinement *)cf
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -1849,6 +2176,8 @@ BD_params_init (struct stokes *sys,
 		struct EV *ev,
 		struct angles *ang,
 		struct EV_DH *ev_dh,
+		struct EV_LJ *ev_LJ,
+		struct confinement *cf,
 		int flag_Q,
 		double peclet,
 		double eps,
