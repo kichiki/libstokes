@@ -1,6 +1,6 @@
 /* guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.c,v 1.1 2008/05/13 01:11:54 kichiki Exp $
+ * $Id: excluded-volume-guile.c,v 1.2 2008/05/24 05:42:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,10 +49,10 @@
  *                   if NULL is returned, it failed (not defined)
  */
 struct EV *
-guile_get_ev_v (const char *var,
-		const struct bonds *bonds,
-		double length, double peclet,
-		double ev_r2, int np)
+EV_guile_get (const char *var,
+	      const struct bonds *bonds,
+	      double length, double peclet,
+	      double ev_r2, int np)
 {
   if (guile_check_symbol (var) == 0)
     {
