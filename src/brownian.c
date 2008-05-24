@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.23 2008/05/08 02:39:51 kichiki Exp $
+ * $Id: brownian.c,v 1.24 2008/05/24 05:48:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include <stokes.h>
 #include <ewald-3f.h>   // solve_res_3f()
@@ -32,7 +33,6 @@
 #include <ewald.h> // atimes_3all()
 #include <ode.h> // solve_mix_3all()
 #include <ode-quaternion.h> // quaternion_dQdt()
-#include "memory-check.h"
 
 #include <KIrand.h> // struct KIrand
 
@@ -52,6 +52,8 @@
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
 #include <ev-dh.h> // EV_DH_calc_force ()
+#include <ev-LJ.h> // EV_LJ_calc_force ()
+#include <confinement.h> // CF_calc_force ()
 
 #include "brownian.h"
 
@@ -81,6 +83,8 @@
  *  (struct EV *)ev
  *  (struct angles *)ang
  *  (struct EV_DH *)ev_dh
+ *  (struct EV_LJ *)ev_LJ
+ *  (struct confinement *)cf
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -111,6 +115,8 @@ BD_params_init (struct stokes *sys,
 		struct EV *ev,
 		struct angles *ang,
 		struct EV_DH *ev_dh,
+		struct EV_LJ *ev_LJ,
+		struct confinement *cf,
 		int flag_Q,
 		double peclet,
 		double eps,
@@ -175,6 +181,8 @@ BD_params_init (struct stokes *sys,
   BD->ev       = ev;
   BD->ang      = ang;
   BD->ev_dh    = ev_dh;
+  BD->ev_LJ    = ev_LJ;
+  BD->cf       = cf;
 
   BD->flag_Q   = flag_Q;
 
@@ -2167,6 +2175,7 @@ BD_add_FP (struct BD_params *BD,
 {
   stokes_set_pos_mobile (BD->sys, pos);
 
+  //if (BD->bonds != NULL)
   if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
@@ -2179,7 +2188,7 @@ BD_add_FP (struct BD_params *BD,
       EV_calc_force (BD->ev, BD->sys,
 		     FTS->f, 1/* add */);
     }
-  if (BD->ang->n > 0)
+  if (BD->ang != NULL)
     {
       // calc angle (bending) force
       angles_calc_force (BD->ang, BD->sys,
@@ -2190,6 +2199,18 @@ BD_add_FP (struct BD_params *BD,
       // calc EV_DH force
       EV_DH_calc_force (BD->ev_dh, BD->sys,
 			FTS->f, 1/* add */);
+    }
+  if (BD->ev_LJ != NULL)
+    {
+      // calc EV_LJ force
+      EV_LJ_calc_force (BD->ev_LJ, BD->sys,
+			FTS->f, 1/* add */);
+    }
+  if (BD->cf != NULL)
+    {
+      // calc confinement force
+      CF_calc_force (BD->cf, BD->sys,
+		     FTS->f, 1/* add */);
     }
 }
 

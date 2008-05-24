@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.15 2008/05/03 02:26:48 kichiki Exp $
+ * $Id: brownian.h,v 1.16 2008/05/24 05:49:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,6 +53,8 @@ struct BD_params
   struct EV *ev;
   struct angles *ang;
   struct EV_DH *ev_dh;
+  struct EV_LJ *ev_LJ;
+  struct confinement *cf;
 
   int flag_Q;
 
@@ -113,6 +115,8 @@ struct BD_params
  *  (struct EV *)ev
  *  (struct angles *)ang
  *  (struct EV_DH *)ev_dh
+ *  (struct EV_LJ *)ev_LJ
+ *  (struct confinement *)cf
  *  (int) flag_Q
  *  (double) peclet
  *  (double) eps
@@ -143,6 +147,8 @@ BD_params_init (struct stokes *sys,
 		struct EV *ev,
 		struct angles *ang,
 		struct EV_DH *ev_dh,
+		struct EV_LJ *ev_LJ,
+		struct confinement *cf,
 		int flag_Q,
 		double peclet,
 		double eps,
