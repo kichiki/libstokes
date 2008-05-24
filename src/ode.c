@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.12 2008/05/08 02:44:24 kichiki Exp $
+ * $Id: ode.c,v 1.13 2008/05/24 05:59:27 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gsl/gsl_errno.h> // GSL_SUCCESS
-#include "memory-check.h"
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "stokes.h" // struct stokes
 #include "ewald-3f.h"

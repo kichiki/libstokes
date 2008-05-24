@@ -1,6 +1,6 @@
 /* ODE utility routines for angle by quaternion
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.c,v 1.7 2008/04/29 03:30:35 kichiki Exp $
+ * $Id: ode-quaternion.c,v 1.8 2008/05/24 05:58:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <math.h> // sin(), cos()
 #include <gsl/gsl_errno.h> // GSL_SUCCESS
-#include "memory-check.h"
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "dgetri_c.h" /* lapack_inv_() */
 #include "bonds.h" // bonds_calc_force()

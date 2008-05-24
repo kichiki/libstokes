@@ -1,6 +1,6 @@
 /* Chebyshev polynomial routines
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: chebyshev.c,v 1.2 2007/10/27 03:55:58 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: chebyshev.c,v 1.3 2008/05/24 05:58:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include "memory-check.h"
+#include "memory-check.h" // macro CHECK_MALLOC
 
 
 /* calc Chebyshev coefficient

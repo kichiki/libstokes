@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.10 2008/05/02 03:37:34 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.11 2008/05/24 05:59:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "memory-check.h"
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include <netcdf.h>
 
