@@ -1,5 +1,5 @@
 /* KIrand -- wrapper of random number generator MT19937
- * $Id: KIrand.c,v 1.2 2007/10/06 19:03:26 kichiki Exp $
+ * $Id: KIrand.c,v 1.3 2008/06/01 17:03:43 kichiki Exp $
  */
 
 /* 
@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include <stdlib.h> /* malloc() */
 #include <math.h> /* sqrt(), log() */
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "KIrand.h" /* KIrand */
 
@@ -55,9 +56,8 @@
 struct KIrand *
 KIrand_init (void)
 {
-  struct KIrand *r = NULL;
-
-  r = (struct KIrand *) malloc (sizeof (struct KIrand));
+  struct KIrand *r = (struct KIrand *)malloc (sizeof (struct KIrand));
+  CHECK_MALLOC (r, "KIrand_init");
   r->mti = MTRNG_N + 1;
 
   r->Gaussian_has_saved = 0; /* not saved */
@@ -72,6 +72,33 @@ KIrand_free (struct KIrand *r)
   if (r != NULL) free (r);
 }
 
+/* load the state for the random number generator
+ */
+void
+KIrand_load_mt (struct KIrand *r,
+		unsigned long *mt, int mti)
+{
+  int i;
+  for (i = 0; i < MTRNG_N; i ++)
+    {
+      r->mt[i] = mt[i];
+    }
+  r->mti = mti;
+}
+
+/* restore the state for the Gaussian random number generator
+ */
+void
+KIrand_load_Gaussian (struct KIrand *rng,
+		      unsigned long *mt, int mti,
+		      int flag_saved,
+		      double x_saved)
+{
+  KIrand_load_mt (rng, mt, mti);
+  rng->Gaussian_has_saved = flag_saved;
+  rng->Gaussian_saved = x_saved;
+}
+
 
 /* double random numbers with gaussian distribution
  * taken from gromacs-3.2.1/src/gmxlib/gmx_random.c in GROMACS;
@@ -82,7 +109,7 @@ KIrand_Gaussian (struct KIrand * rng)
 {
   double x, y, r;
 
-  if (rng->Gaussian_has_saved)
+  if (rng->Gaussian_has_saved != 0)
     {
       rng->Gaussian_has_saved = 0;
       return (rng->Gaussian_saved);

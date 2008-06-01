@@ -1,6 +1,6 @@
 /* header file for Kirand.c --
  * KIrand -- wrapper of random number generator MT19937
- * $Id: KIrand.h,v 1.1 2007/09/29 20:41:49 kichiki Exp $
+ * $Id: KIrand.h,v 1.2 2008/06/01 17:04:22 kichiki Exp $
  */
 #ifndef	_KIRAND_H_
 #define	_KIRAND_H_
@@ -69,6 +69,22 @@ KIrand_init (void);
 
 void
 KIrand_free (struct KIrand *r);
+
+
+/* load the state for the random number generator
+ */
+void
+KIrand_load_mt (struct KIrand *r,
+		unsigned long *mt, int mti);
+
+/* restore the state for the Gaussian random number generator
+ */
+void
+KIrand_load_Gaussian (struct KIrand *rng,
+		      unsigned long *mt, int mti,
+		      int flag_saved,
+		      double x_saved);
+
 
 /* double random numbers with gaussian distribution
  * taken from gromacs-3.2.1/src/gmxlib/gmx_random.c in GROMACS;
