@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.22 2008/05/24 06:08:26 kichiki Exp $
+ * $Id: test-all.c,v 1.23 2008/06/01 17:09:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,6 +36,7 @@
 #include "check-twobody-slip.h" // check_twobody_slip_with_noslip()
 
 // Brownian dynamics stuff
+#include "check-KIrand.h"
 #include "check-chebyshev.h"
 #include "check-dsaupd_c.h"
 #include "check-dnaupd_c.h"
@@ -347,6 +348,11 @@ main (int argc, char** argv)
 
   // check-sqrt-dgeev.c
   check += check_BD_sqrt_by_dgeev (100, 1, 4.1e-13);
+
+  // check-KIrand.c
+  check += check_KIrand_Gaussian (1, 5.0e-4);
+  check += check_KIrand_Gaussian_cont (1, 0.0);
+
 
   // check-list-ex.c
   check += check_list_ex (1, 0.0);

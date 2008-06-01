@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.20 2008/05/24 06:08:47 kichiki Exp $
+# $Id: Makefile,v 1.21 2008/06/01 17:10:13 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -89,7 +89,8 @@ test-all-OBJ =\
 	check-ev-LJ.o		\
 	check-ev-LJ-guile.o	\
 	check-confinement.o	\
-	check-confinement-guile.o
+	check-confinement-guile.o	\
+	check-KIrand.o
 
 
 test-all:	$(test-all-OBJ)
