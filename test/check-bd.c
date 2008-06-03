@@ -1,6 +1,6 @@
 /* test code for Brownian dynamics scheme
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd.c,v 1.3 2007/12/01 18:27:25 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: check-bd.c,v 1.4 2008/06/03 02:49:50 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h> // sqrt()
-#include <libstokes.h> // struct stokes
+#include <stokes.h> // struct stokes
 #include <ewald.h> // atimes_3all()
 #include <KIrand.h> // struct KIrand
 
