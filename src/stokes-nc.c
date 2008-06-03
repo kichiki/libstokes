@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.16 2008/05/24 06:00:28 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.17 2008/06/03 02:33:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,6 +24,7 @@
 
 #include <netcdf.h>
 
+#include "KIrand.h" // MTRNG_N
 #include "stokes-nc-read.h"
 #include "stokes-nc.h"
 
@@ -113,7 +114,11 @@ stokes_nc_print_actives (struct stokes_nc *nc,
 	       " for shear_mode\n");
     }
   fprintf (out, "----+---+-------+-------+----------\n");
-  fprintf (out, "shear_mode      | %d \n", shear_mode);
+  fprintf (out, "shear_mode      | %d\n", shear_mode);
+
+  // random number generator
+  fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "states of RNG   | %d\n", nc->flag_rng);
 }
 
 
@@ -583,6 +588,63 @@ stokes_nc_init_t (struct stokes_nc *nc,
 	(status, "at nc_put_att() in stokes_nc_init_t", name);
     }
 }
+
+/* init a variable (int)x[time][rng]
+ */
+static void
+stokes_nc_init_int_t_rng (struct stokes_nc *nc,
+			  const char *name,
+			  const char *longname,
+			  int *var_id)
+{
+  int status;
+  int dimids[2];
+
+  dimids[0] = nc->time_dim;
+  dimids[1] = nc->rng_dim;
+  status = nc_def_var
+    (nc->id, name, NC_INT, 2, dimids, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_int_t_rng", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_int_t_rng", name);
+    }
+}
+/* init a variable (int)x[time]
+ */
+static void
+stokes_nc_init_int_t (struct stokes_nc *nc,
+		      const char *name,
+		      const char *longname,
+		      int *var_id)
+{
+  int status;
+
+  status = nc_def_var
+    (nc->id, name, NC_INT, 1, &nc->time_dim, var_id);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_def_var() in stokes_nc_init_int_t", name);
+    }
+  status = nc_put_att_text
+    (nc->id, *var_id, "long_name",
+     strlen(longname), longname);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status, "at nc_put_att() in stokes_nc_init_int_t", name);
+    }
+}
+
 /* init a variable x (just a scalar)
  */
 static void
@@ -612,7 +674,7 @@ stokes_nc_init_scalar (struct stokes_nc *nc,
 /* init a variable x (just a scalar) with NC_INT
  */
 static void
-stokes_nc_init_scalar_int (struct stokes_nc *nc,
+stokes_nc_init_int_scalar (struct stokes_nc *nc,
 			   const char *name,
 			   const char *longname,
 			   int *var_id)
@@ -624,7 +686,7 @@ stokes_nc_init_scalar_int (struct stokes_nc *nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_def_var() in stokes_nc_init_scalar_int", name);
+	(status, "at nc_def_var() in stokes_nc_init_int_scalar", name);
     }
   status = nc_put_att_text
     (nc->id, *var_id, "long_name",
@@ -632,7 +694,7 @@ stokes_nc_init_scalar_int (struct stokes_nc *nc,
   if (status != NC_NOERR)
     {
       stokes_nc_error
-	(status, "at nc_put_att() in stokes_nc_init_scalar_int", name);
+	(status, "at nc_put_att() in stokes_nc_init_int_scalar", name);
     }
 }
 
@@ -689,7 +751,8 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 		 int flag_sf,
 		 int flag_a,
 		 int flag_af,
-		 int shear_mode)
+		 int shear_mode,
+		 int flag_rng)
 {
   struct stokes_nc *nc
     = (struct stokes_nc *)malloc (sizeof (struct stokes_nc));
@@ -733,6 +796,9 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
   nc->flag_a = flag_a;
   nc->flag_af = flag_af;
 
+  nc->flag_rng = flag_rng;
+
+
   /* create netCDF dataset: enter define mode */
   int status;
   status = nc_create (filename,
@@ -745,7 +811,8 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
       stokes_nc_error (status, "at nc_create() in stokes_nc_init", NULL);
     }
 
-  /* define dimensions: from name and length */
+  /**
+   * define dimensions: from name and length */
   nc->np  = nm;
   nc->npf = nf;
   nc->nvec = 3; // number of vector components
@@ -831,6 +898,25 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 		       "at nc_def_dim() for quat in stokes_nc_init", NULL);
     }
 
+  /* index of random number generator array */
+  if (flag_rng != 0)
+    {
+      nc->nrng = MTRNG_N; // for random number generator
+      status = nc_def_dim(nc->id, "rng", nc->nrng, &(nc->rng_dim));
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error (status,
+			   "at nc_def_dim() for time in stokes_nc_init", NULL);
+	}
+      dimids[0] = nc->rng_dim;
+      status = nc_def_var (nc->id, "rng", NC_INT, 1, dimids, &(nc->rng_id));
+      if (status != NC_NOERR)
+	{
+	  stokes_nc_error (status,
+			   "at nc_def_dim() for time in stokes_nc_init", NULL);
+	}
+    }
+ 
   /* time index */
   status = nc_def_dim(nc->id, "time", NC_UNLIMITED, &(nc->time_dim));
   if (status != NC_NOERR)
@@ -846,6 +932,8 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 		       "at nc_def_dim() for time in stokes_nc_init", NULL);
     }
  
+  /**
+   * define data arrays */
   /* lattice vector */
   stokes_nc_init_vec (nc, "l",
 		      "lattice vector",
@@ -854,7 +942,7 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 
   /* data of imposed flow */
   /* shear_mode */
-  stokes_nc_init_scalar_int (nc, "shear_mode",
+  stokes_nc_init_int_scalar (nc, "shear_mode",
 			     "shear mode",
 			     &nc->shear_mode_id);
   if (shear_mode != 0)
@@ -1147,7 +1235,24 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 	}
     }
 
-  /* end definitions: leave define mode */
+  /* data for random number generator */
+  if (flag_rng != 0)
+    {
+      stokes_nc_init_int_t_rng (nc, "mt", "random number generator table",
+				&nc->mt_id);
+      stokes_nc_init_int_t (nc, "mti",
+			    "random number generator index",
+			    &nc->mti_id);
+      stokes_nc_init_int_t (nc, "mt_Ghs",
+			    "Gaussian random number generator flag",
+			    &nc->mt_Ghs_id);
+      stokes_nc_init_t (nc, "mt_Gs",
+			"Gaussian random number generator saved value",
+			&nc->mt_Gs_id);
+    }
+
+  /**
+   * end definitions: leave define mode */
   status = nc_enddef (nc->id);  /*leave define mode*/
   if (status != NC_NOERR)
     {
@@ -1224,6 +1329,20 @@ stokes_nc_init_ (const char *filename, int nm, int nf,
 	    }
 	}
     }
+  if (flag_rng != 0)
+    {
+      for (i = 0; i < nc->nrng; i ++)
+	{
+          idx[0] = i;
+	  status = nc_put_var1_int (nc->id, nc->rng_id, idx, &i);
+	  if (status != NC_NOERR)
+	    {
+	      stokes_nc_error
+		(status,
+		 "at nc_put_var1() for rng in stokes_nc_init", NULL);
+	    }
+	}
+    }
 
   /* shear_mode */
   status = nc_put_var1_int (nc->id, nc->shear_mode_id, NULL, &shear_mode);
@@ -1285,7 +1404,8 @@ stokes_nc_x_init (const char * filename, int np)
 			  0, // sf
 			  0, // a
 			  0, // af
-			  0);// shear_mode
+			  0, // shear_mode
+			  0);// flag_rng
 }
 
 /* initialize NetCDF file for libstokes
@@ -1302,6 +1422,8 @@ stokes_nc_x_init (const char * filename, int np)
  *               2 == x = flow dir, z = grad dir
  *               NOTE: shear_rate and shear_shift[t] are defined only for
  *               shear_mode = 1 or 2.
+ *  flag_rng : 0 == no states of random number generator
+ *             1 == output states of random number generator
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
@@ -1325,7 +1447,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 		int flag_poly,
 		int flag_Q,
 		int flag_it,
-		int shear_mode)
+		int shear_mode,
+		int flag_rng)
 {
   int flag_ui0 = 0;
   int flag_oi0 = 0;
@@ -1471,7 +1594,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 			  flag_uf,  flag_of,  flag_ef,
 			  flag_ff,  flag_tf,  flag_sf,
 			  flag_a,   flag_af,
-			  shear_mode);
+			  shear_mode,
+			  flag_rng);
 }
 
 
@@ -2516,6 +2640,73 @@ stokes_nc_set_sf (struct stokes_nc *nc,
 }
 
 
+/* set rng data at time (step)
+ */
+void
+stokes_nc_set_rng (struct stokes_nc *nc,
+		   int step,
+		   const struct KIrand *rng)
+{
+  size_t start[2];
+  size_t count[2];
+
+  start[0] = step;
+  start[1] = 0;
+
+  count[0] = 1;
+  count[1] = nc->nrng;
+
+  size_t index[1];
+  index[0] = step;
+
+  int status;
+
+
+  // mt[nrng]
+  int *mt = (int *)malloc (sizeof(int) * MTRNG_N);
+  CHECK_MALLOC (mt, "stokes_nc_set_rng");
+
+  // copy (unsigned long) array to (int) array
+  bcopy (rng->mt, mt, sizeof(int) * MTRNG_N);
+
+  status = nc_put_vara_int(nc->id, nc->mt_id, start, count, mt);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_int() in stokes_nc_set_rng", "mt");
+    }
+
+  // mti
+  status = nc_put_var1_int (nc->id, nc->mti_id, index, &(rng->mti));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_int() in stokes_nc_set_rng", "mti");
+    }
+
+  // Gaussian_has_saved
+  status = nc_put_var1_int (nc->id, nc->mt_Ghs_id, index,
+			    &(rng->Gaussian_has_saved));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_int() in stokes_nc_set_rng", "mt_Ghs");
+    }
+
+  // Gaussian_saved
+  status = nc_put_var1_double (nc->id, nc->mt_Gs_id, index,
+			       &(rng->Gaussian_saved));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_put_vara_double() in stokes_nc_set_rng", "mt_Gs");
+    }
+}
+
 /** utility routines **/
 /* set stokes_nc data by the parameters
  * INPUT
@@ -2534,6 +2725,7 @@ stokes_nc_set_sf (struct stokes_nc *nc,
  *               1 == x = flow dir, y = grad dir
  *               2 == x = flow dir, z = grad dir
  *  shear_rate : defined only for shear_mode = 1 or 2.
+ *  flag_rng   :
  */
 struct stokes_nc *
 stokes_nc_set_by_params (const char *out_file,
@@ -2544,7 +2736,8 @@ stokes_nc_set_by_params (const char *out_file,
 			 const double *uf, const double *of, const double *ef,
 			 const double *xf,
 			 const double *lat,
-			 int shear_mode, double shear_rate)
+			 int shear_mode, double shear_rate,
+			 int flag_rng)
 {
   int nm = sys->nm;
   int nf = sys->np - nm;
@@ -2556,7 +2749,7 @@ stokes_nc_set_by_params (const char *out_file,
   struct stokes_nc *nc
     = stokes_nc_init (out_file, nm, nf,
 		      sys->version, flag_poly, flag_Q, 0,
-		      shear_mode);
+		      shear_mode, flag_rng);
   CHECK_MALLOC (nc, "stokes_nc_set_by_params");
 
   stokes_nc_set_ui0 (nc, Ui);

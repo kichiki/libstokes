@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.13 2008/05/24 05:42:04 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.14 2008/06/03 02:33:30 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 
 #include "stokes.h" // struct stokes
 
+#include "KIrand.h" // struct KIrand
 
 struct stokes_nc {
   int id;
@@ -45,6 +46,11 @@ struct stokes_nc {
   int nquat;
   int quat_dim;
   int quat_id;
+
+  int nrng;
+  int rng_dim;
+  int rng_id;
+  int flag_rng;
 
   int ntime;
   int time_dim;
@@ -99,6 +105,12 @@ struct stokes_nc {
   int shear_rate_id;
   int shear_shift_id;
 
+  /* states of the random number generator */
+  int mt_id;
+  int mti_id;
+  int mt_Ghs_id;
+  int mt_Gs_id;
+
   /* active/inactive flags : 0 = inactive
    *                         1 = active */
   int flag_ui0;
@@ -150,7 +162,7 @@ void
 stokes_nc_error (int status, const char * message, const char * varname);
 
 void
-stokes_nc_print_actives (struct stokes_nc * nc,
+stokes_nc_print_actives (struct stokes_nc *nc,
 			 FILE * out);
 
 
@@ -178,6 +190,8 @@ stokes_nc_x_init (const char * filename, int np);
  *               2 == x = flow dir, z = grad dir
  *               NOTE: shear_rate and shear_shift[t] are defined only for
  *               shear_mode = 1 or 2.
+ *  flag_rng : 0 == no states of random number generator
+ *             1 == output states of random number generator
  * OUTPUT
  *  (returned value) : ncid
  *  activated entries are
@@ -201,7 +215,8 @@ stokes_nc_init (const char *filename, int np, int nf,
 		int flag_poly,
 		int flag_Q,
 		int flag_it,
-		int shear_mode);
+		int shear_mode,
+		int flag_rng);
 
 /* close (and write if necessary) NetCDF file for libstokes
  */
@@ -218,108 +233,108 @@ stokes_nc_set_shear_rate (struct stokes_nc *nc,
 /* set l = (lx, ly, lz)
  */
 void
-stokes_nc_set_l (struct stokes_nc * nc,
+stokes_nc_set_l (struct stokes_nc *nc,
 		 const double * l);
 /* set ui0[vec]
  */
 void
-stokes_nc_set_ui0 (struct stokes_nc * nc,
+stokes_nc_set_ui0 (struct stokes_nc *nc,
 		   const double * ui0);
 /* set oi[vec]
  */
 void
-stokes_nc_set_oi0 (struct stokes_nc * nc,
+stokes_nc_set_oi0 (struct stokes_nc *nc,
 		   const double * oi0);
 /* set ei0[stt]
  */
 void
-stokes_nc_set_ei0 (struct stokes_nc * nc,
+stokes_nc_set_ei0 (struct stokes_nc *nc,
 		   const double * ei0);
 /* set x0[np][vec]
  */
 void
-stokes_nc_set_x0 (struct stokes_nc * nc,
+stokes_nc_set_x0 (struct stokes_nc *nc,
 		  const double * x0);
 /* set u0[np][vec]
  */
 void
-stokes_nc_set_u0 (struct stokes_nc * nc,
+stokes_nc_set_u0 (struct stokes_nc *nc,
 		  const double * u0);
 /* set o0[np][vec]
  */
 void
-stokes_nc_set_o0 (struct stokes_nc * nc,
+stokes_nc_set_o0 (struct stokes_nc *nc,
 		  const double * o0);
 /* set e0[np][stt]
  */
 void
-stokes_nc_set_e0 (struct stokes_nc * nc,
+stokes_nc_set_e0 (struct stokes_nc *nc,
 		  const double * e0);
 /* set f0[np][vec]
  */
 void
-stokes_nc_set_f0 (struct stokes_nc * nc,
+stokes_nc_set_f0 (struct stokes_nc *nc,
 		  const double * f0);
 /* set t0[np][vec]
  */
 void
-stokes_nc_set_t0 (struct stokes_nc * nc,
+stokes_nc_set_t0 (struct stokes_nc *nc,
 		  const double * t0);
 /* set s0[np][stt]
  */
 void
-stokes_nc_set_s0 (struct stokes_nc * nc,
+stokes_nc_set_s0 (struct stokes_nc *nc,
 		  const double * s0);
 /* set xf0[npf][vec]
  */
 void
-stokes_nc_set_xf0 (struct stokes_nc * nc,
+stokes_nc_set_xf0 (struct stokes_nc *nc,
 		   const double * xf0);
 /* set uf0[npf][vec]
  */
 void
-stokes_nc_set_uf0 (struct stokes_nc * nc,
+stokes_nc_set_uf0 (struct stokes_nc *nc,
 		   const double * uf0);
 /* set of0[npf][vec]
  */
 void
-stokes_nc_set_of0 (struct stokes_nc * nc,
+stokes_nc_set_of0 (struct stokes_nc *nc,
 		   const double * of0);
 /* set ef0[npf][stt]
  */
 void
-stokes_nc_set_ef0 (struct stokes_nc * nc,
+stokes_nc_set_ef0 (struct stokes_nc *nc,
 		   const double * ef0);
 /* set ff0[npf][vec]
  */
 void
-stokes_nc_set_ff0 (struct stokes_nc * nc,
+stokes_nc_set_ff0 (struct stokes_nc *nc,
 		   const double * ff0);
 /* set tf0[npf][vec]
  */
 void
-stokes_nc_set_tf0 (struct stokes_nc * nc,
+stokes_nc_set_tf0 (struct stokes_nc *nc,
 		   const double * tf0);
 /* set sf0[npf][stt]
  */
 void
-stokes_nc_set_sf0 (struct stokes_nc * nc,
+stokes_nc_set_sf0 (struct stokes_nc *nc,
 		   const double * sf0);
 /* set a[np]
  */
 void
-stokes_nc_set_a (struct stokes_nc * nc,
+stokes_nc_set_a (struct stokes_nc *nc,
 		 const double * a);
 /* set af[npf]
  */
 void
-stokes_nc_set_af (struct stokes_nc * nc,
+stokes_nc_set_af (struct stokes_nc *nc,
 		  const double * af);
 
 /* set time (step)
  */
 void
-stokes_nc_set_time (struct stokes_nc * nc,
+stokes_nc_set_time (struct stokes_nc *nc,
 		    int step, double time);
 /* set shear_shift[time]
  */
@@ -330,111 +345,119 @@ stokes_nc_set_shear_shift (struct stokes_nc *nc,
 /* set ui[time][vec] at time (step)
  */
 void
-stokes_nc_set_ui (struct stokes_nc * nc,
+stokes_nc_set_ui (struct stokes_nc *nc,
 		  int step,
 		  const double * ui);
 /* set oi[time][vec] at time (step)
  */
 void
-stokes_nc_set_oi (struct stokes_nc * nc,
+stokes_nc_set_oi (struct stokes_nc *nc,
 		  int step,
 		  const double * oi);
 /* set ei[time][stt] at time (step)
  */
 void
-stokes_nc_set_ei (struct stokes_nc * nc,
+stokes_nc_set_ei (struct stokes_nc *nc,
 		  int step,
 		  const double * ei);
 /* set x at time (step)
  */
 void
-stokes_nc_set_x (struct stokes_nc * nc,
+stokes_nc_set_x (struct stokes_nc *nc,
 		 int step,
 		 const double * x);
 /* set q at time (step)
  */
 void
-stokes_nc_set_q (struct stokes_nc * nc,
+stokes_nc_set_q (struct stokes_nc *nc,
 		 int step,
 		 const double * q);
 /* set u at time (step)
  */
 void
-stokes_nc_set_u (struct stokes_nc * nc,
+stokes_nc_set_u (struct stokes_nc *nc,
 		 int step,
 		 const double * u);
 /* set o at time (step)
  */
 void
-stokes_nc_set_o (struct stokes_nc * nc,
+stokes_nc_set_o (struct stokes_nc *nc,
 		 int step,
 		 const double * o);
 /* set e at time (step)
  */
 void
-stokes_nc_set_e (struct stokes_nc * nc,
+stokes_nc_set_e (struct stokes_nc *nc,
 		 int step,
 		 const double * e);
 /* set f at time (step)
  */
 void
-stokes_nc_set_f (struct stokes_nc * nc,
+stokes_nc_set_f (struct stokes_nc *nc,
 		 int step,
 		 const double * f);
 /* set t at time (step)
  */
 void
-stokes_nc_set_t (struct stokes_nc * nc,
+stokes_nc_set_t (struct stokes_nc *nc,
 		 int step,
 		 const double * t);
 /* set s at time (step)
  */
 void
-stokes_nc_set_s (struct stokes_nc * nc,
+stokes_nc_set_s (struct stokes_nc *nc,
 		 int step,
 		 const double * s);
 /* set xf at time (step)
  */
 void
-stokes_nc_set_xf (struct stokes_nc * nc,
+stokes_nc_set_xf (struct stokes_nc *nc,
 		  int step,
 		  const double * xf);
 /* set uf at time (step)
  */
 void
-stokes_nc_set_uf (struct stokes_nc * nc,
+stokes_nc_set_uf (struct stokes_nc *nc,
 		  int step,
 		  const double * uf);
 /* set of at time (step)
  */
 void
-stokes_nc_set_of (struct stokes_nc * nc,
+stokes_nc_set_of (struct stokes_nc *nc,
 		  int step,
 		  const double * of);
 /* set ef at time (step)
  */
 void
-stokes_nc_set_ef (struct stokes_nc * nc,
+stokes_nc_set_ef (struct stokes_nc *nc,
 		  int step,
 		  const double * ef);
 /* set ff at time (step)
  */
 void
-stokes_nc_set_ff (struct stokes_nc * nc,
+stokes_nc_set_ff (struct stokes_nc *nc,
 		  int step,
 		  const double * ff);
 /* set tf at time (step)
  */
 void
-stokes_nc_set_tf (struct stokes_nc * nc,
+stokes_nc_set_tf (struct stokes_nc *nc,
 		  int step,
 		  const double * tf);
 /* set sf at time (step)
  */
 void
-stokes_nc_set_sf (struct stokes_nc * nc,
+stokes_nc_set_sf (struct stokes_nc *nc,
 		  int step,
 		  const double * sf);
+
+
+/* set rng data at time (step)
+ */
+void
+stokes_nc_set_rng (struct stokes_nc *nc,
+		   int step,
+		   const struct KIrand *rng);
 
 
 /** utility routines **/
@@ -455,6 +478,7 @@ stokes_nc_set_sf (struct stokes_nc * nc,
  *               1 == x = flow dir, y = grad dir
  *               2 == x = flow dir, z = grad dir
  *  shear_rate : defined only for shear_mode = 1 or 2.
+ *  flag_rng   :
  */
 struct stokes_nc *
 stokes_nc_set_by_params (const char *out_file,
@@ -465,7 +489,8 @@ stokes_nc_set_by_params (const char *out_file,
 			 const double *uf, const double *of, const double *ef,
 			 const double *xf,
 			 const double *lat,
-			 int shear_mode, double shear_rate);
+			 int shear_mode, double shear_rate,
+			 int flag_rng);
 
 /* check stokes_nc data with the parameters
  * INPUT
