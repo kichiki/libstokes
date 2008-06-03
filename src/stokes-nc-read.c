@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.c,v 5.11 2008/05/24 05:59:55 kichiki Exp $
+ * $Id: stokes-nc-read.c,v 5.12 2008/06/03 02:33:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,27 @@ stokes_nc_check_1 (int id,
     }
 }
 static void
+stokes_nc_check_1i (int id,
+		    nc_type xtype,
+		    int ndims, const int *dimids,
+		    int dim0_id,
+		    int * var_id,
+		    int * flag)
+{
+  if (xtype != NC_INT ||
+      ndims != 1 ||
+      dimids[0] != dim0_id)
+    {
+      fprintf (stderr, "invalid data for time-dependent variable"
+	       " in stokes_nc_check_1i()\n");
+    }
+  else
+    {
+      *var_id = id;
+      *flag   = 1;
+    }
+}
+static void
 stokes_nc_check_2 (int id,
 		   nc_type xtype,
 		   int ndims, const int *dimids,
@@ -63,6 +84,28 @@ stokes_nc_check_2 (int id,
     {
       fprintf (stderr, "invalid data for time-dependent variable"
 	       " in stokes_nc_check_2()\n");
+    }
+  else
+    {
+      *var_id = id;
+      *flag   = 1;
+    }
+}
+static void
+stokes_nc_check_2i (int id,
+		    nc_type xtype,
+		    int ndims, const int *dimids,
+		    int dim0_id, int dim1_id,
+		    int * var_id,
+		    int * flag)
+{
+  if (xtype != NC_INT ||
+      ndims != 2 ||
+      dimids[0] != dim0_id ||
+      dimids[1] != dim1_id)
+    {
+      fprintf (stderr, "invalid data for time-dependent variable"
+	       " in stokes_nc_check_2i()\n");
     }
   else
     {
@@ -184,6 +227,11 @@ stokes_nc_open_ (const char * filename, int omode)
 	{
 	  nc->quat_dim = i;
 	  nc->nquat = len[0];
+	}
+      else if (strcmp ("rng", name) == 0)
+	{
+	  nc->rng_dim = i;
+	  nc->nrng = len[0];
 	}
       else if (strcmp ("time", name) == 0)
 	{
@@ -321,6 +369,19 @@ stokes_nc_open_ (const char * filename, int omode)
 	  else
 	    {
 	      nc->quat_id = d_ids[0];
+	    }
+	}
+      else if (strcmp ("rng", name) == 0)
+	{
+	  if (xtype != NC_INT ||
+	      nd != 1)
+	    {
+	      fprintf (stderr, "invalid data for variable rng"
+		       " in stokes_nc_open()\n");
+	    }
+	  else
+	    {
+	      nc->rng_id = d_ids[0];
 	    }
 	}
       /* system data */
@@ -635,6 +696,35 @@ stokes_nc_open_ (const char * filename, int omode)
 			     &(nc->sf_id),
 			     &(nc->flag_sf));
 	}
+      /* data for random number generator */
+      else if (strcmp ("mt", name) == 0)
+	{
+	  stokes_nc_check_2i (i, xtype, nd, d_ids,
+			      nc->time_dim, nc->rng_dim,
+			      &(nc->mt_id),
+			      &(nc->flag_rng));
+	}
+      else if (strcmp ("mti", name) == 0)
+	{
+	  stokes_nc_check_1i (i, xtype, nd, d_ids,
+			      nc->time_dim,
+			      &(nc->mti_id),
+			      &(nc->flag_rng));
+	}
+      else if (strcmp ("mt_Ghs", name) == 0)
+	{
+	  stokes_nc_check_1i (i, xtype, nd, d_ids,
+			      nc->time_dim,
+			      &(nc->mt_Ghs_id),
+			      &(nc->flag_rng));
+	}
+      else if (strcmp ("mt_Gs", name) == 0)
+	{
+	  stokes_nc_check_1 (i, xtype, nd, d_ids,
+			     nc->time_dim,
+			     &(nc->mt_Gs_id),
+			     &(nc->flag_rng));
+	}
       else
 	{
 	  fprintf (stderr, "variable %s is not a member of stokes-nc\n",
@@ -671,7 +761,7 @@ stokes_nc_reopen (const char * filename)
  *  x[]
  */
 void
-stokes_nc_get_array1d (const struct stokes_nc * nc,
+stokes_nc_get_array1d (const struct stokes_nc *nc,
 		       const char * name,
 		       double * x)
 {
@@ -810,7 +900,7 @@ stokes_nc_get_array1d (const struct stokes_nc * nc,
 /* read constant data for particles in 2d array [np/npf][vec/stt]
  */
 void
-stokes_nc_get_data0 (const struct stokes_nc * nc,
+stokes_nc_get_data0 (const struct stokes_nc *nc,
 		     const char * name,
 		     double * x)
 {
@@ -1030,7 +1120,7 @@ stokes_nc_get_data0 (const struct stokes_nc * nc,
 /* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
  */
 void
-stokes_nc_get_data (const struct stokes_nc * nc,
+stokes_nc_get_data (const struct stokes_nc *nc,
 		    const char * name,
 		    int step,
 		    double * x)
@@ -1272,7 +1362,7 @@ stokes_nc_get_data (const struct stokes_nc * nc,
  *  time[nc->ntime]
  */
 void
-stokes_nc_get_time (const struct stokes_nc * nc,
+stokes_nc_get_time (const struct stokes_nc *nc,
 		    double * time)
 {
   size_t start;
@@ -1301,7 +1391,7 @@ stokes_nc_get_time (const struct stokes_nc * nc,
  *  returned value : time[step]
  */
 double
-stokes_nc_get_time_step (const struct stokes_nc * nc,
+stokes_nc_get_time_step (const struct stokes_nc *nc,
 			 int step)
 {
   double time;
@@ -1320,4 +1410,73 @@ stokes_nc_get_time_step (const struct stokes_nc * nc,
 	 "at nc_get_vara_double() in stokes_nc_get_time", "time");
     }
   return (time);
+}
+
+/* read rng data at time (step)
+ * INPUT
+ *  step
+ */
+void
+stokes_nc_get_rng (struct stokes_nc *nc,
+		   int step,
+		   struct KIrand *rng)
+{
+  size_t start[2];
+  size_t count[2];
+
+  start[0] = step;
+  start[1] = 0;
+
+  count[0] = 1;
+  count[1] = nc->nrng;
+
+  size_t index[1];
+  index[0] = step;
+
+  int status;
+
+
+  // mt[nrng]
+  int *mt = (int *)malloc (sizeof(int) * MTRNG_N);
+  CHECK_MALLOC (mt, "stokes_nc_set_rng");
+
+  status = nc_get_vara_int(nc->id, nc->mt_id, start, count, mt);
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_int() in stokes_nc_get_rng", "mt");
+    }
+
+  // copy (unsigned long) array to (int) array
+  bcopy (mt, rng->mt, sizeof(int) * MTRNG_N);
+
+  // mti
+  status = nc_get_var1_int (nc->id, nc->mti_id, index, &(rng->mti));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_int() in stokes_nc_get_rng", "mti");
+    }
+
+  // Gaussian_has_saved
+  status = nc_get_var1_int (nc->id, nc->mt_Ghs_id, index,
+			    &(rng->Gaussian_has_saved));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_int() in stokes_nc_get_rng", "mt_Ghs");
+    }
+
+  // Gaussian_saved
+  status = nc_get_var1_double (nc->id, nc->mt_Gs_id, index,
+			       &(rng->Gaussian_saved));
+  if (status != NC_NOERR)
+    {
+      stokes_nc_error
+	(status,
+	 "at nc_get_vara_double() in stokes_nc_get_rng", "mt_Gs");
+    }
 }

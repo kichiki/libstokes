@@ -1,7 +1,7 @@
 /* header file for stokes-nc-read.c --
  * NetCDF interface for libstokes
- * Copyright (C) 2006-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc-read.h,v 5.5 2007/05/15 07:23:35 kichiki Exp $
+ * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: stokes-nc-read.h,v 5.6 2008/06/03 02:34:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,19 +40,19 @@ stokes_nc_reopen (const char * filename);
  *  x[]
  */
 void
-stokes_nc_get_array1d (const struct stokes_nc * nc,
+stokes_nc_get_array1d (const struct stokes_nc *nc,
 		       const char * name,
 		       double * x);
 /* read constant data for particles in 2d array [np/npf][vec/stt]
  */
 void
-stokes_nc_get_data0 (const struct stokes_nc * nc,
+stokes_nc_get_data0 (const struct stokes_nc *nc,
 		     const char * name,
 		     double * x);
 /* read time-dep. particle data at step in 3d array [step][np/npf][vec/stt]
  */
 void
-stokes_nc_get_data (const struct stokes_nc * nc,
+stokes_nc_get_data (const struct stokes_nc *nc,
 		    const char * name,
 		    int step,
 		    double * x);
@@ -64,7 +64,7 @@ stokes_nc_get_data (const struct stokes_nc * nc,
  *  time[nc->ntime]
  */
 void
-stokes_nc_get_time (const struct stokes_nc * nc,
+stokes_nc_get_time (const struct stokes_nc *nc,
 		    double * time);
 
 /* read time at a step
@@ -74,8 +74,17 @@ stokes_nc_get_time (const struct stokes_nc * nc,
  *  returned value : time[step]
  */
 double
-stokes_nc_get_time_step (const struct stokes_nc * nc,
+stokes_nc_get_time_step (const struct stokes_nc *nc,
 			 int step);
+
+/* read rng data at time (step)
+ * INPUT
+ *  step
+ */
+void
+stokes_nc_get_rng (struct stokes_nc *nc,
+		   int step,
+		   struct KIrand *rng);
 
 
 #endif /* !_STOKES_READ_NC_H_ */
