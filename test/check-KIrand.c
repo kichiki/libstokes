@@ -1,6 +1,6 @@
 /* test code for KIrand.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-KIrand.c,v 1.1 2008/06/01 17:05:21 kichiki Exp $
+ * $Id: check-KIrand.c,v 1.2 2008/06/05 03:27:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -69,8 +69,8 @@ check_KIrand_Gaussian (int verbose, double tiny)
     }
   vari /= (double)n;
 
-  check += compare_max (mean, 0.0, " mean", verbose, tiny, &max);
-  check += compare_max (vari, 1.0, " vari", verbose, tiny, &max);
+  check += compare_max (mean+1.0, 1.0, " mean", verbose, tiny, &max);
+  check += compare_max (vari,     1.0, " vari", verbose, tiny, &max);
 
   free (x0);
 
