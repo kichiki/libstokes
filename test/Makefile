@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.21 2008/06/01 17:10:13 kichiki Exp $
+# $Id: Makefile,v 1.22 2008/06/05 03:26:46 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -18,6 +18,9 @@ RYUON_LIB = -L/usr/local/lib
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
 
+NITSOL_INC = -I/usr/local/include
+NITSOL_LIB = -L/usr/local/lib -lnitsol
+
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
 
@@ -27,7 +30,8 @@ CFLAGS	     = \
 	-I$(SRC_DIR)	\
 	$(RYUON_INC)	\
 	$(GUILE_INC)	\
-	$(GSL_INC)
+	$(GSL_INC)	\
+	$(NITSOL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
@@ -45,7 +49,8 @@ LIBS         = \
 	$(ATLAS_LIBS)		\
 	-lnetcdf		\
 	$(GUILE_LIB)		\
-	$(GSL_LIB)
+	$(GSL_LIB)		\
+	$(NITSOL_LIB)
 
 all:	test-all	\
 	test-twobody	\
@@ -80,6 +85,7 @@ test-all-OBJ =\
 	check-dpotrf_c.o	\
 	check-brownian.o	\
 	check-bd-imp.o		\
+	check-bd-imp-nitsol.o	\
 	check-sqrt-dgeev.o	\
 	check-matrix.o		\
 	check-list-ex.o		\

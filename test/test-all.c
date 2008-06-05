@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.23 2008/06/01 17:09:44 kichiki Exp $
+ * $Id: test-all.c,v 1.24 2008/06/05 03:24:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,6 +46,7 @@
 #include "check-dpotrf_c.h"
 #include "check-brownian.h"
 #include "check-bd-imp.h"
+#include "check-bd-imp-nitsol.h"
 #include "check-sqrt-dgeev.h"
 
 #include "check-matrix.h"
@@ -67,6 +68,7 @@ int
 main (int argc, char** argv)
 {
   int check = 0;
+
 
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
@@ -345,6 +347,32 @@ main (int argc, char** argv)
 				    0.01,// h
 				    1.0, // t_out
 				    1, 8.0e-6);
+
+  // check-bd-imp-nitsol.c
+  check += check_BD_imp_NITSOL (0,   // F version
+				20,  // N
+				0,   // flag_lub
+				0,   // flag_mat
+				0,   // flag_Q
+				0.1, // dt
+				1, 3.1e-4);
+
+  check += check_BD_imp_NITSOL (1,   // FT version
+				20,  // N
+				0,   // flag_lub
+				0,   // flag_mat
+				1,   // flag_Q
+				0.1, // dt
+				1, 3.1e-4);
+
+  check += check_BD_imp_NITSOL (2,   // FTS version
+				20,  // N
+				0,   // flag_lub
+				0,   // flag_mat
+				1,   // flag_Q
+				0.1, // dt
+				1, 3.1e-4);
+
 
   // check-sqrt-dgeev.c
   check += check_BD_sqrt_by_dgeev (100, 1, 4.1e-13);
