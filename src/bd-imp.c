@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.9 2008/05/02 03:47:59 kichiki Exp $
+ * $Id: bd-imp.c,v 1.10 2008/06/05 03:22:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -90,8 +90,10 @@ BD_imp_init (struct BD_params *BD,
   BDimp->F = (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
   CHECK_MALLOC (BDimp->F, "BD_imp_init");
 
-  if      (BD->scheme == 3) BDimp->F->f = BD_imp_JGdP00_func;
-  else if (BD->scheme == 4) BDimp->F->f = BD_imp_PC_func;
+  if (BD->scheme == 3 || BD->scheme == 4)
+    {
+      BDimp->F->f = BD_imp_GSL_MULTIROOT_func;
+    }
   else
     {
       fprintf (stderr, "# BD_imp_init: invalid scheme %d\n", BD->scheme);
@@ -350,113 +352,6 @@ BD_imp_adj_uinf (struct BD_imp *BDimp,
   /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
 }
 
-/**
- * semi-implicit algorithm by
- * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
- */
-/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
- * INTPUT
- *  x[n] : = (x[nm*3])          for F version
- *         = (x[nm*3], q[nm*4]) for FT and FTS versions
- *  p    : (struct BD_imp *)
- * OUTPUT
- *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
- */
-int
-BD_imp_JGdP00_func (const gsl_vector *x, void *p,
-		    gsl_vector *f)
-{
-  struct BD_imp *BDimp = (struct BD_imp *)p;
-  struct BD_params *BD = BDimp->BD;
-  struct stokes *sys = BD->sys;
-
-  int i;
-
-  int nm = sys->nm;
-  int nm3 = nm * 3;
-  int nm4 = nm3 + nm;
-
-  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
-  for (i = 0; i < nm3; i ++)
-    {
-      BDimp->pos[i] = gsl_vector_get (x, i);
-    }
-  if (sys->version > 0)
-    {
-      for (i = 0; i < nm4; i ++)
-	{
-	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
-	}
-    }
-
-  /**
-   * set forces,
-   * where F^bond, F^EV are at the new position BDimp->pos[]
-   */
-  BD_imp_calc_forces (BDimp, BDimp->pos);
-
-  /**
-   * solve (u, o) with F^P(x) for the configuration to x0[]
-   */
-  // reset the configuration to x0[]
-  stokes_set_pos_mobile (sys, BDimp->x0);
-  solve_mix_3all (sys,
-		  BD->flag_noHI,
-		  BD->flag_lub, BD->flag_mat,
-		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
-		  BD->uf, BD->of, BD->ef,
-		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
-		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
-  /* note that FTS->[u,o] are in the labo frame */
-
-  /**
-   * adjust the imposed flow with the new config x[].
-   *
-   * now FTS->u = U (in the labo frame)
-   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   * so that FTS->u += (u(x) - u(x0))
-   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   *                   ^^^^
-   * note that only u depends on the position (not o (nor e))
-   * thereofre, there is no correction
-   * (that is, the components in (u(x) - u(x0)) are zero)
-   */
-  BD_imp_adj_uinf (BDimp, BDimp->x0, BDimp->pos);
-  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
-
-  /**
-   * form the vector f[] for the root-finding routines
-   */
-  for (i = 0; i < nm3; i ++)
-    {
-      double fi = 
-	BDimp->pos[i] - BDimp->x0[i]
-	- BDimp->dt * BDimp->FTS->u[i];
-      gsl_vector_set (f, i, fi);
-    }
-  if (sys->version > 0)
-    {
-      // FT or FTS version
-      for (i = 0; i < nm; i ++)
-	{
-	  int ix = i * 3;
-	  int iq = i * 4;
-	  double dQdt[4];
-	  quaternion_dQdt (BDimp->q + iq, BDimp->FTS->o + ix, dQdt);
-	  int ii;
-	  for (ii = 0; ii < 4; ii ++)
-	    {
-	      double fi =
-		BDimp->q[iq + ii] - BDimp->q0[iq + ii]
-		- BDimp->dt * dQdt[ii];
-	      gsl_vector_set (f, nm3 + iq + ii, fi);
-	    }
-	}
-    }
-
-  return (GSL_SUCCESS);
-}
-
 /* set gsl_vector
  * if q == NULL, q = (0,0,0,1) is set.
  */
@@ -515,7 +410,239 @@ BD_imp_get_root (const struct BD_imp *BDimp,
     }
 }
 
+void
+BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
+			   double *x, double *q)
+{
+  /**
+   * set the initial guess
+   */
+  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
+  gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
 
+  int status;
+  int iter = 0;
+  do
+    {
+      iter++;
+      status = gsl_multiroot_fsolver_iterate (BDimp->S);
+
+      if (status)   /* check if solver is stuck */
+	break;
+
+      status = gsl_multiroot_test_residual (BDimp->S->f, BDimp->eps);
+    }
+  while (status == GSL_CONTINUE && iter < BDimp->itmax);
+
+  /**
+   * retreive the solution
+   */
+  gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
+  BD_imp_get_root (BDimp, root, x, q);
+
+  /* it looks like the "root" is just a pointer, so we don't need to free it.
+  gsl_vector_free (root);
+  */
+}
+
+
+/* form the nonlinear equations for the semi-implicit algorithms
+ * (both JGdP and siPC)
+ * INTPUT
+ *  x[n] : = (x[nm*3])          for F version
+ *         = (x[nm*3], q[nm*4]) for FT and FTS versions
+ *  p    : (struct BD_imp *)
+ * OUTPUT
+ *  f[n] := x - x0
+ *        - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  for JGdP, or
+ *  f[n] := x - x0
+ *        - (dt/2) * (U^pr
+ *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  for siPC, where U^pr is the predictor obtained by Euler scheme as 
+ *  U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
+ */
+void
+BD_imp_f (struct BD_imp *BDimp, const double *x,
+	  double *f)
+{
+  struct BD_params *BD = BDimp->BD;
+  struct stokes *sys = BD->sys;
+
+  int i;
+
+  int nm = sys->nm;
+  int nm3 = nm * 3;
+  int nm4 = nm3 + nm;
+
+  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
+  for (i = 0; i < nm3; i ++)
+    {
+      BDimp->pos[i] = x[i];
+    }
+  if (sys->version > 0)
+    {
+      for (i = 0; i < nm4; i ++)
+	{
+	  BDimp->q[i] = x[nm3 + i];
+	}
+    }
+
+  /**
+   * set forces,
+   * where F^bond, F^EV are at the new position BDimp->pos[]
+   */
+  BD_imp_calc_forces (BDimp, BDimp->pos);
+
+  /**
+   * solve (u, o) with F^P(x) for the configuration to x0[]
+   * for JGdP, or
+   * solve (u, o) with F^P(x) for the configuration to xP[] -- the predictor
+   * for siPC
+   */
+  if (BDimp->BD->scheme == 3) // JGdP
+    {
+      // reset the configuration to x0[]
+      stokes_set_pos_mobile (sys, BDimp->x0);
+    }
+  else if (BDimp->BD->scheme == 4) // siPC
+    {
+      // reset the configuration to xP[]
+      stokes_set_pos_mobile (sys, BDimp->xP);
+    }
+  else
+    {
+      fprintf (stderr, "# BD_imp_NITSOL_f: invalid scheme %d\n",
+	       BDimp->BD->scheme);
+      exit (1);
+    }
+  solve_mix_3all (sys,
+		  BD->flag_noHI,
+		  BD->flag_lub, BD->flag_mat,
+		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
+		  BD->uf, BD->of, BD->ef,
+		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
+		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
+  /* note that FTS->[u,o] are in the labo frame */
+
+  /**
+   * adjust the imposed flow with the new config x[].
+   *
+   * now FTS->u = U (in the labo frame)
+   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   * so that FTS->u += (u(x) - u(x0))
+   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+   *                   ^^^^
+   * note that only u depends on the position (not o (nor e))
+   * thereofre, there is no correction
+   * (that is, the components in (u(x) - u(x0)) are zero)
+   */
+  if (BDimp->BD->scheme == 3) // JGdP
+    {
+      BD_imp_adj_uinf (BDimp, BDimp->x0, BDimp->pos);
+    }
+  else // siPC
+    {
+      BD_imp_adj_uinf (BDimp, BDimp->xP, BDimp->pos);
+    }
+  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
+
+  /**
+   * form the vector f[] for the root-finding routines
+   */
+  for (i = 0; i < nm3; i ++)
+    {
+      if (BDimp->BD->scheme == 3) // JGdP
+	{
+	  f[i] =
+	    BDimp->pos[i] - BDimp->x0[i]
+	    - BDimp->dt * BDimp->FTS->u[i];
+	}
+      else // siPC
+	{
+	  f[i] =
+	    BDimp->pos[i] - BDimp->x0[i]
+	    - 0.5 * BDimp->dt * (BDimp->uP[i] + BDimp->FTS->u[i]);
+	}
+    }
+  if (sys->version > 0)
+    {
+      // FT or FTS version
+      for (i = 0; i < nm; i ++)
+	{
+	  int ix = i * 3;
+	  int iq = i * 4;
+	  double dQdt[4];
+	  quaternion_dQdt (BDimp->q + iq, BDimp->FTS->o + ix, dQdt);
+	  int ii;
+	  for (ii = 0; ii < 4; ii ++)
+	    {
+	      if (BDimp->BD->scheme == 3) // JGdP
+		{
+		  f[nm3 + iq + ii] =
+		    BDimp->q[iq + ii] - BDimp->q0[iq + ii]
+		    - BDimp->dt * dQdt[ii];
+		}
+	      else // siPC
+		{
+		  f[nm3 + iq + ii] =
+		    BDimp->q[iq + ii] - BDimp->q0[iq + ii]
+		    - 0.5 * BDimp->dt * (BDimp->dQdtP[iq + ii] + dQdt[ii]);
+		}
+	    }
+	}
+    }
+}
+
+
+
+/* wrapper of BD_imp_f() for GSL-MULTROOT routine
+ * this is applicable for both JGdP and siPC
+ */
+int
+BD_imp_GSL_MULTIROOT_func (const gsl_vector *x, void *p,
+			   gsl_vector *f)
+{
+  struct BD_imp *BDimp = (struct BD_imp *)p;
+
+  int n;
+  if (BDimp->BD->sys->version == 0)
+    {
+      n = BDimp->BD->sys->nm * 3;
+    }
+  else
+    {
+      n = BDimp->BD->sys->nm * 7;
+    }
+  double *xcur = (double *)malloc (sizeof (double) * n);
+  double *fcur = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (xcur, "BD_imp_GSL_MULTIROOT_func");
+  CHECK_MALLOC (fcur, "BD_imp_GSL_MULTIROOT_func");
+
+  int i;
+  for (i = 0; i < n; i ++)
+    {
+      xcur[i] = gsl_vector_get (x, i);
+    }
+
+  BD_imp_f (BDimp, xcur, fcur);
+
+  for (i = 0; i < n; i ++)
+    {
+      gsl_vector_set (f, i, fcur[i]);
+    }
+
+  free (xcur);
+  free (fcur);
+
+  return (GSL_SUCCESS);
+}
+
+
+/**
+ * semi-implicit algorithm by
+ * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
+ */
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
@@ -557,34 +684,10 @@ BD_evolve_JGdP00 (double t,
     }
 
   /**
-   * set the initial guess
+   * solve the nonlinear equations by GSL-MULTIROOT
    */
-  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
-  gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
+  BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
 
-  int status;
-  int iter = 0;
-  do
-    {
-      iter++;
-      status = gsl_multiroot_fsolver_iterate (BDimp->S);
-
-      if (status)   /* check if solver is stuck */
-	break;
-
-      status = gsl_multiroot_test_residual (BDimp->S->f, BDimp->eps);
-    }
-  while (status == GSL_CONTINUE && iter < BDimp->itmax);
-
-  /**
-   * retreive the solution
-   */
-  gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
-  BD_imp_get_root (BDimp, root, x, q);
-
-  /* it looks like the "root" is just a pointer, so we don't need to free it.
-  gsl_vector_free (root);
-  */
 
   /* dt-ajustment process -- overlap check */
   if (BDimp->BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check
@@ -679,113 +782,6 @@ BD_imp_set_P (struct BD_imp *BDimp)
   BDimp->flag_PC = 1;
 }
 
-/* form the nonlinear equations for semi-implicit predictor-corrector
- * INTPUT
- *  x[n] : = (x[nm*3])          for F version
- *         = (x[nm*3], q[nm*4]) for FT and FTS versions
- *  p    : (struct BD_imp *)
- * OUTPUT
- *  f[n] := x - x0
- *        - (dt/2) * (U^pr
- *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
- *  where U^pr is the predictor obtained by Euler scheme as 
- *   U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
- */
-int
-BD_imp_PC_func (const gsl_vector *x, void *p,
-		gsl_vector *f)
-{
-  struct BD_imp *BDimp = (struct BD_imp *)p;
-  struct BD_params *BD = BDimp->BD;
-  struct stokes *sys = BD->sys;
-
-  int i;
-
-  int nm = sys->nm;
-  int nm3 = nm * 3;
-  int nm4 = nm3 + nm;
-
-  /* extract pos[nm3] and q[nm4] from gsl_vector *x */
-  for (i = 0; i < nm3; i ++)
-    {
-      BDimp->pos[i] = gsl_vector_get (x, i);
-    }
-  if (sys->version > 0)
-    {
-      for (i = 0; i < nm4; i ++)
-	{
-	  BDimp->q[i] = gsl_vector_get (x, nm3 + i);
-	}
-    }
-
-  /**
-   * set forces,
-   * where F^bond, F^EV are at the new position BDimp->pos[]
-   */
-  BD_imp_calc_forces (BDimp, BDimp->pos);
-
-  /**
-   * solve (u, o) with F^P(x) for the configuration to xP[] -- the predictor
-   */
-  // reset the configuration to xP[]
-  stokes_set_pos_mobile (sys, BDimp->xP);
-  solve_mix_3all (sys,
-		  BD->flag_noHI,
-		  BD->flag_lub, BD->flag_mat,
-		  BDimp->FTS->f, BDimp->FTS->t, BDimp->FTS->e,
-		  BD->uf, BD->of, BD->ef,
-		  BDimp->FTS->u, BDimp->FTS->o, BDimp->FTS->s,
-		  BDimp->FTS->ff, BDimp->FTS->tf, BDimp->FTS->sf);
-  /* note that FTS->[u,o] are in the labo frame */
-
-  /**
-   * adjust the imposed flow with the new config x[].
-   *
-   * now FTS->u = U (in the labo frame)
-   *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   * so that FTS->u += (u(x) - u(x0))
-   *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
-   *                   ^^^^
-   * note that only u depends on the position (not o (nor e))
-   * thereofre, there is no correction
-   * (that is, the components in (u(x) - u(x0)) are zero)
-   */
-  BD_imp_adj_uinf (BDimp, BDimp->xP, BDimp->pos);
-  /* now FTS->u = u(x) + U(x0, F^ext(x0), F^B(x0), F^P(x)) */
-
-  /**
-   * form the vector f[] for the root-finding routines
-   */
-  for (i = 0; i < nm3; i ++)
-    {
-      double fi = 
-	BDimp->pos[i] - BDimp->x0[i]
-	- 0.5 * BDimp->dt * (BDimp->uP[i] + BDimp->FTS->u[i]);
-      gsl_vector_set (f, i, fi);
-    }
-  if (sys->version > 0)
-    {
-      // FT or FTS version
-      for (i = 0; i < nm; i ++)
-	{
-	  int ix = i * 3;
-	  int iq = i * 4;
-	  double dQdt[4];
-	  quaternion_dQdt (BDimp->q + iq, BDimp->FTS->o + ix, dQdt);
-	  int ii;
-	  for (ii = 0; ii < 4; ii ++)
-	    {
-	      double fi =
-		BDimp->q[iq + ii] - BDimp->q0[iq + ii]
-		- 0.5 * BDimp->dt * (BDimp->dQdtP[iq + ii] + dQdt[ii]);
-	      gsl_vector_set (f, nm3 + iq + ii, fi);
-	    }
-	}
-    }
-
-  return (GSL_SUCCESS);
-}
-
 /* evolve position of particles by semi-implicit predictor-corrector
  * INPUT
  *  t       : current time
@@ -858,39 +854,10 @@ BD_evolve_imp_PC (double t,
 
 
   /**
-   * set the initial guess
+   * solve the nonlinear equations by GSL-MULTIROOT
    */
-  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
-  gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
+  BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
 
-  // set sys->shear_shift if necessary
-  // at the corrector step
-  stokes_set_shear_shift (BDimp->BD->sys, t + dt_local,
-			  BDimp->BD->t0, BDimp->BD->s0);
-
-  int status;
-  int iter = 0;
-  do
-    {
-      iter++;
-      status = gsl_multiroot_fsolver_iterate (BDimp->S);
-
-      if (status)   /* check if solver is stuck */
-	break;
-
-      status = gsl_multiroot_test_residual (BDimp->S->f, BDimp->eps);
-    }
-  while (status == GSL_CONTINUE && iter < BDimp->itmax);
-
-  /**
-   * retreive the solution
-   */
-  gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
-  BD_imp_get_root (BDimp, root, x, q);
-
-  /* it looks like the "root" is just a pointer, so we don't need to free it.
-  gsl_vector_free (root);
-  */
 
   /* dt-ajustment process -- overlap check */
   if (BDimp->BD->sys->rmin == 0.0 // if rmin is defined, skip overlap check

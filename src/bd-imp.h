@@ -1,7 +1,7 @@
 /* header file for bd-imp.c --
  * implicit Brownian dynamics algorithms
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.h,v 1.3 2007/12/22 04:30:55 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: bd-imp.h,v 1.4 2008/06/05 03:23:20 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,6 @@ struct BD_imp {
   double *dQdtP;
 };
 
-
 /* initialize struct BD_imp
  * INPUT
  *  BD : struct BD_params
@@ -83,21 +82,36 @@ void
 BD_imp_set_dt (struct BD_imp *BDimp,
 	       double dt);
 
-/**
- * semi-implicit algorithm by
- * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
- */
-/* form the nonlinear equations for the algorithm by Jendrejack et al (2000)
- * INTPUT
- *  x[n] : = (x[nm*3])          for F version
- *         = (x[nm*3], q[nm*4]) for FT and FTS versions
- *  p    : (struct BD_imp *)
+/* calculate forces on each particle including
+ *   constant force in BDimp->BD->F[],T[]
+ *   Brownian force BDimp->fact * BDimp->z[],
+ *   bond force F^bond(pos[]) by ...
+ *   EV force F^EV(pos[]) by ...
+ * INPUT
+ *  pos[] : position for F^bond and F^EV
+ *  BDimp->BD->FTS->F[],T[],E[] for constant force
+ *  BDimp->fact, BDimp->z[] for F^B
  * OUTPUT
- *  f[n] := x - x0 - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0)))
+ *  BDimp->FTS->f[],t[],e[]
  */
-int
-BD_imp_JGdP00_func (const gsl_vector *x, void *p,
-		    gsl_vector *f);
+void
+BD_imp_calc_forces (struct BD_imp *BDimp,
+		    const double *pos);
+
+/* adjust the imposed flow with the new config x[].
+ *
+ * now FTS->u = U (in the labo frame)
+ *            = u(x0) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+ * so that FTS->u += (u(x) - u(x0))
+ *                => u(x) + R^{-1}.(F^ext(x0) + F^B(x0) + F^P(x))
+ *                   ^^^^
+ * note that only u depends on the position (not o (nor e))
+ * thereofre, there is no correction
+ * (that is, the components in (u(x) - u(x0)) are zero)
+ */
+void
+BD_imp_adj_uinf (struct BD_imp *BDimp,
+		 double *x0, double *x);
 
 /* set gsl_vector
  * if q == NULL, q = (0,0,0,1) is set.
@@ -107,12 +121,49 @@ BD_imp_set_guess (const struct BD_imp *BDimp,
 		  const double *x,
 		  const double *q,
 		  gsl_vector *guess);
+
 void
 BD_imp_get_root (const struct BD_imp *BDimp,
 		 gsl_vector *root,
 		 double *x,
 		 double *q);
 
+void
+BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
+			   double *x, double *q);
+
+/* form the nonlinear equations for the semi-implicit algorithms
+ * (both JGdP and siPC)
+ * INTPUT
+ *  x[n] : = (x[nm*3])          for F version
+ *         = (x[nm*3], q[nm*4]) for FT and FTS versions
+ *  p    : (struct BD_imp *)
+ * OUTPUT
+ *  f[n] := x - x0
+ *        - dt * (uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  for JGdP, or
+ *  f[n] := x - x0
+ *        - (dt/2) * (U^pr
+ *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
+ *  for siPC, where U^pr is the predictor obtained by Euler scheme as 
+ *  U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
+ */
+void
+BD_imp_f (struct BD_imp *BDimp, const double *x,
+	  double *f);
+
+/* wrapper of BD_imp_f() for GSL-MULTROOT routine
+ * this is applicable for both JGdP and siPC
+ */
+int
+BD_imp_GSL_MULTIROOT_func (const gsl_vector *x, void *p,
+			   gsl_vector *f);
+
+
+/**
+ * semi-implicit algorithm by
+ * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
+ */
 /* evolve position of particles by semi-implicit scheme
  * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
  * INPUT
@@ -134,6 +185,7 @@ BD_evolve_JGdP00 (double t,
 		  double *x, double *q,
 		  double dt);
 
+
 /**
  * semi-implicit predictor-corrector algorithm
  */
@@ -142,22 +194,6 @@ BD_evolve_JGdP00 (double t,
  */
 void
 BD_imp_set_P (struct BD_imp *BDimp);
-
-/* form the nonlinear equations for semi-implicit predictor-corrector
- * INTPUT
- *  x[n] : = (x[nm*3])          for F version
- *         = (x[nm*3], q[nm*4]) for FT and FTS versions
- *  p    : (struct BD_imp *)
- * OUTPUT
- *  f[n] := x - x0
- *        - (dt/2) * (U^pr
- *                    + uinf(x) + M(x0).(F^E + F^P(x) + F^B(x0))),
- *  where U^pr is the predictor obtained by Euler scheme as 
- *   U^pr = uinf(x0) + M(x0).(F^E + F^P(x0) + F^B(x0)).
- */
-int
-BD_imp_PC_func (const gsl_vector *x, void *p,
-		gsl_vector *f);
 
 /* evolve position of particles by semi-implicit predictor-corrector
  * INPUT
