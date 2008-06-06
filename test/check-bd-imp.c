@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.6 2008/05/24 06:09:35 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.7 2008/06/06 03:53:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -202,6 +202,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
    */
   BD->scheme = 3; // JGdP
   struct BD_imp *BDimp = BD_imp_init (BD,
+				      0,     // GSL solver
 				      1000,  // itmax
 				      1.0e-6 // eps
 				      );
@@ -567,6 +568,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   struct BD_imp *BDimp = NULL;
   BD->scheme = 3; // JGdP
   BDimp = BD_imp_init (BD,
+		       0,     // GSL solver
 		       1000,  // itmax
 		       1.0e-6 // eps
 		       );
@@ -580,6 +582,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 
   BD->scheme = 4; // siPC
   BDimp = BD_imp_init (BD,
+		       0,     // GSL solver
 		       1000,  // itmax
 		       1.0e-6 // eps
 		       );
