@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.63 2008/06/03 02:37:20 kichiki Exp $
+ * $Id: libstokes.h,v 1.64 2008/06/06 03:46:58 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2271,6 +2271,136 @@ BD_ode_evolve (struct BD_params *BD,
 	       double *y);
 
 
+/* from nitsol_c.h */
+struct NITSOL {
+  // size of the problem
+  int n;
+
+  // tolerance values
+  double ftol;
+  double stptol;
+
+  // input parameters
+  int input[10];
+
+  // work area
+  int lrwork;
+  double *rwork;
+
+  // parameters to the functions
+  double *rpar;
+  int *ipar;
+
+  // functions
+  void (*f)(int *n, double *xcur, double *fcur,
+	    double *rpar, int *ipar, int *itrmf);
+  void (*jacv)(int *n, double *xcur, double *fcur,
+	       int *ijob, double *v, double *z,
+	       double *rpar, int *ipar, int *itrmjv);
+  double (*dinpr)(int* N, 
+		  double* X, int* incX, 
+		  double* Y, int* incY);
+  double (*dnorm)(int* N, double* X, int* incX);
+
+  // other parameters
+  int iplvl;
+  int ipunit;
+
+  double choice1_exp;
+  double choice2_exp;
+  double choice2_coef;
+  double eta_cutoff;
+  double etamax;
+  double thmin;
+  double thmax;
+  double etafixed;
+
+  // output parameters
+  int iterm;
+  int info[6];
+};
+
+
+struct NITSOL *
+NITSOL_init (void);
+
+void
+NITSOL_free (struct NITSOL *nit);
+
+void
+NITSOL_set_n (struct NITSOL *nit,
+	      int n);
+
+void
+NITSOL_set_GMRES (struct NITSOL *nit,
+		  int restart);
+
+void
+NITSOL_set_BiCGSTAB (struct NITSOL *nit);
+
+void
+NITSOL_set_TFQMR (struct NITSOL *nit);
+
+/*
+ * INPUT
+ *  p_flag  : 0 == no preconditioning
+ *            1 == right preconditioning
+ *  j_flag  : 0 == approximated for J*v
+ *            1 == analytical J*v
+ *  j_order : 1, 2, or 4 for the approximation of J*v
+ *            (ignored for j_flag == 1)
+ *  jacv  : jacobian and preconditioning function
+ *          (ignored for p_flag == 0 and j_flag == 0)
+ */
+void
+NITSOL_set_jacv (struct NITSOL *nit,
+		 int p_flag,
+		 int j_flag,
+		 int j_order,
+		 void (*jacv)(int *n, double *xcur, double *fcur,
+			      int *ijob, double *v, double *z,
+			      double *rpar, int *ipar, int *itrmjv));
+
+void
+NITSOL_set_tol (struct NITSOL *nit,
+		double ftol, double stptol);
+
+/*
+ * i do not know the way of specifying parameters is fine (for choices 1, 2, 3)
+ * INPUT
+ *  flag : choice 0
+ *         choice 1, p1 is for exp (alpha)
+ *         choice 2, p1 and p2 are for exp (alpha) and coef (gamma)
+ *         choice 3, p1 is for etafixed
+ *  p1, p2 : parameters
+ */
+void
+NITSOL_set_forcing (struct NITSOL *nit,
+		    int flag,
+		    double p1, double p2);
+
+
+
+void
+NITSOL_parse_input (struct NITSOL *nit,
+		    FILE *out);
+
+void
+NITSOL_parse_info (struct NITSOL *nit,
+		   FILE *out);
+
+void
+NITSOL_parse_nitinfo (FILE *out);
+
+void
+NITSOL_parse_iterm (struct NITSOL *nit,
+		    FILE *out);
+
+
+void
+NITSOL_solve (struct NITSOL *nit,
+	      double *x);
+
 /* from bd-imp.h */
 #include <gsl/gsl_multiroots.h>
 struct BD_imp {
@@ -2281,13 +2411,22 @@ struct BD_imp {
   double fact;
   double *z;
 
+  int flag_solver; /* 0 == GSL
+		    * 1 == NITSOL
+		    */
+
   // GSL stuff
   const gsl_multiroot_fsolver_type *T;
   gsl_multiroot_function *F;
   gsl_multiroot_fsolver  *S;
   gsl_vector *guess;
+
+  // NITSOL stuff
+  struct NITSOL *nit;
+
   int itmax;
   double eps;
+
 
   // working area used in BD_imp_JGdP00_func()
   struct FTS *FTS;
@@ -2307,11 +2446,14 @@ struct BD_imp {
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  flag_solver : 0 == GSL solver
+ *                1 == NITSOL
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
+	     int flag_solver,
 	     int itmax, double eps);
 
 void
