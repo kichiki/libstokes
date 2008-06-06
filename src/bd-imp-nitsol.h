@@ -1,7 +1,7 @@
 /* header file for bd-imp-nitsol.c --
  * implicit Brownian dynamics algorithms by NITSOL
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp-nitsol.h,v 1.1 2008/06/05 03:21:11 kichiki Exp $
+ * $Id: bd-imp-nitsol.h,v 1.2 2008/06/06 03:46:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,58 +55,6 @@ BD_imp_NITSOL_f (int *n, double *xcur, double *fcur,
 void
 BD_imp_NITSOL_wrap (struct BD_imp *BDimp,
 		    double *x, double *q);
-
-
-/**
- * semi-implicit algorithm by
- * Jendrejack et al (2000) J.Chem.Phys. vol 113 p.2894.
- */
-/* evolve position of particles by semi-implicit scheme
- * with NITSOL
- * ref: Jendrejack et al (2000) J. Chem. Phys. vol.113 p.2894.
- * INPUT
- *  t       : current time
- *  BDimp   : struct BD_imp
- *  x[nm*3] : positions of particles   at t = t0
- *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
- *            if NULL is given, just ignored.
- *  dt      : time step (scaled by a/U)
- * OUTPUT
- *  x[nm*3] : updated positions of particles at t = t0 + dt
- *  q[nm*4] : quaternions of particles       at t = t0 + dt
- *            (only if q[] is given for FT and FTS)
- *  returned value : the integrated time duration
- */
-double
-BD_evolve_NITSOL_JGdP00 (double t,
-			 struct BD_imp *BDimp,
-			 double *x, double *q,
-			 double dt);
-
-
-/**
- * semi-implicit predictor-corrector algorithm
- */
-/* evolve position of particles by semi-implicit predictor-corrector
- * with NITSOL
- * INPUT
- *  t       : current time
- *  BDimp   : struct BD_imp
- *  x[nm*3] : positions of particles   at t = t0
- *  q[nm*4] : quaternions of particles at t = t0 (only for FT and FTS)
- *            if NULL is given, just ignored.
- *  dt      : time step (scaled by a/U)
- * OUTPUT
- *  x[nm*3] : updated positions of particles at t = t0 + dt
- *  q[nm*4] : quaternions of particles       at t = t0 + dt
- *            (only if q[] is given for FT and FTS)
- *  returned value : the integrated time duration
- */
-double
-BD_evolve_NITSOL_imp_PC (double t,
-			 struct BD_imp *BDimp,
-			 double *x, double *q,
-			 double dt);
 
 
 #endif /* !_BD_IMP_NITSOL_H_ */
