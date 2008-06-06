@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.10 2008/06/05 03:22:52 kichiki Exp $
+ * $Id: bd-imp.c,v 1.11 2008/06/06 03:18:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,19 +27,33 @@
 #include <ode-quaternion.h> // quaternion_dQdt()
 
 #include <brownian.h> // struct BD_params
+#include <nitsol_c.h> // struct NITSOL
+#include "bd-imp-nitsol.h" // BD_imp_NITSOL_f(), BD_imp_NITSOL_jacv()
 
 #include "bd-imp.h"
+
+// BLAS functions
+double
+ddot_(int* N, 
+      double* X, int* incX, 
+      double* Y, int* incY);
+double
+dnrm2_(int* N, 
+       double* X, int* incX);
 
 
 /* initialize struct BD_imp
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  flag_solver : 0 == GSL solver
+ *                1 == NITSOL
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
+	     int flag_solver,
 	     int itmax, double eps)
 {
   struct BD_imp *BDimp = (struct BD_imp *)malloc (sizeof (struct BD_imp));
@@ -84,37 +98,82 @@ BD_imp_init (struct BD_params *BD,
   BDimp->z = (double *)malloc (sizeof (double) * nz);
   CHECK_MALLOC (BDimp->z, "BD_imp_init");
 
-  // initialize GSL stuff
-  BDimp->T = gsl_multiroot_fsolver_hybrid;
-
-  BDimp->F = (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
-  CHECK_MALLOC (BDimp->F, "BD_imp_init");
-
-  if (BD->scheme == 3 || BD->scheme == 4)
-    {
-      BDimp->F->f = BD_imp_GSL_MULTIROOT_func;
-    }
-  else
+  if (BD->scheme != 3 && BD->scheme != 4)
     {
       fprintf (stderr, "# BD_imp_init: invalid scheme %d\n", BD->scheme);
       exit (1);
     }
 
+  int n;
   if (BD->sys->version == 0)
     {
-      BDimp->F->n = nm * 3;
+      n = nm * 3;
     }
   else
     {
-      BDimp->F->n = nm * 7; // quaternion is used here
+      n = nm * 7; // quaternion is used here
     }
-  BDimp->F->params = BDimp;
 
-  BDimp->S = gsl_multiroot_fsolver_alloc (BDimp->T, BDimp->F->n);
-  CHECK_MALLOC (BDimp->S, "BD_imp_init");
+  BDimp->flag_solver = flag_solver;
+  if (flag_solver == 0)
+    {
+      // initialize GSL stuff
+      BDimp->T = gsl_multiroot_fsolver_hybrid;
 
-  BDimp->guess = gsl_vector_alloc (BDimp->F->n);
-  CHECK_MALLOC (BDimp->guess, "BD_imp_init");
+      BDimp->F
+	= (gsl_multiroot_function *)malloc (sizeof (gsl_multiroot_function));
+      CHECK_MALLOC (BDimp->F, "BD_imp_init");
+
+      BDimp->F->f = BD_imp_GSL_MULTIROOT_func;
+
+      BDimp->F->n = n;
+      BDimp->F->params = BDimp;
+
+      BDimp->S = gsl_multiroot_fsolver_alloc (BDimp->T, BDimp->F->n);
+      CHECK_MALLOC (BDimp->S, "BD_imp_init");
+
+      BDimp->guess = gsl_vector_alloc (BDimp->F->n);
+      CHECK_MALLOC (BDimp->guess, "BD_imp_init");
+
+      // NITSOL
+      BDimp->nit = NULL;
+    }
+  else
+    {
+      // GSL stuff
+      BDimp->T = NULL;
+      BDimp->F = NULL;
+      BDimp->S = NULL;
+      BDimp->guess = NULL;
+
+      // NITSOL
+      BDimp->nit = NITSOL_init ();
+      CHECK_MALLOC (BDimp->nit, "BD_imp_init");
+
+      NITSOL_set_n (BDimp->nit, n);
+      NITSOL_set_GMRES (BDimp->nit, 50);
+      NITSOL_set_jacv (BDimp->nit,
+		       0,   // p_flag
+		       0,   // j_flag
+		       4,   // j_order
+		       BD_imp_NITSOL_jacv);
+      BDimp->nit->f = BD_imp_NITSOL_f;
+      NITSOL_set_forcing (BDimp->nit, 0, 0.0, 0.0);
+
+      BDimp->nit->iplvl  = 0;
+      BDimp->nit->ipunit = 6; // stdout
+
+      // BLAS routines
+      BDimp->nit->dinpr = ddot_;
+      BDimp->nit->dnorm = dnrm2_;
+
+      NITSOL_set_tol (BDimp->nit,
+		      eps, // ftol
+		      eps);// stptol
+
+      // parameter for f() and jacv()
+      BDimp->nit->rpar = (double *)BDimp;
+    }
 
   // working area
   BDimp->FTS = FTS_init (BD->sys);
@@ -158,6 +217,8 @@ BD_imp_free (struct BD_imp *BDimp)
   if (BDimp->F  != NULL) free (BDimp->F);
   if (BDimp->S  != NULL) gsl_multiroot_fsolver_free (BDimp->S);
   if (BDimp->guess != NULL) gsl_vector_free (BDimp->guess);
+
+  if (BDimp->nit != NULL) NITSOL_free (BDimp->nit);
 
   if (BDimp->FTS != NULL) FTS_free (BDimp->FTS);
   if (BDimp->pos != NULL) free (BDimp->pos);
@@ -355,11 +416,11 @@ BD_imp_adj_uinf (struct BD_imp *BDimp,
 /* set gsl_vector
  * if q == NULL, q = (0,0,0,1) is set.
  */
-void
-BD_imp_set_guess (const struct BD_imp *BDimp,
-		  const double *x,
-		  const double *q,
-		  gsl_vector *guess)
+static void
+BD_imp_GSL_set_guess (const struct BD_imp *BDimp,
+		      const double *x,
+		      const double *q,
+		      gsl_vector *guess)
 {
   int nm3 = BDimp->BD->sys->nm * 3;
   int i;
@@ -389,11 +450,11 @@ BD_imp_set_guess (const struct BD_imp *BDimp,
     }
 }
 
-void
-BD_imp_get_root (const struct BD_imp *BDimp,
-		 gsl_vector *root,
-		 double *x,
-		 double *q)
+static void
+BD_imp_GSL_get_root (const struct BD_imp *BDimp,
+		     gsl_vector *root,
+		     double *x,
+		     double *q)
 {
   int nm3 = BDimp->BD->sys->nm * 3;
   int i;
@@ -410,14 +471,14 @@ BD_imp_get_root (const struct BD_imp *BDimp,
     }
 }
 
-void
+static void
 BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
 			   double *x, double *q)
 {
   /**
    * set the initial guess
    */
-  BD_imp_set_guess (BDimp, x, q, BDimp->guess);
+  BD_imp_GSL_set_guess (BDimp, x, q, BDimp->guess);
   gsl_multiroot_fsolver_set (BDimp->S, BDimp->F, BDimp->guess);
 
   int status;
@@ -438,7 +499,7 @@ BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
    * retreive the solution
    */
   gsl_vector *root = gsl_multiroot_fsolver_root (BDimp->S);
-  BD_imp_get_root (BDimp, root, x, q);
+  BD_imp_GSL_get_root (BDimp, root, x, q);
 
   /* it looks like the "root" is just a pointer, so we don't need to free it.
   gsl_vector_free (root);
@@ -684,9 +745,18 @@ BD_evolve_JGdP00 (double t,
     }
 
   /**
-   * solve the nonlinear equations by GSL-MULTIROOT
+   * solve the nonlinear equations
    */
-  BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
+  if (BDimp->flag_solver == 0)
+    {
+      // GSL-MULTIROOT
+      BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
+    }
+  else
+    {
+      // NITSOL
+      BD_imp_NITSOL_wrap (BDimp, x, q);
+    }
 
 
   /* dt-ajustment process -- overlap check */
@@ -729,7 +799,7 @@ BD_evolve_JGdP00 (double t,
 /* set the predictor for the configuration (BDimp->x0, BDimp->q0).
  * this must be called after setting both BD_imp_set_xq() and BD_imp_set_dt().
  */
-void
+static void
 BD_imp_set_P (struct BD_imp *BDimp)
 {
   if (BDimp->flag_PC == 1) return;
@@ -854,9 +924,18 @@ BD_evolve_imp_PC (double t,
 
 
   /**
-   * solve the nonlinear equations by GSL-MULTIROOT
+   * solve the nonlinear equations
    */
-  BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
+  if (BDimp->flag_solver == 0)
+    {
+      // GSL-MULTIROOT
+      BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
+    }
+  else
+    {
+      // NITSOL
+      BD_imp_NITSOL_wrap (BDimp, x, q);
+    }
 
 
   /* dt-ajustment process -- overlap check */

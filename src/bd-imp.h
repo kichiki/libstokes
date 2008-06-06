@@ -1,7 +1,7 @@
 /* header file for bd-imp.c --
  * implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.h,v 1.4 2008/06/05 03:23:20 kichiki Exp $
+ * $Id: bd-imp.h,v 1.5 2008/06/06 03:18:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 
 
 #include <gsl/gsl_multiroots.h>
+#include <nitsol_c.h> // struct NITSOL
 #include <brownian.h> // struct BD_params
 
 struct BD_imp {
@@ -32,13 +33,22 @@ struct BD_imp {
   double fact;
   double *z;
 
+  int flag_solver; /* 0 == GSL
+		    * 1 == NITSOL
+		    */
+
   // GSL stuff
   const gsl_multiroot_fsolver_type *T;
   gsl_multiroot_function *F;
   gsl_multiroot_fsolver  *S;
   gsl_vector *guess;
+
+  // NITSOL stuff
+  struct NITSOL *nit;
+
   int itmax;
   double eps;
+
 
   // working area used in BD_imp_JGdP00_func()
   struct FTS *FTS;
@@ -53,15 +63,19 @@ struct BD_imp {
   double *dQdtP;
 };
 
+
 /* initialize struct BD_imp
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
+ *  flag_solver : 0 == GSL solver
+ *                1 == NITSOL
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
+	     int flag_solver,
 	     int itmax, double eps);
 
 void
@@ -113,24 +127,6 @@ void
 BD_imp_adj_uinf (struct BD_imp *BDimp,
 		 double *x0, double *x);
 
-/* set gsl_vector
- * if q == NULL, q = (0,0,0,1) is set.
- */
-void
-BD_imp_set_guess (const struct BD_imp *BDimp,
-		  const double *x,
-		  const double *q,
-		  gsl_vector *guess);
-
-void
-BD_imp_get_root (const struct BD_imp *BDimp,
-		 gsl_vector *root,
-		 double *x,
-		 double *q);
-
-void
-BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
-			   double *x, double *q);
 
 /* form the nonlinear equations for the semi-implicit algorithms
  * (both JGdP and siPC)
@@ -151,6 +147,7 @@ BD_imp_GSL_MULTIROOT_wrap (struct BD_imp *BDimp,
 void
 BD_imp_f (struct BD_imp *BDimp, const double *x,
 	  double *f);
+
 
 /* wrapper of BD_imp_f() for GSL-MULTROOT routine
  * this is applicable for both JGdP and siPC
@@ -189,12 +186,6 @@ BD_evolve_JGdP00 (double t,
 /**
  * semi-implicit predictor-corrector algorithm
  */
-/* set the predictor for the configuration (BDimp->x0, BDimp->q0).
- * this must be called after setting both BD_imp_set_xq() and BD_imp_set_dt().
- */
-void
-BD_imp_set_P (struct BD_imp *BDimp);
-
 /* evolve position of particles by semi-implicit predictor-corrector
  * INPUT
  *  t       : current time
