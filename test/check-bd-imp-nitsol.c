@@ -1,6 +1,6 @@
 /* test code for bd-imp-nitsol.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp-nitsol.c,v 1.1 2008/06/05 03:23:54 kichiki Exp $
+ * $Id: check-bd-imp-nitsol.c,v 1.2 2008/06/06 03:53:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@ check_BD_imp_NITSOL (int version, int np,
       fprintf (stdout,
 	       "==================================================\n"
 	       "check_BD_imp_NITSOL\n"
-	       "(ver=%d,N=%d,lub=%d,mat=%d,Q=%d,dt=%f)",
+	       "(ver=%d,N=%d,lub=%d,mat=%d,Q=%d,dt=%f)\n",
 	       version, np, flag_lub, flag_mat, flag_Q, dt);
     }
 
@@ -195,6 +195,7 @@ check_BD_imp_NITSOL (int version, int np,
 
   BD->scheme = 3; // JGdP
   BDimp = BD_imp_init (BD,
+		       0,     // GSL
 		       1000,  // itmax
 		       1.0e-6 // eps
 		       );
@@ -204,33 +205,56 @@ check_BD_imp_NITSOL (int version, int np,
   double t_1 = ptime_ms_d();
   double dt_JGdP  = BD_evolve_JGdP00        (t, BDimp, x_JGdP,  q_JGdP,  dt);
   double t_2 = ptime_ms_d();
-  double dt_NJGdP = BD_evolve_NITSOL_JGdP00 (t, BDimp, x_NJGdP, q_NJGdP, dt);
-  double t_3 = ptime_ms_d();
-
   BD_imp_free (BDimp);
+
+  BDimp = BD_imp_init (BD,
+		       1,     // NITSOL
+		       1000,  // itmax
+		       1.0e-6 // eps
+		       );
+  CHECK_MALLOC (BDimp, "check_BD_imp_NITSOL");
+  BDimp->nit->iplvl = 1;
+  double t_3 = ptime_ms_d();
+  double dt_NJGdP = BD_evolve_JGdP00 (t, BDimp, x_NJGdP, q_NJGdP, dt);
+  double t_4 = ptime_ms_d();
+  NITSOL_parse_info (BDimp->nit, stdout);
+  BD_imp_free (BDimp);
+
   BD->scheme = 4; // siPC
   BDimp = BD_imp_init (BD,
+		       0,     // GSL
 		       1000,  // itmax
 		       1.0e-6 // eps
 		       );
   CHECK_MALLOC (BDimp, "check_BD_imp_NITSOL");
 
-
-  double t_4 = ptime_ms_d();
-  double dt_siPC  = BD_evolve_imp_PC        (t, BDimp, x_siPC,  q_siPC,  dt);
   double t_5 = ptime_ms_d();
-  double dt_NsiPC = BD_evolve_NITSOL_imp_PC (t, BDimp, x_NsiPC, q_NsiPC, dt);
+  double dt_siPC  = BD_evolve_imp_PC (t, BDimp, x_siPC,  q_siPC,  dt);
   double t_6 = ptime_ms_d();
+  BD_imp_free (BDimp);
+
+  BDimp = BD_imp_init (BD,
+		       1,     // NITSOL
+		       1000,  // itmax
+		       1.0e-6 // eps
+		       );
+  CHECK_MALLOC (BDimp, "check_BD_imp_NITSOL");
+  BDimp->nit->iplvl = 1;
+  double t_7 = ptime_ms_d();
+  double dt_NsiPC = BD_evolve_imp_PC (t, BDimp, x_NsiPC, q_NsiPC, dt);
+  double t_8 = ptime_ms_d();
+  NITSOL_parse_info (BDimp->nit, stdout);
+  BD_imp_free (BDimp);
 
   fprintf (stdout, "BENCHMARK:\n");
   fprintf (stdout, "  JGdP : %e %e, ratio = %f\n",
 	   (t_2 - t_1),
-	   (t_3 - t_2),
-	   (t_2 - t_1) / (t_3 - t_2));
+	   (t_4 - t_3),
+	   (t_2 - t_1) / (t_4 - t_3));
   fprintf (stdout, "  siPC : %e %e, ratio = %f\n",
-	   (t_5 - t_4),
 	   (t_6 - t_5),
-	   (t_5 - t_4) / (t_6 - t_5));
+	   (t_8 - t_7),
+	   (t_6 - t_5) / (t_8 - t_7));
 
   check += compare_max (dt, dt_JGdP,  "dt_JGdP",  verbose, tiny, &max);
   check += compare_max (dt, dt_siPC,  "dt_siPC",  verbose, tiny, &max);
@@ -365,7 +389,6 @@ check_BD_imp_NITSOL (int version, int np,
       free (q_NsiPC);
       free (q_JGdP);
     }
-  BD_imp_free (BDimp);
 
   if (verbose != 0)
     {
