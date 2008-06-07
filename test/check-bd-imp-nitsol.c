@@ -1,6 +1,6 @@
 /* test code for bd-imp-nitsol.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp-nitsol.c,v 1.2 2008/06/06 03:53:32 kichiki Exp $
+ * $Id: check-bd-imp-nitsol.c,v 1.3 2008/06/07 02:59:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -213,7 +213,9 @@ check_BD_imp_NITSOL (int version, int np,
 		       1.0e-6 // eps
 		       );
   CHECK_MALLOC (BDimp, "check_BD_imp_NITSOL");
-  BDimp->nit->iplvl = 1;
+  NITSOL_set_iplvl (BDimp->nit,
+		    1,  // iplvl
+		    6); // stdout
   double t_3 = ptime_ms_d();
   double dt_NJGdP = BD_evolve_JGdP00 (t, BDimp, x_NJGdP, q_NJGdP, dt);
   double t_4 = ptime_ms_d();
@@ -239,7 +241,9 @@ check_BD_imp_NITSOL (int version, int np,
 		       1.0e-6 // eps
 		       );
   CHECK_MALLOC (BDimp, "check_BD_imp_NITSOL");
-  BDimp->nit->iplvl = 1;
+  NITSOL_set_iplvl (BDimp->nit,
+		    1,  // iplvl
+		    6); // stdout
   double t_7 = ptime_ms_d();
   double dt_NsiPC = BD_evolve_imp_PC (t, BDimp, x_NsiPC, q_NsiPC, dt);
   double t_8 = ptime_ms_d();
