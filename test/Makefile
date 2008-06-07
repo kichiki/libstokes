@@ -1,17 +1,28 @@
-# $Id: Makefile,v 1.22 2008/06/05 03:26:46 kichiki Exp $
+# $Id: Makefile,v 1.23 2008/06/07 03:01:07 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
 LD           = libtool --mode=link --tag=CC $(CC)
 
 OPTS = \
-	-pipe -O3 -march=prescott -fomit-frame-pointer\
-	-mfpmath=sse -ffast-math
+	-march=prescott -mfpmath=sse \
+	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for SUSE-Linux
+#OPTS = \
+#	-mtune=opteron -m64 \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for i1200 (openSUSE)
+#OPTS = \
+#	-march=pentium3m \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
 
-SRC_DIR = ../src
+
+# for header file besides libstokes.h
+RYUON_SRC = ../src
 
 RYUON_INC = -I/usr/local/include
 RYUON_LIB = -L/usr/local/lib
+# for SUSE-Linux
 #RYUON_INC = -I/home/ichiki/RYUON/include
 #RYUON_LIB = -L/home/ichiki/RYUON/lib
 
@@ -20,18 +31,12 @@ GSL_LIB = `pkg-config --libs gsl`
 
 NITSOL_INC = -I/usr/local/include
 NITSOL_LIB = -L/usr/local/lib -lnitsol
+# for SUSE-Linux
+#NITSOL_INC = -I/home/ichiki/RYUON/include
+#NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
 
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
-
-CFLAGS	     = \
-	-Wall		\
-	$(OPTS)		\
-	-I$(SRC_DIR)	\
-	$(RYUON_INC)	\
-	$(GUILE_INC)	\
-	$(GSL_INC)	\
-	$(NITSOL_INC)
 
 #ATLAS_LIBS	= \
 #	-lg2c -lblas -llapack\
@@ -40,8 +45,26 @@ ATLAS_LIBS	= \
 	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
+# for SUSE-Linux
+# for openSUSE
+#ATLAS_LIBS	= \
+#	-lgfortran -lblas -llapack\
+#	-larpack
+#ATLAS_LIBS	= \
+#	-llapack -lptcblas -lptf77blas -latlas\
+#	-larpack
+
+CFLAGS	     = \
+	-Wall		\
+	$(OPTS)		\
+	-I$(RYUON_SRC)	\
+	$(RYUON_INC)	\
+	$(GUILE_INC)	\
+	$(GSL_INC)	\
+	$(NITSOL_INC)
 
 LDFLAGS      =
+
 LIBS         = \
 	../src/libstokes.la	\
 	-lm			\
