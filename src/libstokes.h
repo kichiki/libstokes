@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.64 2008/06/06 03:46:58 kichiki Exp $
+ * $Id: libstokes.h,v 1.65 2008/06/07 02:58:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2379,8 +2379,24 @@ NITSOL_set_forcing (struct NITSOL *nit,
 		    int flag,
 		    double p1, double p2);
 
+/* set iplvl and ipunit
+ * INPUT
+ *  iplvl = 0 => no printout
+ *        = 1 => iteration numbers and F-norms
+ *        = 2 => ... + some stats, step norms, and linear model norms
+ *        = 3 => ... + some Krylov solver and backtrack information
+ *        = 4 => ... + more Krylov solver and backtrack information
+ *  ipunit = printout unit number, e.g., ipunit = 6 => standard output. 
+ *           NOTE: If ipunit = 0 on input, then it is set to 6 below.
+ */
+void
+NITSOL_set_iplvl (struct NITSOL *nit,
+		  int iplvl, int ipunit);
 
 
+/**
+ * parsing functions for the information about NITSOL
+ */
 void
 NITSOL_parse_input (struct NITSOL *nit,
 		    FILE *out);
@@ -2397,6 +2413,9 @@ NITSOL_parse_iterm (struct NITSOL *nit,
 		    FILE *out);
 
 
+/**
+ * solver routine via struct NITSOL
+ */
 void
 NITSOL_solve (struct NITSOL *nit,
 	      double *x);
