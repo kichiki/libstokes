@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.24 2008/06/05 03:24:52 kichiki Exp $
+ * $Id: test-all.c,v 1.25 2008/06/07 03:00:29 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -77,13 +77,13 @@ main (int argc, char** argv)
   check += check_dnaupd_c (100, 1, 1.2e-15);
   check += check_bd (50, 100, 2.005, 1, 8.0e-10);
   check += check_bd (100, 100, 2.005, 1, 2.0e-15);
-  check += check_dgeev_c (1, 3.0e-15);
+  check += check_dgeev_c (1, 6.0e-15);
 
   // check-mul-matrices.c
   check += check_mul_matrices (200, 1, 0.0);
 
   // check-matrix.c
-  check += benchmark_dgemm (200, 1, 1.8e-15);
+  check += benchmark_dgemm (200, 1, 2.1e-15);
   check += benchmark_mul_matrices (200, 1, 0.0);
 
   // check-solve-gen-linear.c
@@ -223,7 +223,7 @@ main (int argc, char** argv)
 
   // check-brownian.c
   check += check_cheb_minv (10, 1, 2.0e-14);
-  check += check_cheb_lub  (10, 1, 6.2e-15);
+  check += check_cheb_lub  (10, 1, 6.4e-15);
 
   // check-brownian.c -- serious tests for calc_brownian_force()
   check += check_minv_FU (1, 1.6e-10);
