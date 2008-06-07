@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.11 2008/06/06 03:18:33 kichiki Exp $
+ * $Id: bd-imp.c,v 1.12 2008/06/07 02:59:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -160,8 +160,9 @@ BD_imp_init (struct BD_params *BD,
       BDimp->nit->f = BD_imp_NITSOL_f;
       NITSOL_set_forcing (BDimp->nit, 0, 0.0, 0.0);
 
-      BDimp->nit->iplvl  = 0;
-      BDimp->nit->ipunit = 6; // stdout
+      NITSOL_set_iplvl (BDimp->nit,
+			0,  // iplvl
+			6); // stdout
 
       // BLAS routines
       BDimp->nit->dinpr = ddot_;
