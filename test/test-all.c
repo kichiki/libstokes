@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.25 2008/06/07 03:00:29 kichiki Exp $
+ * $Id: test-all.c,v 1.26 2008/06/08 04:31:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -229,7 +229,7 @@ main (int argc, char** argv)
   check += check_minv_FU (1, 1.6e-10);
   check += check_lub_FU (1, 2.6e-13);
   check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
-  check += check_inv_by_submatrices (50, 50, 1, 1.2e-10);
+  check += check_inv_by_submatrices (50, 50, 1, 1.4e-10);
 
   // check-bd-imp.c
   // for BD_evolve_JGdP00()
