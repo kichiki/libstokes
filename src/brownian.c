@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.24 2008/05/24 05:48:49 kichiki Exp $
+ * $Id: brownian.c,v 1.25 2008/06/13 02:59:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,6 +48,7 @@
 #include <libiter.h>
 #include <lub.h>
 
+#include <bead-rod.h> // struct BeadRod
 #include <bonds.h> // bonds_calc_force ()
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
@@ -78,6 +79,7 @@
  *        therefore, check for the existance of mobile pair(s)
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
+ *  (struct BeadRod *)br
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
@@ -110,6 +112,7 @@ BD_params_init (struct stokes *sys,
 		int flag_lub,
 		int flag_mat,
 		double st,
+		struct BeadRod *br,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
@@ -154,6 +157,7 @@ BD_params_init (struct stokes *sys,
   BD->flag_lub_B = 0;
   int i;
   if (flag_lub != 0 && bonds->n != 0)
+  //if (flag_lub != 0 && bonds != NULL)
     {
       for (i = 0; i < sys->nm; i ++)
 	{
@@ -176,6 +180,8 @@ BD_params_init (struct stokes *sys,
     }
 
   BD->st       = st;
+
+  BD->br       = br;
   BD->bonds    = bonds;
   BD->gamma    = gamma;
   BD->ev       = ev;
@@ -2457,6 +2463,19 @@ BD_evolve_mid (double t,
 	}
     }
 
+  // constraints
+  if (BD->br != NULL)
+    {
+      /* at this point, 
+       * x[]    is the initial configuration (at t) and
+       * xmid[] is the final configuration (at t+dt) without constraints
+       */
+      BeadRod_adjust_by_constraints (BD->br,
+				     BD->sys->nm,
+				     xmid,
+				     x);
+    }
+
   // final accepted configuration
   for (i = 0; i < nm3; i ++)
     {
@@ -2801,6 +2820,19 @@ BD_evolve_BB03 (double t,
 	}
     }
 
+  // constraints
+  if (BD->br != NULL)
+    {
+      /* at this point, 
+       * x[]    is the initial configuration (at t) and
+       * xBB[]  is the final configuration (at t+dt) without constraints
+       */
+      BeadRod_adjust_by_constraints (BD->br,
+				     BD->sys->nm,
+				     xBB,
+				     x);
+    }
+
   // final accepted configuration
   for (i = 0; i < nm3; i ++)
     {
@@ -3035,6 +3067,19 @@ BD_evolve_BM97 (double t,
 		   "dt = %e > %e\n", dt_local, BD->dt_lim);
 	  goto BD_evolve_BM97_REDO_scale;
 	}
+    }
+
+  // constraints
+  if (BD->br != NULL)
+    {
+      /* at this point, 
+       * x[]    is the initial configuration (at t) and
+       * xBM[]  is the final configuration (at t+dt) without constraints
+       */
+      BeadRod_adjust_by_constraints (BD->br,
+				     BD->sys->nm,
+				     xBM,
+				     x);
     }
 
   // final accepted configuration

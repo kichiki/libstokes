@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.16 2008/05/24 05:49:11 kichiki Exp $
+ * $Id: brownian.h,v 1.17 2008/06/13 02:59:41 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,6 +48,7 @@ struct BD_params
 
   double st; // currently this is just place holders
 
+  struct BeadRod *br;
   struct bonds *bonds;
   double gamma;
   struct EV *ev;
@@ -110,6 +111,7 @@ struct BD_params
  *        therefore, check for the existance of mobile pair(s)
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
+ *  (struct BeadRod *)br
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
@@ -142,6 +144,7 @@ BD_params_init (struct stokes *sys,
 		int flag_lub,
 		int flag_mat,
 		double st,
+		struct BeadRod *br,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
