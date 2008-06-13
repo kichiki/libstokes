@@ -1,7 +1,7 @@
 /* header file for bead-rod.c --
  * bead-rod model
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod.h,v 1.1 2008/06/13 02:57:49 kichiki Exp $
+ * $Id: bead-rod.h,v 1.2 2008/06/13 05:09:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -158,7 +158,7 @@ BeadRod_solve_iter_gamma (struct BeadRod *br,
  *  gamma[nc] : Lagrange multiplier
  *  n  : number of beads
  * OUTPUT
- *  dr[n] : constraint correction for displacement
+ *  dr[n*3] : constraint correction for displacement
  */
 void
 BeadRod_constraint_displacement (struct BeadRod *br,

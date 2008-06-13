@@ -1,6 +1,6 @@
 /* bead-rod model
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod.c,v 1.1 2008/06/13 02:57:29 kichiki Exp $
+ * $Id: bead-rod.c,v 1.2 2008/06/13 05:09:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -248,14 +248,6 @@ void
 BeadRod_set_u_by_r (struct BeadRod *br,
 		    const double *r)
 {
-  if (br->ia == NULL ||
-      br->ib == NULL)
-    {
-      fprintf (stderr, "BeadRod_set_u_by_r:"
-	       " define particle list ia[] and ib[].\n");
-      exit (1);
-    }
-
   BeadRod_bead_to_connector (br->nc,
 			     br->ia,
 			     br->ib,
@@ -268,14 +260,6 @@ void
 BeadRod_set_uu_by_r (struct BeadRod *br,
 		     const double *r)
 {
-  if (br->ia == NULL ||
-      br->ib == NULL)
-    {
-      fprintf (stderr, "BeadRod_set_u_by_r:"
-	       " define particle list ia[] and ib[].\n");
-      exit (1);
-    }
-
   BeadRod_bead_to_connector (br->nc,
 			     br->ia,
 			     br->ib,
@@ -543,7 +527,7 @@ BeadRod_solve_iter_gamma (struct BeadRod *br,
  *  gamma[nc] : Lagrange multiplier
  *  n  : number of beads
  * OUTPUT
- *  dr[n] : constraint correction for displacement
+ *  dr[n*3] : constraint correction for displacement
  */
 void
 BeadRod_constraint_displacement (struct BeadRod *br,
@@ -674,8 +658,9 @@ BeadRod_adjust_by_constraints (struct BeadRod *br,
 			       const double *rr,
 			       double *r)
 {
-  BeadRod_set_u_by_r (br, r);
-  BeadRod_set_u_by_r (br, rr);
+  //return;
+  BeadRod_set_u_by_r  (br, r);
+  BeadRod_set_uu_by_r (br, rr);
 
   double *gamma = (double *)malloc (sizeof (double) * br->nc);
   CHECK_MALLOC (gamma, "BeadRod_adjust_by_constraints");
@@ -685,7 +670,7 @@ BeadRod_adjust_by_constraints (struct BeadRod *br,
   free (gamma);
 
   int i;
-  for (i = 0; i < n; i ++)
+  for (i = 0; i < n*3; i ++)
     {
       r[i] += rr[i];
     }
