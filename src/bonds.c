@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.12 2008/05/13 01:09:16 kichiki Exp $
+ * $Id: bonds.c,v 1.13 2008/06/13 03:04:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,9 +18,9 @@
  */
 #include <stdlib.h>
 #include <math.h> // sqrt
+#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "stokes.h" // struct stokes
-#include "memory-check.h" // macro CHECK_MALLOC
 
 #include "bonds.h" // struct bonds
 
@@ -575,6 +575,8 @@ check_nn_list (int n, const int *nn, int ia)
 void
 list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b)
 {
+  if (b == NULL) return;
+
   // i is the bond type
   int i;
   for (i = 0; i < b->n; i ++)
