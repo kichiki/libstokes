@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.26 2008/06/08 04:31:46 kichiki Exp $
+ * $Id: test-all.c,v 1.27 2008/06/13 03:13:17 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,9 +58,10 @@
 #include "check-ev-LJ.h"
 #include "check-ev-LJ-guile.h"
 
-
 #include "check-confinement.h"
 #include "check-confinement-guile.h"
+
+#include "check-bead-rod.h"
 
 
 /* main program */
@@ -228,7 +229,7 @@ main (int argc, char** argv)
   // check-brownian.c -- serious tests for calc_brownian_force()
   check += check_minv_FU (1, 1.6e-10);
   check += check_lub_FU (1, 2.6e-13);
-  check += benchmark_BD_minv_FU_in_FTS (50, 1, 5.5e-9); // a bit large...
+  check += benchmark_BD_minv_FU_in_FTS (50, 1, 6.0e-9); // a bit large...
   check += check_inv_by_submatrices (50, 50, 1, 1.4e-10);
 
   // check-bd-imp.c
@@ -408,6 +409,12 @@ main (int argc, char** argv)
   check += check_CF_sphere_calc_force (100.0, 1, 2.0e-13);
   // check-confinement-guile.c
   check += check_CF_guile_get (1, 0.0);
+
+
+  // check-bead-rod.c
+  check += check_BeadRod_constraint_displacement (10, 1, 2.0e-15);
+  check += check_BeadRod_solve_iter_gamma (10, 1.0e-8, 1, 4.0e-10);
+  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.0e-10);
 
 
   fprintf (stdout,
