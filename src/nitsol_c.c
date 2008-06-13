@@ -1,6 +1,6 @@
 /* C wrappers for NITSOL
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: nitsol_c.c,v 1.2 2008/06/07 02:58:02 kichiki Exp $
+ * $Id: nitsol_c.c,v 1.3 2008/06/13 02:56:08 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,16 @@
 
 #include <nitsol.h>
 #include "nitsol_c.h" // struct NITSOL
+
+
+// BLAS functions
+double
+ddot_(int* N, 
+      double* X, int* incX, 
+      double* Y, int* incY);
+double
+dnrm2_(int* N, 
+       double* X, int* incX);
 
 
 struct NITSOL *
@@ -165,6 +175,30 @@ NITSOL_set_TFQMR (struct NITSOL *nit)
 }
 
 
+/* do nothing for jacobian and preconditioner
+ */
+static void
+NITSOL_no_jacv (int *n, double *xcur, double *fcur,
+		int *ijob, double *v, double *z,
+		double *rpar, int *ipar, int *itrmjv)
+{
+  if (*ijob == 0)
+    {
+      // calc Jacobian-vector product
+      return;
+    }
+  else if (*ijob == 1)
+    {
+      // apply the preconditioner
+      return;
+    }
+  else
+    {
+      fprintf (stderr, "# NITSOL_no_jacv: invalid ijob %d\n", *ijob);
+      return;
+    }
+}
+
 /*
  * INPUT
  *  p_flag  : 0 == no preconditioning
@@ -214,7 +248,8 @@ NITSOL_set_jacv (struct NITSOL *nit,
     }
   else
     {
-      nit->jacv = NULL;
+      //nit->jacv = NULL;
+      nit->jacv = NITSOL_no_jacv;
     }
 }
 
@@ -288,6 +323,16 @@ NITSOL_set_iplvl (struct NITSOL *nit,
 {
   nit->iplvl = iplvl;
   nit->ipunit = ipunit;
+}
+
+
+/* set routines for calculating norm by BLAS routines (ddot_ and dnrm2_)
+ */
+void
+NITSOL_set_norm_by_BLAS (struct NITSOL *nit)
+{
+  nit->dinpr = ddot_;
+  nit->dnorm = dnrm2_;
 }
 
 

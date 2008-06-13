@@ -1,7 +1,7 @@
 /* header file for nitsol_c.c --
  * C wrappers for NITSOL
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: nitsol_c.h,v 1.2 2008/06/07 02:58:21 kichiki Exp $
+ * $Id: nitsol_c.h,v 1.3 2008/06/13 02:56:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -141,6 +141,11 @@ NITSOL_set_forcing (struct NITSOL *nit,
 void
 NITSOL_set_iplvl (struct NITSOL *nit,
 		  int iplvl, int ipunit);
+
+/* set routines for calculating norm by BLAS routines (ddot_ and dnrm2_)
+ */
+void
+NITSOL_set_norm_by_BLAS (struct NITSOL *nit);
 
 
 /**
