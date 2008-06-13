@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.25 2008/06/13 02:59:22 kichiki Exp $
+ * $Id: brownian.c,v 1.26 2008/06/13 05:07:52 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2470,6 +2470,7 @@ BD_evolve_mid (double t,
        * x[]    is the initial configuration (at t) and
        * xmid[] is the final configuration (at t+dt) without constraints
        */
+      BeadRod_set_coefs (BD->br, dt_local, 1.0);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
 				     xmid,
@@ -2827,6 +2828,7 @@ BD_evolve_BB03 (double t,
        * x[]    is the initial configuration (at t) and
        * xBB[]  is the final configuration (at t+dt) without constraints
        */
+      BeadRod_set_coefs (BD->br, dt_local, 1.0);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
 				     xBB,
@@ -3076,6 +3078,7 @@ BD_evolve_BM97 (double t,
        * x[]    is the initial configuration (at t) and
        * xBM[]  is the final configuration (at t+dt) without constraints
        */
+      BeadRod_set_coefs (BD->br, dt_local, 1.0);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
 				     xBM,
