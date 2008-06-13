@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.12 2008/06/07 02:59:17 kichiki Exp $
+ * $Id: bd-imp.c,v 1.13 2008/06/13 02:56:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,15 +31,6 @@
 #include "bd-imp-nitsol.h" // BD_imp_NITSOL_f(), BD_imp_NITSOL_jacv()
 
 #include "bd-imp.h"
-
-// BLAS functions
-double
-ddot_(int* N, 
-      double* X, int* incX, 
-      double* Y, int* incY);
-double
-dnrm2_(int* N, 
-       double* X, int* incX);
 
 
 /* initialize struct BD_imp
@@ -156,7 +147,8 @@ BD_imp_init (struct BD_params *BD,
 		       0,   // p_flag
 		       0,   // j_flag
 		       4,   // j_order
-		       BD_imp_NITSOL_jacv);
+		       //BD_imp_NITSOL_jacv);
+		       NULL); // now NULL is accepted...
       BDimp->nit->f = BD_imp_NITSOL_f;
       NITSOL_set_forcing (BDimp->nit, 0, 0.0, 0.0);
 
@@ -164,9 +156,7 @@ BD_imp_init (struct BD_params *BD,
 			0,  // iplvl
 			6); // stdout
 
-      // BLAS routines
-      BDimp->nit->dinpr = ddot_;
-      BDimp->nit->dnorm = dnrm2_;
+      NITSOL_set_norm_by_BLAS (BDimp->nit);
 
       NITSOL_set_tol (BDimp->nit,
 		      eps, // ftol
