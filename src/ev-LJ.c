@@ -1,6 +1,6 @@
 /* excluded-volume interactions in Lennard-Jones type
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-LJ.c,v 1.1 2008/05/24 05:46:53 kichiki Exp $
+ * $Id: ev-LJ.c,v 1.2 2008/06/13 03:06:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,8 +110,10 @@ EV_LJ_fr (double e, double r0, double x)
   double r = r0 - x;
   if (r < 0.0)
     {
-      fprintf (stderr, "EV_LJ_fr: too much overlap."
-	       " the force value is adjusted.\n");
+      fprintf (stderr, "EV_LJ_fr: too much overlap"
+	       " (x=%e > r0=%e)"
+	       " r=r0-x=%e is adjusted to 1.0e-12.\n",
+	       x, r0, r);
       r = 1.0e-12; // give some small value
     }
 
