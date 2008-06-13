@@ -1,6 +1,6 @@
 /* guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.c,v 1.2 2008/05/24 05:42:30 kichiki Exp $
+ * $Id: excluded-volume-guile.c,v 1.3 2008/06/13 03:09:54 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@ EV_guile_get (const char *var,
 {
   if (guile_check_symbol (var) == 0)
     {
-      fprintf (stderr, "guile_get_ev_v: %s is not defined\n", var);
+      fprintf (stderr, "EV_guile_get: %s is not defined\n", var);
       return (NULL);
     }
 
@@ -68,13 +68,13 @@ EV_guile_get (const char *var,
 
   if (!SCM_NFALSEP (scm_list_p (scm_ev)))
     {
-      fprintf (stderr, "guile_get_ev_v: %s is not a list\n", var);
+      fprintf (stderr, "EV_guile_get: %s is not a list\n", var);
       return (NULL);
     }
 
   unsigned long len
     = scm_num2ulong (scm_length (scm_ev),
-		     0, "guile_get_ev_v");
+		     0, "EV_guile_get");
   if (len == 0)
     {
       // null list is given ==> no excluded-volume interaction
@@ -82,23 +82,23 @@ EV_guile_get (const char *var,
     }
   else if (len != bonds->n)
     {
-      fprintf (stderr, "guile_get_ev_v:"
+      fprintf (stderr, "EV_guile_get:"
 	       " length of %s %ld != %d number of springs\n",
 	       var, len, bonds->n);
       return (NULL);
     }
 
   double *ev_v = (double *)malloc (sizeof (double) * len);
-  CHECK_MALLOC (ev_v, "guile_get_ev_v");
+  CHECK_MALLOC (ev_v, "EV_guile_get");
 
   if (guile_get_doubles (var, len, ev_v) != 1) // FALSE
     {
-      fprintf (stderr, "guile_get_ev_v: fail to parse %s\n", var);
+      fprintf (stderr, "EV_guile_get: fail to parse %s\n", var);
       return (NULL);
     }
 
   struct EV *ev = EV_init (bonds, length, peclet, ev_r2, ev_v, np);
-  CHECK_MALLOC (ev, "guile_get_ev_v");
+  CHECK_MALLOC (ev, "EV_guile_get");
 
   return (ev); // success
 }

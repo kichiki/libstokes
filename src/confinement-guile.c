@@ -1,6 +1,6 @@
 /* guile interface for struct confinement
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: confinement-guile.c,v 1.1 2008/05/24 05:38:52 kichiki Exp $
+ * $Id: confinement-guile.c,v 1.2 2008/06/13 03:09:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -91,7 +91,7 @@ CF_guile_get (const char *var)
 {
   if (guile_check_symbol (var) == 0)
     {
-      fprintf (stderr, "guile_get_confinement: %s is not defined\n", var);
+      fprintf (stderr, "CF_guile_get: %s is not defined\n", var);
       return (NULL);
     }
 
@@ -103,7 +103,7 @@ CF_guile_get (const char *var)
 
   if (!SCM_NFALSEP (scm_list_p (scm_confinement)))
     {
-      fprintf (stderr, "guile_get_confinement: %s is not a list\n", var);
+      fprintf (stderr, "CF_guile_get: %s is not a list\n", var);
       return (NULL);
     }
 
@@ -112,7 +112,7 @@ CF_guile_get (const char *var)
 
   unsigned long len
     = scm_num2ulong (scm_length (scm_confinement),
-		     0, "guile_get_confinement");
+		     0, "CF_guile_get");
   if (len == 0)
     {
       // no confinement
@@ -120,16 +120,16 @@ CF_guile_get (const char *var)
     }
   else if (len < 4)
     {
-      fprintf (stderr, "guile_get_confinement: %s is too short\n", var);
+      fprintf (stderr, "CF_guile_get: %s is too short\n", var);
       return (NULL);
     }
 
   double epsilon
     = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (0)),
-		   "guile_get_confinement");
+		   "CF_guile_get");
   double r0
     = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (1)),
-		   "guile_get_confinement");
+		   "CF_guile_get");
 
   // get the string
   char *str_cf = NULL;
@@ -150,14 +150,14 @@ CF_guile_get (const char *var)
     {
       if (len != 4)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for sphere, number of parameter must be 1\n");
 	}
       else
 	{
 	  double R
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (0, // sphere
 			R,
 			0.0, // r
@@ -167,24 +167,24 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else if (strcmp (str_cf, "sphere+hole") == 0)
     {
       if (len != 5)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for sphere+hole, number of parameter must be 2\n");
 	}
       else
 	{
 	  double R
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double r
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (1, // sphere+hole
 			R,
 			r,
@@ -194,30 +194,30 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else if (strcmp (str_cf, "cylinder") == 0)
     {
       if (len != 7)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for cylinder, number of parameter must be 4\n");
 	}
       else
 	{
 	  double r
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double x
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double y
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double z
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (2, // cylinder
 			0.0, // R,
 			r,
@@ -227,30 +227,30 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else if (strcmp (str_cf, "dumbbell") == 0)
     {
       if (len != 7)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for dumbbell, number of parameter must be 4\n");
 	}
       else
 	{
 	  double R
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double R2
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double L
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double r
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (3, // dumbbell
 			R,
 			r,
@@ -260,27 +260,27 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else if (strcmp (str_cf, "hex2d") == 0)
     {
       if (len != 6)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for hex2d, number of parameter must be 3\n");
 	}
       else
 	{
 	  double R
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double r
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double L
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (4, // hex2d
 			R,
 			r,
@@ -290,24 +290,24 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else if (strcmp (str_cf, "porous") == 0)
     {
       if (len != 5)
 	{
-	  fprintf (stderr, "guile_get_confinement:"
+	  fprintf (stderr, "CF_guile_get:"
 		   " for hex2d, number of parameter must be 2\n");
 	}
       else
 	{
 	  double R
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  double L
 	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "guile_get_confinement");
+			   "CF_guile_get");
 	  cf = CF_init (5, // porous
 			R,
 			0.0,
@@ -317,12 +317,12 @@ CF_guile_get (const char *var)
 			0, // flag_LJ
 			epsilon,
 			r0);
-	  CHECK_MALLOC (cf, "guile_get_confinement");
+	  CHECK_MALLOC (cf, "CF_guile_get");
 	}
     }
   else
     {
-      fprintf (stderr, "guile_get_confinement: invalid confinement %s\n",
+      fprintf (stderr, "CF_guile_get: invalid confinement %s\n",
 	       str_cf);
     }
   free (str_cf);

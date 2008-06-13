@@ -1,6 +1,6 @@
 /* guile interface for struct angles
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: angles-guile.c,v 1.5 2008/05/24 05:46:04 kichiki Exp $
+ * $Id: angles-guile.c,v 1.6 2008/06/13 03:09:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -132,7 +132,7 @@ angles_guile_get (const char *var)
       // 3rd element (2) of the list scm_angle
       int scale = scm_num2int (scm_list_ref (scm_angle, scm_int2num (2)),
 			       0,
-			       "guile_get_bonds");
+			       "angles_guile_get");
 
       // 4th element (3) of the list scm_angle
       SCM scm_triplets = scm_list_ref (scm_angle, scm_int2num (3));
