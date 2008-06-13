@@ -1,6 +1,6 @@
 /* test code for bd-imp-nitsol.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp-nitsol.c,v 1.3 2008/06/07 02:59:59 kichiki Exp $
+ * $Id: check-bd-imp-nitsol.c,v 1.4 2008/06/13 03:15:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -120,6 +120,7 @@ check_BD_imp_NITSOL (int version, int np,
 		      flag_lub,
 		      flag_mat,
 		      0.0, // st,
+		      NULL, // struct BeadRod *br,
 		      bonds,
 		      1.0, // gamma,
 		      NULL, // ev,

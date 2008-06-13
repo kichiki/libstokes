@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.7 2008/06/06 03:53:10 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.8 2008/06/13 03:14:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -121,6 +121,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
 		      flag_lub,
 		      flag_mat,
 		      0.0, // st,
+		      NULL, // struct BeadRod *br,
 		      bonds,
 		      1.0, // gamma,
 		      NULL, // ev,
@@ -471,6 +472,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
 		      flag_lub,
 		      flag_mat,
 		      0.0, // st,
+		      NULL, // struct BeadRod *br,
 		      bonds,
 		      1.0, // gamma,
 		      NULL, // ev,
