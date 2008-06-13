@@ -1,6 +1,6 @@
 /* guile interface for struct EV_LJ.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-LJ-guile.c,v 1.1 2008/05/24 05:47:33 kichiki Exp $
+ * $Id: ev-LJ-guile.c,v 1.2 2008/06/13 03:11:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 
 
 /* get ev-LJ from SCM
- * in SCM, angles are given by something like
+ * in SCM, "ev-LJ" are given by something like
  *  (define ev-LJ '(
  *   (; LJ type 1
  *    10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)

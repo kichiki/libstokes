@@ -1,6 +1,6 @@
 /* guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.4 2008/05/24 05:39:35 kichiki Exp $
+ * $Id: ev-dh-guile.c,v 1.5 2008/06/13 03:10:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 
 
 /* get ev_dh from SCM
- * in SCM, angles are given by something like
+ * in SCM, "ev-dh" are given by something like
  *  (define ev-dh '(
  *    ; system parameters
  *    1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
