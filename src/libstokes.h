@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.65 2008/06/07 02:58:52 kichiki Exp $
+ * $Id: libstokes.h,v 1.66 2008/06/13 03:00:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1013,6 +1013,86 @@ guile_load (const char *file);
 
 
 /************************************
+ ** constraints                    **
+ ************************************/
+/* from bead-rod.h */
+struct BeadRod {
+  int nc; // number of constraints
+
+  // particle indices consisting of the rods
+  double *a;  // a[nc] : rod distance
+  int *ia; // ia[nc] : particle at one end of the rod
+  int *ib; // ib[nc] : particle at the other end of the rod
+
+  int verbose; // 0 == quiet, 1 == verbose
+
+  int scheme; /* 0 == iterative (Liu 1989)
+	       * 1 == NITSOL (Newton-GMRES)
+	       */
+  double eps; // tolerance
+
+  struct NITSOL *nit; // for scheme == 1
+  struct iter *it;    // for scheme == 0
+
+  // dynamic properties
+  double c1; // coefficient of linear term (4 dt/zeta)
+  double c2; // coefficient of quadratic term (2 dt/zeta)^2
+
+  double *u;  // u(t)
+  double *uu; // u'(t+dt)
+};
+
+/* initialize struct BeadRod
+ * INPUT
+ *  nc    : number of constraints
+ *  a[nc] : distances for each constraint (NULL for the uniform case a=1)
+ *  ia[nc], ib[nc] : particle indices for each constraint
+ */
+struct BeadRod *
+BeadRod_init (int nc,
+	      const double *a,
+	      const int *ia,
+	      const int *ib);
+
+void
+BeadRod_free (struct BeadRod *br);
+
+/* from bead-rod-guile.h */
+/* get constraints from SCM and set struct BeadRod
+ * "constraints" is given in SCM as 
+ *  (define constraints '(
+ *   ; system parameters
+ *   1.0e-6    ; 1) tolerance
+ *   "nitsol"  ; 2) scheme for solving nonlinear equations
+ *                  "linear" for iterative scheme in linear approximation
+ *                  "nitsol" for Newton-GMRES scheme by NITSOL library
+ *   ; the following is for each constraint
+ *   (         ; 3) constraint type 1
+ *    5.0      ; 3-1) distance [nm]
+ *    (        ; 3-2) list of particle-pairs
+ *     (0 1)
+ *     (1 2)
+ *     (2 3)
+ *    )
+ *   (         ; 4) constraint type 2
+ *    10.0     ; 4-1) distance [nm]
+ *    (        ; 4-2) list of particle-pairs
+ *     (3 4)
+ *     (4 5)
+ *    )
+ *  ))
+ * INPUT
+ *  var : name of the variable.
+ *        in the above example, set "constraints".
+ * OUTPUT
+ *  returned value : struct BeadRod
+ *                   if NULL is returned, it failed (not defined)
+ */
+struct BeadRod *
+BeadRod_guile_get (const char *var);
+
+
+/************************************
  ** bond-interaction routines      **
  ************************************/
 /* from bonds.h */
@@ -1537,7 +1617,7 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
 
 /* from ev-dh-guile.h */
 /* get ev_dh from SCM
- * in SCM, angles are given by something like
+ * in SCM, "ev-dh" are given by something like
  *  (define ev-dh '(
  *    ; system parameters
  *    1.0e-6   ; 1) epsilon for the cut-off distance of EV_DH interaction
@@ -1643,7 +1723,7 @@ EV_LJ_calc_force (struct EV_LJ *ev_LJ,
 
 /* from ev-LJ-guile.h */
 /* get ev-LJ from SCM
- * in SCM, angles are given by something like
+ * in SCM, "ev-LJ" are given by something like
  *  (define ev-LJ '(
  *   (; LJ type 1
  *    10.0 ; 1) LJ parameter epsilon in kT (so this is dimensionless value)
@@ -2124,6 +2204,7 @@ struct BD_params
 
   double st; // currently this is just place holders
 
+  struct BeadRod *br;
   struct bonds *bonds;
   double gamma;
   struct EV *ev;
@@ -2186,6 +2267,7 @@ struct BD_params
  *        therefore, check for the existance of mobile pair(s)
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
+ *  (struct BeadRod *)br
  *  (struct bonds *)bonds
  *  (double) gamma
  *  (struct EV *)ev
@@ -2218,6 +2300,7 @@ BD_params_init (struct stokes *sys,
 		int flag_lub,
 		int flag_mat,
 		double st,
+		struct BeadRod *br,
 		struct bonds *bonds,
 		double gamma,
 		struct EV *ev,
@@ -2392,6 +2475,11 @@ NITSOL_set_forcing (struct NITSOL *nit,
 void
 NITSOL_set_iplvl (struct NITSOL *nit,
 		  int iplvl, int ipunit);
+
+/* set routines for calculating norm by BLAS routines (ddot_ and dnrm2_)
+ */
+void
+NITSOL_set_norm_by_BLAS (struct NITSOL *nit);
 
 
 /**
