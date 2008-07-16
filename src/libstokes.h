@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.66 2008/06/13 03:00:06 kichiki Exp $
+ * $Id: libstokes.h,v 1.67 2008/07/16 16:43:32 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1017,10 +1017,12 @@ guile_load (const char *file);
  ************************************/
 /* from bead-rod.h */
 struct BeadRod {
+  struct stokes *sys;
+
   int nc; // number of constraints
 
   // particle indices consisting of the rods
-  double *a;  // a[nc] : rod distance
+  double *a2;  // a2[nc] : square rod distance
   int *ia; // ia[nc] : particle at one end of the rod
   int *ib; // ib[nc] : particle at the other end of the rod
 
@@ -1035,27 +1037,33 @@ struct BeadRod {
   struct iter *it;    // for scheme == 0
 
   // dynamic properties
-  double c1; // coefficient of linear term (4 dt/zeta)
-  double c2; // coefficient of quadratic term (2 dt/zeta)^2
+  double dt; // time difference between u[] and uu[] below
+  double d1; // = (2 dt / zeta)
+  double d2; // = (2 dt / zeta)^2
+  // note : the linear-term coefficient is (2 * d1)
 
-  double *u;  // u(t)
-  double *uu; // u'(t+dt)
+  double *u;  // u [nc * 3], initial connector at t
+  double *uu; // uu[nc * 3], connector without constraint at t+dt
 };
+
 
 /* initialize struct BeadRod
  * INPUT
+ *  sys   : struct stokes
  *  nc    : number of constraints
- *  a[nc] : distances for each constraint (NULL for the uniform case a=1)
+ *  a[nc] : distances for each constraint
  *  ia[nc], ib[nc] : particle indices for each constraint
  */
 struct BeadRod *
-BeadRod_init (int nc,
+BeadRod_init (struct stokes *sys,
+	      int nc,
 	      const double *a,
 	      const int *ia,
 	      const int *ib);
 
 void
 BeadRod_free (struct BeadRod *br);
+
 
 /* from bead-rod-guile.h */
 /* get constraints from SCM and set struct BeadRod
@@ -1064,8 +1072,8 @@ BeadRod_free (struct BeadRod *br);
  *   ; system parameters
  *   1.0e-6    ; 1) tolerance
  *   "nitsol"  ; 2) scheme for solving nonlinear equations
- *                  "linear" for iterative scheme in linear approximation
- *                  "nitsol" for Newton-GMRES scheme by NITSOL library
+ *             ;    "linear" for iterative scheme in linear approximation
+ *             ;    "nitsol" for Newton-GMRES scheme by NITSOL library
  *   ; the following is for each constraint
  *   (         ; 3) constraint type 1
  *    5.0      ; 3-1) distance [nm]
@@ -1073,23 +1081,27 @@ BeadRod_free (struct BeadRod *br);
  *     (0 1)
  *     (1 2)
  *     (2 3)
- *    )
+ *   ))
  *   (         ; 4) constraint type 2
  *    10.0     ; 4-1) distance [nm]
  *    (        ; 4-2) list of particle-pairs
  *     (3 4)
  *     (4 5)
- *    )
+ *   ))
  *  ))
  * INPUT
  *  var : name of the variable.
  *        in the above example, set "constraints".
+ *  sys : struct stokes
+ *  length : unit length in the simulation
  * OUTPUT
  *  returned value : struct BeadRod
  *                   if NULL is returned, it failed (not defined)
  */
 struct BeadRod *
-BeadRod_guile_get (const char *var);
+BeadRod_guile_get (const char *var,
+		   struct stokes *sys,
+		   double length);
 
 
 /************************************
@@ -1128,6 +1140,7 @@ struct bonds {
 		*/
   double *p1;  // the first parameter (k or N_{K,s})
   double *p2;  // the second parameter (r0 or b_{K})
+  double *p3;  // the third parameter (tol for FENE-Fraenkel)
 
   struct bond_pairs **pairs; // pairs for the bond
 
@@ -1170,14 +1183,14 @@ bonds_free (struct bonds *bonds);
  *                (p1, p2) = (k, r0) for dWLC (type == 6).
  *                in the latter case, potential is given by
  *                (k/2) * (kT / r0^2) * (r-r0)^2
- *  p1, p2 : spring parameters
+ *  p1, p2, p3 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2,
+		int type, int fene, double p1, double p2, double p3,
 		int nex);
 
 /* set FENE spring parameters for run
@@ -1310,16 +1323,31 @@ list_ex_check (struct list_ex *ex, int i, int j);
  *     ((4 5)  ; 3) list of pairs
  *      (5 6)
  *      (6 7))
- *       1)    ; 4) number of exclusion for lubrication
+ *      1)     ; 4) number of exclusion for lubrication
+ *    (; bond 3
+ *     7       ; 1) spring type (FENE-Fraenkel)
+ *     (       ; 2) spring parameters (list with 4 elements)
+ *      0      ;    fene = 0 means (p1, p2, p3) = (H, r0 [nm], tol)
+ *      1.0e6  ;    p1 = H, the spring constant
+ *      0.5    ;    p2 = r0 [nm], the natural length of the spring
+ *      0.01)  ;    p3 = tol, the tolerance parameter "s"
+ *             ;    note that, for FENE-Fraenkel (type == 7),
+ *             ;    the scalar part of the force is
+ *             ;    fr = H * (r/hat(r0) - 1.0) / (1 - ((1-r/hat(r0))/tol)^2)
+ *             ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
+ *     ((8 9)  ; 3) list of pairs
+ *      (9 10))
+ *      1)     ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
- *   0 : Hookean spring (Asp * (r - Ls)
+ *   0 : Hookean spring (Asp * (r - Ls))
  *   1 : wormlike chain (WLC)
  *   2 : inverse Langevin chain (ILC)
  *   3 : Cohen's Pade approximation
  *   4 : Warner spring
  *   5 : Hookean spring (Asp * r / Ls)
  *   6 : Hookean spring for dWLC
+ *   7 : FENE-Fraenkel
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)

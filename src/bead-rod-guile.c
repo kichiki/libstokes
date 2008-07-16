@@ -1,6 +1,6 @@
 /* guile interface for struct BeadRod
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod-guile.c,v 1.1 2008/06/13 02:58:12 kichiki Exp $
+ * $Id: bead-rod-guile.c,v 1.2 2008/07/16 16:41:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,6 +22,7 @@
 #include <string.h> // strcmp()
 #include "memory-check.h" // macro CHECK_MALLOC
 
+#include "stokes.h" // struct stokes
 #include "stokes-guile.h" // guile_load()
 #include "bead-rod.h"     // struct BeadRod
 
@@ -34,8 +35,8 @@
  *   ; system parameters
  *   1.0e-6    ; 1) tolerance
  *   "nitsol"  ; 2) scheme for solving nonlinear equations
- *                  "linear" for iterative scheme in linear approximation
- *                  "nitsol" for Newton-GMRES scheme by NITSOL library
+ *             ;    "linear" for iterative scheme in linear approximation
+ *             ;    "nitsol" for Newton-GMRES scheme by NITSOL library
  *   ; the following is for each constraint
  *   (         ; 3) constraint type 1
  *    5.0      ; 3-1) distance [nm]
@@ -43,23 +44,27 @@
  *     (0 1)
  *     (1 2)
  *     (2 3)
- *    )
+ *   ))
  *   (         ; 4) constraint type 2
  *    10.0     ; 4-1) distance [nm]
  *    (        ; 4-2) list of particle-pairs
  *     (3 4)
  *     (4 5)
- *    )
+ *   ))
  *  ))
  * INPUT
  *  var : name of the variable.
  *        in the above example, set "constraints".
+ *  sys : struct stokes
+ *  length : unit length in the simulation
  * OUTPUT
  *  returned value : struct BeadRod
  *                   if NULL is returned, it failed (not defined)
  */
 struct BeadRod *
-BeadRod_guile_get (const char *var)
+BeadRod_guile_get (const char *var,
+		   struct stokes *sys,
+		   double length)
 {
   if (guile_check_symbol (var) == 0)
     {
@@ -164,6 +169,7 @@ BeadRod_guile_get (const char *var)
       // 1st element (0) of the list scm_br
       double a0 = scm_num2dbl (scm_list_ref (scm_br, scm_int2num (0)),
 			       "BeadRod_guile_get");
+      a0 /= length; // scale by the unit length
 
       // 2nd element (1) of the list scm_br
       SCM scm_pairs
@@ -223,7 +229,7 @@ BeadRod_guile_get (const char *var)
     }
 
   // now we have nc (number of constraints) and tables a[nc], ia[nc], ib[nc]
-  struct BeadRod *br = BeadRod_init (nc, a, ia, ib);
+  struct BeadRod *br = BeadRod_init (sys, nc, a, ia, ib);
   CHECK_MALLOC (br, "BeadRod_guile_get");
   free (a);
   free (ia);
