@@ -1,6 +1,6 @@
 /* subroutine for the procedure of F version
  * Copyright (C) 2001-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: f.c,v 2.12 2007/11/28 03:13:26 kichiki Exp $
+ * $Id: f.c,v 2.13 2008/07/16 18:29:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -624,8 +624,7 @@ shift_rest_to_labo_U (struct stokes * sys,
   int i, ix, iy, iz;
   double uOx, uOy, uOz;
   double uEx, uEy, uEz;
-  double Ezz;
-  Ezz = - sys->Ei[0] - sys->Ei[4];
+  double Ezz = - sys->Ei[0] - sys->Ei[4];
 
   for (i = 0; i < np; i ++)
     {
