@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.26 2008/06/13 05:07:52 kichiki Exp $
+ * $Id: brownian.c,v 1.27 2008/07/16 16:48:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2165,58 +2165,65 @@ BD_params_get_fact (struct BD_params *BD,
 
 
 /* add interaction forces on each particle including
- *   bond force F^bond(sys->pos[]) by bonds_calc_force()
- *   EV force F^EV(sys->pos[]) by EV_calc_force()
+ *   bond force  by bonds_calc_force(),
+ *   EV force    by EV_calc_force(),
+ *   angle force by angles_calc_force(),
+ *   EV-DH force by EV_DH_calc_force(),
+ *   EV-LJ force by EV_LJ_calc_force(),
+ *   confinement by CF_calc_force().
  * this is the position where new forces are added for Brownian Dynamics.
  * INPUT
- *  BD : struct BD_params
- *  pos[] : position for F^bond and F^EV
+ *  BD      : struct BD_params
+ *  pos[]   : position of particles (BD->sys->pos is accepted)
  * OUTPUT
- *  FTS : struct FTS
+ *  f[np*3] : 
  */
 void
 BD_add_FP (struct BD_params *BD,
 	   const double *pos,
-	   struct FTS *FTS)
+	   double *f)
 {
-  stokes_set_pos_mobile (BD->sys, pos);
+  if (BD->sys->pos != pos)
+    {
+      stokes_set_pos_mobile (BD->sys, pos);
+    }
 
   //if (BD->bonds != NULL)
   if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
       bonds_calc_force (BD->bonds, BD->sys,
-			FTS->f, 1/* add */);
+			f, 1/* add */);
     }
   if (BD->ev != NULL)
     {
       // calc EV force
       EV_calc_force (BD->ev, BD->sys,
-		     FTS->f, 1/* add */);
+		     f, 1/* add */);
     }
   if (BD->ang != NULL)
     {
       // calc angle (bending) force
       angles_calc_force (BD->ang, BD->sys,
-			 FTS->f, 1/* add */);
+			 f, 1/* add */);
     }
   if (BD->ev_dh != NULL)
     {
       // calc EV_DH force
       EV_DH_calc_force (BD->ev_dh, BD->sys,
-			FTS->f, 1/* add */);
+			f, 1/* add */);
     }
   if (BD->ev_LJ != NULL)
     {
       // calc EV_LJ force
       EV_LJ_calc_force (BD->ev_LJ, BD->sys,
-			FTS->f, 1/* add */);
+			f, 1/* add */);
     }
   if (BD->cf != NULL)
     {
       // calc confinement force
       CF_calc_force (BD->cf, BD->sys,
-		     FTS->f, 1/* add */);
+		     f, 1/* add */);
     }
 }
 
@@ -2269,7 +2276,7 @@ BD_calc_forces (struct BD_params *BD,
     }
 
   // interaction forces depending on the configuration by sys->pos[]
-  BD_add_FP (BD, BD->sys->pos, FTS);
+  BD_add_FP (BD, BD->sys->pos, FTS->f);
 }
 
 
@@ -2473,8 +2480,8 @@ BD_evolve_mid (double t,
       BeadRod_set_coefs (BD->br, dt_local, 1.0);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
-				     xmid,
-				     x);
+				     x,
+				     xmid);
     }
 
   // final accepted configuration
@@ -2744,7 +2751,7 @@ BD_evolve_BB03 (double t,
   stokes_set_shear_shift (BD->sys, t,
 			  BD->t0, BD->s0);
   // interaction forces
-  BD_add_FP (BD, x, FTS);
+  BD_add_FP (BD, x, FTS->f);
 
   solve_mix_3all (BD->sys,
 		  BD->flag_noHI,
@@ -2831,8 +2838,8 @@ BD_evolve_BB03 (double t,
       BeadRod_set_coefs (BD->br, dt_local, 1.0);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
-				     xBB,
-				     x);
+				     x,
+				     xBB);
     }
 
   // final accepted configuration
@@ -2856,6 +2863,37 @@ BD_evolve_BB03 (double t,
   FTS_free (FTS);
 
   return (dt_local);
+}
+
+static double
+check_constraints (struct BD_params *BD,
+		   const double *x)
+{
+  double *u = (double *)malloc (sizeof (double) * BD->br->nc * 3);
+  CHECK_MALLOC (u, "check_constraints");
+
+  BeadRod_bead_to_connector (BD->br->nc,
+			     BD->br->ia,
+			     BD->br->ib,
+			     x,
+			     u);
+  double max2 = 0.0;
+  int i;
+  for (i = 0; i < BD->br->nc; i ++)
+    {
+      int ix = i*3;
+      int iy = ix + 1;
+      int iz = ix + 2;
+      double u2 = u[ix] * u[ix] + u[iy] * u[iy] + u[iz] * u[iz];
+      double e2 = fabs (u2 - BD->br->a2[i]);
+      if (e2 > max2)
+	{
+	  max2 = e2;
+	}
+    }
+
+  free (u);
+  return (max2);
 }
 
 /* evolve position of particles -- Ball-Melrose scheme
@@ -3078,11 +3116,19 @@ BD_evolve_BM97 (double t,
        * x[]    is the initial configuration (at t) and
        * xBM[]  is the final configuration (at t+dt) without constraints
        */
-      BeadRod_set_coefs (BD->br, dt_local, 1.0);
+      fprintf (stdout, "# before %e => %e",
+	       check_constraints (BD, x),
+	       check_constraints (BD, xBM));
+      double zeta;
+      if (BD->sys->a == NULL) zeta = 1.0;
+      else                    zeta = BD->sys->a[0]; // now i=0 is picked
+      BeadRod_set_coefs (BD->br, dt_local, zeta);
       BeadRod_adjust_by_constraints (BD->br,
 				     BD->sys->nm,
-				     xBM,
-				     x);
+				     x,
+				     xBM);
+      fprintf (stdout, " => %e\n",
+	       check_constraints (BD, xBM));
     }
 
   // final accepted configuration

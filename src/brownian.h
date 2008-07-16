@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.17 2008/06/13 02:59:41 kichiki Exp $
+ * $Id: brownian.h,v 1.18 2008/07/16 16:48:43 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -377,18 +377,23 @@ BD_params_get_fact (struct BD_params *BD,
 		    double dt);
 
 /* add interaction forces on each particle including
- *   bond force F^bond(sys->pos[]) by bonds_calc_force()
- *   EV force F^EV(sys->pos[]) by EV_calc_force()
+ *   bond force  by bonds_calc_force(),
+ *   EV force    by EV_calc_force(),
+ *   angle force by angles_calc_force(),
+ *   EV-DH force by EV_DH_calc_force(),
+ *   EV-LJ force by EV_LJ_calc_force(),
+ *   confinement by CF_calc_force().
+ * this is the position where new forces are added for Brownian Dynamics.
  * INPUT
- *  BD : struct BD_params
- *  pos[] : position for F^bond and F^EV
+ *  BD      : struct BD_params
+ *  pos[]   : position of particles (BD->sys->pos is accepted)
  * OUTPUT
- *  FTS : struct FTS
+ *  f[np*3] : 
  */
 void
 BD_add_FP (struct BD_params *BD,
 	   const double *pos,
-	   struct FTS *FTS);
+	   double *f);
 
 /* evolve position of particles -- the mid-point scheme
  * INPUT
