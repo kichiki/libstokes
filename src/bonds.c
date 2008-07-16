@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.13 2008/06/13 03:04:52 kichiki Exp $
+ * $Id: bonds.c,v 1.14 2008/07/16 16:47:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -82,6 +82,7 @@ bonds_init (void)
   bonds->fene  = NULL;
   bonds->p1    = NULL;
   bonds->p2    = NULL;
+  bonds->p3    = NULL;
   bonds->pairs = NULL;
   bonds->nex   = NULL;
 
@@ -96,6 +97,7 @@ bonds_free (struct bonds *bonds)
   if (bonds->fene  != NULL) free (bonds->fene);
   if (bonds->p1    != NULL) free (bonds->p1);
   if (bonds->p2    != NULL) free (bonds->p2);
+  if (bonds->p3    != NULL) free (bonds->p3);
   if (bonds->pairs != NULL)
     {
       int i;
@@ -118,14 +120,14 @@ bonds_free (struct bonds *bonds)
  *                (p1, p2) = (k, r0) for dWLC (type == 6).
  *                in the latter case, potential is given by
  *                (k/2) * (kT / r0^2) * (r-r0)^2
- *  p1, p2 : spring parameters
+ *  p1, p2, p3 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2,
+		int type, int fene, double p1, double p2, double p3,
 		int nex)
 {
   bonds->n ++;
@@ -136,6 +138,7 @@ bonds_add_type (struct bonds *bonds,
   bonds->fene = (int *)realloc (bonds->fene,  sizeof (int) * n);
   bonds->p1   = (double *)realloc (bonds->p1, sizeof (double) * n);
   bonds->p2   = (double *)realloc (bonds->p2, sizeof (double) * n);
+  bonds->p3   = (double *)realloc (bonds->p3, sizeof (double) * n);
   bonds->pairs
     = (struct bond_pairs **)realloc (bonds->pairs,
 				     sizeof (struct bond_pairs *) * n);
@@ -148,6 +151,7 @@ bonds_add_type (struct bonds *bonds,
   bonds->fene [n] = fene;
   bonds->p1   [n] = p1;
   bonds->p2   [n] = p2;
+  bonds->p3   [n] = p3;
 
   bonds->pairs [n] = bond_pairs_init ();
 
@@ -212,6 +216,84 @@ bonds_ILC (double x)
   return (cosh (x) / sinh (x) - 1.0 / x);
 }
 
+
+/* return force function (scalar part) of the spring
+ */
+double
+bonds_fr_i (struct bonds *bonds,
+	    int bond_index,
+	    double Q)
+{
+  double fr;
+
+  double A  = bonds->p1[bond_index];
+  double Q0 = bonds->p2[bond_index];
+  double s  = bonds->p3[bond_index]; // only for FENE-Fraenkel
+
+  double hatQ = Q / Q0;
+  double x2;
+
+  int bond_type = bonds->type[bond_index];
+  if ((bond_type != 0 &&
+       bond_type != 5 &&
+       bond_type != 6 &&
+       bond_type != 7) // FENE chain
+      && hatQ >= 1.0)
+    {
+      fprintf (stderr, "bonds:"
+	       " extension %e exceeds the max %e for the bond %d\n",
+	       Q, Q0, bond_index);
+      fprintf (stderr, "bond_type = %d\n", bond_type);
+      exit (1);
+    }
+
+  switch (bond_type)
+    {
+    case 1: // Wormlike chain (WLC)
+      x2 = (1.0 - hatQ) * (1.0 - hatQ);
+      fr = (2.0/3.0) * A * (0.25 / x2 - 0.25 + hatQ);
+      break;
+
+    case 2: // inverse Langevin chain (ILC)
+      fr = A / 3.0 * bonds_ILC (hatQ);
+      break;
+
+    case 3: // Cohen's Pade approximation for ILC
+      x2 = hatQ * hatQ;
+      fr = A * hatQ * (1.0 - x2 / 3.0) / (1.0 - x2);
+      break;
+
+    case 4: // Warner spring
+      x2 = hatQ * hatQ;
+      fr = A * hatQ / (1.0 - x2);
+      break;
+
+    case 5: // Hookean
+      fr = A * hatQ;
+      break;
+
+    case 7: // FENE-Fraenkel
+      // note that (p1,p2,p3) = (H,r0,s)
+      x2 = (1.0 - hatQ) / s; // s is the tolerance
+      x2 = x2 * x2;
+      fr = A * (hatQ - 1.0) / (1.0 - x2);
+      break;
+
+    case 0: // Hookean with natural length == Fraenkel
+    case 6: // dWLC
+      // note that here (p1,p2) = (k, r0), not (N_{K,s}, b_{K})
+      fr = A * (Q - Q0);
+      break;
+
+    default:
+      fprintf (stderr, "bonds: invalid spring type %d\n", bond_type);
+      exit (1);
+      break;
+    }
+
+  return (fr);
+}
+
 static void
 bonds_set_force_ij (struct bonds *bonds,
 		    struct stokes *sys,
@@ -226,54 +308,7 @@ bonds_set_force_ij (struct bonds *bonds,
   double ey = y / r;
   double ez = z / r;
 
-  double Asp = bonds->p1[bond_index];
-  double Ls  = bonds->p2[bond_index];
-
-  double fr;
-  double rLs = r / Ls;
-  double rLs2;
-
-  int bond_type = bonds->type[bond_index];
-  if ((bond_type != 0 && bond_type != 5 && bond_type != 6) // FENE chain
-      && rLs >= 1.0)
-    {
-      fprintf (stderr, "bonds: extension %e exceeds the max %e for (%d,%d)\n",
-	       r, Ls, ia, ib);
-      fprintf (stderr, "bond_type = %d\n", bond_type);
-      exit (1);
-    }
-
-  switch (bond_type)
-    {
-    case 1: // Wormlike chain (WLC)
-      rLs2 = (1.0 - rLs) * (1.0 - rLs);
-      fr = (2.0/3.0) * Asp * (0.25 / rLs2 - 0.25 + rLs);
-      break;
-
-    case 2: // inverse Langevin chain (ILC)
-      fr = Asp / 3.0 * bonds_ILC (rLs);
-      break;
-
-    case 3: // Cohen's Pade approximation for ILC
-      rLs2 = rLs * rLs;
-      fr = Asp * rLs * (1.0 - rLs2 / 3.0) / (1.0 - rLs2);
-      break;
-
-    case 4: // Warner spring
-      rLs2 = rLs * rLs;
-      fr = Asp * rLs / (1.0 - rLs2);
-      break;
-
-    case 5: // Hookean
-      fr = Asp * rLs;
-      break;
-
-    case 0: // Hookean
-    case 6: // dWLC
-    default:
-      fr = Asp * (r - Ls);
-      break;
-    }
+  double fr = bonds_fr_i (bonds, bond_index, r);
 
   /* F_a = - fr (R_a - R_b)/|R_a - R_b|
    * where fr > 0 corresponds to the attractive
@@ -411,6 +446,7 @@ bonds_print (FILE *out, struct bonds *bonds)
       fprintf (out, " type = %d\n", bonds->type[i]);
       fprintf (out, " k = %f\n", bonds->p1[i]);
       fprintf (out, " r0 = %f\n", bonds->p2[i]);
+      fprintf (out, " tol = %e\n", bonds->p3[i]);
       fprintf (out, " nex = %d\n", bonds->nex[i]);
       fprintf (out, " number of pairs = %d\n", bonds->pairs[i]->n);
       int j;

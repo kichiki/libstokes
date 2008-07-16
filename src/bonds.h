@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.9 2008/05/13 01:09:38 kichiki Exp $
+ * $Id: bonds.h,v 1.10 2008/07/16 16:47:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@ struct bonds {
 		*/
   double *p1;  // the first parameter (k or N_{K,s})
   double *p2;  // the second parameter (r0 or b_{K})
+  double *p3;  // the third parameter (tol for FENE-Fraenkel)
 
   struct bond_pairs **pairs; // pairs for the bond
 
@@ -98,14 +99,14 @@ bonds_free (struct bonds *bonds);
  *                (p1, p2) = (k, r0) for dWLC (type == 6).
  *                in the latter case, potential is given by
  *                (k/2) * (kT / r0^2) * (r-r0)^2
- *  p1, p2 : spring parameters
+ *  p1, p2, p3 : spring parameters
  *  nex    : number of excluded particles in the chain
  * OUTPUT
  *  bonds  :
  */
 void
 bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2,
+		int type, int fene, double p1, double p2, double p3,
 		int nex);
 
 /* set FENE spring parameters for run
@@ -127,6 +128,13 @@ bonds_add_type (struct bonds *bonds,
 void
 bonds_set_FENE (struct bonds *bonds,
 		double length, double peclet);
+
+/* return force function (scalar part) of the spring
+ */
+double
+bonds_fr_i (struct bonds *bonds,
+	    int bond_index,
+	    double Q);
 
 /*
  * INPUT
