@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.13 2008/06/13 02:56:57 kichiki Exp $
+ * $Id: bd-imp.c,v 1.14 2008/07/16 16:49:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -342,7 +342,7 @@ BD_imp_calc_forces (struct BD_imp *BDimp,
   /**
    * add interaction forces for pos[]
    */
-  BD_add_FP (BD, pos, BDimp->FTS);
+  BD_add_FP (BD, pos, BDimp->FTS->f);
 }
 
 /* adjust the imposed flow with the new config x[].
