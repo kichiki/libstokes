@@ -1,6 +1,6 @@
 /* guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.10 2008/05/24 05:45:22 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.11 2008/07/16 18:28:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,16 +53,31 @@
  *     ((4 5)  ; 3) list of pairs
  *      (5 6)
  *      (6 7))
- *       1)    ; 4) number of exclusion for lubrication
+ *      1)     ; 4) number of exclusion for lubrication
+ *    (; bond 3
+ *     7       ; 1) spring type (FENE-Fraenkel)
+ *     (       ; 2) spring parameters (list with 4 elements)
+ *      0      ;    fene = 0 means (p1, p2, p3) = (H, r0 [nm], tol)
+ *      1.0e6  ;    p1 = H, the spring constant
+ *      0.5    ;    p2 = r0 [nm], the natural length of the spring
+ *      0.01)  ;    p3 = tol, the tolerance parameter "s"
+ *             ;    note that, for FENE-Fraenkel (type == 7),
+ *             ;    the scalar part of the force is
+ *             ;    fr = H * (r/hat(r0) - 1.0) / (1 - ((1-r/hat(r0))/tol)^2)
+ *             ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
+ *     ((8 9)  ; 3) list of pairs
+ *      (9 10))
+ *      1)     ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
- *   0 : Hookean spring (Asp * (r - Ls)
+ *   0 : Hookean spring (Asp * (r - Ls))
  *   1 : wormlike chain (WLC)
  *   2 : inverse Langevin chain (ILC)
  *   3 : Cohen's Pade approximation
  *   4 : Warner spring
  *   5 : Hookean spring (Asp * r / Ls)
  *   6 : Hookean spring for dWLC
+ *   7 : FENE-Fraenkel
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
@@ -145,10 +160,11 @@ bonds_guile_get (const char * var)
 	}
       unsigned long params_len
 	= scm_num2ulong (scm_length (scm_params), 0, "bonds_guile_get");
-      if (params_len != 3)
+      if (params_len != 3 &&
+	  params_len != 4)
 	{
 	  fprintf (stderr, "bonds_guile_get:"
-		   " params has wrong length %ld != 3\n",
+		   " params has wrong length %ld != 3 nor 4\n",
 		   params_len);
 	  bonds_free (bonds);
 	  return (NULL); // failed
@@ -160,6 +176,15 @@ bonds_guile_get (const char * var)
 			       "bonds_guile_get");
       double p2 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (2)),
 			       "bonds_guile_get");
+      double p3 = 0.0;
+      if (params_len == 4)
+	{
+	  // params_len == 4
+	  p3 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (3)),
+			    "bonds_guile_get");
+	}
+      // end of parsing scm_params
+
 
       // 4th element (3) of the list scm_bond
       // (3rd element will be taken later)
@@ -167,7 +192,7 @@ bonds_guile_get (const char * var)
 			     0,
 			     "bonds_guile_get");
 
-      bonds_add_type (bonds, type, fene, p1, p2, nex);
+      bonds_add_type (bonds, type, fene, p1, p2, p3, nex);
 
 
       // 3rd element (2) of the list scm_bond

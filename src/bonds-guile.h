@@ -1,7 +1,7 @@
 /* header file for bonds-guile.c --
  * guile interface for struct bonds
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.h,v 1.8 2008/05/24 05:45:42 kichiki Exp $
+ * $Id: bonds-guile.h,v 1.9 2008/07/16 18:28:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,16 +47,31 @@
  *     ((4 5)  ; 3) list of pairs
  *      (5 6)
  *      (6 7))
- *       1)    ; 4) number of exclusion for lubrication
+ *      1)     ; 4) number of exclusion for lubrication
+ *    (; bond 3
+ *     7       ; 1) spring type (FENE-Fraenkel)
+ *     (       ; 2) spring parameters (list with 4 elements)
+ *      0      ;    fene = 0 means (p1, p2, p3) = (H, r0 [nm], tol)
+ *      1.0e6  ;    p1 = H, the spring constant
+ *      0.5    ;    p2 = r0 [nm], the natural length of the spring
+ *      0.01)  ;    p3 = tol, the tolerance parameter "s"
+ *             ;    note that, for FENE-Fraenkel (type == 7),
+ *             ;    the scalar part of the force is
+ *             ;    fr = H * (r/hat(r0) - 1.0) / (1 - ((1-r/hat(r0))/tol)^2)
+ *             ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
+ *     ((8 9)  ; 3) list of pairs
+ *      (9 10))
+ *      1)     ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
- *   0 : Hookean spring (Asp * (r - Ls)
+ *   0 : Hookean spring (Asp * (r - Ls))
  *   1 : wormlike chain (WLC)
  *   2 : inverse Langevin chain (ILC)
  *   3 : Cohen's Pade approximation
  *   4 : Warner spring
  *   5 : Hookean spring (Asp * r / Ls)
  *   6 : Hookean spring for dWLC
+ *   7 : FENE-Fraenkel
  * OUTPUT
  *  returned value : struct bonds
  *                   if NULL is returned, it failed (not defined)
