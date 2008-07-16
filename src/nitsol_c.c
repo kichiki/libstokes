@@ -1,6 +1,6 @@
 /* C wrappers for NITSOL
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: nitsol_c.c,v 1.3 2008/06/13 02:56:08 kichiki Exp $
+ * $Id: nitsol_c.c,v 1.4 2008/07/16 16:45:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -219,6 +219,17 @@ NITSOL_set_jacv (struct NITSOL *nit,
 			      int *ijob, double *v, double *z,
 			      double *rpar, int *ipar, int *itrmjv))
 {
+  if (jacv == NULL)
+    {
+      if (p_flag != 0 || j_flag != 0)
+	{
+	  fprintf (stderr, "# NITSOL_set_jacv:"
+		   " p_flag and j_flag are set by 0\n");
+	  p_flag = 0;
+	  j_flag = 0;
+	}
+    }
+
   nit->input[4] = p_flag; /* 0 == no preconditioning
 			  * 1 == right preconditioning
 			  */
@@ -248,7 +259,6 @@ NITSOL_set_jacv (struct NITSOL *nit,
     }
   else
     {
-      //nit->jacv = NULL;
       nit->jacv = NITSOL_no_jacv;
     }
 }
