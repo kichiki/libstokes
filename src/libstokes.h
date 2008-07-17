@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.67 2008/07/16 16:43:32 kichiki Exp $
+ * $Id: libstokes.h,v 1.68 2008/07/17 02:24:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -142,7 +142,7 @@ struct stokes {
 		  * all particles within +/-1 cells in x,y,z for the periodic
 		  */
   /* exclusion list for lubrication due to the bonding */
-  struct list_ex *ex_lub;
+  //struct list_ex *ex_lub;
 
   /**
    * for zeta program
@@ -1108,90 +1108,67 @@ BeadRod_guile_get (const char *var,
  ** bond-interaction routines      **
  ************************************/
 /* from bonds.h */
-struct bond_pairs {
-  int n;   // number of pairs
-  int *ia; // particle a for the pair
-  int *ib; // particle b for the pair
-};
+// for each group
+struct BONDS {
+  int n; // number of bonds
+  int *type; /* type[n] : type of the spring for each bond
+	      * 0 : Hookean (p1 = k, spring constant,
+	      *              p2 = r0, natural length)
+	      * 1 : Wormlike chain (WLC)
+	      * 2 : inverse Langevin chain (ILC)
+	      * 3 : Cohen's Pade approx for ILC
+	      * 4 : Werner spring (approx for ILC)
+	      * 5 : another Hookean
+	      *     where for these FENE chains,
+	      *     p1 = N_{K,s} the Kuhn steps for a spring
+	      *     p2 = b_{K}   the Kuhn length [nm]
+	      * 6 : discrete Wormlike chain (dWLC), where
+	      *     p1 = k, dimensionless spring constant, 
+	      *     p2 = r0, the natural length [nm],
+	      *     the potential is given by
+	      *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
+	      * 7 : FENE-Fraenkel
+	      *     p1, p2 are the same for FENE chains.
+	      *     p3 = s, the tolerance
+	      */
+  int *fene; /* fene[n] : flag for the parameters p1 and p2
+	      * 0 : (p1, p2) = (A^{sp}, L_{s})
+	      * 1 : (p1, p2) = (N_{K,s}, b_{K})
+	      */
+  double *p1; // p1[n] : the first parameter (k or N_{K,s})
+  double *p2; // p2[n] : the second parameter (r0 or b_{K})
+  double *p3; // p3[n] : the third parameter (tol for FENE-Fraenkel)
 
-struct bonds {
-  /* table for bond type */
-  int n;      // number of bond types
-  int *type;  /* type of the spring
-	       * 0 : Hookean (p1 = k, spring constant,
-	       *              p2 = r0, natural length)
-	       * 1 : Wormlike chain (WLC)
-	       * 2 : inverse Langevin chain (ILC)
-	       * 3 : Cohen's Pade approx for ILC
-	       * 4 : Werner spring (approx for ILC)
-	       * 5 : another Hookean
-	       *     where for these FENE chains,
-	       *     p1 = N_{K,s} the Kuhn steps for a spring
-	       *     p2 = b_{K}   the Kuhn length [nm]
-	       * 6 : discrete Wormlike chain (dWLC), where
-	       *     p1 = k, dimensionless spring constant, 
-	       *     p2 = r0, the natural length [nm],
-	       *     the potential is given by
-	       *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
-	       */
-  int *fene;   /* flag for the parameters p1 and p2
-		* 0 : (p1, p2) = (A^{sp}, L_{s})
-		* 1 : (p1, p2) = (N_{K,s}, b_{K})
-		*/
-  double *p1;  // the first parameter (k or N_{K,s})
-  double *p2;  // the second parameter (r0 or b_{K})
-  double *p3;  // the third parameter (tol for FENE-Fraenkel)
-
-  struct bond_pairs **pairs; // pairs for the bond
-
-  int *nex;    // number of excluded particles in the chain
-};
-
-struct list_ex {
-  int np;  // total number of particles (must be equal to sys->np)
-  int *n;  // n[np] : number of excluded particles for each particles
-  int **i; // i[j][k] : k-th particle index to exclude for particle j.
+  int *ia;    // ia[n] : particle index of one end of the bond
+  int *ib;    // ib[n] : particle index of the other end of the bond
 };
 
 
+struct BONDS *
+BONDS_init (void);
 
 void
-bond_pairs_free (struct bond_pairs *pairs);
+BONDS_free (struct BONDS *b);
 
-void
-bond_pairs_add (struct bond_pairs *pairs,
-		int ia, int ib);
-
-
-/* initialize struct bonds
+/*
  * INPUT
- * OUTPUT
- *  returned value : struct bonds
- */
-struct bonds *
-bonds_init (void);
-
-void
-bonds_free (struct bonds *bonds);
-
-/* add a spring into bonds
- * INPUT
- *  bonds  : struct bonds
- *  type   : type of the spring
- *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
- *           1 == (p1, p2) = (N_{K,s}, b_{K}) or
- *                (p1, p2) = (k, r0) for dWLC (type == 6).
- *                in the latter case, potential is given by
- *                (k/2) * (kT / r0^2) * (r-r0)^2
- *  p1, p2, p3 : spring parameters
- *  nex    : number of excluded particles in the chain
- * OUTPUT
- *  bonds  :
+ *  ia, ib : (global) particle index, that is, they are in the range [0, NP), 
+ *           where NP is the total number of particles.
  */
 void
-bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2, double p3,
-		int nex);
+BONDS_append (struct BONDS *b,
+	      int type,
+	      int fene,
+	      double p1,
+	      double p2,
+	      double p3,
+	      int ia,
+	      int ib);
+
+
+void
+BONDS_sort_by_ia (struct BONDS *b);
+
 
 /* set FENE spring parameters for run
  * INPUT
@@ -1210,12 +1187,19 @@ bonds_add_type (struct bonds *bonds,
  *  bonds->p2[] := Ls / length = r0 / length
  */
 void
-bonds_set_FENE (struct bonds *bonds,
+BONDS_set_FENE (struct BONDS *b,
 		double length, double peclet);
+
+/* return force function (scalar part) of the spring
+ */
+double
+BONDS_fr_i (struct BONDS *b,
+	    int bond_index,
+	    double Q);
 
 /*
  * INPUT
- *  bonds      : struct bonds
+ *  b          : struct BONDS
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -1223,77 +1207,10 @@ bonds_set_FENE (struct bonds *bonds,
  * OUTPUT
  */
 void
-bonds_calc_force (struct bonds *bonds,
+BONDS_calc_force (struct BONDS *b,
 		  struct stokes *sys,
 		  double *f,
 		  int flag_add);
-
-void
-bonds_print (FILE *out, struct bonds *bonds);
-
-
-/**
- * SWIG utility routine
- * For examplean, expected usage in python by SWIG:
- *   n = stokes.bonds_get_pairs_n(bonds, i)
- *   ia = stokes.iarray(n)
- *   ib = stokes.iarray(n)
- *   stokes.bonds_get_pairs(bonds, i, ia, ib)
- * then, you have arrays ia[n] and ib[n].
- */
-
-/* to get the number of pairs for the bond "i"
- */
-int
-bonds_get_pairs_n (struct bonds *b, int i);
-/* 
- * INPUT
- *  b : struct bonds
- *  i : index of the bond
- *  ia[n] : "a" particle index of j-th pair for the bond "i",
- *  ib[n] : "b" particle index of j-th pair for the bond "i",
- *          where j runs from 0 to (n-1) and
- *          n = b->pairs[i]->n is the number of pairs for the bond "i".
- *          before calling, allocate ia and ib with (sizeof(int) * n).
- * OUTPUT
- *  ia[n], ib[n] : 
- */
-void
-bonds_get_pairs (struct bonds *b, int i,
-		 int *ia, int *ib);
-
-
-/**
- * exclusion list for lubrication due to the bonding
- */
-struct list_ex *
-list_ex_init (int np);
-
-void
-list_ex_add (struct list_ex *ex, int j, int k);
-
-void
-list_ex_free (struct list_ex *ex);
-
-struct list_ex *
-list_ex_copy (struct list_ex *ex0);
-
-/* construct the excluded list by struct bonds
- */
-void
-list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b);
-
-/* check whether j is excluded for i
- * INPUT
- *  ex : struct list_ex
- *  i  : particle now we are considering
- *  j  : particle whether it is in the list or not.
- * OUTPUT
- *  returned value : 0 (false); j is NOT in the excluded list for i.
- *                   1 (true);  j IS in the excluded list for i.
- */
-int
-list_ex_check (struct list_ex *ex, int i, int j);
 
 
 /* from bonds-guile.h */
@@ -1305,7 +1222,7 @@ list_ex_check (struct list_ex *ex, int i, int j);
  *     (       ; 2) spring parameters (list with 3 elements)
  *      0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
  *      1.0    ;    p1   = A^{sp}, scaled spring constant
- *      2.1)   ;    p2   = L_{s} / a, scaled max extension
+ *      2.1)   ;    p2   = L_{s} / length, scaled max extension
  *     ((0 1)  ; 3) list of pairs
  *      (1 2)
  *      (2 3))
@@ -1349,19 +1266,19 @@ list_ex_check (struct list_ex *ex, int i, int j);
  *   6 : Hookean spring for dWLC
  *   7 : FENE-Fraenkel
  * OUTPUT
- *  returned value : struct bonds
+ *  returned value : struct BONDS
  *                   if NULL is returned, it failed (not defined)
  */
-struct bonds *
-bonds_guile_get (const char * var);
+struct BONDS *
+BONDS_guile_get (const char * var);
 
 
 /* from excluded-volume.h */
 struct EV {
   double r2; // square of the max distance for F^{EV}
 
-  /* table for chain type */
-  int n;     // number of chain types
+  /* table for each particle */
+  int n;     // number of particles
   double *l; /* := sqrt((2/3) hat(ls)^2) */
   double *A; /* := (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
 	      * where
@@ -1372,22 +1289,19 @@ struct EV {
 	      *   F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
 	      * (note: r_{ij} is also dimensionless scaled by length)
 	      */
-
-  /* table for particles */
-  int *ch;   /* chain type for each particle
-	      * negative value == no assignement to the chain
-	      */
 };
+
 
 /* initialize struct EV
  * INPUT
- *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
+ *  np     : number of particles
  *  length : unit of length given by "length" in SCM (dimensional number)
  *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
- *  np     : number of particles
+ *  NKs[n] : Kuhn steps for a spring belongs to the particle
+ *  bK[n]  : (dimensional) Kuhn length in the dimension of "length"
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
  *      ev->l[i] = sqrt((2/3) hat(ls)^2)
@@ -1401,10 +1315,12 @@ struct EV {
  *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds,
+EV_init (int np,
 	 double length, double peclet,
-	 double r2, const double *v,
-	 int np);
+	 double r2,
+	 const double *v,
+	 const double *NKs,
+	 const double *bK);
 
 void
 EV_free (struct EV *ev);
@@ -1444,31 +1360,39 @@ EV_calc_force (struct EV *ev,
 
 
 /* from excluded-volume-guile.h */
-/* get ev-v from SCM and set struct EV
- * in SCM, ev-v is a list of parameter v [nm^3] or [micro m^3]
- * (depending on the dimension of the parameter "length")
- * for each spring:
- *  (define ev-v '(
- *   0.0012 ; for the spring 1
- *   0.002  ; for the spring 2
+/* get ev from SCM and set struct EV
+ * in SCM, ev are given by something like
+ *  (define ev '(
+ *   5.0     ; max distance [nm] (or in the same dimension of "length")
+ *   ( ; for the EV 1
+ *    0.0012 ; v [nm^3] (or in the same dimension of "length")
+ *    0      ; fene
+ *    1.0    ; p1 = A^{sp}, scaled spring const
+ *    2.1    ; p2 = L_{s} / length, scaled max extension
+ *    (0 1 2); list of particles belongs to the EV parameters
+ *   )
+ *   ( ; for the EV 2
+ *    0.002  ; v [nm^3] (or in the same dimension of "length")
+ *    1      ; fene
+ *    19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
+ *    106.0  ; p2 = b_{K} [nm], the Kuhn length
+ *    (3 4)  ; list of particles belongs to the EV parameters
+ *   )
  *  ))
  * INPUT
  *  var : name of the variable.
  *        in the above example, set "ev-v".
- *  bonds : struct bonds
+ *  np     : number of particles (beads)
  *  length : unit length given by "length" in SCM (dimensional value)
  *  peclet : peclet number
- *  ev_r2  : square of max distance for EV interaction
- *  np     : number of particles (beads)
  * OUTPUT
  *  returned value : struct EV
  *                   if NULL is returned, it failed (not defined)
  */
 struct EV *
 EV_guile_get (const char *var,
-	      const struct bonds *bonds,
-	      double length, double peclet,
-	      double ev_r2, int np);
+	      int np,
+	      double length, double peclet);
 
 
 /************************************
@@ -2019,7 +1943,7 @@ struct ode_params
   int flag_mat;
   int flag_lub;
   double st;
-  struct bonds *bonds;
+  struct BONDS *bonds;
   double gamma;
 
   // auxiliary imposed-flow parameters for simple shear
@@ -2030,17 +1954,18 @@ struct ode_params
 
 /* set the parameters to struct ode_params
  * INPUT
- *  (struct stokes *)sys -- initialize before calling!
+ *  (struct stokes *)sys
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
+ *  (int) flag_noHI
  *  (int) flag_mat
  *  (int) flag_lub
  *  (double) stokes
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma (for the bond relaxation scheme)
  * OUTPUT :
  *  (struct ode_params) params
@@ -2057,7 +1982,7 @@ ode_params_init (struct stokes *sys,
 		 int flag_lub,
 		 int flag_mat,
 		 double st,
-		 struct bonds *bonds,
+		 struct BONDS *bonds,
 		 double gamma);
 
 void 
@@ -2084,7 +2009,7 @@ ode_set_shear_shift_ref (struct ode_params *ode,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  *           ode->gamma     : the friction coef
  * OUTPUT
  *  f[] := (d/dt) y (t), that is, the velocity of particles at time t
@@ -2110,7 +2035,7 @@ dydt_relax_bond (double t, const double *y, double *f,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)
@@ -2137,7 +2062,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
@@ -2164,7 +2089,7 @@ dydt_hydro (double t, const double *y, double *dydt,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
@@ -2191,7 +2116,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)
@@ -2233,7 +2158,7 @@ struct BD_params
   double st; // currently this is just place holders
 
   struct BeadRod *br;
-  struct bonds *bonds;
+  struct BONDS *bonds;
   double gamma;
   struct EV *ev;
   struct angles *ang;
@@ -2296,7 +2221,7 @@ struct BD_params
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct BeadRod *)br
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
@@ -2329,7 +2254,7 @@ BD_params_init (struct stokes *sys,
 		int flag_mat,
 		double st,
 		struct BeadRod *br,
-		struct bonds *bonds,
+		struct BONDS *bonds,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
