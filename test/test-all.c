@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.27 2008/06/13 03:13:17 kichiki Exp $
+ * $Id: test-all.c,v 1.28 2008/07/17 05:56:48 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,8 +51,10 @@
 
 #include "check-matrix.h"
 
-#include "check-list-ex.h"
+//#include "check-list-ex.h"
+#include "check-bonds-guile.h"
 #include "check-angles.h"
+#include "check-excluded-volume-guile.h"
 #include "check-ev-dh.h"
 #include "check-ev-dh-guile.h"
 #include "check-ev-LJ.h"
@@ -62,6 +64,9 @@
 #include "check-confinement-guile.h"
 
 #include "check-bead-rod.h"
+#include "check-bead-rod-guile.h"
+
+#include "check-solve-cubic.h"
 
 
 /* main program */
@@ -69,6 +74,9 @@ int
 main (int argc, char** argv)
 {
   int check = 0;
+
+  //check_BeadRod_calc_dr (10, 1.0e-8, 1, 0.0);
+  //exit (1);
 
 
   // Brownian dynamics stuff
@@ -384,7 +392,13 @@ main (int argc, char** argv)
 
 
   // check-list-ex.c
-  check += check_list_ex (1, 0.0);
+  //check += check_list_ex (1, 0.0);
+
+  // check-bonds-guile.c
+  check += check_bonds_guile_get (1, 0.0);
+
+  // check-excluded-volume-guile.c
+  check += check_EV_guile_get (1, 1.0e-15);
 
   // check-angles.c
   check += check_angles_guile_get (1, 0.0);
@@ -413,8 +427,15 @@ main (int argc, char** argv)
 
   // check-bead-rod.c
   check += check_BeadRod_constraint_displacement (10, 1, 2.0e-15);
-  check += check_BeadRod_solve_iter_gamma (10, 1.0e-8, 1, 4.0e-10);
-  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.0e-10);
+  check += check_BeadRod_solve_iter_gamma (10, 1.0e-8, 1, 3.0e-9);
+  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.0e-9);
+  check += check_BeadRod_solve_gamma (10, 1.0e-8, 1, 2.0e-9);
+  // check-bead-rod-guile.c
+  check += check_BeadRod_guile_get (1, 0.0);
+
+
+  // check-solve-cubic.c
+  check += check_solve_cubic (1, 3.0e-16);
 
 
   fprintf (stdout,

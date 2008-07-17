@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.24 2008/06/13 03:14:01 kichiki Exp $
+# $Id: Makefile,v 1.25 2008/07/17 05:57:14 kichiki Exp $
 
 CC           = cc
 #LD           = libtool --mode=link $(CC)
@@ -42,7 +42,7 @@ GUILE_LIB = `guile-config link`
 #	-lg2c -lblas -llapack\
 #	-lcblas -lf77blas -latlas
 ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.4 -lgfortran \
+	-L/usr/local/lib/gcc-4.2.5 -lgfortran \
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 # for SUSE-Linux
@@ -111,8 +111,9 @@ test-all-OBJ =\
 	check-bd-imp-nitsol.o	\
 	check-sqrt-dgeev.o	\
 	check-matrix.o		\
-	check-list-ex.o		\
+	check-bonds-guile.o	\
 	check-angles.o		\
+	check-excluded-volume-guile.o	\
 	check-ev-dh.o		\
 	check-ev-dh-guile.o	\
 	check-ev-LJ.o		\
@@ -120,8 +121,11 @@ test-all-OBJ =\
 	check-confinement.o	\
 	check-confinement-guile.o	\
 	check-KIrand.o		\
-	check-bead-rod.o
-
+	check-bead-rod.o	\
+	check-bead-rod-guile.o	\
+	check-solve-cubic.o
+# below the check-matrix.o
+#	check-list-ex.o		\
 
 test-all:	$(test-all-OBJ)
 	$(LD) $(LDFLAGS) -o test-all	\
