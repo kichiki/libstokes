@@ -1,6 +1,6 @@
 /* excluded-volume interactions
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.c,v 1.5 2008/05/13 01:10:18 kichiki Exp $
+ * $Id: excluded-volume.c,v 1.6 2008/07/17 02:19:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,13 +27,14 @@
 
 /* initialize struct EV
  * INPUT
- *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
+ *  np     : number of particles
  *  length : unit of length given by "length" in SCM (dimensional number)
  *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
- *  np     : number of particles
+ *  NKs[n] : Kuhn steps for a spring belongs to the particle
+ *  bK[n]  : (dimensional) Kuhn length in the dimension of "length"
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
  *      ev->l[i] = sqrt((2/3) hat(ls)^2)
@@ -47,29 +48,34 @@
  *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds,
+EV_init (int np,
 	 double length, double peclet,
-	 double r2, const double *v,
-	 int np)
+	 double r2,
+	 const double *v,
+	 const double *NKs,
+	 const double *bK)
 {
   struct EV *ev = (struct EV *)malloc (sizeof (struct EV));
   CHECK_MALLOC (ev, "EV_init");
 
   ev->r2 = r2;
-  ev->n = bonds->n;
+  ev->n = np;
   ev->l = (double *)malloc (sizeof (double) * ev->n);
   ev->A = (double *)malloc (sizeof (double) * ev->n);
-  ev->ch = (int *)malloc (sizeof (int) * np);
   CHECK_MALLOC (ev->l,  "EV_init");
   CHECK_MALLOC (ev->A,  "EV_init");
-  CHECK_MALLOC (ev->ch, "EV_init");
+
+
+  /* make the particle table */
+  int *ibond = (int *)malloc (sizeof (int) * np);
+  CHECK_MALLOC (ibond, "EV_init");
 
   /* make the table for each chain */
   double length3 = length * length * length;
   double pi_m32 = pow (M_PI, -1.5); // (1 / pi)^{3/2}
 
   int i;
-  for (i = 0; i < ev->n; i ++)
+  for (i = 0; i < np; i ++)
     {
       if (v[i] == 0.0)
 	{
@@ -77,67 +83,20 @@ EV_init (const struct bonds *bonds,
 	  ev->l[i] = 0.0;
 	  ev->A[i] = 0.0;
 	}
-      else if (bonds->type[i] == 6)
-	{
-	  // EV cannot be defined for dWLC chain
-	  fprintf (stderr, "EV_init:"
-		   " EV for spring %d of dWLC chain couldn't define.\n",
-		   i);
-	  ev->l[i] = 0.0;
-	  ev->A[i] = 0.0;
-	}
-      else
-	{
-	  double N_Ks, b_K;
-	  if (bonds->fene[i] == 1)
-	    {
-	      // given parameters
-	      N_Ks = bonds->p1[i];
-	      b_K  = bonds->p2[i];
 
-	      b_K /= length; // dimensionless
-	    }
-	  else
-	    {
-	      // given parameters
-	      double Asp = bonds->p1[i];
-	      double Ls  = bonds->p2[i];
+      double N_Ks = NKs[i];
+      double b_K  = bK[i];
+      b_K /= length; // dimensionless
 
-	      b_K = 3.0 / (peclet * Asp); // dimensionless
-	      N_Ks = Ls / b_K;
-	    }
-
-	  double ls = sqrt (N_Ks * b_K * b_K / 3.0); // dimensionless
-	  ev->l[i] = ls / sqrt (1.5);
-	  ev->A[i] = pi_m32 / peclet
-	    * (v[i] / length3)
-	    * N_Ks * N_Ks
-	    * pow (ev->l[i], -5.0);
-	  // with these, F^EV(r) = A * r * exp (- r^2 / l^2)
-	}
+      double ls = sqrt (N_Ks * b_K * b_K / 3.0); // dimensionless
+      ev->l[i] = ls / sqrt (1.5);
+      ev->A[i] = pi_m32 / peclet
+	* (v[i] / length3)
+	* N_Ks * N_Ks
+	* pow (ev->l[i], -5.0);
+      // with these, F^EV(r) = A * r * exp (- r^2 / l^2)
     }
   
-  /* make the particle table */
-  for (i = 0; i < np; i ++)
-    {
-      ev->ch[i] = -1; // initialized by the unassigment
-    }
-  for (i = 0; i < bonds->n; i ++)
-    {
-      // now i is the chain (bond) type
-      struct bond_pairs *pairs = bonds->pairs [i];
-
-      int j;
-      for (j = 0; j < pairs->n; j ++)
-	{
-	  int ia = pairs->ia [j];
-	  int ib = pairs->ib [j];
-	  ev->ch[ia] = i; // i is the chain (bond) type.
-	  ev->ch[ib] = i; // i is the chain (bond) type.
-	}
-    }
-
-
   return (ev);
 }
 
@@ -147,7 +106,6 @@ EV_free (struct EV *ev)
   if (ev == NULL) return;
   if (ev->l  != NULL) free (ev->l);
   if (ev->A  != NULL) free (ev->A);
-  if (ev->ch != NULL) free (ev->ch);
   free (ev);
 }
 
@@ -167,18 +125,15 @@ EV_get_coefficients (struct EV *ev,
 		     int i, int j,
 		     double *l, double *A)
 {
-  int ic = ev->ch[i];
-  int jc = ev->ch[j];
-
-  if (ic == jc)
+  if (i == j)
     {
-      *l = ev->l[ic];
-      *A = ev->A[ic];
+      *l = ev->l[i];
+      *A = ev->A[i];
     }
   else
     {
-      *l = 0.5 * (ev->l[ic] + ev->l[jc]);
-      *A = sqrt (ev->A[ic] * ev->A[jc]);
+      *l = 0.5 * (ev->l[i] + ev->l[j]);
+      *A = sqrt (ev->A[i] * ev->A[j]);
     }
 }
 

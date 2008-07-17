@@ -1,7 +1,7 @@
 /* header file for excluded-volume-guile.c --
  * guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.h,v 1.2 2008/05/24 05:42:50 kichiki Exp $
+ * $Id: excluded-volume-guile.h,v 1.3 2008/07/17 02:20:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,34 +21,41 @@
 #define	_EXCLUDED_VOLUME_GUILE_H_
 
 
-#include "bonds.h" // struct bonds
 #include "excluded-volume.h" // struct EV
 
-/* get ev-v from SCM and set struct EV
- * in SCM, ev-v is a list of parameter v [nm^3] or [micro m^3]
- * (depending on the dimension of the parameter "length")
- * for each spring:
- *  (define ev-v '(
- *   0.0012 ; for the spring 1
- *   0.002  ; for the spring 2
+/* get ev from SCM and set struct EV
+ * in SCM, ev are given by something like
+ *  (define ev '(
+ *   5.0     ; max distance [nm] (or in the same dimension of "length")
+ *   ( ; for the EV 1
+ *    0.0012 ; v [nm^3] (or in the same dimension of "length")
+ *    0      ; fene
+ *    1.0    ; p1 = A^{sp}, scaled spring const
+ *    2.1    ; p2 = L_{s} / length, scaled max extension
+ *    (0 1 2); list of particles belongs to the EV parameters
+ *   )
+ *   ( ; for the EV 2
+ *    0.002  ; v [nm^3] (or in the same dimension of "length")
+ *    1      ; fene
+ *    19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
+ *    106.0) ; p2 = b_{K} [nm], the Kuhn length
+ *    (3 4)  ; list of particles belongs to the EV parameters
+ *   )
  *  ))
  * INPUT
  *  var : name of the variable.
  *        in the above example, set "ev-v".
- *  bonds : struct bonds
+ *  np     : number of particles (beads)
  *  length : unit length given by "length" in SCM (dimensional value)
  *  peclet : peclet number
- *  ev_r2  : square of max distance for EV interaction
- *  np     : number of particles (beads)
  * OUTPUT
  *  returned value : struct EV
  *                   if NULL is returned, it failed (not defined)
  */
 struct EV *
 EV_guile_get (const char *var,
-	      const struct bonds *bonds,
-	      double length, double peclet,
-	      double ev_r2, int np);
+	      int np,
+	      double length, double peclet);
 
 
 #endif /* !_EXCLUDED_VOLUME_GUILE_H_ */

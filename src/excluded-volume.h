@@ -1,7 +1,7 @@
 /* header file for excluded-volume.c --
  * excluded-volume interactions
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.h,v 1.3 2008/05/13 01:10:53 kichiki Exp $
+ * $Id: excluded-volume.h,v 1.4 2008/07/17 02:19:31 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,11 +21,13 @@
 #define	_EXCLUDED_VOLUME_H_
 
 
+#include "stokes.h" // struct stokes
+
 struct EV {
   double r2; // square of the max distance for F^{EV}
 
-  /* table for chain type */
-  int n;     // number of chain types
+  /* table for each particle */
+  int n;     // number of particles
   double *l; /* := sqrt((2/3) hat(ls)^2) */
   double *A; /* := (1/pi)^{3/2} hat(v) N_Ks^2 / (peclet ev->l[i]^5)
 	      * where
@@ -36,25 +38,19 @@ struct EV {
 	      *   F^{EV}_{i} = A * r_{ij} * exp (- r_{ij}^2 / l^2)
 	      * (note: r_{ij} is also dimensionless scaled by length)
 	      */
-
-  /* table for particles */
-  int *ch;   /* chain type for each particle
-	      * negative value == no assignement to the chain
-	      */
 };
 
 
-#include "bonds.h" // struct bonds
-
 /* initialize struct EV
  * INPUT
- *  bonds  : struct bonds (either fene=0 or fene=1 is fine).
+ *  np     : number of particles
  *  length : unit of length given by "length" in SCM (dimensional number)
  *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
  *  v[n]   : EV parameters for each spring.
  *           the index should correspond to that in bonds.
- *  np     : number of particles
+ *  NKs[n] : Kuhn steps for a spring belongs to the particle
+ *  bK[n]  : (dimensional) Kuhn length in the dimension of "length"
  * OUTPUT
  *  returned value : struct EV, where l and A are defined by 
  *      ev->l[i] = sqrt((2/3) hat(ls)^2)
@@ -68,10 +64,12 @@ struct EV {
  *    (note: r_{ij} is also dimensionless scaled by length)
  */
 struct EV *
-EV_init (const struct bonds *bonds,
+EV_init (int np,
 	 double length, double peclet,
-	 double r2, const double *v,
-	 int np);
+	 double r2,
+	 const double *v,
+	 const double *NKs,
+	 const double *bK);
 
 void
 EV_free (struct EV *ev);

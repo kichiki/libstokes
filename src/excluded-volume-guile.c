@@ -1,6 +1,6 @@
 /* guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.c,v 1.3 2008/06/13 03:09:54 kichiki Exp $
+ * $Id: excluded-volume-guile.c,v 1.4 2008/07/17 02:19:51 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,37 +22,44 @@
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include "stokes-guile.h" // guile_load()
-#include "bonds.h"           // struct bonds
 #include "excluded-volume.h" // struct EV
 
 #include "excluded-volume-guile.h"
 
 
-/* get ev-v from SCM and set struct EV
- * in SCM, ev-v is a list of parameter v [nm^3] or [micro m^3]
- * (depending on the dimension of the parameter "length")
- * for each spring:
- *  (define ev-v '(
- *   0.0012 ; for the spring 1
- *   0.002  ; for the spring 2
+/* get ev from SCM and set struct EV
+ * in SCM, ev are given by something like
+ *  (define ev '(
+ *   5.0     ; max distance [nm] (or in the same dimension of "length")
+ *   ( ; for the EV 1
+ *    0.0012 ; v [nm^3] (or in the same dimension of "length")
+ *    0      ; fene
+ *    1.0    ; p1 = A^{sp}, scaled spring const
+ *    2.1    ; p2 = L_{s} / length, scaled max extension
+ *    (0 1 2); list of particles belongs to the EV parameters
+ *   )
+ *   ( ; for the EV 2
+ *    0.002  ; v [nm^3] (or in the same dimension of "length")
+ *    1      ; fene
+ *    19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
+ *    106.0  ; p2 = b_{K} [nm], the Kuhn length
+ *    (3 4)  ; list of particles belongs to the EV parameters
+ *   )
  *  ))
  * INPUT
  *  var : name of the variable.
  *        in the above example, set "ev-v".
- *  bonds : struct bonds
+ *  np     : number of particles (beads)
  *  length : unit length given by "length" in SCM (dimensional value)
  *  peclet : peclet number
- *  ev_r2  : square of max distance for EV interaction
- *  np     : number of particles (beads)
  * OUTPUT
  *  returned value : struct EV
  *                   if NULL is returned, it failed (not defined)
  */
 struct EV *
 EV_guile_get (const char *var,
-	      const struct bonds *bonds,
-	      double length, double peclet,
-	      double ev_r2, int np)
+	      int np,
+	      double length, double peclet)
 {
   if (guile_check_symbol (var) == 0)
     {
@@ -63,42 +70,131 @@ EV_guile_get (const char *var,
   SCM scm_symbol
     = scm_c_lookup (var);
 
-  SCM scm_ev
+  SCM scm_EVs
     = scm_variable_ref (scm_symbol);
 
-  if (!SCM_NFALSEP (scm_list_p (scm_ev)))
+  if (!SCM_NFALSEP (scm_list_p (scm_EVs)))
     {
       fprintf (stderr, "EV_guile_get: %s is not a list\n", var);
       return (NULL);
     }
 
   unsigned long len
-    = scm_num2ulong (scm_length (scm_ev),
+    = scm_num2ulong (scm_length (scm_EVs),
 		     0, "EV_guile_get");
-  if (len == 0)
+  if (len < 2)
     {
       // null list is given ==> no excluded-volume interaction
       return (NULL);
     }
-  else if (len != bonds->n)
+
+  double *v = (double *)calloc (np, sizeof (double));
+  double *N = (double *)calloc (np, sizeof (double));
+  double *b = (double *)calloc (np, sizeof (double));
+  CHECK_MALLOC (v, "EV_guile_get");
+  CHECK_MALLOC (N, "EV_guile_get");
+  CHECK_MALLOC (b, "EV_guile_get");
+
+  // 1st element
+  double rmax = scm_num2dbl (scm_list_ref (scm_EVs, scm_int2num (0)),
+			     "EV_guile_get");
+  rmax /= length; // dimensionless
+  double r2 = rmax * rmax;
+
+  int i;
+  for (i = 1; i < len; i ++)
     {
-      fprintf (stderr, "EV_guile_get:"
-	       " length of %s %ld != %d number of springs\n",
-	       var, len, bonds->n);
-      return (NULL);
+      SCM scm_EV = scm_list_ref (scm_EVs, scm_int2num (i));
+      if (!SCM_NFALSEP (scm_list_p (scm_EV)))
+	{
+	  // scm_EV is not a list
+	  fprintf (stderr, "EV_guile_get:"
+		   " %d-th EV of %s is not a list\n",
+		   i-1, var);
+	  return (NULL); // failed
+	}
+      unsigned long EV_len
+	= scm_num2ulong (scm_length (scm_EV),
+			 0, "EV_guile_get");
+      if (EV_len != 5)
+	{
+	  fprintf (stderr, "EV_guile_get:"
+		   " length of %d-th EV of %s is not 5\n",
+		   i-1, var);
+	  return (NULL); // failed
+	}
+
+      // 1st element (0) of the list scm_EV
+      double v0 = scm_num2dbl (scm_list_ref (scm_EV, scm_int2num (0)),
+			       "EV_guile_get");
+      // 2nd element (1) of the list scm_EV
+      int fene = scm_num2int (scm_list_ref (scm_EV, scm_int2num (1)),
+			      0,
+			      "EV_guile_get");
+      // 3rd element (2) of the list scm_EV
+      double p1 = scm_num2dbl (scm_list_ref (scm_EV, scm_int2num (2)),
+			       "EV_guile_get");
+      // 4th element (3) of the list scm_EV
+      double p2 = scm_num2dbl (scm_list_ref (scm_EV, scm_int2num (3)),
+			       "EV_guile_get");
+
+      double N_Ks, b_K;
+      if (fene == 1)
+	{
+	  // given parameters
+	  N_Ks = p1;
+	  b_K  = p2;
+
+	  b_K /= length; 
+	}
+      else
+	{
+	  // given parameters
+	  double Asp = p1;
+	  double Ls  = p2;
+
+	  b_K = 3.0 / (peclet * Asp); // dimensionless
+	  N_Ks = Ls / b_K;
+	}
+
+      // 5th element (4) of the list scm_EV
+      SCM scm_particles = scm_list_ref (scm_EV, scm_int2num (4));
+      if (!SCM_NFALSEP (scm_list_p (scm_particles)))
+	{
+	  // scm_params is not a list
+	  fprintf (stderr, "EV_guile_get:"
+		   " params of %d-th EV in %s is not a list\n",
+		   i-1, var);
+	  return (NULL); // failed
+	}
+      unsigned long particles_len
+	= scm_num2ulong (scm_length (scm_particles), 0, "EV_guile_get");
+      int j;
+      for (j = 0; j < particles_len; j ++)
+	{
+	  int ip = scm_num2int (scm_list_ref (scm_particles, scm_int2num (j)),
+				0,
+				"EV_guile_get");
+	  if (ip < 0 || ip >= np)
+	    {
+	      fprintf (stderr, "EV_guile_get:"
+		       " invalid particle index %d (np=%d)\n",
+		       ip, np);
+	      return (NULL); // failed
+	    }
+
+	  v[ip] = v0;
+	  N[ip] = N_Ks;
+	  b[ip] = b_K;
+	}
     }
 
-  double *ev_v = (double *)malloc (sizeof (double) * len);
-  CHECK_MALLOC (ev_v, "EV_guile_get");
-
-  if (guile_get_doubles (var, len, ev_v) != 1) // FALSE
-    {
-      fprintf (stderr, "EV_guile_get: fail to parse %s\n", var);
-      return (NULL);
-    }
-
-  struct EV *ev = EV_init (bonds, length, peclet, ev_r2, ev_v, np);
+  struct EV *ev = EV_init (np, length, peclet, r2, v, N, b);
   CHECK_MALLOC (ev, "EV_guile_get");
+
+  free (v);
+  free (N);
+  free (b);
 
   return (ev); // success
 }
