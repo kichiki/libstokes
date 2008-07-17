@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.10 2008/07/16 16:47:56 kichiki Exp $
+ * $Id: bonds.h,v 1.11 2008/07/17 02:16:59 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,90 +24,67 @@
 #include "stokes.h" // struct stokes
 
 
-struct bond_pairs {
-  int n;   // number of pairs
-  int *ia; // particle a for the pair
-  int *ib; // particle b for the pair
-};
+// for each group
+struct BONDS {
+  int n; // number of bonds
+  int *type; /* type[n] : type of the spring for each bond
+	      * 0 : Hookean (p1 = k, spring constant,
+	      *              p2 = r0, natural length)
+	      * 1 : Wormlike chain (WLC)
+	      * 2 : inverse Langevin chain (ILC)
+	      * 3 : Cohen's Pade approx for ILC
+	      * 4 : Werner spring (approx for ILC)
+	      * 5 : another Hookean
+	      *     where for these FENE chains,
+	      *     p1 = N_{K,s} the Kuhn steps for a spring
+	      *     p2 = b_{K}   the Kuhn length [nm]
+	      * 6 : discrete Wormlike chain (dWLC), where
+	      *     p1 = k, dimensionless spring constant, 
+	      *     p2 = r0, the natural length [nm],
+	      *     the potential is given by
+	      *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
+	      * 7 : FENE-Fraenkel
+	      *     p1, p2 are the same for FENE chains.
+	      *     p3 = s, the tolerance
+	      */
+  int *fene; /* fene[n] : flag for the parameters p1 and p2
+	      * 0 : (p1, p2) = (A^{sp}, L_{s})
+	      * 1 : (p1, p2) = (N_{K,s}, b_{K})
+	      */
+  double *p1; // p1[n] : the first parameter (k or N_{K,s})
+  double *p2; // p2[n] : the second parameter (r0 or b_{K})
+  double *p3; // p3[n] : the third parameter (tol for FENE-Fraenkel)
 
-struct bonds {
-  /* table for bond type */
-  int n;      // number of bond types
-  int *type;  /* type of the spring
-	       * 0 : Hookean (p1 = k, spring constant,
-	       *              p2 = r0, natural length)
-	       * 1 : Wormlike chain (WLC)
-	       * 2 : inverse Langevin chain (ILC)
-	       * 3 : Cohen's Pade approx for ILC
-	       * 4 : Werner spring (approx for ILC)
-	       * 5 : another Hookean
-	       *     where for these FENE chains,
-	       *     p1 = N_{K,s} the Kuhn steps for a spring
-	       *     p2 = b_{K}   the Kuhn length [nm]
-	       * 6 : discrete Wormlike chain (dWLC), where
-	       *     p1 = k, dimensionless spring constant, 
-	       *     p2 = r0, the natural length [nm],
-	       *     the potential is given by
-	       *     U(r) = (k/2) * (kT / r0^2) * (r-r0)^2
-	       */
-  int *fene;   /* flag for the parameters p1 and p2
-		* 0 : (p1, p2) = (A^{sp}, L_{s})
-		* 1 : (p1, p2) = (N_{K,s}, b_{K})
-		*/
-  double *p1;  // the first parameter (k or N_{K,s})
-  double *p2;  // the second parameter (r0 or b_{K})
-  double *p3;  // the third parameter (tol for FENE-Fraenkel)
-
-  struct bond_pairs **pairs; // pairs for the bond
-
-  int *nex;    // number of excluded particles in the chain
-};
-
-struct list_ex {
-  int np;  // total number of particles (must be equal to sys->np)
-  int *n;  // n[np] : number of excluded particles for each particles
-  int **i; // i[j][k] : k-th particle index to exclude for particle j.
+  int *ia;    // ia[n] : particle index of one end of the bond
+  int *ib;    // ib[n] : particle index of the other end of the bond
 };
 
 
+struct BONDS *
+BONDS_init (void);
 
 void
-bond_pairs_free (struct bond_pairs *pairs);
+BONDS_free (struct BONDS *b);
 
-void
-bond_pairs_add (struct bond_pairs *pairs,
-		int ia, int ib);
-
-
-/* initialize struct bonds
+/*
  * INPUT
- * OUTPUT
- *  returned value : struct bonds
- */
-struct bonds *
-bonds_init (void);
-
-void
-bonds_free (struct bonds *bonds);
-
-/* add a spring into bonds
- * INPUT
- *  bonds  : struct bonds
- *  type   : type of the spring
- *  fene   : 0 == (p1,p2) are (A^{sp}, L_{s})
- *           1 == (p1, p2) = (N_{K,s}, b_{K}) or
- *                (p1, p2) = (k, r0) for dWLC (type == 6).
- *                in the latter case, potential is given by
- *                (k/2) * (kT / r0^2) * (r-r0)^2
- *  p1, p2, p3 : spring parameters
- *  nex    : number of excluded particles in the chain
- * OUTPUT
- *  bonds  :
+ *  ia, ib : (global) particle index, that is, they are in the range [0, NP), 
+ *           where NP is the total number of particles.
  */
 void
-bonds_add_type (struct bonds *bonds,
-		int type, int fene, double p1, double p2, double p3,
-		int nex);
+BONDS_append (struct BONDS *b,
+	      int type,
+	      int fene,
+	      double p1,
+	      double p2,
+	      double p3,
+	      int ia,
+	      int ib);
+
+
+void
+BONDS_sort_by_ia (struct BONDS *b);
+
 
 /* set FENE spring parameters for run
  * INPUT
@@ -126,19 +103,19 @@ bonds_add_type (struct bonds *bonds,
  *  bonds->p2[] := Ls / length = r0 / length
  */
 void
-bonds_set_FENE (struct bonds *bonds,
+BONDS_set_FENE (struct BONDS *b,
 		double length, double peclet);
 
 /* return force function (scalar part) of the spring
  */
 double
-bonds_fr_i (struct bonds *bonds,
+BONDS_fr_i (struct BONDS *b,
 	    int bond_index,
 	    double Q);
 
 /*
  * INPUT
- *  bonds      : struct bonds
+ *  b          : struct BONDS
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -146,79 +123,10 @@ bonds_fr_i (struct bonds *bonds,
  * OUTPUT
  */
 void
-bonds_calc_force (struct bonds *bonds,
+BONDS_calc_force (struct BONDS *b,
 		  struct stokes *sys,
 		  double *f,
 		  int flag_add);
-
-void
-bonds_print (FILE *out, struct bonds *bonds);
-
-
-/**
- * SWIG utility routine
- * For examplean, expected usage in python by SWIG:
- *   n = stokes.bonds_get_pairs_n(bonds, i)
- *   ia = stokes.iarray(n)
- *   ib = stokes.iarray(n)
- *   stokes.bonds_get_pairs(bonds, i, ia, ib)
- * then, you have arrays ia[n] and ib[n].
- */
-
-/* to get the number of pairs for the bond "i"
- */
-int
-bonds_get_pairs_n (struct bonds *b, int i);
-/* 
- * INPUT
- *  b : struct bonds
- *  i : index of the bond
- *  ia[n] : "a" particle index of j-th pair for the bond "i",
- *  ib[n] : "b" particle index of j-th pair for the bond "i",
- *          where j runs from 0 to (n-1) and
- *          n = b->pairs[i]->n is the number of pairs for the bond "i".
- *          before calling, allocate ia and ib with (sizeof(int) * n).
- * OUTPUT
- *  ia[n], ib[n] : 
- */
-void
-bonds_get_pairs (struct bonds *b, int i,
-		 int *ia, int *ib);
-
-
-/**
- * exclusion list for lubrication due to the bonding
- */
-struct list_ex *
-list_ex_init (int np);
-
-void
-list_ex_add (struct list_ex *ex, int j, int k);
-
-void
-list_ex_free (struct list_ex *ex);
-
-struct list_ex *
-list_ex_copy (struct list_ex *ex0);
-
-/* construct the excluded list by struct bonds
- */
-void
-list_ex_set_by_bonds (struct list_ex *ex, const struct bonds *b);
-
-/* check whether j is excluded for i
- * INPUT
- *  ex : struct list_ex
- *  i  : particle now we are considering
- *  j  : particle whether it is in the list or not.
- * OUTPUT
- *  returned value : 0 (false); j is NOT in the excluded list for i.
- *                   1 (true);  j IS in the excluded list for i.
- *                   NOTE, the self for i in some chain is EXCLUDED,
- *                   while the self for particles is NOT excluded.
- */
-int
-list_ex_check (struct list_ex *ex, int i, int j);
 
 
 #endif /* !_BONDS_H_ */
