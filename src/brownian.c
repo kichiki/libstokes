@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.27 2008/07/16 16:48:22 kichiki Exp $
+ * $Id: brownian.c,v 1.28 2008/07/17 02:26:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@
 #include <lub.h>
 
 #include <bead-rod.h> // struct BeadRod
-#include <bonds.h> // bonds_calc_force ()
+#include <bonds.h> // BONDS_calc_force ()
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
 #include <ev-dh.h> // EV_DH_calc_force ()
@@ -80,7 +80,7 @@
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct BeadRod *)br
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
@@ -113,7 +113,7 @@ BD_params_init (struct stokes *sys,
 		int flag_mat,
 		double st,
 		struct BeadRod *br,
-		struct bonds *bonds,
+		struct BONDS *bonds,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
@@ -156,20 +156,22 @@ BD_params_init (struct stokes *sys,
    * not excluded for lub calculation to set BD->flag_lub_B = 1. */
   BD->flag_lub_B = 0;
   int i;
-  if (flag_lub != 0 && bonds->n != 0)
-  //if (flag_lub != 0 && bonds != NULL)
+  //if (flag_lub != 0 && bonds->n != 0)
+  if (flag_lub != 0 && bonds != NULL)
     {
       for (i = 0; i < sys->nm; i ++)
 	{
 	  int j;
 	  for (j = i+1; j < sys->nm; j ++)
 	    {
+	      /*
 	      if (list_ex_check (sys->ex_lub, i, j) == 0)
 		{
 		  // not excluded!
 		  BD->flag_lub_B = 1;
 		  break;
 		}
+	      */
 	    }
 	  if (BD->flag_lub_B == 1)
 	    {
@@ -2165,7 +2167,7 @@ BD_params_get_fact (struct BD_params *BD,
 
 
 /* add interaction forces on each particle including
- *   bond force  by bonds_calc_force(),
+ *   bond force  by BONDS_calc_force(),
  *   EV force    by EV_calc_force(),
  *   angle force by angles_calc_force(),
  *   EV-DH force by EV_DH_calc_force(),
@@ -2192,7 +2194,7 @@ BD_add_FP (struct BD_params *BD,
   if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
-      bonds_calc_force (BD->bonds, BD->sys,
+      BONDS_calc_force (BD->bonds, BD->sys,
 			f, 1/* add */);
     }
   if (BD->ev != NULL)

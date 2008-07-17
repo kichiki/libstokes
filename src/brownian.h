@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.18 2008/07/16 16:48:43 kichiki Exp $
+ * $Id: brownian.h,v 1.19 2008/07/17 02:26:56 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ struct BD_params
   double st; // currently this is just place holders
 
   struct BeadRod *br;
-  struct bonds *bonds;
+  struct BONDS *bonds;
   double gamma;
   struct EV *ev;
   struct angles *ang;
@@ -112,7 +112,7 @@ struct BD_params
  *        not excluded by sys->ex_lub for flag_lub_B.
  *  (double) stokes -- currently this is just a place holder
  *  (struct BeadRod *)br
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma
  *  (struct EV *)ev
  *  (struct angles *)ang
@@ -145,7 +145,7 @@ BD_params_init (struct stokes *sys,
 		int flag_mat,
 		double st,
 		struct BeadRod *br,
-		struct bonds *bonds,
+		struct BONDS *bonds,
 		double gamma,
 		struct EV *ev,
 		struct angles *ang,
@@ -377,7 +377,7 @@ BD_params_get_fact (struct BD_params *BD,
 		    double dt);
 
 /* add interaction forces on each particle including
- *   bond force  by bonds_calc_force(),
+ *   bond force  by BONDS_calc_force(),
  *   EV force    by EV_calc_force(),
  *   angle force by angles_calc_force(),
  *   EV-DH force by EV_DH_calc_force(),
