@@ -1,7 +1,7 @@
 /* header file for ode-quaternion.c --
  * ODE utility routines for angle by quaternion
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.h,v 1.2 2007/12/05 03:48:34 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: ode-quaternion.h,v 1.3 2008/07/17 02:18:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,7 +54,7 @@ quaternion_dQdt (const double *Q, const double *O,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
@@ -81,7 +81,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)

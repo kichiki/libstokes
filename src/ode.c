@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.c,v 1.13 2008/05/24 05:59:27 kichiki Exp $
+ * $Id: ode.c,v 1.14 2008/07/17 02:17:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@
 #include "ewald-3f-matrix.h"
 #include "ewald-3ft-matrix.h"
 #include "ewald-3fts-matrix.h"
-#include "bonds.h" // struct bonds
+#include "bonds.h" // struct BONDS
 #include "noHI.h" // solve_mix_3[f|ft|fts]_noHI()
 
 #include "ode.h"
@@ -698,7 +698,7 @@ solve_mix_3all (struct stokes *sys,
  *  (int) flag_mat
  *  (int) flag_lub
  *  (double) stokes
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma (for the bond relaxation scheme)
  * OUTPUT :
  *  (struct ode_params) params
@@ -715,7 +715,7 @@ ode_params_init (struct stokes *sys,
 		 int flag_lub,
 		 int flag_mat,
 		 double st,
-		 struct bonds *bonds,
+		 struct BONDS *bonds,
 		 double gamma)
 {
   struct ode_params *params
@@ -770,7 +770,7 @@ ode_set_shear_shift_ref (struct ode_params *ode,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  *           ode->gamma     : the friction coef
  * OUTPUT
  *  f[] := (d/dt) y (t), that is, the velocity of particles at time t
@@ -786,7 +786,7 @@ dydt_relax_bond (double t, const double *y, double *f,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
-  bonds_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
+  BONDS_calc_force (ode->bonds, ode->sys, f, 0/* zero-clear */);
 
   // scale by the friction coefficient
   int i;
@@ -816,7 +816,7 @@ dydt_relax_bond (double t, const double *y, double *f,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)
@@ -872,10 +872,11 @@ dydt_hydro_st (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
-  if (ode->bonds->n > 0)
+  //if (ode->bonds->n > 0)
+  if (ode->bonds != NULL)
     {
       // calc force on the mobile particles
-      bonds_calc_force (ode->bonds, ode->sys,
+      BONDS_calc_force (ode->bonds, ode->sys,
 			fm, 1/* add */);
     }
 
@@ -923,7 +924,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
@@ -977,10 +978,11 @@ dydt_hydro (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
-  if (ode->bonds->n > 0)
+  //if (ode->bonds->n > 0)
+  if (ode->bonds != NULL)
     {
       // calc force on the mobile particles
-      bonds_calc_force (ode->bonds, ode->sys,
+      BONDS_calc_force (ode->bonds, ode->sys,
 			fm, 1/* add */);
     }
 

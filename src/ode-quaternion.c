@@ -1,6 +1,6 @@
 /* ODE utility routines for angle by quaternion
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode-quaternion.c,v 1.8 2008/05/24 05:58:56 kichiki Exp $
+ * $Id: ode-quaternion.c,v 1.9 2008/07/17 02:18:36 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
 #include "memory-check.h" // macro CHECK_MALLOC
 
 #include "dgetri_c.h" /* lapack_inv_() */
-#include "bonds.h" // bonds_calc_force()
+#include "bonds.h" // BONDS_calc_force()
 
 #include "ode.h" // solve_mix_3all()
 #include "ode-quaternion.h"
@@ -138,7 +138,7 @@ quaternion_by_Euler (double phi, double theta, double psi,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
@@ -192,10 +192,11 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
-  if (ode->bonds->n > 0)
+  //if (ode->bonds->n > 0)
+  if (ode->bonds != NULL)
     {
       // calc force on the mobile particles
-      bonds_calc_force (ode->bonds, ode->sys,
+      BONDS_calc_force (ode->bonds, ode->sys,
 			fm, 1/* add */);
     }
 
@@ -248,7 +249,7 @@ dydt_Q_hydro (double t, const double *y, double *dydt,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)
@@ -304,10 +305,11 @@ dydt_Q_hydro_st (double t, const double *y, double *dydt,
   stokes_set_pos_mobile (ode->sys, y);
   stokes_set_shear_shift (ode->sys, t, ode->t0, ode->s0);
 
-  if (ode->bonds->n > 0)
+  //if (ode->bonds->n > 0)
+  if (ode->bonds != NULL)
     {
       // calc force on the mobile particles
-      bonds_calc_force (ode->bonds, ode->sys,
+      BONDS_calc_force (ode->bonds, ode->sys,
 			fm, 1/* add */);
     }
 

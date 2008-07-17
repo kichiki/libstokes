@@ -1,6 +1,6 @@
 /* ODE utility routines
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ode.h,v 1.7 2008/04/29 03:30:16 kichiki Exp $
+ * $Id: ode.h,v 1.8 2008/07/17 02:18:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ struct ode_params
   int flag_mat;
   int flag_lub;
   double st;
-  struct bonds *bonds;
+  struct BONDS *bonds;
   double gamma;
 
   // auxiliary imposed-flow parameters for simple shear
@@ -71,17 +71,18 @@ struct ode_params
 
 /* set the parameters to struct ode_params
  * INPUT
- *  (struct stokes *)sys -- initialize before calling!
+ *  (struct stokes *)sys
  *  F [np*3]
  *  T [np*3]
  *  E [np*5]
  *  uf [np*3]
  *  of [np*3]
  *  ef [np*5]
+ *  (int) flag_noHI
  *  (int) flag_mat
  *  (int) flag_lub
  *  (double) stokes
- *  (struct bonds *)bonds
+ *  (struct BONDS *)bonds
  *  (double) gamma (for the bond relaxation scheme)
  * OUTPUT :
  *  (struct ode_params) params
@@ -98,7 +99,7 @@ ode_params_init (struct stokes *sys,
 		 int flag_lub,
 		 int flag_mat,
 		 double st,
-		 struct bonds *bonds,
+		 struct BONDS *bonds,
 		 double gamma);
 
 void 
@@ -125,7 +126,7 @@ ode_set_shear_shift_ref (struct ode_params *ode,
  *  params : (struct ode_params*)ode.
  *           the following parameters are used here;
  *           ode->sys       : (struct stokes *)
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  *           ode->gamma     : the friction coef
  * OUTPUT
  *  f[] := (d/dt) y (t), that is, the velocity of particles at time t
@@ -151,7 +152,7 @@ dydt_relax_bond (double t, const double *y, double *f,
  *           ode->flag_mat
  *           ode->flag_lub
  *           ode->stokes
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) y(t), where y(t) = (x(t), U(t)).
  *         (d/dt) x(t) = U(t)
@@ -178,7 +179,7 @@ dydt_hydro_st (double t, const double *y, double *dydt,
  *           ode->ef [np*5]
  *           ode->flag_mat
  *           ode->flag_lub
- *           ode->bonds     : (struct bonds *)
+ *           ode->bonds     : (struct BONDS *)
  * OUTPUT
  *  dydt[] := (d/dt) x(t) = U(t)
  *         where U(t) := R^-1 . F, the terminal velocity
