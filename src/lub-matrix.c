@@ -1,6 +1,6 @@
 /* lubrication routines -- MATRIX procedure
- * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.16 2007/12/22 17:34:29 kichiki Exp $
+ * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: lub-matrix.c,v 1.17 2008/07/17 02:26:01 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,11 +110,13 @@ make_matrix_lub_3f (struct stokes *sys,
       i3 = i * 3;
       for (j = i; j < np; ++j)
 	{
+	  /*
 	  if (list_ex_check (sys->ex_lub, i, j) == 1)
 	    {
 	      // j is in the exclusion list for i
 	      continue;
 	    }
+	  */
 
 	  j3 = j * 3;
 
@@ -256,11 +258,13 @@ make_matrix_lub_3ft (struct stokes *sys,
       i3 = i * 3;
       for (j = i; j < np; ++j)
 	{
+	  /*
 	  if (list_ex_check (sys->ex_lub, i, j) == 1)
 	    {
 	      // j is in the exclusion list for i
 	      continue;
 	    }
+	  */
 
 	  j3 = j * 3;
 
@@ -402,11 +406,13 @@ make_matrix_lub_3fts (struct stokes *sys,
       i3 = i * 3;
       for (j = i; j < np; ++j)
 	{
+	  /*
 	  if (list_ex_check (sys->ex_lub, i, j) == 1)
 	    {
 	      // j is in the exclusion list for i
 	      continue;
 	    }
+	  */
 
 	  j3 = j * 3;
 
