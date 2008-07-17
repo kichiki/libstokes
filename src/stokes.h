@@ -1,7 +1,7 @@
 /* header file for stokes.c --
  * structure for system parameters of stokes library.
  * Copyright (C) 2001-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes.h,v 1.27 2008/04/12 18:21:48 kichiki Exp $
+ * $Id: stokes.h,v 1.28 2008/07/17 02:25:04 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -140,7 +140,7 @@ struct stokes {
 		  * all particles within +/-1 cells in x,y,z for the periodic
 		  */
   /* exclusion list for lubrication due to the bonding */
-  struct list_ex *ex_lub;
+  //struct list_ex *ex_lub;
 
   /**
    * for zeta program
