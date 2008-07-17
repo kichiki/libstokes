@@ -1,6 +1,6 @@
 /* guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.c,v 1.4 2008/07/17 02:19:51 kichiki Exp $
+ * $Id: excluded-volume-guile.c,v 1.5 2008/07/17 05:35:19 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -143,9 +143,7 @@ EV_guile_get (const char *var,
 	{
 	  // given parameters
 	  N_Ks = p1;
-	  b_K  = p2;
-
-	  b_K /= length; 
+	  b_K  = p2; // dimensional
 	}
       else
 	{
@@ -155,6 +153,8 @@ EV_guile_get (const char *var,
 
 	  b_K = 3.0 / (peclet * Asp); // dimensionless
 	  N_Ks = Ls / b_K;
+
+	  b_K *= length; // dimensional
 	}
 
       // 5th element (4) of the list scm_EV
