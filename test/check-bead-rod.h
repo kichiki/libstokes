@@ -1,7 +1,7 @@
 /* header file for check-bead-rod.c --
  * test code for bead-rod.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bead-rod.h,v 1.1 2008/06/13 03:12:48 kichiki Exp $
+ * $Id: check-bead-rod.h,v 1.2 2008/07/17 03:14:37 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,5 +39,15 @@ check_BeadRod_solve_iter_gamma (int n, double eps,
 int
 check_BeadRod_solve_gamma_by_NITSOL (int n, double eps,
 				     int verbose, double tiny);
+
+int
+check_BeadRod_solve_gamma (int n, double eps,
+			   int verbose, double tiny);
+
+
+int
+check_BeadRod_calc_dr (int n, double eps,
+		       int verbose, double tiny);
+
 
 #endif /* !_CHECK_BEAD_ROD_H_ */
