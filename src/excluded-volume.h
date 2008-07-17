@@ -1,7 +1,7 @@
 /* header file for excluded-volume.c --
  * excluded-volume interactions
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume.h,v 1.4 2008/07/17 02:19:31 kichiki Exp $
+ * $Id: excluded-volume.h,v 1.5 2008/07/17 05:34:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,8 +47,7 @@ struct EV {
  *  length : unit of length given by "length" in SCM (dimensional number)
  *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
- *  v[n]   : EV parameters for each spring.
- *           the index should correspond to that in bonds.
+ *  v[n]   : EV parameters for each spring in the dimension of "length" cubed
  *  NKs[n] : Kuhn steps for a spring belongs to the particle
  *  bK[n]  : (dimensional) Kuhn length in the dimension of "length"
  * OUTPUT

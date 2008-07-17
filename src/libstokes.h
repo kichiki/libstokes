@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.68 2008/07/17 02:24:22 kichiki Exp $
+ * $Id: libstokes.h,v 1.69 2008/07/17 05:35:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1298,8 +1298,7 @@ struct EV {
  *  length : unit of length given by "length" in SCM (dimensional number)
  *  peclet : peclet number (with respect to "length")
  *  r2     : square of the max distance for F^{EV}
- *  v[n]   : EV parameters for each spring.
- *           the index should correspond to that in bonds.
+ *  v[n]   : EV parameters for each spring in the dimension of "length" cubed
  *  NKs[n] : Kuhn steps for a spring belongs to the particle
  *  bK[n]  : (dimensional) Kuhn length in the dimension of "length"
  * OUTPUT
