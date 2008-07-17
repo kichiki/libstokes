@@ -1,7 +1,7 @@
 /* header file for bonds-guile.c --
- * guile interface for struct bonds
+ * guile interface for struct BONDS
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.h,v 1.9 2008/07/16 18:28:25 kichiki Exp $
+ * $Id: bonds-guile.h,v 1.10 2008/07/17 02:17:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@
  *     (       ; 2) spring parameters (list with 3 elements)
  *      0      ;    fene = 0 means (p1, p2) = (A^{sp}, L_{s})
  *      1.0    ;    p1   = A^{sp}, scaled spring constant
- *      2.1)   ;    p2   = L_{s} / a, scaled max extension
+ *      2.1)   ;    p2   = L_{s} / length, scaled max extension
  *     ((0 1)  ; 3) list of pairs
  *      (1 2)
  *      (2 3))
@@ -73,11 +73,11 @@
  *   6 : Hookean spring for dWLC
  *   7 : FENE-Fraenkel
  * OUTPUT
- *  returned value : struct bonds
+ *  returned value : struct BONDS
  *                   if NULL is returned, it failed (not defined)
  */
-struct bonds *
-bonds_guile_get (const char * var);
+struct BONDS *
+BONDS_guile_get (const char * var);
 
 
 #endif /* !_BONDS_GUILE_H_ */
