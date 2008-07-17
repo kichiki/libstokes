@@ -1,6 +1,6 @@
 /* test code for bd-imp-nitsol.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp-nitsol.c,v 1.4 2008/06/13 03:15:14 kichiki Exp $
+ * $Id: check-bd-imp-nitsol.c,v 1.5 2008/07/17 03:11:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@
 #include <brownian.h>
 #include <bd-imp.h>
 #include "bd-imp-nitsol.h"
-#include <bonds.h> // bonds_init(), bonds_free()
+#include <bonds.h> // BONDS_init(), BONDS_free()
 #include <angles.h> // angles_init(), angles_free()
 
 
@@ -110,7 +110,7 @@ check_BD_imp_NITSOL (int version, int np,
       stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 0, NULL);
     }
 
-  struct bonds *bonds = bonds_init ();
+  struct BONDS *bonds = BONDS_init ();
   struct BD_params *BD
     = BD_params_init (sys,
 		      0, // BD_seed,
@@ -381,7 +381,7 @@ check_BD_imp_NITSOL (int version, int np,
   free (F);
   free (T);
   free (E);
-  bonds_free (bonds);
+  BONDS_free (bonds);
   BD_params_free (BD);
   free (x_siPC);
   free (x_NJGdP);

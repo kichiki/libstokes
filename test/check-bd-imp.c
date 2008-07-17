@@ -1,6 +1,6 @@
 /* test code for bd-imp.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp.c,v 1.8 2008/06/13 03:14:44 kichiki Exp $
+ * $Id: check-bd-imp.c,v 1.9 2008/07/17 03:10:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +25,7 @@
 #include <stokes.h>
 #include <brownian.h>
 #include <bd-imp.h>
-#include <bonds.h> // bonds_init(), bonds_free()
+#include <bonds.h> // BONDS_init(), BONDS_free()
 #include <angles.h> // angles_init(), angles_free()
 
 
@@ -111,7 +111,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
       stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 0, NULL);
     }
 
-  struct bonds *bonds = bonds_init ();
+  struct BONDS *bonds = BONDS_init ();
   struct BD_params *BD
     = BD_params_init (sys,
 		      0, // BD_seed,
@@ -355,7 +355,7 @@ check_BD_evolve_JGdP00 (int version, int flag_lub, int flag_mat,
   free (F);
   free (T);
   free (E);
-  bonds_free (bonds);
+  BONDS_free (bonds);
   BD_params_free (BD);
   free (x_mid);
   free (x_BB);
@@ -462,7 +462,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
       stokes_set_iter (sys, "otmk", 2000, 20, 1.0e-6, 0, NULL);
     }
 
-  struct bonds *bonds = bonds_init ();
+  struct BONDS *bonds = BONDS_init ();
   struct BD_params *BD
     = BD_params_init (sys,
 		      0, // BD_seed,
@@ -740,7 +740,7 @@ check_BD_imp_ode_evolve (int version, int flag_lub, int flag_mat,
   free (F);
   free (T);
   free (E);
-  bonds_free (bonds);
+  BONDS_free (bonds);
   BD_params_free (BD);
   free (y_mid);
   free (y_BB);

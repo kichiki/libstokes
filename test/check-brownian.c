@@ -1,6 +1,6 @@
 /* test code for brownian.c
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-brownian.c,v 1.12 2008/06/13 03:14:21 kichiki Exp $
+ * $Id: check-brownian.c,v 1.13 2008/07/17 03:09:21 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,7 +35,7 @@
 #include <ewald-3fts-matrix.h>
 #include <ewald.h> // make_matrix_mob_3all()
 #include <matrix.h> // multiply_extmat_with_extvec_3fts()
-#include <bonds.h> // bonds_init(), bonds_free()
+#include <bonds.h> // BONDS_init(), BONDS_free()
 
 #include <bench.h> // ptime_ms_d()
 
@@ -392,7 +392,7 @@ check_minv_FU (int verbose, double tiny)
      1,    // int flag_mat,
      0.0,  // double st,
      NULL, // struct BeadRod *br,
-     NULL, // struct bonds *bonds,
+     NULL, // struct BONDS *bonds,
      0.0,  // double gamma,
      NULL, // struct EV *ev,
      NULL, // struct angles *ang,
@@ -755,7 +755,7 @@ check_lub_FU (int verbose, double tiny)
   double xi = xi_by_tratio (sys, 1.0);
   stokes_set_xi (sys, xi, 1.0e-6);
 
-  struct bonds *bonds = bonds_init ();
+  struct BONDS *bonds = BONDS_init ();
   struct BD_params *BD = BD_params_init
     (sys,
      0,    // unsigned long seed,
@@ -770,7 +770,7 @@ check_lub_FU (int verbose, double tiny)
      1,    // int flag_mat,
      0.0,  // double st,
      NULL, // struct BeadRod *br,
-     bonds,// struct bonds *bonds, <-- necessary to define BD->flag_lub
+     bonds,// struct BONDS *bonds, <-- necessary to define BD->flag_lub
      0.0,  // double gamma,
      NULL, // struct EV *ev,
      NULL, // struct angles *ang,
@@ -788,7 +788,7 @@ check_lub_FU (int verbose, double tiny)
      1.0   // double dt_lim
      );
   CHECK_MALLOC (BD, "check_lub_FU");
-  bonds_free (bonds);
+  BONDS_free (bonds);
 
   int n = np * 6;
   double *x = (double *)malloc (sizeof (double) * n);
