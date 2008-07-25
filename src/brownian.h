@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.19 2008/07/17 02:26:56 kichiki Exp $
+ * $Id: brownian.h,v 1.20 2008/07/25 22:16:34 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,14 +22,17 @@
 
 
 #include <KIrand.h>
+#include <bonds.h>        // struct BONDS
+#include <bonds-groups.h> // struct BONDS_GROUPS
 
 struct BD_params
 {
-  /* note that the following pointers are just pointers, therefore, 
+  /* note that the following pointers (except for the indicated ones)
+   * are just pointers, therefore, 
    * you have to take care of them (to free, for example).
    */
   struct stokes *sys;
-  struct KIrand *rng;
+  struct KIrand *rng; // this is allocated in BD_params_init()
   double *F;
   double *T;
   double *E;
@@ -50,6 +53,7 @@ struct BD_params
 
   struct BeadRod *br;
   struct BONDS *bonds;
+  struct BONDS_GROUPS *groups; // this is allocated in BD_params_init()
   double gamma;
   struct EV *ev;
   struct angles *ang;
@@ -65,10 +69,10 @@ struct BD_params
 
   int n_minv;
   double eig_minv[2];
-  double *a_minv;
+  double *a_minv; // this is allocated in BD_params_init()
   int n_lub;
   double eig_lub[2];
-  double *a_lub;
+  double *a_lub;  // this is allocated in BD_params_init()
 
   int scheme;  /* 0 : the mid-point algorithm
 		* 1 : Banchio-Brady (2003)

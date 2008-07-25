@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.28 2008/07/17 02:26:36 kichiki Exp $
+ * $Id: brownian.c,v 1.29 2008/07/25 22:16:07 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,8 @@
 #include <lub.h>
 
 #include <bead-rod.h> // struct BeadRod
-#include <bonds.h> // BONDS_calc_force ()
+#include <bonds.h>        // struct BONDS
+#include <bonds-groups.h> // struct BONDS_GROUPS
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
 #include <ev-dh.h> // EV_DH_calc_force ()
@@ -185,6 +186,15 @@ BD_params_init (struct stokes *sys,
 
   BD->br       = br;
   BD->bonds    = bonds;
+  if (bonds != NULL)
+    {
+      BD->groups = BONDS_GROUPS_make (bonds, sys->np);
+      CHECK_MALLOC (BD->groups, "BD_params_init");
+    }
+  else
+    {
+      BD->groups = NULL;
+    }
   BD->gamma    = gamma;
   BD->ev       = ev;
   BD->ang      = ang;
@@ -246,7 +256,8 @@ BD_params_free (struct BD_params *BD)
 {
   if (BD == NULL) return;
 
-  KIrand_free (BD->rng);
+  if (BD->rng != NULL) KIrand_free (BD->rng);
+  if (BD->groups != NULL) BONDS_GROUPS_free (BD->groups);
   if (BD->a_minv != NULL) free (BD->a_minv);
   if (BD->a_lub  != NULL) free (BD->a_lub);
   free (BD);
@@ -2190,8 +2201,8 @@ BD_add_FP (struct BD_params *BD,
       stokes_set_pos_mobile (BD->sys, pos);
     }
 
-  //if (BD->bonds != NULL)
-  if (BD->bonds->n > 0)
+  if (BD->bonds != NULL)
+  //if (BD->bonds->n > 0)
     {
       // calc bond (spring) force
       BONDS_calc_force (BD->bonds, BD->sys,
