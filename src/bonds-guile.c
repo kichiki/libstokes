@@ -1,6 +1,6 @@
 /* guile interface for struct BONDS
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.12 2008/07/17 02:17:19 kichiki Exp $
+ * $Id: bonds-guile.c,v 1.13 2008/07/25 22:20:12 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,7 +67,7 @@
  *             ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
  *     ((8 9)  ; 3) list of pairs
  *      (9 10))
- *      1)     ; 4) number of exclusion for lubrication
+ *      0)     ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
  *   0 : Hookean spring (Asp * (r - Ls))

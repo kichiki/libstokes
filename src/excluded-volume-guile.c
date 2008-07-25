@@ -1,6 +1,6 @@
 /* guile interface for struct EV
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: excluded-volume-guile.c,v 1.5 2008/07/17 05:35:19 kichiki Exp $
+ * $Id: excluded-volume-guile.c,v 1.6 2008/07/25 22:17:49 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -31,16 +31,16 @@
  * in SCM, ev are given by something like
  *  (define ev '(
  *   5.0     ; max distance [nm] (or in the same dimension of "length")
- *   ( ; for the EV 1
+ *   ( ; for EV type 1
  *    0.0012 ; v [nm^3] (or in the same dimension of "length")
- *    0      ; fene
+ *    0      ; fene flag. if fene == 0, (p1,p2) = (A^{sp},L_{s})
  *    1.0    ; p1 = A^{sp}, scaled spring const
  *    2.1    ; p2 = L_{s} / length, scaled max extension
  *    (0 1 2); list of particles belongs to the EV parameters
  *   )
- *   ( ; for the EV 2
+ *   ( ; for EV type 2
  *    0.002  ; v [nm^3] (or in the same dimension of "length")
- *    1      ; fene
+ *    1      ; fene flag. if fene == 1, (p1,p2) = (N_{K,s},b_{K})
  *    19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
  *    106.0  ; p2 = b_{K} [nm], the Kuhn length
  *    (3 4)  ; list of particles belongs to the EV parameters
