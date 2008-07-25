@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.69 2008/07/17 05:35:57 kichiki Exp $
+ * $Id: libstokes.h,v 1.70 2008/07/25 22:21:42 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1254,7 +1254,7 @@ BONDS_calc_force (struct BONDS *b,
  *             ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
  *     ((8 9)  ; 3) list of pairs
  *      (9 10))
- *      1)     ; 4) number of exclusion for lubrication
+ *      0)     ; 4) number of exclusion for lubrication
  *   ))
  * where spring types are
  *   0 : Hookean spring (Asp * (r - Ls))
@@ -1363,16 +1363,16 @@ EV_calc_force (struct EV *ev,
  * in SCM, ev are given by something like
  *  (define ev '(
  *   5.0     ; max distance [nm] (or in the same dimension of "length")
- *   ( ; for the EV 1
+ *   ( ; for EV type 1
  *    0.0012 ; v [nm^3] (or in the same dimension of "length")
- *    0      ; fene
+ *    0      ; fene flag. if fene == 0, (p1,p2) = (A^{sp},L_{s})
  *    1.0    ; p1 = A^{sp}, scaled spring const
  *    2.1    ; p2 = L_{s} / length, scaled max extension
  *    (0 1 2); list of particles belongs to the EV parameters
  *   )
- *   ( ; for the EV 2
+ *   ( ; for EV type 2
  *    0.002  ; v [nm^3] (or in the same dimension of "length")
- *    1      ; fene
+ *    1      ; fene flag. if fene == 1, (p1,p2) = (N_{K,s},b_{K})
  *    19.8   ; p1 = N_{K,s}, the Kuhn steps for a spring
  *    106.0  ; p2 = b_{K} [nm], the Kuhn length
  *    (3 4)  ; list of particles belongs to the EV parameters
@@ -1575,13 +1575,13 @@ EV_DH_calc_force (struct EV_DH *ev_dh,
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
- *    (        ; 5) list of chain types
- *     (; chain type 1
+ *    (        ; 5) list of DH types
+ *     (; DH type 1
  *      2.43    ; 1) nu [e/nm]
  *      5.00    ; 2) l0 [nm]
  *      (0 1 2) ; 3) list of particles
  *     )
- *     (; chain type 2
+ *     (; DH type 2
  *      2.00    ; 1) nu [e/nm]
  *      4.00    ; 2) l0 [nm]
  *      (3 4)   ; 3) list of particles
@@ -2133,11 +2133,12 @@ dydt_Q_hydro_st (double t, const double *y, double *dydt,
 /* from brownian.h */
 struct BD_params
 {
-  /* note that the following pointers are just pointers, therefore, 
+  /* note that the following pointers (except for the indicated ones)
+   * are just pointers, therefore, 
    * you have to take care of them (to free, for example).
    */
   struct stokes *sys;
-  struct KIrand *rng;
+  struct KIrand *rng; // this is allocated in BD_params_init()
   double *F;
   double *T;
   double *E;
@@ -2158,6 +2159,7 @@ struct BD_params
 
   struct BeadRod *br;
   struct BONDS *bonds;
+  struct BONDS_GROUPS *groups; // this is allocated in BD_params_init()
   double gamma;
   struct EV *ev;
   struct angles *ang;
@@ -2173,10 +2175,10 @@ struct BD_params
 
   int n_minv;
   double eig_minv[2];
-  double *a_minv;
+  double *a_minv; // this is allocated in BD_params_init()
   int n_lub;
   double eig_lub[2];
-  double *a_lub;
+  double *a_lub;  // this is allocated in BD_params_init()
 
   int scheme;  /* 0 : the mid-point algorithm
 		* 1 : Banchio-Brady (2003)
