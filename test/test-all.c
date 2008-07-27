@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.28 2008/07/17 05:56:48 kichiki Exp $
+ * $Id: test-all.c,v 1.29 2008/07/27 01:10:45 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,6 +47,7 @@
 #include "check-brownian.h"
 #include "check-bd-imp.h"
 #include "check-bd-imp-nitsol.h"
+#include "check-bd-imp-fast.h"
 #include "check-sqrt-dgeev.h"
 
 #include "check-matrix.h"
@@ -381,6 +382,98 @@ main (int argc, char** argv)
 				1,   // flag_Q
 				0.1, // dt
 				1, 3.1e-4);
+
+  // check-bd-imp-fast.c
+  // noHI
+  check += check_fastSI_rhs (0, 3, 1, 1, 3.0e-16); // Fraenkel
+  check += check_fastSI_rhs (1, 3, 1, 1, 0.0);     // WLC
+  check += check_fastSI_rhs (3, 3, 1, 1, 0.0);     // Cohen
+  check += check_fastSI_rhs (4, 3, 1, 1, 0.0);     // Werner
+  check += check_fastSI_rhs (5, 3, 1, 1, 0.0);     // Hook
+  check += check_fastSI_rhs (6, 3, 1, 1, 3.0e-16); // Fraenkel for dWLC
+  check += check_fastSI_rhs (7, 3, 1, 1, 3.0e-16); // FENE-Fraenkel
+
+  // HI
+  check += check_fastSI_rhs (0, 3, 0, 1, 0.0);     // Fraenkel
+  check += check_fastSI_rhs (1, 3, 0, 1, 2.0e-16); // WLC
+  check += check_fastSI_rhs (3, 3, 0, 1, 2.0e-16); // Cohen
+  check += check_fastSI_rhs (4, 3, 0, 1, 2.0e-16); // Werner
+  check += check_fastSI_rhs (5, 3, 0, 1, 0.0);     // Hook
+  check += check_fastSI_rhs (6, 3, 0, 1, 0.0);     // Fraenkel for dWLC
+  check += check_fastSI_rhs (7, 3, 0, 1, 0.0);     // FENE-Fraenkel
+
+
+  // noHI
+  check += check_fastSI_solve_cubic (0, 3, 1, 1, 2.0e-16); // Fraenkel
+  check += check_fastSI_solve_cubic (1, 3, 1, 1, 3.0e-16); // WLC
+  check += check_fastSI_solve_cubic (3, 3, 1, 1, 2.0e-16); // Cohen
+  check += check_fastSI_solve_cubic (4, 3, 1, 1, 7.0e-16); // Werner
+  check += check_fastSI_solve_cubic (5, 3, 1, 1, 2.0e-16); // Hook
+  check += check_fastSI_solve_cubic (6, 3, 1, 1, 2.0e-16); // Fraenkel for dWLC
+  check += check_fastSI_solve_cubic (7, 3, 1, 1, 2.0e-12); // FENE-Fraenkel
+
+  // HI
+  check += check_fastSI_solve_cubic (0, 3, 0, 1, 2.0e-16); // Fraenkel
+  check += check_fastSI_solve_cubic (1, 3, 0, 1, 2.0e-16); // WLC
+  check += check_fastSI_solve_cubic (3, 3, 0, 1, 3.0e-16); // Cohen
+  check += check_fastSI_solve_cubic (4, 3, 0, 1, 7.0e-16); // Werner
+  check += check_fastSI_solve_cubic (5, 3, 0, 1, 2.0e-16); // Hook
+  check += check_fastSI_solve_cubic (6, 3, 0, 1, 2.0e-16); // Fraenkel for dWLC
+  check += check_fastSI_solve_cubic (7, 3, 0, 1, 4.0e-12); // FENE-Fraenkel
+
+  // noHI
+  check += check_fastSI_solve (0, 3, 1, 1.0e-2, 1, 3.0e-9);  // Fraenkel
+  check += check_fastSI_solve (1, 3, 1, 1.0e-2, 1, 1.0e-9);  // WLC
+  check += check_fastSI_solve (3, 3, 1, 1.0e-2, 1, 2.0e-10); // Cohen
+  check += check_fastSI_solve (4, 3, 1, 1.0e-2, 1, 4.0e-9);  // Werner
+  check += check_fastSI_solve (5, 3, 1, 1.0e-2, 1, 5.0e-10); // Hook
+  check += check_fastSI_solve (6, 3, 1, 1.0e-2, 1, 3.0e-9);  // Fraenkel
+  check += check_fastSI_solve (7, 3, 1, 1.0e-2, 1, 5.0e-9);  // FENE-Fraenkel
+
+  // noHI
+  check += check_fastSI_solve (0, 10, 1, 1.0e-2, 1, 2.0e-9);  // Fraenkel
+  check += check_fastSI_solve (1, 10, 1, 1.0e-2, 1, 2.0e-9);  // WLC
+  check += check_fastSI_solve (3, 10, 1, 1.0e-2, 1, 8.0e-10); // Cohen
+  check += check_fastSI_solve (4, 10, 1, 1.0e-2, 1, 3.0e-9);  // Werner
+  check += check_fastSI_solve (5, 10, 1, 1.0e-2, 1, 3.0e-9);  // Hook
+  check += check_fastSI_solve (6, 10, 1, 1.0e-2, 1, 2.0e-9);  // Fraenkel
+  check += check_fastSI_solve (7, 10, 1, 1.0e-2, 1, 3.0e-9);  // FENE-Fraenkel
+
+  // noHI
+  check += check_fastSI_solve (0, 100, 1, 1.0e-2, 1, 5.0e-9);  // Fraenkel
+  check += check_fastSI_solve (1, 100, 1, 1.0e-2, 1, 3.0e-10); // WLC
+  check += check_fastSI_solve (3, 100, 1, 1.0e-2, 1, 2.0e-9);  // Cohen
+  check += check_fastSI_solve (4, 100, 1, 1.0e-2, 1, 8.0e-10); // Werner
+  check += check_fastSI_solve (5, 100, 1, 1.0e-2, 1, 3.0e-10); // Hook
+  check += check_fastSI_solve (6, 100, 1, 1.0e-2, 1, 5.0e-9);  // Fraenkel
+  check += check_fastSI_solve (7, 100, 1, 1.0e-2, 1, 2.0e-9);  // FENE-Fraenkel
+
+  // HI -- dt is reduced
+  check += check_fastSI_solve (0, 3, 0, 1.0e-3, 1, 7.0e-9);  // Fraenkel
+  check += check_fastSI_solve (1, 3, 0, 1.0e-3, 1, 3.0e-10); // WLC
+  check += check_fastSI_solve (3, 3, 0, 1.0e-3, 1, 5.0e-10); // Cohen
+  check += check_fastSI_solve (4, 3, 0, 1.0e-3, 1, 3.0e-10); // Werner
+  check += check_fastSI_solve (5, 3, 0, 1.0e-3, 1, 2.0e-9);  // Hook
+  check += check_fastSI_solve (6, 3, 0, 1.0e-3, 1, 7.0e-9);  // Fraenkel
+  check += check_fastSI_solve (7, 3, 0, 1.0e-3, 1, 4.0e-9);  // FENE-Fraenkel
+
+  // some tweaks for dt are needed...
+  check += check_fastSI_solve (0, 10, 0, 1.0e-3, 1, 7.0e-10); // Fraenkel
+  check += check_fastSI_solve (1, 10, 0, 1.0e-4, 1, 3.0e-10); // WLC
+  check += check_fastSI_solve (3, 10, 0, 1.0e-4, 1, 5.0e-11); // Cohen
+  check += check_fastSI_solve (4, 10, 0, 1.0e-4, 1, 2.0e-10); // Werner
+  check += check_fastSI_solve (5, 10, 0, 1.0e-3, 1, 7.0e-9);  // Hook
+  check += check_fastSI_solve (6, 10, 0, 1.0e-3, 1, 7.0e-10); // Fraenkel
+  check += check_fastSI_solve (7, 10, 0, 1.0e-3, 1, 3.0e-9);  // FENE-Fraenkel
+
+  // further tweaks for dt are needed...
+  check += check_fastSI_solve (0, 100, 0, 1.0e-3, 1, 9.0e-11); // Fraenkel
+  check += check_fastSI_solve (1, 100, 0, 1.0e-6, 1, 4.0e-9);  // WLC
+  check += check_fastSI_solve (3, 100, 0, 1.0e-6, 1, 4.0e-9);  // Cohen
+  check += check_fastSI_solve (4, 100, 0, 1.0e-6, 1, 2.0e-9);  // Werner
+  check += check_fastSI_solve (5, 100, 0, 1.0e-6, 1, 9.0e-11); // Hook
+  check += check_fastSI_solve (6, 100, 0, 1.0e-3, 1, 9.0e-11); // Fraenkel
+  check += check_fastSI_solve (7, 100, 0, 1.0e-3, 1, 3.0e-9);  // FENE-Fraenkel
 
 
   // check-sqrt-dgeev.c
