@@ -1,6 +1,6 @@
 /* bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.c,v 1.15 2008/07/17 02:16:40 kichiki Exp $
+ * $Id: bonds.c,v 1.16 2008/07/27 00:50:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -305,6 +305,34 @@ BONDS_fr_i (struct BONDS *b,
   return (fr);
 }
 
+/* calc spring force for the bond "i"
+ * INPUT
+ *  bonds : struct BONDS
+ *  ib    : bond index
+ *  q[3]  : connector vector for the bond "i"
+ * OUTPUT
+ *  f[3]  : force due to the bond "i"
+ */
+void
+BONDS_calc_force_spring_i (struct BONDS *bonds,
+			   int ib,
+			   const double *q,
+			   double *f)
+{
+  double Q = sqrt(q[0] * q[0]
+		  + q[1] * q[1]
+		  + q[2] * q[2]);
+  double ex = q[0] / Q;
+  double ey = q[1] / Q;
+  double ez = q[2] / Q;
+
+  double fr = BONDS_fr_i (bonds, ib, Q);
+
+  f[0] = fr * ex;
+  f[1] = fr * ey;
+  f[2] = fr * ez;
+}
+
 /* search the closest image in 27 periodic images
  * INPUT
  *  sys : struct stokes
@@ -382,41 +410,41 @@ BONDS_calc_force (struct BONDS *b,
 
   for (i = 0; i < b->n; i ++)
     {
-	int ia = b->ia [i];
-	int ib = b->ib [i];
-	// skip if both particles are fixed
-	if (ia >= sys->nm && ib >= sys->nm) continue;
+      int ia = b->ia [i];
+      int ib = b->ib [i];
+      // skip if both particles are fixed
+      if (ia >= sys->nm && ib >= sys->nm) continue;
 
-	int ia3 = ia * 3;
-	int ib3 = ib * 3;
-	double x = sys->pos [ia3  ] - sys->pos [ib3  ];
-	double y = sys->pos [ia3+1] - sys->pos [ib3+1];
-	double z = sys->pos [ia3+2] - sys->pos [ib3+2];
+      int ia3 = ia * 3;
+      int ib3 = ib * 3;
+      double x = sys->pos [ia3  ] - sys->pos [ib3  ];
+      double y = sys->pos [ia3+1] - sys->pos [ib3+1];
+      double z = sys->pos [ia3+2] - sys->pos [ib3+2];
 
-	if (sys->periodic != 0)
+      if (sys->periodic != 0)
 	{
 	  search_close_image (sys, &x, &y, &z);
 	}
 
-	double r = sqrt (x*x + y*y + z*z);
-	x /= r;
-	y /= r;
-	z /= r;
+      double r = sqrt (x*x + y*y + z*z);
+      x /= r;
+      y /= r;
+      z /= r;
 
-	double fr = BONDS_fr_i (b, i, r);
+      double fr = BONDS_fr_i (b, i, r);
 
-	/* F_a = - fr (R_a - R_b)/|R_a - R_b|
-	 * where fr > 0 corresponds to the attractive
-	 *   and fr < 0 corresponds to the repulsive
-	 */
-	if (ia < sys->nm)
+      /* F_a = - fr (R_a - R_b)/|R_a - R_b|
+       * where fr > 0 corresponds to the attractive
+       *   and fr < 0 corresponds to the repulsive
+       */
+      if (ia < sys->nm)
 	{
 	  int ia3 = ia * 3;
 	  f[ia3+0] += - fr * x;
 	  f[ia3+1] += - fr * y;
 	  f[ia3+2] += - fr * z;
 	}
-	if (ib < sys->nm)
+      if (ib < sys->nm)
 	{
 	  int ib3 = ib * 3;
 	  f[ib3+0] += fr * x;

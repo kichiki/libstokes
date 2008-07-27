@@ -1,7 +1,7 @@
 /* header file for bonds.c --
  * bond interaction between particles
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds.h,v 1.11 2008/07/17 02:16:59 kichiki Exp $
+ * $Id: bonds.h,v 1.12 2008/07/27 00:51:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -112,6 +112,20 @@ double
 BONDS_fr_i (struct BONDS *b,
 	    int bond_index,
 	    double Q);
+
+/* calc spring force for the bond "i"
+ * INPUT
+ *  bonds : struct BONDS
+ *  ib    : bond index
+ *  q[3]  : connector vector for the bond "i"
+ * OUTPUT
+ *  f[3]  : force due to the bond "i"
+ */
+void
+BONDS_calc_force_spring_i (struct BONDS *bonds,
+			   int ib,
+			   const double *q,
+			   double *f);
 
 /*
  * INPUT
