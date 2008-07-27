@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.14 2008/07/16 16:49:07 kichiki Exp $
+ * $Id: bd-imp.c,v 1.15 2008/07/27 00:55:05 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -86,7 +86,7 @@ BD_imp_init (struct BD_params *BD,
     }
 
   // z[] is set by 0 here. it is defined by BD_imp_set_xq().
-  BDimp->z = (double *)malloc (sizeof (double) * nz);
+  BDimp->z = (double *)calloc (nz, sizeof (double));
   CHECK_MALLOC (BDimp->z, "BD_imp_init");
 
   if (BD->scheme != 3 && BD->scheme != 4)
@@ -205,16 +205,20 @@ BD_imp_free (struct BD_imp *BDimp)
 
   if (BDimp->z  != NULL) free (BDimp->z);
 
+  // for GSL solver
   if (BDimp->F  != NULL) free (BDimp->F);
   if (BDimp->S  != NULL) gsl_multiroot_fsolver_free (BDimp->S);
   if (BDimp->guess != NULL) gsl_vector_free (BDimp->guess);
 
+  // for NITSOL solver
   if (BDimp->nit != NULL) NITSOL_free (BDimp->nit);
 
+  // for working area
   if (BDimp->FTS != NULL) FTS_free (BDimp->FTS);
   if (BDimp->pos != NULL) free (BDimp->pos);
   if (BDimp->q   != NULL) free (BDimp->q);
 
+  // for PC algorithm
   if (BDimp->xP != NULL) free (BDimp->xP);
   if (BDimp->qP != NULL) free (BDimp->qP);
   if (BDimp->uP != NULL) free (BDimp->uP);
