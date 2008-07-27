@@ -1,4 +1,4 @@
-; $Id: check-bonds-guile.scm,v 1.1 2008/07/17 03:07:27 kichiki Exp $
+; $Id: check-bonds-guile.scm,v 1.2 2008/07/27 01:05:42 kichiki Exp $
 (define bonds '(
   (; bond 1
    0       ; 1) spring type
@@ -37,5 +37,5 @@
            ;    where hat(r0) = r0 / L0 (L0 is given by "length" [nm])
    ((8 9)  ; 3) list of pairs
     (9 10))
-    1)     ; 4) number of exclusion for lubrication
+    0)     ; 4) number of exclusion for lubrication
  ))
