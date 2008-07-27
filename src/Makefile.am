@@ -1,5 +1,5 @@
 # for libstokes
-# $Id: Makefile.am,v 1.29 2008/07/17 02:52:24 kichiki Exp $
+# $Id: Makefile.am,v 1.30 2008/07/27 00:52:43 kichiki Exp $
 
 lib_LTLIBRARIES = libstokes.la
 
@@ -85,6 +85,7 @@ libstokes_la_SOURCES = \
 	brownian.c		\
 	bd-imp.c		\
 	bd-imp-nitsol.c		\
+	bd-imp-fast.c		\
 	bead-rod.c		\
 	bead-rod-guile.c
 
