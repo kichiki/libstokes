@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.70 2008/07/25 22:21:42 kichiki Exp $
+ * $Id: libstokes.h,v 1.71 2008/08/12 05:40:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1071,9 +1071,9 @@ BeadRod_free (struct BeadRod *br);
  *  (define constraints '(
  *   ; system parameters
  *   1.0e-6    ; 1) tolerance
- *   "nitsol"  ; 2) scheme for solving nonlinear equations
+ *   "NITSOL"  ; 2) scheme for solving nonlinear equations
  *             ;    "linear" for iterative scheme in linear approximation
- *             ;    "nitsol" for Newton-GMRES scheme by NITSOL library
+ *             ;    "NITSOL" for Newton-GMRES scheme by NITSOL library
  *   ; the following is for each constraint
  *   (         ; 3) constraint type 1
  *    5.0      ; 3-1) distance [nm]
@@ -2185,7 +2185,8 @@ struct BD_params
 		* 2 : Ball-Melrose (1997)
 		* 3 : Jendrejack et al (2000)
 		* 4 : semi-implicit predictor-corrector
-		* note that, for 3 and 4, BD_imp_ode_evolve() should be used.
+		* 5 : semi-implicit for connector vectors
+		* note that, for 3, 4 and 5, BD_imp_ode_evolve() should be used.
 		*/
   double BB_n; // step parameter for BB03 algorithm
 
@@ -2472,9 +2473,10 @@ struct BD_imp {
   double fact;
   double *z;
 
-  int flag_solver; /* 0 == GSL
-		    * 1 == NITSOL
-		    */
+  int solver; /* 0 == GSL
+	       * 1 == NITSOL
+	       * 2 == fastSI
+	       */
 
   // GSL stuff
   const gsl_multiroot_fsolver_type *T;
@@ -2507,14 +2509,15 @@ struct BD_imp {
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
- *  flag_solver : 0 == GSL solver
- *                1 == NITSOL
+ *  solver : 0 == GSL solver
+ *           1 == NITSOL
+ *           2 == fastSI
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
-	     int flag_solver,
+	     int solver,
 	     int itmax, double eps);
 
 void
