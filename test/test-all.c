@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.29 2008/07/27 01:10:45 kichiki Exp $
+ * $Id: test-all.c,v 1.30 2008/08/12 05:52:20 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -405,19 +405,19 @@ main (int argc, char** argv)
 
   // noHI
   check += check_fastSI_solve_cubic (0, 3, 1, 1, 2.0e-16); // Fraenkel
-  check += check_fastSI_solve_cubic (1, 3, 1, 1, 3.0e-16); // WLC
-  check += check_fastSI_solve_cubic (3, 3, 1, 1, 2.0e-16); // Cohen
+  check += check_fastSI_solve_cubic (1, 3, 1, 1, 2.0e-15); // WLC
+  check += check_fastSI_solve_cubic (3, 3, 1, 1, 3.0e-15); // Cohen
   check += check_fastSI_solve_cubic (4, 3, 1, 1, 7.0e-16); // Werner
   check += check_fastSI_solve_cubic (5, 3, 1, 1, 2.0e-16); // Hook
   check += check_fastSI_solve_cubic (6, 3, 1, 1, 2.0e-16); // Fraenkel for dWLC
-  check += check_fastSI_solve_cubic (7, 3, 1, 1, 2.0e-12); // FENE-Fraenkel
+  check += check_fastSI_solve_cubic (7, 3, 1, 1, 5.0e-12); // FENE-Fraenkel
 
   // HI
   check += check_fastSI_solve_cubic (0, 3, 0, 1, 2.0e-16); // Fraenkel
-  check += check_fastSI_solve_cubic (1, 3, 0, 1, 2.0e-16); // WLC
-  check += check_fastSI_solve_cubic (3, 3, 0, 1, 3.0e-16); // Cohen
-  check += check_fastSI_solve_cubic (4, 3, 0, 1, 7.0e-16); // Werner
-  check += check_fastSI_solve_cubic (5, 3, 0, 1, 2.0e-16); // Hook
+  check += check_fastSI_solve_cubic (1, 3, 0, 1, 4.0e-16); // WLC
+  check += check_fastSI_solve_cubic (3, 3, 0, 1, 4.0e-16); // Cohen
+  check += check_fastSI_solve_cubic (4, 3, 0, 1, 2.0e-15); // Werner
+  check += check_fastSI_solve_cubic (5, 3, 0, 1, 3.0e-16); // Hook
   check += check_fastSI_solve_cubic (6, 3, 0, 1, 2.0e-16); // Fraenkel for dWLC
   check += check_fastSI_solve_cubic (7, 3, 0, 1, 4.0e-12); // FENE-Fraenkel
 
