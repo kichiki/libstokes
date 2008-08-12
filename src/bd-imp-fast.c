@@ -1,6 +1,6 @@
 /* fast semi-implicit Brownian dynamics algorithms
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp-fast.c,v 1.1 2008/07/27 00:51:48 kichiki Exp $
+ * $Id: bd-imp-fast.c,v 1.2 2008/08/12 05:32:22 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1485,7 +1485,7 @@ fastSI_calc_FB (struct BD_imp *b,
  * INPUT
  *  t       : current time
  *  b       : struct BD_imp
- *            b->flag_solver == 0 : GSL-multiroot
+ *            b->solver == 0 : GSL-multiroot
  *                           == 1 : NITSOL
  *                           == 2 : fastSI
  *  x[nm*3] : positions of particles   at t = t0
@@ -1545,24 +1545,22 @@ fastSI_evolve (double t,
   /**
    * solve the nonlinear equations
    */
-  if (b->flag_solver == 2)
+  if (b->solver == 2) // fastSI
     {
       fastSI_solve (b, q0, q);
     }
-  else if (b->flag_solver == 1)
+  else if (b->solver == 1) // NITSOL
     {
-      // NITSOL
       fastSI_NITSOL_wrap (b, q0, q);
     }
-  else if (b->flag_solver == 0)
+  else if (b->solver == 0) // GSL-MULTIROOT
     {
-      // GSL-MULTIROOT
       fastSI_GSL_MULTIROOT_wrap (b, q0, q);
     }
   else
     {
       fprintf (stderr, "# fastSI_evolve() : invalid solver %d\n",
-	       b->flag_solver);
+	       b->solver);
     }
 
   free (q0);
