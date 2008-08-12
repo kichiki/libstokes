@@ -1,6 +1,6 @@
 /* test code for bd-imp-fast.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bd-imp-fast.c,v 1.1 2008/07/27 00:58:57 kichiki Exp $
+ * $Id: check-bd-imp-fast.c,v 1.2 2008/08/12 05:51:02 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -177,7 +177,7 @@ BD_imp_free_for_test (struct BD_imp *b)
  *           1 == NITSOL
  *           2 == fastSI
  */
-void
+struct BD_imp *
 BD_imp_reset_solver (struct BD_imp *b,
 		     int solver,
 		     int itmax, double eps)
@@ -207,6 +207,9 @@ BD_imp_reset_solver (struct BD_imp *b,
     }
   // set dt
   BD_imp_set_dt (b, dt);
+
+  return (b);
+  // b is allocated so that it should be returned
 }
 
 
@@ -567,19 +570,19 @@ check_fastSI_solve (int type, int np, int flag_noHI, double dt,
 		     b->BD->sys->pos);
 
   // fastSI
-  BD_imp_reset_solver (b,
-		       2,       // fastSI
-		       1000,    // itmax
-		       1.0e-8); // eps
+  b = BD_imp_reset_solver (b,
+			   2,       // fastSI
+			   1000,    // itmax
+			   1.0e-8); // eps
   double t_fastSI_0 = ptime_ms_d ();
   fastSI_solve (b, q0, q1);
   double t_fastSI_1 = ptime_ms_d ();
 
   // NITSOL
-  BD_imp_reset_solver (b,
-		       1,       // NITSOL
-		       1000,    // itmax
-		       1.0e-8); // eps
+  b = BD_imp_reset_solver (b,
+			   1,       // NITSOL
+			   1000,    // itmax
+			   1.0e-8); // eps
   NITSOL_set_iplvl (b->nit,
 		    1,  // iplvl
 		    6); // stdout
@@ -589,10 +592,10 @@ check_fastSI_solve (int type, int np, int flag_noHI, double dt,
   double t_NITSOL_1 = ptime_ms_d ();
 
   // GSL
-  BD_imp_reset_solver (b,
-		       0,       // GSL multiroot
-		       1000,    // itmax
-		       1.0e-8); // eps
+  b = BD_imp_reset_solver (b,
+			   0,       // GSL multiroot
+			   1000,    // itmax
+			   1.0e-8); // eps
   b->F->f = fastSI_GSL_MULTIROOT_func;
   double t_GSL_0 = ptime_ms_d ();
   fastSI_GSL_MULTIROOT_wrap (b, q0, q3);
