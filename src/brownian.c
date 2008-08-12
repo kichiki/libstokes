@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.29 2008/07/25 22:16:07 kichiki Exp $
+ * $Id: brownian.c,v 1.30 2008/08/12 05:28:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -2102,17 +2102,22 @@ BD_ode_evolve (struct BD_params *BD,
       double dt_done;
       switch (BD->scheme)
 	{
-	case 1: // Banchio-Brady (2003)
+	case 0: // "mid-point" : the mid-point algorithm
+	  dt_done = BD_evolve_mid (*t, BD, x, q, dt_local);
+	  break;
+
+	case 1: // "BanchioBrady03" : Banchio-Brady (2003)
 	  dt_done = BD_evolve_BB03 (*t, BD, x, q, dt_local);
 	  break;
 
-	case 2: // Ball-Melrose (1997)
+	case 2: // "BallMelrose97" : Ball-Melrose (1997)
 	  dt_done = BD_evolve_BM97 (*t, BD, x, q, dt_local);
 	  break;
 
-	case 0: // the mid-point algorithm
 	default:
-	  dt_done = BD_evolve_mid (*t, BD, x, q, dt_local);
+	  fprintf (stderr, "# BD_ode_evolve: invalid scheme %d\n",
+		   BD->scheme);
+	  exit (1);
 	  break;
 	}
 

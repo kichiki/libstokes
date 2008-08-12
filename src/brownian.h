@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.20 2008/07/25 22:16:34 kichiki Exp $
+ * $Id: brownian.h,v 1.21 2008/08/12 05:28:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -79,7 +79,8 @@ struct BD_params
 		* 2 : Ball-Melrose (1997)
 		* 3 : Jendrejack et al (2000)
 		* 4 : semi-implicit predictor-corrector
-		* note that, for 3 and 4, BD_imp_ode_evolve() should be used.
+		* 5 : semi-implicit for connector vectors
+		* note that, for 3, 4 and 5, BD_imp_ode_evolve() should be used.
 		*/
   double BB_n; // step parameter for BB03 algorithm
 
