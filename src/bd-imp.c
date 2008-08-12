@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.15 2008/07/27 00:55:05 kichiki Exp $
+ * $Id: bd-imp.c,v 1.16 2008/08/12 05:30:47 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,14 +37,15 @@
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
- *  flag_solver : 0 == GSL solver
- *                1 == NITSOL
+ *  solver : 0 == GSL solver
+ *           1 == NITSOL
+ *           2 == fastSI
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
-	     int flag_solver,
+	     int solver,
 	     int itmax, double eps)
 {
   struct BD_imp *BDimp = (struct BD_imp *)malloc (sizeof (struct BD_imp));
@@ -105,8 +106,8 @@ BD_imp_init (struct BD_params *BD,
       n = nm * 7; // quaternion is used here
     }
 
-  BDimp->flag_solver = flag_solver;
-  if (flag_solver == 0)
+  BDimp->solver = solver;
+  if (solver == 0) // GSL-MULTIROOT
     {
       // initialize GSL stuff
       BDimp->T = gsl_multiroot_fsolver_hybrid;
@@ -129,7 +130,7 @@ BD_imp_init (struct BD_params *BD,
       // NITSOL
       BDimp->nit = NULL;
     }
-  else
+  else if (solver == 1) // NITSOL
     {
       // GSL stuff
       BDimp->T = NULL;
@@ -164,6 +165,17 @@ BD_imp_init (struct BD_params *BD,
 
       // parameter for f() and jacv()
       BDimp->nit->rpar = (double *)BDimp;
+    }
+  else // fastSI
+    {
+      // GSL stuff
+      BDimp->T = NULL;
+      BDimp->F = NULL;
+      BDimp->S = NULL;
+      BDimp->guess = NULL;
+
+      // NITSOL
+      BDimp->nit = NULL;
     }
 
   // working area
@@ -742,15 +754,18 @@ BD_evolve_JGdP00 (double t,
   /**
    * solve the nonlinear equations
    */
-  if (BDimp->flag_solver == 0)
+  if (BDimp->solver == 0) // GSL-MULTIROOT
     {
-      // GSL-MULTIROOT
       BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
     }
-  else
+  else if (BDimp->solver == 1) // NITSOL
     {
-      // NITSOL
       BD_imp_NITSOL_wrap (BDimp, x, q);
+    }
+  else // fastSI
+    {
+      fprintf (stderr, "# BD_evolve_JGdP00: invalid solver %d\n",
+	       BDimp->solver);
     }
 
 
@@ -921,15 +936,18 @@ BD_evolve_imp_PC (double t,
   /**
    * solve the nonlinear equations
    */
-  if (BDimp->flag_solver == 0)
+  if (BDimp->solver == 0) // GSL-MULTIROOT
     {
-      // GSL-MULTIROOT
       BD_imp_GSL_MULTIROOT_wrap (BDimp, x, q);
     }
-  else
+  else if (BDimp->solver == 1) // NITSOL
     {
-      // NITSOL
       BD_imp_NITSOL_wrap (BDimp, x, q);
+    }
+  else // fastSI
+    {
+      fprintf (stderr, "# BD_evolve_imp_PC: invalid solver %d\n",
+	       BDimp->solver);
     }
 
 
@@ -1014,12 +1032,23 @@ BD_imp_ode_evolve (struct BD_imp *BDimp,
       double dt_done;
       switch (BD->scheme)
 	{
-	case 3:
+	case 3: // "JendrejackEtal00"
 	  dt_done = BD_evolve_JGdP00 (*t, BDimp, x, q, dt_local);
 	  break;
 
-	case 4:
+	case 4: // "semi-implicit-PC"
 	  dt_done = BD_evolve_imp_PC (*t, BDimp, x, q, dt_local);
+	  break;
+
+	case 5:
+	  // "SI-connector" : semi-implicit scheme for connector vectors
+	  if (BD->flag_Q != 0)
+	    {
+	      fprintf (stderr, "# BD_imp_ode_evolve:"
+		       " quaternion is not implemented in fastSI yet\n");
+	      exit (1);
+	    }
+	  dt_done = fastSI_evolve (*t, BDimp, x, dt_local);
 	  break;
 
 	default:

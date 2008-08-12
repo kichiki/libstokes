@@ -1,7 +1,7 @@
 /* header file for bd-imp.c --
  * implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.h,v 1.5 2008/06/06 03:18:56 kichiki Exp $
+ * $Id: bd-imp.h,v 1.6 2008/08/12 05:31:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,9 +33,10 @@ struct BD_imp {
   double fact;
   double *z;
 
-  int flag_solver; /* 0 == GSL
-		    * 1 == NITSOL
-		    */
+  int solver; /* 0 == GSL
+	       * 1 == NITSOL
+	       * 2 == fastSI
+	       */
 
   // GSL stuff
   const gsl_multiroot_fsolver_type *T;
@@ -68,14 +69,15 @@ struct BD_imp {
  * INPUT
  *  BD : struct BD_params
  *       note that BDimp->BD is just a pointer to BD in the argument.
- *  flag_solver : 0 == GSL solver
- *                1 == NITSOL
+ *  solver : 0 == GSL solver
+ *           1 == NITSOL
+ *           2 == fastSI
  *  itmax : max of iteration for the root-finding
  *  eps   : tolerance for the root-finding
  */
 struct BD_imp *
 BD_imp_init (struct BD_params *BD,
-	     int flag_solver,
+	     int solver,
 	     int itmax, double eps);
 
 void
