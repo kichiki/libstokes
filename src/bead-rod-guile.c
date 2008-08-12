@@ -1,6 +1,6 @@
 /* guile interface for struct BeadRod
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod-guile.c,v 1.2 2008/07/16 16:41:46 kichiki Exp $
+ * $Id: bead-rod-guile.c,v 1.3 2008/08/12 05:38:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,9 +34,9 @@
  *  (define constraints '(
  *   ; system parameters
  *   1.0e-6    ; 1) tolerance
- *   "nitsol"  ; 2) scheme for solving nonlinear equations
+ *   "NITSOL"  ; 2) scheme for solving nonlinear equations
  *             ;    "linear" for iterative scheme in linear approximation
- *             ;    "nitsol" for Newton-GMRES scheme by NITSOL library
+ *             ;    "NITSOL" for Newton-GMRES scheme by NITSOL library
  *   ; the following is for each constraint
  *   (         ; 3) constraint type 1
  *    5.0      ; 3-1) distance [nm]
@@ -117,7 +117,8 @@ BeadRod_guile_get (const char *var,
     {
       scheme = 0;
     }
-  else if (strcmp (str_scheme, "nitsol") == 0)
+  else if (strcmp (str_scheme, "nitsol") == 0 ||
+	   strcmp (str_scheme, "NITSOL") == 0)
     {
       scheme = 1;
     }
