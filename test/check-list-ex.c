@@ -1,6 +1,6 @@
 /* test code for struct list_ex in bonds.c
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-list-ex.c,v 1.1 2007/12/05 03:53:06 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: check-list-ex.c,v 1.2 2008/10/08 03:29:03 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -91,6 +91,7 @@ check_list_ex (int verbose, double tiny)
 		  0,   // fene
 		  1.0, // p1 = A^{sp}
 		  2.1, // p2 = L_{s}
+		  0.0, // p3
 		  -1); // nex
   bond_pairs_add (b->pairs[0], 0, 1);
   bond_pairs_add (b->pairs[0], 1, 2);
@@ -102,6 +103,7 @@ check_list_ex (int verbose, double tiny)
 		  1,    // fene
 		  19.8, // p1 = N_{K,s}
 		  106.0,// p2 = b_{K}
+		  0.0, // p3
 		  1);   // nex
   bond_pairs_add (b->pairs[1], 4, 5);
   bond_pairs_add (b->pairs[1], 5, 6);
@@ -113,6 +115,7 @@ check_list_ex (int verbose, double tiny)
 		  1,    // fene
 		  19.8, // p1 = N_{K,s}
 		  106.0,// p2 = b_{K}
+		  0.0, // p3
 		  2);   // nex
   bond_pairs_add (b->pairs[2], 8,  9);
   bond_pairs_add (b->pairs[2], 9,  10);
@@ -132,6 +135,7 @@ check_list_ex (int verbose, double tiny)
 		  1,    // fene
 		  19.8, // p1 = N_{K,s}
 		  106.0,// p2 = b_{K}
+		  0.0, // p3
 		  2);   // nex
   bond_pairs_add (b->pairs[3], 12, 14);
   bond_pairs_add (b->pairs[3], 13, 14);
