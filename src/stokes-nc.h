@@ -1,7 +1,7 @@
 /* header file for stokes-nc.c --
  * NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.h,v 5.14 2008/06/03 02:33:30 kichiki Exp $
+ * $Id: stokes-nc.h,v 5.15 2008/10/08 03:25:57 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -519,6 +519,52 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 			const double *xf,
 			const double *lat,
 			double tiny);
+
+
+/* return stokes version (F/FT/FTS)
+ * INPUT
+ *  nc : struct stokes_nc *nc
+ * OUTPUT
+ *  version : returned value
+ */
+int
+stokes_nc_get_version (const struct stokes_nc *nc);
+
+
+/* get parameters from stokes_nc data
+ * for stokes_nc_set_by_params()
+ * therefore, struct stokes *sys is incomplete.
+ * INPUT
+ *  nc         :
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *             :   shear_mode, shear_rate
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *  shear_rate : defined only for shear_mode = 1 or 2.
+ *  flag_rng   :
+ */
+void
+stokes_nc_get_params (const struct stokes_nc *nc,
+		      struct stokes *sys,
+		      int *flag_Q,
+		      double *Ui, double *Oi, double *Ei,
+		      double *F, double *T, double *E,
+		      double *uf, double *of, double *ef,
+		      double *xf,
+		      double *lat,
+		      int *shear_mode, double *shear_rate,
+		      int *flag_rng);
 
 
 #endif /* !_STOKES_NC_H_ */

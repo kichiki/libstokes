@@ -1,6 +1,6 @@
 /* NetCDF interface for libstokes
  * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-nc.c,v 5.17 2008/06/03 02:33:01 kichiki Exp $
+ * $Id: stokes-nc.c,v 5.18 2008/10/08 03:25:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -104,7 +104,7 @@ stokes_nc_print_actives (struct stokes_nc *nc,
   // (int)shear_mode
   int shear_mode;
   int status;
-  int index = 0;
+  size_t index = 0;
   status = nc_get_var1_int (nc->id, nc->shear_mode_id, &index,
 			    &shear_mode);
   if (status != NC_NOERR)
@@ -113,11 +113,11 @@ stokes_nc_print_actives (struct stokes_nc *nc,
 	       "# stokes_nc_print_actives() : nc_get_var1_int() failed"
 	       " for shear_mode\n");
     }
-  fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "----+---+-------+------------------\n");
   fprintf (out, "shear_mode      | %d\n", shear_mode);
 
   // random number generator
-  fprintf (out, "----+---+-------+-------+----------\n");
+  fprintf (out, "----------------+------------------\n");
   fprintf (out, "states of RNG   | %d\n", nc->flag_rng);
 }
 
@@ -2896,11 +2896,6 @@ stokes_nc_check_params (const struct stokes_nc *nc,
       fprintf (stderr, "mismatch npf %d != %d\n", nf, nc->npf);
       check ++;
     }
-  if (nf != nc->npf)
-    {
-      fprintf (stderr, "mismatch npf %d != %d\n", nf, nc->npf);
-      check ++;
-    }
   // because flag_it is always 1 now
   if (nc->flag_ui0 != 1 ||
       nc->flag_oi0 != 1 ||
@@ -3054,7 +3049,8 @@ stokes_nc_check_params (const struct stokes_nc *nc,
       // (int)shear_mode
       int check_int;
       int status;
-      status = nc_get_var1_int (nc->id, nc->shear_mode_id, NULL,
+      size_t index = 0;
+      status = nc_get_var1_int (nc->id, nc->shear_mode_id, &index,
 				&check_int);
       if (status != NC_NOERR)
 	{
@@ -3069,7 +3065,7 @@ stokes_nc_check_params (const struct stokes_nc *nc,
 	}
 
       // shear_rate
-      status = nc_get_var1_double (nc->id, nc->shear_rate_id, NULL,
+      status = nc_get_var1_double (nc->id, nc->shear_rate_id, &index,
 				   check_array);
       if (status != NC_NOERR)
 	{
@@ -3217,4 +3213,303 @@ stokes_nc_check_params (const struct stokes_nc *nc,
   free (check_parray);
 
   return (check);
+}
+
+
+/* return stokes version (F/FT/FTS)
+ * INPUT
+ *  nc : struct stokes_nc *nc
+ * OUTPUT
+ *  version : returned value
+ */
+int
+stokes_nc_get_version (const struct stokes_nc *nc)
+{
+  int version = 0;
+
+  if (nc->npf == 0)
+    {
+      // no fixed particles
+      if (nc->flag_f0 == 1 &&
+	  nc->flag_t0 == 1 &&
+	  nc->flag_e0 == 1 &&
+	  nc->flag_x == 1 &&
+	  nc->flag_u == 1 &&
+	  nc->flag_o == 1 &&
+	  nc->flag_s == 1 &&
+	  nc->flag_uf0 == 0 &&
+	  nc->flag_of0 == 0 &&
+	  nc->flag_ef0 == 0 &&
+	  nc->flag_xf0 == 0 &&
+	  nc->flag_ff == 0 &&
+	  nc->flag_tf == 0 &&
+	  nc->flag_sf == 0)
+	{
+	  version = 2; // FTS
+	}
+      else if (nc->flag_f0 == 1 &&
+	       nc->flag_t0 == 1 &&
+	       nc->flag_e0 == 0 &&
+	       nc->flag_x == 1 &&
+	       nc->flag_u == 1 &&
+	       nc->flag_o == 1 &&
+	       nc->flag_s == 0 &&
+	       nc->flag_uf0 == 0 &&
+	       nc->flag_of0 == 0 &&
+	       nc->flag_ef0 == 0 &&
+	       nc->flag_xf0 == 0 &&
+	       nc->flag_ff == 0 &&
+	       nc->flag_tf == 0 &&
+	       nc->flag_sf == 0)
+	{
+	  version = 1; // FT
+	}
+      else if (nc->flag_f0 == 1 &&
+	       nc->flag_t0 == 0 &&
+	       nc->flag_e0 == 0 &&
+	       nc->flag_x == 1 &&
+	       nc->flag_u == 1 &&
+	       nc->flag_o == 0 &&
+	       nc->flag_s == 0 &&
+	       nc->flag_uf0 == 0 &&
+	       nc->flag_of0 == 0 &&
+	       nc->flag_ef0 == 0 &&
+	       nc->flag_xf0 == 0 &&
+	       nc->flag_ff == 0 &&
+	       nc->flag_tf == 0 &&
+	       nc->flag_sf == 0)
+	{
+	  version = 0; // F
+	}
+    }
+  else
+    {
+      // with fixed particles
+      if (nc->flag_f0 == 1 &&
+	  nc->flag_t0 == 1 &&
+	  nc->flag_e0 == 1 &&
+	  nc->flag_x == 1 &&
+	  nc->flag_u == 1 &&
+	  nc->flag_o == 1 &&
+	  nc->flag_s == 1 &&
+	  nc->flag_uf0 == 1 &&
+	  nc->flag_of0 == 1 &&
+	  nc->flag_ef0 == 1 &&
+	  nc->flag_xf0 == 1 &&
+	  nc->flag_ff == 1 &&
+	  nc->flag_tf == 1 &&
+	  nc->flag_sf == 1)
+	{
+	  version = 2; // FTS
+	}
+      else if (nc->flag_f0 == 1 &&
+	       nc->flag_t0 == 1 &&
+	       nc->flag_e0 == 0 &&
+	       nc->flag_x == 1 &&
+	       nc->flag_u == 1 &&
+	       nc->flag_o == 1 &&
+	       nc->flag_s == 0 &&
+	       nc->flag_uf0 == 1 &&
+	       nc->flag_of0 == 1 &&
+	       nc->flag_ef0 == 0 &&
+	       nc->flag_xf0 == 1 &&
+	       nc->flag_ff == 1 &&
+	       nc->flag_tf == 1 &&
+	       nc->flag_sf == 0)
+	{
+	  version = 1; // FT
+	}
+      else if (nc->flag_f0 == 1 &&
+	       nc->flag_t0 == 0 &&
+	       nc->flag_e0 == 0 &&
+	       nc->flag_x == 1 &&
+	       nc->flag_u == 1 &&
+	       nc->flag_o == 0 &&
+	       nc->flag_s == 0 &&
+	       nc->flag_uf0 == 1 &&
+	       nc->flag_of0 == 0 &&
+	       nc->flag_ef0 == 0 &&
+	       nc->flag_xf0 == 1 &&
+	       nc->flag_ff == 1 &&
+	       nc->flag_tf == 0 &&
+	       nc->flag_sf == 0)
+	{
+	  version = 0; // F
+	}
+    }
+
+  return (version);
+}
+
+
+/* get parameters from stokes_nc data
+ * for stokes_nc_set_by_params()
+ * therefore, struct stokes *sys is incomplete.
+ * INPUT
+ *  nc         :
+ *  sys        : the following elements are referred.
+ *             :   version
+ *             :   np, nm
+ *             :   a[np] (if NULL, monodisperse mode)
+ *             :   periodic
+ *             :   shear_mode, shear_rate
+ *  flag_Q     :
+ *  Ui, Oi, Ei :
+ *  F,  T,  E  :
+ *  uf, of, ef : used only for the mix problem
+ *  xf         : position of the fixed particles
+ *  lat[3]     : used only for the periodic case
+ *  shear_mode : 0 == imposed flow is given by Ui,Oi,Ei.
+ *               1 == x = flow dir, y = grad dir
+ *               2 == x = flow dir, z = grad dir
+ *  shear_rate : defined only for shear_mode = 1 or 2.
+ *  flag_rng   :
+ */
+void
+stokes_nc_get_params (const struct stokes_nc *nc,
+		      struct stokes *sys,
+		      int *flag_Q,
+		      double *Ui, double *Oi, double *Ei,
+		      double *F, double *T, double *E,
+		      double *uf, double *of, double *ef,
+		      double *xf,
+		      double *lat,
+		      int *shear_mode, double *shear_rate,
+		      int *flag_rng)
+{
+  // trivial parameters
+  *flag_Q   = nc->flag_q;
+  *flag_rng = nc->flag_rng;
+
+
+  // set struct stokes
+  // version
+  sys->version = stokes_nc_get_version (nc);
+
+  // nm and np
+  int nm = nc->np;
+  int nf = nc->npf;
+  int np = nm + nf;
+  stokes_set_np (sys, np, nm);
+
+  // radius
+  double *a = (double *)malloc (sizeof (double) * np);
+  CHECK_MALLOC (a, "stokes_nc_get_params");
+  if (nc->flag_a != 0)
+    {
+      stokes_nc_get_array1d (nc, "a", a);
+      if (nc->flag_af != 0)
+	{
+	  stokes_nc_get_array1d (nc, "af", a + nm);
+	}
+      stokes_set_radius (sys, a);
+    }
+  free (a);
+
+
+  // lattice vector
+  stokes_nc_get_array1d (nc, "l", lat);
+  if (lat[0] == 0.0 &&
+      lat[1] == 0.0 &&
+      lat[2] == 0.0)
+    {
+      sys->periodic = 0;
+    }
+  else
+    {
+      sys->periodic = 1;
+      stokes_set_l (sys, lat[0], lat[1], lat[2]);
+    }
+
+
+  /* this struct stokes *sys is incomplete, at least, 
+   * for the following informations:
+   *
+   * stokes_set_slip (sys, slip);
+   * stokes_set_xi (sys, xi, ewald_eps);
+   */
+
+
+  // imposed flow
+  stokes_nc_get_array1d (nc, "Ui0", Ui);
+  stokes_nc_get_array1d (nc, "Oi0", Oi);
+  stokes_nc_get_array1d (nc, "Ei0", Ei);
+
+
+  // first for mobile particle informations (for both mob and mix)
+  if (sys->version == 0)
+    {
+      // F version
+      stokes_nc_get_data0 (nc, "F0", F);
+    }
+  else if (sys->version == 1)
+    {
+      // FT version
+      stokes_nc_get_data0 (nc, "F0", F);
+      stokes_nc_get_data0 (nc, "T0", T);
+    }
+  else
+    {
+      // FTS version
+      stokes_nc_get_data0 (nc, "F0", F);
+      stokes_nc_get_data0 (nc, "T0", T);
+      stokes_nc_get_data0 (nc, "E0", E);
+    }
+  if (nf > 0)
+    {
+      // mix problem (with fixed particles)
+      if (sys->a != NULL)
+	{
+	  stokes_nc_get_array1d (nc, "af", sys->a + sys->nm);
+	}
+      stokes_nc_get_data0 (nc, "xf0", xf);
+
+      if (sys->version == 0)
+	{
+	  // F version
+	  stokes_nc_get_data0 (nc, "Uf0", uf);
+	}
+      else if (sys->version == 1)
+	{
+	  // FT version
+	  stokes_nc_get_data0 (nc, "Uf0", uf);
+	  stokes_nc_get_data0 (nc, "Of0", of);
+	}
+      else
+	{
+	  // FTS version
+	  stokes_nc_get_data0 (nc, "Uf0", uf);
+	  stokes_nc_get_data0 (nc, "Of0", of);
+	  stokes_nc_get_data0 (nc, "Ef0", ef);
+	}
+    }
+
+
+  // auxiliary imposed-flow parameters for simple shear
+  // (int)shear_mode
+  int status;
+  size_t index = 0;
+  status = nc_get_var1_int (nc->id, nc->shear_mode_id, &index,
+			    shear_mode);
+  if (status != NC_NOERR)
+    {
+      fprintf (stderr,
+	       "at nc_get_var1_int() for shear_mode"
+	       " in stokes_nc_get_params\n");
+    }
+  sys->shear_mode = *shear_mode;
+
+  if (sys->shear_mode != 0)
+    {
+      // shear_rate
+      status = nc_get_var1_double (nc->id, nc->shear_rate_id, &index,
+				   shear_rate);
+      if (status != NC_NOERR)
+	{
+	  fprintf (stderr,
+		   "at nc_get_var1_double() for shear_rate"
+		   " in stokes_nc_get_params\n");
+	}
+      sys->shear_rate = *shear_rate;
+    }
 }
