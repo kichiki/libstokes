@@ -1,6 +1,6 @@
 /* twobody solutions for slip particles
- * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: YM-slip.c,v 1.3 2008/10/22 05:54:25 kichiki Exp $
+ * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: YM-slip.c,v 1.4 2008/10/22 06:13:09 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,13 @@
 #include <stdio.h>  // fprintf()
 #include <stdlib.h> // malloc(), free()
 #include "memory-check.h" // CHECK_MALLOC
+
+static void twobody_YM_slip_15 (int n, double l, double *f, double *fk);
+static void twobody_YM_slip_16 (int n, double l, double *f, double *fk);
+static void twobody_YM_slip_17 (int n, double l, double *f, double *fk);
+static void twobody_YM_slip_18 (int n, double l, double *f, double *fk);
+static void twobody_YM_slip_19 (int n, double l, double *f, double *fk);
+//static void twobody_YM_slip_20 (int n, double l, double *f, double *fk);
 
 double SL_G1 (int m, int n);
 double SL_G2 (int m, int n);
@@ -556,6 +563,61 @@ void twobody_YM_slip (int n, double l, double *f)
     }
 
   /* k = 15 */
+  twobody_YM_slip_15 (n, l, f, fk);
+  if (n == 15)
+    {
+      free (fk);
+      return;
+    }
+
+  /* k = 16 */
+  twobody_YM_slip_16 (n, l, f, fk);
+  if (n == 16)
+    {
+      free (fk);
+      return;
+    }
+
+  /* k = 17 */
+  twobody_YM_slip_17 (n, l, f, fk);
+  if (n == 17)
+    {
+      free (fk);
+      return;
+    }
+
+  /* k = 18 */
+  twobody_YM_slip_18 (n, l, f, fk);
+  if (n == 18)
+    {
+      free (fk);
+      return;
+    }
+
+  /* k = 19 */
+  twobody_YM_slip_19 (n, l, f, fk);
+  if (n == 19)
+    {
+      free (fk);
+      return;
+    }
+
+  /* k = 20
+  twobody_YM_slip_20 (n, l, f, fk);
+  if (n == 20)
+    {
+      free (fk);
+      return;
+    }
+  */
+  //fprintf (stderr, "twobody_YM_slip is implemented only up to k=20\n");
+  fprintf (stderr, "twobody_YM_slip is implemented only up to k=19\n");
+  free (fk);
+  return;
+}
+static void twobody_YM_slip_15 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 15; q++) fk[q] = 0.0;
   fk[4] =
       6144.0 * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,5) * ( 616.0 * SL_G1(2,11) 
@@ -822,13 +884,10 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[15] = 0.0;
   for (q = 0; q <= 15; q++) f[15] = f[15] * l + fk[15-q];
-  if (n == 15)
-    {
-      free (fk);
-      return;
-    }
-
-  /* k = 16 */
+}
+static void twobody_YM_slip_16 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 16; q++) fk[q] = 0.0;
   fk[2] =
       27648.0 * SL_G1(0,5) * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,3) * ( 180.0 * SL_G1(2,9) 
@@ -1168,13 +1227,10 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[16] = 0.0;
   for (q = 0; q <= 16; q++) f[16] = f[16] * l + fk[16-q];
-  if (n == 16)
-    {
-      free (fk);
-      return;
-    }
-
-  /* k = 17 */
+}
+static void twobody_YM_slip_17 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 17; q++) fk[q] = 0.0;
   fk[4] =
       8192.0 * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,5) * ( 5460.0 * SL_G1(2,13) 
@@ -1841,13 +1897,10 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[17] = 0.0;
   for (q = 0; q <= 17; q++) f[17] = f[17] * l + fk[17-q];
-  if (n == 17)
-    {
-      free (fk);
-      return;
-    }
-
-  /* k = 18 */
+}
+static void twobody_YM_slip_18 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 18; q++) fk[q] = 0.0;
   fk[2] =
       110592.0 * SL_G1(0,5) * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,3) * ( 77.0 * SL_G1(2,11) 
@@ -2670,13 +2723,10 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[18] = 0.0;
   for (q = 0; q <= 18; q++) f[18] = f[18] * l + fk[18-q];
-  if (n == 18)
-    {
-      free (fk);
-      return;
-    }
-
-  /* k = 19 */
+}
+static void twobody_YM_slip_19 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 19; q++) fk[q] = 0.0;
   fk[4] =
       98304.0 * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,5) * ( 39600.0 * SL_G1(2,15) 
@@ -4283,13 +4333,11 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[19] = 0.0;
   for (q = 0; q <= 19; q++) f[19] = f[19] * l + fk[19-q];
-  if (n == 19)
-    {
-      free (fk);
-      return;
-    }
-
-  /* k = 20 */
+}
+/*
+static void twobody_YM_slip_20 (int n, double l, double *f, double *fk)
+{
+  int q;
   for (q = 0; q <= 20; q++) fk[q] = 0.0;
   fk[2] =
       49152.0 * SL_G1(0,5) * SL_G1(0,5) * SL_G2(2,3) * SL_G2(2,3) * ( 1872.0 * SL_G1(2,13) 
@@ -6233,13 +6281,5 @@ void twobody_YM_slip (int n, double l, double *f)
   ;
   f[20] = 0.0;
   for (q = 0; q <= 20; q++) f[20] = f[20] * l + fk[20-q];
-  if (n == 20)
-    {
-      free (fk);
-      return;
-    }
-
-  fprintf (stderr, "twobody_YM_slip is implemented only up to k=20\n");
-  free (fk);
-  return;
 }
+*/
