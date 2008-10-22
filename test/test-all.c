@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.30 2008/08/12 05:52:20 kichiki Exp $
+ * $Id: test-all.c,v 1.31 2008/10/22 06:19:13 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -98,14 +98,14 @@ main (int argc, char** argv)
 
   // check-solve-gen-linear.c
   check += check_split_merge (200, 200, 1, 0.0);
-  check += check_inverse_by_sub (100, 100, 1, 2.9e-13);
+  check += check_inverse_by_sub (100, 100, 1, 4.0e-13);
   check += check_solve_gen_linear (200, 200, 1, 1.8e-7);
 
   // check-lapack-inv.c
-  check += check_lapack_inv_ (100, 1, 7.1e-14);
+  check += check_lapack_inv_ (100, 1, 1.1e-13);
   // check-lapack-solve-lin.c
   check += check_lapack_solve_lin (100, 1, 1.3e-12);
-  check += check_lapack_solve_lin (1000, 1, 5.0e-10);
+  check += check_lapack_solve_lin (1000, 1, 3.1e-9);
 
 
   double r = 2.5;
@@ -120,7 +120,7 @@ main (int argc, char** argv)
   // check-poly.c
   check += check_scalars_nonewald_poly (r, 1, 2.0e-16);
   check += check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
-  check += check_scalars_ewald_real_poly (2.5, 1.0, 1, 1.0e-15);
+  check += check_scalars_ewald_real_poly (2.5, 1.0, 1, 1.2e-15);
 
   check += check_matrix_mob_nonewald_fts (r, 1, 1.0e-14);
   check += check_minv_fts (2.5, 1, 1.0e-14);
@@ -143,7 +143,7 @@ main (int argc, char** argv)
 
   // check-mob-fts.c
   check += check_mob_fts (1, 7.0e-12);
-  check += check_mob_lub_fts (1, 3.3e-11);
+  check += check_mob_lub_fts (1, 3.4e-11);
 
   // check-ewald.c
   int version = 2; // FTS
@@ -156,10 +156,10 @@ main (int argc, char** argv)
   // check-ewald-poly.c
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      4.0, // ewald_tr
-					      ewald_eps, 1, 8.5e-15);
+					      ewald_eps, 1, 1.1e-14);
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      1.0, // ewald_tr
-					      ewald_eps, 1, 4.0e-15);
+					      ewald_eps, 1, 5.2e-15);
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
 					      10.0, // ewald_tr
 					      ewald_eps, 1, 2.3e-14);
@@ -404,21 +404,21 @@ main (int argc, char** argv)
 
 
   // noHI
-  check += check_fastSI_solve_cubic (0, 3, 1, 1, 2.0e-16); // Fraenkel
+  check += check_fastSI_solve_cubic (0, 3, 1, 1, 3.6e-16); // Fraenkel
   check += check_fastSI_solve_cubic (1, 3, 1, 1, 2.0e-15); // WLC
   check += check_fastSI_solve_cubic (3, 3, 1, 1, 3.0e-15); // Cohen
   check += check_fastSI_solve_cubic (4, 3, 1, 1, 7.0e-16); // Werner
   check += check_fastSI_solve_cubic (5, 3, 1, 1, 2.0e-16); // Hook
-  check += check_fastSI_solve_cubic (6, 3, 1, 1, 2.0e-16); // Fraenkel for dWLC
+  check += check_fastSI_solve_cubic (6, 3, 1, 1, 3.6e-16); // Fraenkel for dWLC
   check += check_fastSI_solve_cubic (7, 3, 1, 1, 5.0e-12); // FENE-Fraenkel
 
   // HI
-  check += check_fastSI_solve_cubic (0, 3, 0, 1, 2.0e-16); // Fraenkel
+  check += check_fastSI_solve_cubic (0, 3, 0, 1, 2.2e-16); // Fraenkel
   check += check_fastSI_solve_cubic (1, 3, 0, 1, 4.0e-16); // WLC
   check += check_fastSI_solve_cubic (3, 3, 0, 1, 4.0e-16); // Cohen
   check += check_fastSI_solve_cubic (4, 3, 0, 1, 2.0e-15); // Werner
   check += check_fastSI_solve_cubic (5, 3, 0, 1, 3.0e-16); // Hook
-  check += check_fastSI_solve_cubic (6, 3, 0, 1, 2.0e-16); // Fraenkel for dWLC
+  check += check_fastSI_solve_cubic (6, 3, 0, 1, 2.2e-16); // Fraenkel for dWLC
   check += check_fastSI_solve_cubic (7, 3, 0, 1, 4.0e-12); // FENE-Fraenkel
 
   // noHI
@@ -512,7 +512,7 @@ main (int argc, char** argv)
 
   // check-confinement.c
   check += check_CF_init (1, 1.0e-15);
-  check += check_CF_sphere_calc_force (10.0, 1, 4.0e-14);
+  check += check_CF_sphere_calc_force (10.0, 1, 6.0e-14);
   check += check_CF_sphere_calc_force (100.0, 1, 2.0e-13);
   // check-confinement-guile.c
   check += check_CF_guile_get (1, 0.0);
@@ -521,7 +521,7 @@ main (int argc, char** argv)
   // check-bead-rod.c
   check += check_BeadRod_constraint_displacement (10, 1, 2.0e-15);
   check += check_BeadRod_solve_iter_gamma (10, 1.0e-8, 1, 3.0e-9);
-  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.0e-9);
+  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.2e-9);
   check += check_BeadRod_solve_gamma (10, 1.0e-8, 1, 2.0e-9);
   // check-bead-rod-guile.c
   check += check_BeadRod_guile_get (1, 0.0);
