@@ -1,6 +1,6 @@
 /* twobody solutions for slip particles
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: XC-slip.c,v 1.2 2007/08/21 05:37:36 kichiki Exp $
+ * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
+ * $Id: XC-slip.c,v 1.3 2008/10/22 05:54:25 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,6 +16,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
+#include <stdio.h>  // fprintf()
+#include <stdlib.h> // malloc(), free()
+#include "memory-check.h" // CHECK_MALLOC
 
 double SL_G1 (int m, int n);
 double SL_G2 (int m, int n);
