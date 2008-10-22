@@ -1,12 +1,40 @@
-# $Id: Makefile,v 1.26 2008/07/27 01:11:28 kichiki Exp $
+# $Id: Makefile,v 1.27 2008/10/22 06:19:36 kichiki Exp $
 
-CC           = cc
-#LD           = libtool --mode=link $(CC)
-LD           = libtool --mode=link --tag=CC $(CC)
+CC = cc
+RYUON_PREFIX = /usr/local
+# for SUSE-Linux
+#RYUON_PREFIX = /home/ichiki/RYUON
 
-OPTS = \
-	-march=prescott -mfpmath=sse \
-	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for robson gcc version 3 (32bit)
+#CC = /usr/bin/gcc
+#RYUON_PREFIX = /home/ichiki/RYUON3-32
+
+# for robson gcc version 3 (64bit)
+#CC = /usr/bin/gcc -m64
+#RYUON_PREFIX = /home/ichiki/RYUON3
+
+# for robson gcc version 4
+#CC = /usr/local/bin/gcc4
+#RYUON_PREFIX = /home/ichiki/RYUON4-32
+
+# for robson gcc version 4 (64bit)
+#CC = /usr/local/bin/gcc4 -m64
+#RYUON_PREFIX = /home/ichiki/RYUON4
+
+RYUON_BIN = $(RYUON_PREFIX)/bin
+RYUON_INC = -I$(RYUON_PREFIX)/include
+RYUON_LIB = -L$(RYUON_PREFIX)/lib
+
+LD = libtool --mode=link --tag=CC $(CC)
+#LD = $(CC)
+
+# for header file besides libstokes.h
+RYUON_SRC = ../src
+
+#OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math
+# for FreeBSD
+OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math\
+	-march=prescott -mfpmath=sse
 # for SUSE-Linux
 #OPTS = \
 #	-mtune=opteron -m64 \
@@ -15,65 +43,94 @@ OPTS = \
 #OPTS = \
 #	-march=pentium3m \
 #	-pipe -O3 -fomit-frame-pointer -ffast-math
+# for robson
+#OPTS = -O3 -mcpu=970 -mtune=970 -maltivec
 
+LIBSTOKES = ../src/libstokes.la
+#LIBSTOKES = $(RYUON_LIB) -lstokes
 
-# for header file besides libstokes.h
-RYUON_SRC = ../src
-
-RYUON_INC = -I/usr/local/include
-RYUON_LIB = -L/usr/local/lib
+#ATLAS_LIBS	= \
+#	-lg2c -lblas -llapack\
+#	-lcblas -lf77blas -latlas\
+#	-larpack
+# for FreeBSD
+ATLAS_LIBS = \
+	-L/usr/local/lib/gcc-4.2.5 -lgfortran \
+	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
+	-larpack
 # for SUSE-Linux
-#RYUON_INC = -I/home/ichiki/RYUON/include
-#RYUON_LIB = -L/home/ichiki/RYUON/lib
+# for openSUSE
+#ATLAS_LIBS = \
+#	-lgfortran -lblas -llapack\
+#	-larpack
+#ATLAS_LIBS = \
+#	-llapack -lptcblas -lptf77blas -latlas\
+#	-larpack
+# for robson (gcc/g77, 64bit)
+#ATLAS_LIBS = -lg2c -L/usr/local/lib64 -lcblas -latlas -L/usr/local/lib64 -larpack
+# for robson (gcc/g77, 64bit or 32bit)
+#ATLAS_LIBS = \
+#	-lg2c \
+#	$(RYUON_LIB) -larpack -llapack -lblas
+# for robson (gcc4/gfortran, 64bit)
+#ATLAS_LIBS = -L/usr/local/lib64 -larpack -lessl -lxlf90_r
+# for robson (gcc4/gfortran, 64bit or 32bit)
+#ATLAS_LIBS = \
+#	-L/usr/local/gcc-4.2.2/lib/gcc/powerpc64-suse-linux/4.2.2 -lgfortran \
+#	$(RYUON_LIB) -larpack -llapack -lblas
+#ATLAS_LIBS = \
+#	-L/usr/local/gcc-4.2.2/lib/gcc/powerpc64-suse-linux/4.2.2 -lgfortran \
+#	$(RYUON_LIB) -larpack -llapack -lblas
 
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
+# for robson
+#GSL_INC = `$(RYUON_BIN)/gsl-config --cflags`
+#GSL_LIB = `$(RYUON_BIN)/gsl-config --libs`
 
 NITSOL_INC = -I/usr/local/include
 NITSOL_LIB = -L/usr/local/lib -lnitsol
 # for SUSE-Linux
 #NITSOL_INC = -I/home/ichiki/RYUON/include
 #NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
+# for robson
+#NITSOL_INC = $(RYUON_INC)
+#NITSOL_LIB = $(RYUON_LIB) -lnitsol
 
 GUILE_INC = `guile-config compile`
 GUILE_LIB = `guile-config link`
+# for robson
+#GUILE_INC = `$(RYUON_BIN)/guile-config compile`
+#GUILE_LIB = `$(RYUON_BIN)/guile-config link`
 
-#ATLAS_LIBS	= \
-#	-lg2c -lblas -llapack\
-#	-lcblas -lf77blas -latlas
-ATLAS_LIBS	= \
-	-L/usr/local/lib/gcc-4.2.5 -lgfortran \
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
-	-larpack
-# for SUSE-Linux
-# for openSUSE
-#ATLAS_LIBS	= \
-#	-lgfortran -lblas -llapack\
-#	-larpack
-#ATLAS_LIBS	= \
-#	-llapack -lptcblas -lptf77blas -latlas\
-#	-larpack
+NETCDF_INC = 
+NETCDF_LIB = -lnetcdf
+# for robson
+#NETCDF_INC = $(RYUON_INC)
+#NETCDF_LIB = $(RYUON_LIB) -lnetcdf
 
-CFLAGS	     = \
+
+CFLAGS = \
 	-Wall		\
 	$(OPTS)		\
 	-I$(RYUON_SRC)	\
 	$(RYUON_INC)	\
+	$(NETCDF_INC)	\
 	$(GUILE_INC)	\
 	$(GSL_INC)	\
 	$(NITSOL_INC)
 
-LDFLAGS      =
+LDFLAGS =
 
-LIBS         = \
-	../src/libstokes.la	\
+LIBS = \
+	$(LIBSTOKES)		\
 	-lm			\
 	$(RYUON_LIB) -liter	\
-	$(ATLAS_LIBS)		\
-	-lnetcdf		\
+	$(NETCDF_LIB)		\
 	$(GUILE_LIB)		\
 	$(GSL_LIB)		\
-	$(NITSOL_LIB)
+	$(NITSOL_LIB)		\
+	$(ATLAS_LIBS)
 
 all:	test-all	\
 	test-twobody	\
