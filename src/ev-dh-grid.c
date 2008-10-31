@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel with RYUON_grid
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-grid.c,v 1.1 2008/10/31 05:40:00 kichiki Exp $
+ * $Id: ev-dh-grid.c,v 1.2 2008/10/31 05:44:15 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,41 +26,6 @@
 
 #include "grid.h" // struct RYUON_grid
 
-
-static void
-EV_DH_set_force_ij (struct stokes *sys,
-		    struct EV_DH *ev_dh,
-		    int i, int j, double r2, double x, double y, double z,
-		    double *f)
-{
-  double r = sqrt (r2);
-  double ex = x / r;
-  double ey = y / r;
-  double ez = z / r;
-
-  double kr = r / ev_dh->rd;
-
-  // define fr
-  double fr
-    = ev_dh->a_sys
-    * ev_dh->nu[i] * ev_dh->nu[j]
-    / r2 * (1.0 + kr) * exp (-kr);
-
-  if (i < sys->nm)
-    {
-      int i3 = i * 3;
-      f[i3+0] += fr * ex;
-      f[i3+1] += fr * ey;
-      f[i3+2] += fr * ez;
-    }
-  if (j < sys->nm)
-    {
-      int j3 = j * 3;
-      f[j3+0] += - fr * ex;
-      f[j3+1] += - fr * ey;
-      f[j3+2] += - fr * ez;
-    }
-}
 
 /*
  * for non-periodic system
