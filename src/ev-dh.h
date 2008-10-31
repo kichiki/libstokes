@@ -1,7 +1,7 @@
 /* header file for ev-dh.c --
  * excluded-volume interactions
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.h,v 1.3 2008/05/24 05:44:57 kichiki Exp $
+ * $Id: ev-dh.h,v 1.4 2008/10/31 05:43:28 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,6 +63,14 @@ EV_DH_init (double length, double peclet,
 
 void
 EV_DH_free (struct EV_DH *ev_dh);
+
+
+void
+EV_DH_set_force_ij (struct stokes *sys,
+		    struct EV_DH *ev_dh,
+		    int i, int j, double r2, double x, double y, double z,
+		    double *f);
+
 
 /*
  * INPUT

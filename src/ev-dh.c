@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.c,v 1.4 2008/05/24 05:44:35 kichiki Exp $
+ * $Id: ev-dh.c,v 1.5 2008/10/31 05:43:06 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -88,7 +88,8 @@ EV_DH_free (struct EV_DH *ev_dh)
   free (ev_dh);
 }
 
-static void
+
+void
 EV_DH_set_force_ij (struct stokes *sys,
 		    struct EV_DH *ev_dh,
 		    int i, int j, double r2, double x, double y, double z,
