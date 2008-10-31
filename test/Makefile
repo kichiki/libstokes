@@ -1,9 +1,34 @@
-# $Id: Makefile,v 1.27 2008/10/22 06:19:36 kichiki Exp $
+# $Id: Makefile,v 1.28 2008/10/31 06:07:45 kichiki Exp $
 
+# for FreeBSD
 CC = cc
 RYUON_PREFIX = /usr/local
+F2C_LIBS = -L/usr/local/lib/gcc-4.2.5 -lgfortran
+# plain g2c library
+#F2C_LIBS = -lg2c
+
+#OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math
+# for FreeBSD
+OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math\
+	-march=prescott -mfpmath=sse
+
 # for SUSE-Linux
 #RYUON_PREFIX = /home/ichiki/RYUON
+#F2C_LIBS = -lgfortran
+#OPTS = \
+#	-mtune=opteron -m64 \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
+
+# for i1200 (openSUSE)
+#OPTS = \
+#	-march=pentium3m \
+#	-pipe -O3 -fomit-frame-pointer -ffast-math
+
+# for glacier (with intel compiler)
+#CC = /global/software/intel-9/cc/bin/icc
+#RYUON_PREFIX = /global/home/ichiki/RYUON
+#F2C_LIBS = -L/global/software/intel-9/fc/lib -lifcore
+#OPTS = -O3
 
 # for robson gcc version 3 (32bit)
 #CC = /usr/bin/gcc
@@ -21,6 +46,15 @@ RYUON_PREFIX = /usr/local
 #CC = /usr/local/bin/gcc4 -m64
 #RYUON_PREFIX = /home/ichiki/RYUON4
 
+# for robson gcc3/g77
+#F2C_LIBS = -lg2c
+# for robson gcc4/gfortran
+#F2C_LIBS = -L/usr/local/gcc-4.2.2/lib/gcc/powerpc64-suse-linux/4.2.2 -lgfortran
+
+# for robson
+#OPTS = -O3 -mcpu=970 -mtune=970 -maltivec
+
+
 RYUON_BIN = $(RYUON_PREFIX)/bin
 RYUON_INC = -I$(RYUON_PREFIX)/include
 RYUON_LIB = -L$(RYUON_PREFIX)/lib
@@ -31,59 +65,52 @@ LD = libtool --mode=link --tag=CC $(CC)
 # for header file besides libstokes.h
 RYUON_SRC = ../src
 
-#OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math
-# for FreeBSD
-OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math\
-	-march=prescott -mfpmath=sse
-# for SUSE-Linux
-#OPTS = \
-#	-mtune=opteron -m64 \
-#	-pipe -O3 -fomit-frame-pointer -ffast-math
-# for i1200 (openSUSE)
-#OPTS = \
-#	-march=pentium3m \
-#	-pipe -O3 -fomit-frame-pointer -ffast-math
-# for robson
-#OPTS = -O3 -mcpu=970 -mtune=970 -maltivec
-
 LIBSTOKES = ../src/libstokes.la
 #LIBSTOKES = $(RYUON_LIB) -lstokes
 
-#ATLAS_LIBS	= \
-#	-lg2c -lblas -llapack\
+
+#MATH_LIBS	= \
+#	$(F2C_LIBS)\
+#	-lblas -llapack\
 #	-lcblas -lf77blas -latlas\
 #	-larpack
 # for FreeBSD
-ATLAS_LIBS = \
-	-L/usr/local/lib/gcc-4.2.5 -lgfortran \
+MATH_LIBS = \
+	$(F2C_LIBS)\
 	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
 	-larpack
 # for SUSE-Linux
 # for openSUSE
-#ATLAS_LIBS = \
-#	-lgfortran -lblas -llapack\
+#MATH_LIBS = \
+#	$(F2C_LIBS)\
+#	-lblas -llapack\
 #	-larpack
-#ATLAS_LIBS = \
+#MATH_LIBS = \
 #	-llapack -lptcblas -lptf77blas -latlas\
 #	-larpack
+# for glacier
+#MATH_LIBS = \
+#	$(F2C_LIBS)\
+#	-L/usr/lib -llapack -lblas \
+#	$(RYUON_LIB) -larpack
 # for robson (gcc/g77, 64bit)
-#ATLAS_LIBS = -lg2c -L/usr/local/lib64 -lcblas -latlas -L/usr/local/lib64 -larpack
+#MATH_LIBS = $(F2C_LIBS) -L/usr/local/lib64 -lcblas -latlas -L/usr/local/lib64 -larpack
 # for robson (gcc/g77, 64bit or 32bit)
-#ATLAS_LIBS = \
-#	-lg2c \
+#MATH_LIBS = \
+#	$(F2C_LIBS)\
 #	$(RYUON_LIB) -larpack -llapack -lblas
 # for robson (gcc4/gfortran, 64bit)
-#ATLAS_LIBS = -L/usr/local/lib64 -larpack -lessl -lxlf90_r
+#MATH_LIBS = -L/usr/local/lib64 -larpack -lessl -lxlf90_r
 # for robson (gcc4/gfortran, 64bit or 32bit)
-#ATLAS_LIBS = \
-#	-L/usr/local/gcc-4.2.2/lib/gcc/powerpc64-suse-linux/4.2.2 -lgfortran \
-#	$(RYUON_LIB) -larpack -llapack -lblas
-#ATLAS_LIBS = \
-#	-L/usr/local/gcc-4.2.2/lib/gcc/powerpc64-suse-linux/4.2.2 -lgfortran \
+#MATH_LIBS = \
+#	$(F2C_LIBS)\
 #	$(RYUON_LIB) -larpack -llapack -lblas
 
 GSL_INC = `pkg-config --cflags gsl`
 GSL_LIB = `pkg-config --libs gsl`
+# for glacier
+#GSL_INC = `gsl-config --cflags`
+#GSL_LIB = `gsl-config --libs`
 # for robson
 #GSL_INC = `$(RYUON_BIN)/gsl-config --cflags`
 #GSL_LIB = `$(RYUON_BIN)/gsl-config --libs`
@@ -93,6 +120,7 @@ NITSOL_LIB = -L/usr/local/lib -lnitsol
 # for SUSE-Linux
 #NITSOL_INC = -I/home/ichiki/RYUON/include
 #NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
+# for glacier
 # for robson
 #NITSOL_INC = $(RYUON_INC)
 #NITSOL_LIB = $(RYUON_LIB) -lnitsol
@@ -105,6 +133,7 @@ GUILE_LIB = `guile-config link`
 
 NETCDF_INC = 
 NETCDF_LIB = -lnetcdf
+# for glacier
 # for robson
 #NETCDF_INC = $(RYUON_INC)
 #NETCDF_LIB = $(RYUON_LIB) -lnetcdf
@@ -130,7 +159,7 @@ LIBS = \
 	$(GUILE_LIB)		\
 	$(GSL_LIB)		\
 	$(NITSOL_LIB)		\
-	$(ATLAS_LIBS)
+	$(MATH_LIBS)
 
 all:	test-all	\
 	test-twobody	\
@@ -181,7 +210,9 @@ test-all-OBJ =\
 	check-KIrand.o		\
 	check-bead-rod.o	\
 	check-bead-rod-guile.o	\
-	check-solve-cubic.o
+	check-solve-cubic.o	\
+	check-grid.o		\
+	check-ev-dh-grid.o
 # below the check-matrix.o
 #	check-list-ex.o		\
 
