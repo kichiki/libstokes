@@ -1,6 +1,6 @@
 /* implicit Brownian dynamics algorithms
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bd-imp.c,v 1.16 2008/08/12 05:30:47 kichiki Exp $
+ * $Id: bd-imp.c,v 1.17 2008/11/01 05:40:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,6 +29,7 @@
 #include <brownian.h> // struct BD_params
 #include <nitsol_c.h> // struct NITSOL
 #include "bd-imp-nitsol.h" // BD_imp_NITSOL_f(), BD_imp_NITSOL_jacv()
+#include "bd-imp-fast.h"   // fastSI_evolve()
 
 #include "bd-imp.h"
 
