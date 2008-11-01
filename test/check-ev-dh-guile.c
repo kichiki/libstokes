@@ -1,6 +1,6 @@
 /* test code for ev-dh-guile.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ev-dh-guile.c,v 1.2 2008/05/24 06:04:40 kichiki Exp $
+ * $Id: check-ev-dh-guile.c,v 1.3 2008/11/01 05:55:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -85,15 +85,11 @@ check_EV_DH_guile_get (int verbose, double tiny)
   check += compare_max (ev_dh->rd, rd_, " rd",
 			verbose, tiny, &max);
 
-  
-  if (ev_dh->n != np)
-    {
-      if (verbose != 0)
-	{
-	  fprintf (stdout, " n = %d != %d\n", ev_dh->n, np);
-	}
-      check ++;
-    }
+  check += compare_max ((double)ev_dh->flag_grid, 1.0, " flag_grid",
+			verbose, tiny, &max);
+
+  check += compare_max ((double)ev_dh->n, (double)np, " np",
+			verbose, tiny, &max);
 
   // check particles
   char label[80];
