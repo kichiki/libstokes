@@ -1,6 +1,6 @@
 /* test for ev-dh-grid.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ev-dh-grid.c,v 1.1 2008/10/31 05:52:43 kichiki Exp $
+ * $Id: check-ev-dh-grid.c,v 1.2 2008/11/01 05:54:16 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -125,17 +125,23 @@ check_EV_DH_calc_force_grid (int np,
   double *f2 = (double *)calloc (sizeof (double), np * 3);
   CHECK_MALLOC (f1, "check_EV_DH_calc_force_grid");
   CHECK_MALLOC (f2, "check_EV_DH_calc_force_grid");
+  // initialize f1[] and f2[] with 1.0
+  for (i = 0; i < np * 3; i ++)
+    {
+      f1[i] = 1.0;
+      f2[i] = 1.0;
+    }
 
   double t, t0;
   t0 = ptime_ms_d ();
-  EV_DH_calc_force (ev_dh, sys, f1, 0); // zero-clear and set the force
+  EV_DH_calc_force (ev_dh, sys, f1, 1); // add-on
   t = ptime_ms_d ();
   double t1 = t - t0;
 
   t0 = ptime_ms_d ();
-  struct RYUON_grid *g = GRID_init_all_by_l (sys, ev_dh_r);
+  struct RYUON_grid *g = GRID_init_all_by_cutoff (sys, ev_dh_r);
   CHECK_MALLOC (g, "check_EV_DH_calc_force_grid");
-  EV_DH_calc_force_grid (ev_dh, g, sys, f2, 0); // zero-clear and set the force
+  EV_DH_calc_force_grid (ev_dh, sys, f2, 1); // add-on
   GRID_free (g);
   t = ptime_ms_d ();
   double t2 = t - t0;
