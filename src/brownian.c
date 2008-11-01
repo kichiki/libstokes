@@ -1,6 +1,6 @@
 /* Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.c,v 1.30 2008/08/12 05:28:25 kichiki Exp $
+ * $Id: brownian.c,v 1.31 2008/11/01 05:49:11 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,6 +54,7 @@
 #include <excluded-volume.h> // EV_calc_force ()
 #include <angles.h> // angles_calc_force ()
 #include <ev-dh.h> // EV_DH_calc_force ()
+#include <ev-dh-grid.h> // EV_DH_calc_force_grid ()
 #include <ev-LJ.h> // EV_LJ_calc_force ()
 #include <confinement.h> // CF_calc_force ()
 
@@ -2099,6 +2100,10 @@ BD_ode_evolve (struct BD_params *BD,
 	  dt_local = t_out - (*t);
 	}
 
+      // grid update
+      stokes_set_pos_mobile (BD->sys, x);
+      BD_grid_update (BD);
+
       double dt_done;
       switch (BD->scheme)
 	{
@@ -2228,8 +2233,16 @@ BD_add_FP (struct BD_params *BD,
   if (BD->ev_dh != NULL)
     {
       // calc EV_DH force
-      EV_DH_calc_force (BD->ev_dh, BD->sys,
-			f, 1/* add */);
+      if (BD->ev_dh->flag_grid == 0)
+	{
+	  EV_DH_calc_force (BD->ev_dh, BD->sys,
+			    f, 1/* add */);
+	}
+      else
+	{
+	  EV_DH_calc_force_grid (BD->ev_dh, BD->sys,
+				 f, 1/* add */);
+	}
     }
   if (BD->ev_LJ != NULL)
     {
@@ -2295,6 +2308,29 @@ BD_calc_forces (struct BD_params *BD,
 
   // interaction forces depending on the configuration by sys->pos[]
   BD_add_FP (BD, BD->sys->pos, FTS->f);
+}
+
+
+/*
+ * currently only ev_dh can handle the grid version.
+ */
+void
+BD_grid_update (struct BD_params *BD)
+{
+  if (BD->ev_dh != NULL)
+    {
+      if (BD->ev_dh->flag_grid != 0)
+	{
+	  if (BD->ev_dh->grid != NULL)
+	    {
+	      GRID_free (BD->ev_dh->grid);
+	    }
+
+	  BD->ev_dh->grid
+	    = GRID_init_all_by_cutoff (BD->sys, BD->ev_dh->r_cutoff);
+	  CHECK_MALLOC (BD->ev_dh->grid, "BD_grid_update");
+	}
+    }
 }
 
 

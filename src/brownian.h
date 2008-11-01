@@ -1,7 +1,7 @@
 /* header file for brownian.c --
  * Brownian dynamics code
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: brownian.h,v 1.21 2008/08/12 05:28:44 kichiki Exp $
+ * $Id: brownian.h,v 1.22 2008/11/01 05:49:35 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -399,6 +399,13 @@ void
 BD_add_FP (struct BD_params *BD,
 	   const double *pos,
 	   double *f);
+
+/*
+ * currently only ev_dh can handle the grid version.
+ */
+void
+BD_grid_update (struct BD_params *BD);
+
 
 /* evolve position of particles -- the mid-point scheme
  * INPUT
