@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.32 2008/10/31 06:08:40 kichiki Exp $
+ * $Id: test-all.c,v 1.33 2008/11/01 05:54:46 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -536,10 +536,19 @@ main (int argc, char** argv)
 
   // check-grid.c
   check += check_GRID_ixyz_to_in_to_ixyz (1, 0.0);
+  // randon config
+  check += check_GRID_init_all_by_cutoff (100, 0, 1, 0.0);
+  check += check_GRID_init_all_by_cutoff (1000, 0, 1, 0.0);
+  check += check_GRID_init_all_by_cutoff (10000, 0, 1, 0.0);
+  // regular array config
+  check += check_GRID_init_all_by_cutoff (100, 1, 1, 0.0);
+  check += check_GRID_init_all_by_cutoff (1000, 1, 1, 0.0);
+  check += check_GRID_init_all_by_cutoff (10000, 1, 1, 0.0);
+
   // check-ev-dh-grid.c
-  check += check_EV_DH_calc_force_grid (100, 1, 8.0e-15);
-  check += check_EV_DH_calc_force_grid (1000, 1, 1.0e-13);
-  check += check_EV_DH_calc_force_grid (10000, 1, 3.0e-13);
+  check += check_EV_DH_calc_force_grid (100, 1, 7.0e-16);
+  check += check_EV_DH_calc_force_grid (1000, 1, 2.0e-15);
+  check += check_EV_DH_calc_force_grid (10000, 1, 2.0e-15);
 
 
   fprintf (stdout,
