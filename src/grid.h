@@ -1,7 +1,7 @@
 /* header file for grid.c --
  * RYUON_grid routines
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: grid.h,v 1.1 2008/10/31 05:39:06 kichiki Exp $
+ * $Id: grid.h,v 1.2 2008/11/01 05:42:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,10 +25,10 @@
 
 
 struct RYUON_grid {
-  // bounding box
-  double x0, x1;
-  double y0, y1;
-  double z0, z1;
+  // the origin for the grid generation
+  double x0;
+  double y0;
+  double z0;
 
   // number of grids
   int nx, ny, nz;
@@ -36,8 +36,14 @@ struct RYUON_grid {
   // sizes of the cell
   double lx, ly, lz;
 
+  // particle list for each cell
   int *np;  // np[nx*ny*nz]       : number of particles in each cell
   int **ip; // ip[nx*ny*nz][np[]] : particle indices for each cell
+
+  // nearest neighbor list
+  int nofp;  // number of particles
+  int *nnn;  // nnn[nofp]        : number of NN particles for each particle
+  int **nnp; // nnp[nofp][nnn[]] : NN particle indices for each particle
 };
 
 
@@ -46,7 +52,7 @@ struct RYUON_grid {
  * and cell number (nx, ny, nz)
  * NOTE: particles are not assigned yet.
  * use GRID_add_particle() or GRID_assign_particles().
- * alternatively, use GRID_init_all_by_l() in the first place.
+ * alternatively, use GRID_init_all_by_cutoff() in the first place.
  * INPUT
  *  x0,x1, y0,y1, z0,z1 : bounding box
  *  nx, ny, nz : cell number
@@ -60,14 +66,15 @@ GRID_init (double x0, double x1,
 	   int nx, int ny, int nz);
 
 /* initialize RYUON_grid
- * by bounding box (x0,x1, y0,y1, z0,z1)
- * and cell size l
- * NOTE: particles are not assigned yet.
- * use GRID_add_particle() or GRID_assign_particles().
- * alternatively, use GRID_init_all_by_l() in the first place.
+ *   by struct stokes *sys
+ *   and the cut-off distance r_cutoff
+ * NOTE: both particle list for each cell
+ *   as well as nearest neighbor list are formed.
+ *   the nearest neighbor list contains pairs of particles
+ *   (i,j) of (i < j) only, that is, no self part.
  * INPUT
- *  x0,x1, y0,y1, z0,z1 : bounding box
- *  l : cell size
+ *  sys      : struct stokes
+ *  r_cutoff : cut-off length
  * OUTPUT
  *  (returned value) : struct RYUON_grid
  */
@@ -122,18 +129,38 @@ GRID_assign_particles (struct RYUON_grid *g,
 		       const double *x);
 
 
+void
+GRID_clear_NN (struct RYUON_grid *g);
+
+
+void
+GRID_set_NN (struct RYUON_grid *g,
+	     int np, const double *pos,
+	     double r_cutoff2);
+
+void
+GRID_set_NN_periodic (struct RYUON_grid *g,
+		      int np, const double *pos,
+		      double lx, double ly, double lz,
+		      double r_cutoff2);
+
+
 /* initialize RYUON_grid
- * by struct stokes *sys and cell size l
- * NOTE: particles are assigned too.
+ *   by struct stokes *sys
+ *   and the cut-off distance r_cutoff
+ * NOTE: both particle list for each cell
+ *   as well as nearest neighbor list are formed.
+ *   the nearest neighbor list contains pairs of particles
+ *   (i,j) of (i < j) only, that is, no self part.
  * INPUT
- *  sys : struct stokes
- *  l : cell size
+ *  sys      : struct stokes
+ *  r_cutoff : cut-off length
  * OUTPUT
  *  (returned value) : struct RYUON_grid
  */
 struct RYUON_grid *
-GRID_init_all_by_l (struct stokes *sys,
-		    double l);
+GRID_init_all_by_cutoff (struct stokes *sys,
+			 double r_cutoff);
 
 
 #endif /* !_GRID_H_ */
