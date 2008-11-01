@@ -1,6 +1,6 @@
 /* header file for library 'libstokes'
  * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: libstokes.h,v 1.72 2008/10/08 03:26:35 kichiki Exp $
+ * $Id: libstokes.h,v 1.73 2008/11/01 05:50:33 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -1066,6 +1066,33 @@ guile_load (const char *file);
 
 
 /************************************
+ ** RYUON_grid                     **
+ ************************************/
+/* from grid.h */
+struct RYUON_grid {
+  // bounding box
+  double x0, x1;
+  double y0, y1;
+  double z0, z1;
+
+  // number of grids
+  int nx, ny, nz;
+  int n; // := nx * ny * nz
+  // sizes of the cell
+  double lx, ly, lz;
+
+  // particle list for each cell
+  int *np;  // np[nx*ny*nz]       : number of particles in each cell
+  int **ip; // ip[nx*ny*nz][np[]] : particle indices for each cell
+
+  // nearest neighbor list
+  int nofp;  // number of particles
+  int *nnn;  // nnn[nofp]        : number of NN particles for each particle
+  int **nnp; // nnp[nofp][nnn[]] : NN particle indices for each particle
+};
+
+
+/************************************
  ** constraints                    **
  ************************************/
 /* from bead-rod.h */
@@ -1565,10 +1592,10 @@ angles_guile_get (const char *var);
 /* from ev-dh.h */
 struct EV_DH {
   /* system parameters */
-  double r2;    /* square of the max distance for F^{EV}
-	         * scaled by the characteristic length */
-  double a_sys; /* := (1/pe)(1/kT)(e^2/4pi e0)(1/a) dimensionless number */
-  double rd;    /* debye length scaled by the characteristic length */
+  double r_cutoff; /* the max distance for F^{EV} in length */
+  double r2;       /* square of r_cutoff */
+  double a_sys;    /* := (1/pe)(1/kT)(e^2/4pi e0)(1/a) dimensionless number */
+  double rd;       /* debye length scaled by the characteristic length */
 
   /* parameters for each chain */
   /* currently this is implemented particle-wise for simplicity */
@@ -1577,6 +1604,12 @@ struct EV_DH {
 	       *       (nu) is the line density of charge [e/nm]
 	       *       l0   is the bond length [nm]
 	       *       e    is the elementary charge [C] */
+
+  /* RYUON_grid */
+  int flag_grid; /* == 0, plain particle-particle loop, O(N^2)
+		  * == 1, near-particle loop, O(N)
+		  */
+  struct RYUON_grid *grid;
 };
 
 
