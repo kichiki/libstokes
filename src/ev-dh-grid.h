@@ -1,7 +1,7 @@
 /* header file for ev-dh-grid.c --
  * excluded-volume interactions by Debye-Huckel with RYUON_grid
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-grid.h,v 1.1 2008/10/31 05:40:25 kichiki Exp $
+ * $Id: ev-dh-grid.h,v 1.2 2008/11/01 05:45:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,6 @@
  * for non-periodic system
  * INPUT
  *  ev_dh      : struct EV_DH
- *  g          : struct RYUON_grid
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -38,7 +37,6 @@
  */
 void
 EV_DH_calc_force_grid (struct EV_DH *ev_dh,
-		       struct RYUON_grid *g,
 		       struct stokes *sys,
 		       double *f,
 		       int flag_add);
@@ -47,7 +45,6 @@ EV_DH_calc_force_grid (struct EV_DH *ev_dh,
  * for periodic system
  * INPUT
  *  ev_dh      : struct EV_DH
- *  g          : struct RYUON_grid
  *  sys        : struct stokes (only nm and pos are used)
  *  f [nm * 3] : force is assigned only for the mobile particles
  *  flag_add   : if 0 is given, zero-clear and set the force
@@ -56,7 +53,6 @@ EV_DH_calc_force_grid (struct EV_DH *ev_dh,
  */
 void
 EV_DH_calc_force_grid_periodic (struct EV_DH *ev_dh,
-				struct RYUON_grid *g,
 				struct stokes *sys,
 				double *f,
 				int flag_add);
