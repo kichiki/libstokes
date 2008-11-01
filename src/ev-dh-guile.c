@@ -1,6 +1,6 @@
 /* guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.6 2008/07/25 22:19:01 kichiki Exp $
+ * $Id: ev-dh-guile.c,v 1.7 2008/11/01 05:46:10 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,8 @@
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
- *    (        ; 5) list of DH types
+ *    1        ; 5) flag_grid (0 == particle-particle loop, 1 == grid loop)
+ *    (        ; 6) list of DH types
  *     (; DH type 1
  *      2.43    ; 1) nu [e/nm]
  *      5.00    ; 2) l0 [nm]
@@ -87,10 +88,10 @@ EV_DH_guile_get (const char *var,
       // null is given
       return (NULL);
     }
-  else if (len != 5)
+  else if (len != 6)
     {
       fprintf (stderr, "EV_DH_guile_get:"
-	       " length of %s is not 5\n", var);
+	       " length of %s is not 6\n", var);
       return (NULL); // failed
     }
 
@@ -112,8 +113,14 @@ EV_DH_guile_get (const char *var,
   CHECK_MALLOC (ev_dh, "EV_DH_guile_get");
 
   // 5th element (4) of the list scm_ev_dh
+  ev_dh->flag_grid
+    = scm_num2int (scm_list_ref (scm_ev_dh, scm_int2num (4)),
+		   0,
+		   "EV_DH_guile_get");
+
+  // 6th element (5) of the list scm_ev_dh
   SCM scm_chains
-    = scm_list_ref (scm_ev_dh, scm_int2num (4));
+    = scm_list_ref (scm_ev_dh, scm_int2num (5));
   if (!SCM_NFALSEP (scm_list_p (scm_chains)))
     {
       // scm_chains is not a list

@@ -1,7 +1,7 @@
 /* header file for ev-dh-guile.c --
  * guile interface for struct EV_DH.
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.h,v 1.4 2008/07/25 22:19:21 kichiki Exp $
+ * $Id: ev-dh-guile.h,v 1.5 2008/11/01 05:46:40 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,8 @@
  *    298.0    ; 2) temperature [K]
  *    80.0     ; 3) dielectric constant of the solution
  *    3.07     ; 4) Debye length [nm]
- *    (        ; 5) list of DH types
+ *    1        ; 5) flag_grid (0 == particle-particle loop, 1 == grid loop)
+ *    (        ; 6) list of DH types
  *     (; DH type 1
  *      2.43    ; 1) nu [e/nm]
  *      5.00    ; 2) l0 [nm]
