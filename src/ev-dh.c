@@ -1,6 +1,6 @@
 /* excluded-volume interactions by Debye-Huckel
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.c,v 1.5 2008/10/31 05:43:06 kichiki Exp $
+ * $Id: ev-dh.c,v 1.6 2008/11/01 05:43:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,8 @@
 
 #include "stokes.h" // struct stokes
 #include "memory-check.h" // macro CHECK_MALLOC
+
+#include "grid.h" // GRID_free()
 
 #include "ev-dh.h"
 
@@ -63,8 +65,8 @@ EV_DH_init (double length, double peclet,
   ev_dh->rd    = rd / length; // dimensionless
 
   // set dv_dh->r2, the cut-off distance squared
-  double r_cutoff = - ev_dh->rd * log (eps); // dimensionless cut-off length
-  ev_dh->r2 = r_cutoff * r_cutoff;
+  ev_dh->r_cutoff = - ev_dh->rd * log (eps); // dimensionless cut-off length
+  ev_dh->r2       = (ev_dh->r_cutoff) * (ev_dh->r_cutoff);
 
   ev_dh->n  = np;
   ev_dh->nu = (double *)malloc (sizeof (double) * np);
@@ -77,6 +79,11 @@ EV_DH_init (double length, double peclet,
       ev_dh->nu [i] = 0.0;
     }
 
+  /* RYUON_grid */
+  ev_dh->flag_grid = 0;
+  ev_dh->grid = NULL;
+
+
   return (ev_dh);
 }
 
@@ -85,6 +92,10 @@ EV_DH_free (struct EV_DH *ev_dh)
 {
   if (ev_dh == NULL) return;
   if (ev_dh->nu != NULL) free (ev_dh->nu);
+
+  /* RYUON_grid */
+  if (ev_dh->grid != NULL) GRID_free (ev_dh->grid);
+
   free (ev_dh);
 }
 

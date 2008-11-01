@@ -1,7 +1,7 @@
 /* header file for ev-dh.c --
  * excluded-volume interactions
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh.h,v 1.4 2008/10/31 05:43:28 kichiki Exp $
+ * $Id: ev-dh.h,v 1.5 2008/11/01 05:44:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,14 +21,15 @@
 #define	_EV_DH_H_
 
 #include "stokes.h" // struct stokes
+#include "grid.h"   // struct RYUON_grid
 
 
 struct EV_DH {
   /* system parameters */
-  double r2;    /* square of the max distance for F^{EV}
-	         * scaled by the characteristic length */
-  double a_sys; /* := (1/pe)(1/kT)(e^2/4pi e0)(1/a) dimensionless number */
-  double rd;    /* debye length scaled by the characteristic length */
+  double r_cutoff; /* the max distance for F^{EV} in length */
+  double r2;       /* square of r_cutoff */
+  double a_sys;    /* := (1/pe)(1/kT)(e^2/4pi e0)(1/a) dimensionless number */
+  double rd;       /* debye length scaled by the characteristic length */
 
   /* parameters for each chain */
   /* currently this is implemented particle-wise for simplicity */
@@ -37,6 +38,12 @@ struct EV_DH {
 	       *       (nu) is the line density of charge [e/nm]
 	       *       l0   is the bond length [nm]
 	       *       e    is the elementary charge [C] */
+
+  /* RYUON_grid */
+  int flag_grid; /* == 0, plain particle-particle loop, O(N^2)
+		  * == 1, near-particle loop, O(N)
+		  */
+  struct RYUON_grid *grid;
 };
 
 
