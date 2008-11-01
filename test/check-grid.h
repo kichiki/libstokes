@@ -1,7 +1,7 @@
 /* header file for check-grid.c --
  * test for grid.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-grid.h,v 1.1 2008/10/31 05:52:21 kichiki Exp $
+ * $Id: check-grid.h,v 1.2 2008/11/01 05:52:55 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +26,18 @@
  */
 int
 check_GRID_ixyz_to_in_to_ixyz (int verbose, double tiny);
+
+
+/*
+ * INPUT
+ *  np : number of particles
+ *  flag_conf : 0 == random configuration
+ *              1 == regular array configuration
+ */
+int
+check_GRID_init_all_by_cutoff (int np,
+			       int flag_conf,
+			       int verbose, double tiny);
 
 
 #endif /* !_CHECK_GRID_H_ */
