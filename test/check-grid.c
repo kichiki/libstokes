@@ -1,6 +1,6 @@
 /* test for grid.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-grid.c,v 1.2 2008/11/01 05:52:31 kichiki Exp $
+ * $Id: check-grid.c,v 1.3 2008/11/02 06:16:14 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -299,30 +299,23 @@ check_GRID_init_all_by_cutoff (int np,
       sprintf (label, " n [%d]", i);
       check += compare_max ((double)in1, (double)in2,
 			    label, verbose, tiny, &max);
-      //fprintf (stdout, "# n [%d] = %d vs %d\n", i, in1, in2);
-      if (in1 != in2) continue;
-      if (in1 == 0) continue;
-
-      // sort the lists in ascending order
-      sort_list (in1, ip1, 0);
-      sort_list (in2, ip2, 0);
-
-      for (k = 0; k < in1; k ++)
+      if (in1 == in2 && in1 > 0)
 	{
-	  sprintf (label, " ip[%d] for %d", k, i);
-	  check += compare_max ((double)ip1[k], (double)ip2[k],
-				label, verbose, tiny, &max);
-	  /*
-	  fprintf (stdout, "# ip[%d] for %d = %d vs %d\n",
-		   k, i, ip1[k], ip2[k]);
-	  */
+	  // sort the lists in ascending order
+	  sort_list (in1, ip1, 0);
+	  sort_list (in2, ip2, 0);
+
+	  for (k = 0; k < in1; k ++)
+	    {
+	      sprintf (label, " ip[%d] for %d", k, i);
+	      check += compare_max ((double)ip1[k], (double)ip2[k],
+				    label, verbose, tiny, &max);
+	    }
 	}
 
       // house-keeping
       if (ip1 != NULL) free (ip1);
       if (ip2 != NULL) free (ip2);
-
-      // end of the grid approach
     }
   // end of for (i) -- particle loop
 
