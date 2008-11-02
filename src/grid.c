@@ -1,6 +1,6 @@
 /* RYUON_grid routines
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: grid.c,v 1.2 2008/11/01 05:42:13 kichiki Exp $
+ * $Id: grid.c,v 1.3 2008/11/02 06:10:38 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -303,7 +303,7 @@ GRID_set_NN (struct RYUON_grid *g,
 
   g->nofp = np;
   g->nnn = (int *)calloc (sizeof (int), np);
-  g->nnp = (int **)malloc (sizeof (int) * np);
+  g->nnp = (int **)malloc (sizeof (int *) * np);
   int i;
   for (i = 0; i < np; i ++)
     {

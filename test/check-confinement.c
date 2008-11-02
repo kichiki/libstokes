@@ -1,6 +1,6 @@
 /* test code for confinement.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-confinement.c,v 1.1 2008/05/24 05:52:57 kichiki Exp $
+ * $Id: check-confinement.c,v 1.2 2008/11/02 06:14:53 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -159,7 +159,8 @@ check_CF_init (int verbose, double tiny)
   check += compare_max (cf->e, e, " cylinder LJ-e", verbose, tiny, &max);
   check += compare_max (cf->r0, r0, " cylinder LJ-r0", verbose, tiny, &max);
 
-  theta = asin (r / R);
+  //theta = asin (r / R);
+  theta = 0.0; // because R = 0 here
   check += compare_max (cf->theta, theta, " cylinder theta", verbose, tiny, &max);
   check += compare_max (cf->theta2, 0.0, " cylinder theta2", verbose, tiny, &max);
   check += compare_max (cf->center1, 0.0, " cylinder center1", verbose, tiny, &max);
