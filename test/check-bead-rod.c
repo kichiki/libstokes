@@ -1,6 +1,6 @@
 /* test code for bead-rod.c
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-bead-rod.c,v 1.2 2008/07/17 03:14:11 kichiki Exp $
+ * $Id: check-bead-rod.c,v 1.3 2008/11/05 02:29:00 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -272,7 +272,7 @@ check_BeadRod_solve_iter_gamma (int n, double eps,
 			     0.1);// dr
   br->verbose = verbose;
 
-  double *gamma = (double *)malloc (sizeof (double) * nc);
+  double *gamma = (double *)calloc (sizeof (double), nc);
   CHECK_MALLOC (gamma, "check_BeadRod_solve_iter_gamma");
 
   BeadRod_set_scheme (br,
@@ -338,9 +338,10 @@ check_BeadRod_solve_gamma_by_NITSOL (int n, double eps,
 		    6); // stdout
 
 
-  double *gamma = (double *)malloc (sizeof (double) * nc);
+  double *gamma = (double *)calloc (sizeof (double), nc);
   CHECK_MALLOC (gamma, "check_BeadRod_solve_iter_gamma");
 
+  // NOTE: gamma[] should be initialized!
   BeadRod_solve_gamma (br, gamma);
 
   double *f = (double *)malloc (sizeof (double) * nc);
