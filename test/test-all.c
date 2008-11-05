@@ -1,6 +1,6 @@
 /* test code for libstokes
  * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: test-all.c,v 1.33 2008/11/01 05:54:46 kichiki Exp $
+ * $Id: test-all.c,v 1.34 2008/11/05 02:30:39 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -86,7 +86,7 @@ main (int argc, char** argv)
   // Brownian dynamics stuff
   check += check_chebyshev (1, 1e-10);
   check += check_dsaupd_c (100, 1, 3.1e-15);
-  check += check_dnaupd_c (10, 1, 1.5e-15);
+  check += check_dnaupd_c (10, 1, 2.0e-15);
   check += check_dnaupd_c (100, 1, 1.2e-15);
   check += check_bd (50, 100, 2.005, 1, 8.0e-10);
   check += check_bd (100, 100, 2.005, 1, 2.0e-15);
@@ -392,7 +392,7 @@ main (int argc, char** argv)
   check += check_fastSI_rhs (1, 3, 1, 1, 0.0);     // WLC
   check += check_fastSI_rhs (3, 3, 1, 1, 0.0);     // Cohen
   check += check_fastSI_rhs (4, 3, 1, 1, 0.0);     // Werner
-  check += check_fastSI_rhs (5, 3, 1, 1, 0.0);     // Hook
+  check += check_fastSI_rhs (5, 3, 1, 1, 0.0); // Hook
   check += check_fastSI_rhs (6, 3, 1, 1, 3.0e-16); // Fraenkel for dWLC
   check += check_fastSI_rhs (7, 3, 1, 1, 3.0e-16); // FENE-Fraenkel
 
@@ -401,7 +401,7 @@ main (int argc, char** argv)
   check += check_fastSI_rhs (1, 3, 0, 1, 2.0e-16); // WLC
   check += check_fastSI_rhs (3, 3, 0, 1, 2.0e-16); // Cohen
   check += check_fastSI_rhs (4, 3, 0, 1, 2.0e-16); // Werner
-  check += check_fastSI_rhs (5, 3, 0, 1, 0.0);     // Hook
+  check += check_fastSI_rhs (5, 3, 0, 1, 2.0e-16); // Hook
   check += check_fastSI_rhs (6, 3, 0, 1, 0.0);     // Fraenkel for dWLC
   check += check_fastSI_rhs (7, 3, 0, 1, 0.0);     // FENE-Fraenkel
 
@@ -417,12 +417,12 @@ main (int argc, char** argv)
 
   // HI
   check += check_fastSI_solve_cubic (0, 3, 0, 1, 2.2e-16); // Fraenkel
-  check += check_fastSI_solve_cubic (1, 3, 0, 1, 4.0e-16); // WLC
+  check += check_fastSI_solve_cubic (1, 3, 0, 1, 1.6e-15); // WLC
   check += check_fastSI_solve_cubic (3, 3, 0, 1, 4.0e-16); // Cohen
   check += check_fastSI_solve_cubic (4, 3, 0, 1, 2.0e-15); // Werner
   check += check_fastSI_solve_cubic (5, 3, 0, 1, 3.0e-16); // Hook
   check += check_fastSI_solve_cubic (6, 3, 0, 1, 2.2e-16); // Fraenkel for dWLC
-  check += check_fastSI_solve_cubic (7, 3, 0, 1, 4.0e-12); // FENE-Fraenkel
+  check += check_fastSI_solve_cubic (7, 3, 0, 1, 4.4e-12); // FENE-Fraenkel
 
   // noHI
   check += check_fastSI_solve (0, 3, 1, 1.0e-2, 1, 3.0e-9);  // Fraenkel
@@ -515,7 +515,7 @@ main (int argc, char** argv)
 
   // check-confinement.c
   check += check_CF_init (1, 1.0e-15);
-  check += check_CF_sphere_calc_force (10.0, 1, 6.0e-14);
+  check += check_CF_sphere_calc_force (10.0, 1, 7.8e-14);
   check += check_CF_sphere_calc_force (100.0, 1, 2.0e-13);
   // check-confinement-guile.c
   check += check_CF_guile_get (1, 0.0);
@@ -524,7 +524,7 @@ main (int argc, char** argv)
   // check-bead-rod.c
   check += check_BeadRod_constraint_displacement (10, 1, 2.0e-15);
   check += check_BeadRod_solve_iter_gamma (10, 1.0e-8, 1, 3.0e-9);
-  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 4.2e-9);
+  check += check_BeadRod_solve_gamma_by_NITSOL (10, 1.0e-8, 1, 5.0e-9);
   check += check_BeadRod_solve_gamma (10, 1.0e-8, 1, 2.0e-9);
   // check-bead-rod-guile.c
   check += check_BeadRod_guile_get (1, 0.0);
