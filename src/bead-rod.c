@@ -1,6 +1,6 @@
 /* bead-rod model
  * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod.c,v 1.3 2008/07/16 16:44:54 kichiki Exp $
+ * $Id: bead-rod.c,v 1.4 2008/11/05 02:13:44 kichiki Exp $
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -557,6 +557,7 @@ BeadRod_NITSOL_f (int *n, double *xcur, double *fcur,
  * or by Newton-GMRES method in NITSOL
  * INPUT
  *  br : struct BeadRod
+ *  gamma[nc] : all elements should be initialized.
  * OUTPUT
  *  gamma[nc] :
  */
