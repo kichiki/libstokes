@@ -1,6 +1,5 @@
 /* guile interface for struct EV_DH.
- * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-dh-guile.c,v 1.7 2008/11/01 05:46:10 kichiki Exp $
+ * Copyright (C) 2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,8 +80,9 @@ EV_DH_guile_get (const char *var,
     }
 
   unsigned long len
-    = scm_num2ulong (scm_length (scm_ev_dh),
-		     0, "EV_DH_guile_get");
+    //= scm_num2ulong (scm_length (scm_ev_dh),
+    //		     0, "EV_DH_guile_get");
+    = scm_to_uint64 (scm_length (scm_ev_dh));
   if (len == 0)
     {
       // null is given
@@ -96,17 +96,21 @@ EV_DH_guile_get (const char *var,
     }
 
   // 1st element (0) of the list scm_angle
-  double eps = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (0)),
-			    "EV_DH_guile_get");
+  //double eps = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (0)),
+  //			    "EV_DH_guile_get");
+  double eps = scm_to_double (scm_list_ref (scm_ev_dh, scm_from_int32 (0)));
   // 2nd element (1) of the list scm_angle
-  double T = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (1)),
-			  "EV_DH_guile_get");
+  //double T = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (1)),
+  //			  "EV_DH_guile_get");
+  double T = scm_to_double (scm_list_ref (scm_ev_dh, scm_from_int32 (1)));
   // 3rd element (2) of the list scm_ev_dh
-  double e = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (2)),
-			  "EV_DH_guile_get");
+  //double e = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (2)),
+  //			  "EV_DH_guile_get");
+  double e = scm_to_double (scm_list_ref (scm_ev_dh, scm_from_int32 (2)));
   // 4th element (3) of the list scm_ev_dh
-  double rd = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (3)),
-			   "EV_DH_guile_get");
+  //double rd = scm_num2dbl (scm_list_ref (scm_ev_dh, scm_int2num (3)),
+  //			   "EV_DH_guile_get");
+  double rd = scm_to_double (scm_list_ref (scm_ev_dh, scm_from_int32 (3)));
   // note that rd should be dimensional for EV_DH_init()
 
   struct EV_DH *ev_dh = EV_DH_init (length, peclet, rd, T, e, eps, np);
@@ -114,13 +118,15 @@ EV_DH_guile_get (const char *var,
 
   // 5th element (4) of the list scm_ev_dh
   ev_dh->flag_grid
-    = scm_num2int (scm_list_ref (scm_ev_dh, scm_int2num (4)),
-		   0,
-		   "EV_DH_guile_get");
+    //= scm_num2int (scm_list_ref (scm_ev_dh, scm_int2num (4)),
+    //		   0,
+    //		   "EV_DH_guile_get");
+    = scm_to_int32 (scm_list_ref (scm_ev_dh, scm_from_int32 (4)));
 
   // 6th element (5) of the list scm_ev_dh
   SCM scm_chains
-    = scm_list_ref (scm_ev_dh, scm_int2num (5));
+    //= scm_list_ref (scm_ev_dh, scm_int2num (5));
+    = scm_list_ref (scm_ev_dh, scm_from_int32 (5));
   if (!SCM_NFALSEP (scm_list_p (scm_chains)))
     {
       // scm_chains is not a list
@@ -131,15 +137,18 @@ EV_DH_guile_get (const char *var,
       return (NULL); // failed
     }
   unsigned long chains_len
-    = scm_num2ulong (scm_length (scm_chains),
-		     0, "EV_DH_guile_get");
+    //= scm_num2ulong (scm_length (scm_chains),
+    //		     0, "EV_DH_guile_get");
+    = scm_to_uint64 (scm_length (scm_chains));
 
   int i;
   for (i = 0; i < chains_len; i ++)
     {
       SCM scm_chain
+	//= scm_list_ref (scm_chains,
+	//		scm_int2num (i));
 	= scm_list_ref (scm_chains,
-			scm_int2num (i));
+			scm_from_int32 (i));
       if (!SCM_NFALSEP (scm_list_p (scm_chain)))
 	{
 	  // scm_chain is not a list
@@ -150,8 +159,9 @@ EV_DH_guile_get (const char *var,
 	  return (NULL); // failed
 	}
       unsigned long chain_len
-	= scm_num2ulong (scm_length (scm_chain),
-			 0, "EV_DH_guile_get");
+	//= scm_num2ulong (scm_length (scm_chain),
+	//		 0, "EV_DH_guile_get");
+	= scm_to_uint64 (scm_length (scm_chain));
       if (chain_len != 3)
 	{
 	  fprintf (stderr, "EV_DH_guile_get:"
@@ -162,16 +172,19 @@ EV_DH_guile_get (const char *var,
 	}
 
       // 1st element (0) of the list scm_chain
-      double nu = scm_num2dbl (scm_list_ref (scm_chain, scm_int2num (0)),
-			       "EV_DH_guile_get");
+      //double nu = scm_num2dbl (scm_list_ref (scm_chain, scm_int2num (0)),
+      //		       "EV_DH_guile_get");
+      double nu = scm_to_double (scm_list_ref (scm_chain, scm_from_int32 (0)));
 
       // 2nd element (1) of the list scm_chain
-      double l0 = scm_num2dbl (scm_list_ref (scm_chain, scm_int2num (1)),
-			       "EV_DH_guile_get");
+      //double l0 = scm_num2dbl (scm_list_ref (scm_chain, scm_int2num (1)),
+      //		       "EV_DH_guile_get");
+      double l0 = scm_to_double (scm_list_ref (scm_chain, scm_from_int32 (1)));
 
       // 3rd element (2) of the list scm_chain
       SCM scm_particles
-	= scm_list_ref (scm_chain, scm_int2num (2));
+	//= scm_list_ref (scm_chain, scm_int2num (2));
+	= scm_list_ref (scm_chain, scm_from_int32 (2));
       if (!SCM_NFALSEP (scm_list_p (scm_particles)))
 	{
 	  // scm_particles is not a list
@@ -182,14 +195,16 @@ EV_DH_guile_get (const char *var,
 	  return (NULL); // failed
 	}
       unsigned long particles_len
-	= scm_num2ulong (scm_length (scm_particles),
-			 0, "EV_DH_guile_get");
+	//= scm_num2ulong (scm_length (scm_particles),
+	//		 0, "EV_DH_guile_get");
+	= scm_to_uint64 (scm_length (scm_particles));
       int j;
       for (j = 0; j < particles_len; j++)
 	{
-	  int p = scm_num2int (scm_list_ref (scm_particles, scm_int2num (j)),
-			       0,
-			       "EV_DH_guile_get");
+	  //int p = scm_num2int (scm_list_ref (scm_particles, scm_int2num (j)),
+	  //		       0,
+	  //		       "EV_DH_guile_get");
+	  int p = scm_to_int32 (scm_list_ref (scm_particles, scm_from_int32 (j)));
 	  if (p < 0 || p >= np)
 	    {
 	      fprintf (stderr, "EV_DH_guile_get:"

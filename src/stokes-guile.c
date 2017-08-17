@@ -1,6 +1,5 @@
 /* guile interface for libstokes
- * Copyright (C) 2006-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: stokes-guile.c,v 5.5 2008/04/26 04:23:12 kichiki Exp $
+ * Copyright (C) 2006-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,13 +31,15 @@ guile_check_symbol (const char *name)
   SCM sym; 
   SCM var;
 
-  sym = scm_str2symbol (name);
+  //sym = scm_str2symbol (name);
+  sym = scm_string_to_symbol (scm_from_locale_string (name));
 
   /* Check to see if the symbol exists */
-  var = scm_sym2var (sym, 
-		     scm_current_module_lookup_closure (), 
-		     SCM_BOOL_F);
-  
+  //var = scm_sym2var (sym, 
+  //		     scm_current_module_lookup_closure (), 
+  //		     SCM_BOOL_F);
+  var = scm_symbol_interned_p (sym);
+
   if (var != SCM_BOOL_F) 
     {
       return 1; // true
@@ -95,7 +96,8 @@ guile_get_int (const char * var, int i0)
       scm_param = scm_variable_ref (scm_symbol);
       if (scm_number_p (scm_param))
 	{
-	  i = scm_num2int (scm_param, 0, "guile_get_int");
+	  //i = scm_num2int (scm_param, 0, "guile_get_int");
+	  i = scm_to_int32 (scm_param);
 	}
     }
 
@@ -122,7 +124,8 @@ guile_get_double (const char * var, double d0)
       scm_param = scm_variable_ref (scm_symbol);
       if (scm_number_p (scm_param))
 	{
-	  d = scm_num2dbl (scm_param, "guile_get_double");
+	  //d = scm_num2dbl (scm_param, "guile_get_double");
+	  d = scm_to_double (scm_param);
 	}
     }
 
@@ -149,8 +152,9 @@ guile_get_doubles (const char * var, int n, double * x)
       scm_param = scm_variable_ref (scm_symbol);
       if (SCM_NFALSEP (scm_list_p (scm_param)))
 	{
-	  len = scm_num2ulong (scm_length (scm_param),
-			       0, "guile_get_doubles");
+	  //len = scm_num2ulong (scm_length (scm_param),
+	  //		       0, "guile_get_doubles");
+	  len = scm_to_uint64 (scm_length (scm_param));
 	  if (len != n)
 	    {
 	      fprintf (stderr, "wrong size of %s in guile_get_doubles().\n",
@@ -159,9 +163,11 @@ guile_get_doubles (const char * var, int n, double * x)
 	    }
 	  for (i = 0; i < n; i ++)
 	    {
-	      x[i] = scm_num2dbl (scm_list_ref (scm_param,
-						scm_int2num (i)),
-				  "guile_get_doubles");
+	      //x[i] = scm_num2dbl (scm_list_ref (scm_param,
+	      //					scm_int2num (i)),
+	      //			  "guile_get_doubles");
+	      x[i] = scm_to_double (scm_list_ref (scm_param,
+						  scm_from_int32 (i)));
 	    }
 	  return (1); // success
 	}
@@ -182,9 +188,11 @@ guile_get_doubles (const char * var, int n, double * x)
 	    }
 	  for (i = 0; i < n; i ++)
 	    {
-	      x[i] = scm_num2dbl (scm_vector_ref (scm_param,
-						  scm_int2num (i)),
-				  "guile_get_doubles");
+	      //x[i] = scm_num2dbl (scm_vector_ref (scm_param,
+	      //				  scm_int2num (i)),
+	      //		  "guile_get_doubles");
+	      x[i] = scm_to_double (scm_vector_ref (scm_param,
+						    scm_from_int32 (i)));
 	    }
 	  return (1); // success
 	}
@@ -213,14 +221,17 @@ guile_get_doubles_ (const char * var)
       scm_param = scm_variable_ref (scm_symbol);
       if (SCM_NFALSEP (scm_list_p (scm_param)))
 	{
-	  len = scm_num2ulong (scm_length (scm_param),
-			       0, "guile_get_doubles_");
+	  //len = scm_num2ulong (scm_length (scm_param),
+	  //		       0, "guile_get_doubles_");
+	  len = scm_to_uint64 (scm_length (scm_param));
 	  x = (double *) malloc (sizeof (double) * len);
 	  for (i = 0; i < len; i ++)
 	    {
-	      x[i] = scm_num2dbl (scm_list_ref (scm_param,
-						scm_int2num (i)),
-				  "guile_get_doubles_");
+	      //x[i] = scm_num2dbl (scm_list_ref (scm_param,
+	      //				scm_int2num (i)),
+	      //		  "guile_get_doubles_");
+	      x[i] = scm_to_double (scm_list_ref (scm_param,
+						  scm_from_int32 (i)));
 	    }
 	}
 #ifdef GUILE16
@@ -235,9 +246,11 @@ guile_get_doubles_ (const char * var)
 	  x = (double *) malloc (sizeof (double) * len);
 	  for (i = 0; i < len; i ++)
 	    {
-	      x[i] = scm_num2dbl (scm_vector_ref (scm_param,
-						  scm_int2num (i)),
-				  "guile_get_doubles_");
+	      //x[i] = scm_num2dbl (scm_vector_ref (scm_param,
+	      //				  scm_int2num (i)),
+	      //		  "guile_get_doubles_");
+	      x[i] = scm_to_double (scm_vector_ref (scm_param,
+						    scm_from_int32 (i)));
 	    }
 	}
     }
@@ -264,8 +277,9 @@ guile_get_length (const char * var)
       scm_param = scm_variable_ref (scm_symbol);
       if (SCM_NFALSEP (scm_list_p (scm_param)))
 	{
-	  len = scm_num2ulong (scm_length (scm_param),
-			       0, "guile_get_length");
+	  //len = scm_num2ulong (scm_length (scm_param),
+	  //		       0, "guile_get_length");
+	  len = scm_to_uint64 (scm_length (scm_param));
 	}
 #ifdef GUILE16
       else if (SCM_VECTORP(scm_param))
