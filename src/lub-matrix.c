@@ -1,6 +1,5 @@
 /* lubrication routines -- MATRIX procedure
- * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub-matrix.c,v 1.17 2008/07/17 02:26:01 kichiki Exp $
+ * Copyright (C) 1993-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +20,7 @@
 #include <stdlib.h> /* for exit() */
 
 #include "stokes.h"
-#include "bonds.h" // list_ex_check()
+//#include "bonds.h" // list_ex_check()
 #include "f.h"
 #include "ft.h"
 #include "fts.h"

@@ -1,16 +1,23 @@
-# $Id: Makefile,v 1.28 2008/10/31 06:07:45 kichiki Exp $
+# Makefile for libstokes-core/test
+# Copyright (C) 1993-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
+
+# for Mac
+CC = gcc
+RYUON_PREFIX = /Users/ichiki/WORK/201708/RYUON
+OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math
+F2C_LIBS = -L/opt/local/lib/gcc49 -lgfortran
 
 # for FreeBSD
-CC = cc
-RYUON_PREFIX = /usr/local
-F2C_LIBS = -L/usr/local/lib/gcc-4.2.5 -lgfortran
+#CC = cc
+#RYUON_PREFIX = /usr/local
+#F2C_LIBS = -L/usr/local/lib/gcc-4.2.5 -lgfortran
 # plain g2c library
 #F2C_LIBS = -lg2c
 
 #OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math
 # for FreeBSD
-OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math\
-	-march=prescott -mfpmath=sse
+#OPTS = -pipe -O3 -fomit-frame-pointer -ffast-math\
+#	-march=prescott -mfpmath=sse
 
 # for SUSE-Linux
 #RYUON_PREFIX = /home/ichiki/RYUON
@@ -59,15 +66,21 @@ RYUON_BIN = $(RYUON_PREFIX)/bin
 RYUON_INC = -I$(RYUON_PREFIX)/include
 RYUON_LIB = -L$(RYUON_PREFIX)/lib
 
-LD = libtool --mode=link --tag=CC $(CC)
-#LD = $(CC)
+#LD = libtool --mode=link --tag=CC $(CC)
+LD = $(CC)
 
 # for header file besides libstokes.h
 RYUON_SRC = ../src
 
-LIBSTOKES = ../src/libstokes.la
-#LIBSTOKES = $(RYUON_LIB) -lstokes
+#LIBSTOKES = ../src/libstokes.la
+LIBSTOKES_CORE = $(RYUON_LIB) -lstokes-core
 
+
+# for Mac
+MATH_LIBS = \
+	$(F2C_LIBS)\
+	-L/opt/local/lib -llapack -lblas\
+	-larpack
 
 #MATH_LIBS	= \
 #	$(F2C_LIBS)\
@@ -75,10 +88,10 @@ LIBSTOKES = ../src/libstokes.la
 #	-lcblas -lf77blas -latlas\
 #	-larpack
 # for FreeBSD
-MATH_LIBS = \
-	$(F2C_LIBS)\
-	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
-	-larpack
+#MATH_LIBS = \
+#	$(F2C_LIBS)\
+#	-L/usr/local/lib -lalapack -lf77blas -lcblas -latlas\
+#	-larpack
 # for SUSE-Linux
 # for openSUSE
 #MATH_LIBS = \
@@ -106,59 +119,19 @@ MATH_LIBS = \
 #	$(F2C_LIBS)\
 #	$(RYUON_LIB) -larpack -llapack -lblas
 
-GSL_INC = `pkg-config --cflags gsl`
-GSL_LIB = `pkg-config --libs gsl`
-# for glacier
-#GSL_INC = `gsl-config --cflags`
-#GSL_LIB = `gsl-config --libs`
-# for robson
-#GSL_INC = `$(RYUON_BIN)/gsl-config --cflags`
-#GSL_LIB = `$(RYUON_BIN)/gsl-config --libs`
-
-NITSOL_INC = -I/usr/local/include
-NITSOL_LIB = -L/usr/local/lib -lnitsol
-# for SUSE-Linux
-#NITSOL_INC = -I/home/ichiki/RYUON/include
-#NITSOL_LIB = -L/home/ichiki/RYUON/lib -lnitsol
-# for glacier
-# for robson
-#NITSOL_INC = $(RYUON_INC)
-#NITSOL_LIB = $(RYUON_LIB) -lnitsol
-
-GUILE_INC = `guile-config compile`
-GUILE_LIB = `guile-config link`
-# for robson
-#GUILE_INC = `$(RYUON_BIN)/guile-config compile`
-#GUILE_LIB = `$(RYUON_BIN)/guile-config link`
-
-NETCDF_INC = 
-NETCDF_LIB = -lnetcdf
-# for glacier
-# for robson
-#NETCDF_INC = $(RYUON_INC)
-#NETCDF_LIB = $(RYUON_LIB) -lnetcdf
-
 
 CFLAGS = \
 	-Wall		\
 	$(OPTS)		\
 	-I$(RYUON_SRC)	\
-	$(RYUON_INC)	\
-	$(NETCDF_INC)	\
-	$(GUILE_INC)	\
-	$(GSL_INC)	\
-	$(NITSOL_INC)
+	$(RYUON_INC)
 
 LDFLAGS =
 
 LIBS = \
-	$(LIBSTOKES)		\
+	$(LIBSTOKES_CORE)	\
 	-lm			\
 	$(RYUON_LIB) -liter	\
-	$(NETCDF_LIB)		\
-	$(GUILE_LIB)		\
-	$(GSL_LIB)		\
-	$(NITSOL_LIB)		\
 	$(MATH_LIBS)
 
 all:	test-all	\
@@ -184,37 +157,8 @@ test-all-OBJ =\
 	check-ewald.o		\
 	check-ewald-poly.o	\
 	check-ewald-shear.o	\
-	check-ode-quaternion.o	\
 	check-twobody-slip.o	\
-	check-dsaupd_c.o	\
-	check-dnaupd_c.o	\
-	check-chebyshev.o	\
-	check-bd.o		\
-	check-dgeev_c.o		\
-	check-dpotrf_c.o	\
-	check-brownian.o	\
-	check-bd-imp.o		\
-	check-bd-imp-nitsol.o	\
-	check-bd-imp-fast.o	\
-	check-sqrt-dgeev.o	\
-	check-matrix.o		\
-	check-bonds-guile.o	\
-	check-angles.o		\
-	check-excluded-volume-guile.o	\
-	check-ev-dh.o		\
-	check-ev-dh-guile.o	\
-	check-ev-LJ.o		\
-	check-ev-LJ-guile.o	\
-	check-confinement.o	\
-	check-confinement-guile.o	\
-	check-KIrand.o		\
-	check-bead-rod.o	\
-	check-bead-rod-guile.o	\
-	check-solve-cubic.o	\
-	check-grid.o		\
-	check-ev-dh-grid.o
-# below the check-matrix.o
-#	check-list-ex.o		\
+	check-matrix.o
 
 test-all:	$(test-all-OBJ)
 	$(LD) $(LDFLAGS) -o test-all	\

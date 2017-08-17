@@ -1,9 +1,8 @@
-# for libstokes
-# $Id: Makefile.am,v 1.31 2008/10/31 05:44:39 kichiki Exp $
+# for libstokes-core
 
-lib_LTLIBRARIES = libstokes.la
+lib_LTLIBRARIES = libstokes-core.la
 
-libstokes_la_SOURCES = \
+libstokes_core_la_SOURCES = \
 	stokes.c		\
 	ewald-3f.c		\
 	ewald-3ft.c		\
@@ -44,54 +43,20 @@ libstokes_la_SOURCES = \
 	lub.c			\
 	minv-poly.c		\
 	ewald.c			\
+	ewald-2.c		\
 	non-ewald.c		\
 	ewald-3f-matrix.c	\
 	ewald-3ft-matrix.c	\
 	ewald-3fts-matrix.c	\
 	lub-matrix.c		\
-	matrix.c		\
-	dgetri_c.c		\
-	dgemv_c.c		\
 	dgemm_c.c		\
+	dgemv_c.c		\
+	dgetri_c.c		\
+	matrix.c		\
 	bench.c			\
-	stokes-nc.c		\
-	stokes-nc-read.c	\
-	stokes-guile.c		\
-	coll.c			\
-	confinement.c		\
-	confinement-guile.c	\
-	periodicity.c		\
-	bonds.c			\
-	bonds-guile.c		\
-	bonds-groups.c		\
-	angles.c		\
-	angles-guile.c		\
-	ode.c			\
-	ode-quaternion.c	\
-	noHI.c			\
-	chebyshev.c		\
-	dsaupd_c.c		\
-	dnaupd_c.c		\
-	dgeev_c.c		\
-	dpotrf_c.c		\
-	KIrand.c		\
-	grid.c			\
-	excluded-volume.c	\
-	excluded-volume-guile.c	\
-	ev-dh.c			\
-	ev-dh-guile.c		\
-	ev-dh-grid.c		\
-	ev-LJ.c			\
-	ev-LJ-guile.c		\
-	nitsol_c.c		\
-	brownian.c		\
-	bd-imp.c		\
-	bd-imp-nitsol.c		\
-	bd-imp-fast.c		\
-	bead-rod.c		\
-	bead-rod-guile.c
+	noHI.c
 
 
-libstokes_la_LDFLAGS = -version-info 6:0:0
+libstokes_core_la_LDFLAGS = -version-info 1:0:0
 
-include_HEADERS = libstokes.h
+include_HEADERS = libstokes-core.h
