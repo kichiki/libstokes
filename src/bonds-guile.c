@@ -1,6 +1,5 @@
 /* guile interface for struct BONDS
- * Copyright (C) 2007-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bonds-guile.c,v 1.13 2008/07/25 22:20:12 kichiki Exp $
+ * Copyright (C) 2007-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -101,8 +100,9 @@ BONDS_guile_get (const char * var)
       return (NULL);
     }
 
-  unsigned long len = scm_num2ulong (scm_length (scm_bonds),
-				     0, "BONDS_guile_get");
+  //unsigned long len = scm_num2ulong (scm_length (scm_bonds),
+  //				     0, "BONDS_guile_get");
+  unsigned long len = scm_to_uint64 (scm_length (scm_bonds));
   if (len == 0)
     {
       // null is given
@@ -115,8 +115,10 @@ BONDS_guile_get (const char * var)
   int i;
   for (i = 0; i < len; i ++)
     {
+      //SCM scm_bond = scm_list_ref (scm_bonds,
+      //			   scm_int2num (i));
       SCM scm_bond = scm_list_ref (scm_bonds,
-				   scm_int2num (i));
+				   scm_from_int32 (i));
       if (!SCM_NFALSEP (scm_list_p (scm_bond)))
 	{
 	  // scm_bond is not a list
@@ -127,8 +129,9 @@ BONDS_guile_get (const char * var)
 	  return (NULL); // failed
 	}
       unsigned long bond_len
-	= scm_num2ulong (scm_length (scm_bond),
-			 0, "BONDS_guile_get");
+	//= scm_num2ulong (scm_length (scm_bond),
+	//		 0, "BONDS_guile_get");
+	= scm_to_uint64 (scm_length (scm_bond));
       if (bond_len != 4)
 	{
 	  fprintf (stderr, "BONDS_guile_get:"
@@ -139,12 +142,14 @@ BONDS_guile_get (const char * var)
 	}
 
       // 1st element (0) of the list scm_bond
-      int type = scm_num2int (scm_list_ref (scm_bond, scm_int2num (0)),
-			      0,
-			      "BONDS_guile_get");
+      //int type = scm_num2int (scm_list_ref (scm_bond, scm_int2num (0)),
+      //		      0,
+      //		      "BONDS_guile_get");
+      int type = scm_to_int32 (scm_list_ref (scm_bond, scm_from_int32 (0)));
 
       // 2nd element (1) of the list scm_bond
-      SCM scm_params = scm_list_ref (scm_bond, scm_int2num (1));
+      //SCM scm_params = scm_list_ref (scm_bond, scm_int2num (1));
+      SCM scm_params = scm_list_ref (scm_bond, scm_from_int32 (1));
       if (!SCM_NFALSEP (scm_list_p (scm_params)))
 	{
 	  // scm_params is not a list
@@ -155,7 +160,8 @@ BONDS_guile_get (const char * var)
 	  return (NULL); // failed
 	}
       unsigned long params_len
-	= scm_num2ulong (scm_length (scm_params), 0, "BONDS_guile_get");
+	//= scm_num2ulong (scm_length (scm_params), 0, "BONDS_guile_get");
+	= scm_to_uint64 (scm_length (scm_params));
       if (params_len != 3 &&
 	  params_len != 4)
 	{
@@ -165,32 +171,38 @@ BONDS_guile_get (const char * var)
 	  BONDS_free (b);
 	  return (NULL); // failed
 	}
-      int fene = scm_num2int (scm_list_ref (scm_params, scm_int2num (0)),
-			      0,
-			      "BONDS_guile_get");
-      double p1 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (1)),
-			       "BONDS_guile_get");
-      double p2 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (2)),
-			       "BONDS_guile_get");
+      //int fene = scm_num2int (scm_list_ref (scm_params, scm_int2num (0)),
+      //		      0,
+      //		      "BONDS_guile_get");
+      int fene = scm_to_int32 (scm_list_ref (scm_params, scm_from_int32 (0)));
+      //double p1 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (1)),
+      //			       "BONDS_guile_get");
+      double p1 = scm_to_double (scm_list_ref (scm_params, scm_from_int32 (1)));
+      //double p2 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (2)),
+      //		       "BONDS_guile_get");
+      double p2 = scm_to_double (scm_list_ref (scm_params, scm_from_int32 (2)));
       double p3 = 0.0;
       if (params_len == 4)
 	{
 	  // params_len == 4
-	  p3 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (3)),
-			    "BONDS_guile_get");
+	  //p3 = scm_num2dbl (scm_list_ref (scm_params, scm_int2num (3)),
+	  //		    "BONDS_guile_get");
+	  p3 = scm_to_double (scm_list_ref (scm_params, scm_from_int32 (3)));
 	}
       // end of parsing scm_params
 
 
       // 4th element (3) of the list scm_bond
       // (3rd element will be taken later)
-      int nex = scm_num2int (scm_list_ref (scm_bond, scm_int2num (3)),
-			     0,
-			     "BONDS_guile_get");
+      //int nex = scm_num2int (scm_list_ref (scm_bond, scm_int2num (3)),
+      //		     0,
+      //		     "BONDS_guile_get");
+      int nex = scm_to_int32 (scm_list_ref (scm_bond, scm_from_int32 (3)));
 
 
       // 3rd element (2) of the list scm_bond
-      SCM scm_pairs = scm_list_ref (scm_bond, scm_int2num (2));
+      //SCM scm_pairs = scm_list_ref (scm_bond, scm_int2num (2));
+      SCM scm_pairs = scm_list_ref (scm_bond, scm_from_int32 (2));
       if (!SCM_NFALSEP (scm_list_p (scm_pairs)))
 	{
 	  // scm_pairs is not a list
@@ -202,13 +214,16 @@ BONDS_guile_get (const char * var)
 	}
 
       unsigned long pairs_len
-	= scm_num2ulong (scm_length (scm_pairs),
-				 0, "BONDS_guile_get");
+	//= scm_num2ulong (scm_length (scm_pairs),
+	//			 0, "BONDS_guile_get");
+	= scm_to_uint64 (scm_length (scm_pairs));
       int j;
       for (j = 0; j < pairs_len; j ++)
 	{
+	  //SCM scm_pair = scm_list_ref (scm_pairs,
+	  //			       scm_int2num (j));
 	  SCM scm_pair = scm_list_ref (scm_pairs,
-				       scm_int2num (j));
+	  			       scm_from_int32 (j));
 	  if (!SCM_NFALSEP (scm_list_p (scm_pair)))
 	    {
 	      // scm_pair is not a list
@@ -220,8 +235,9 @@ BONDS_guile_get (const char * var)
 	    }
 
 	  unsigned long pair_len
-	    = scm_num2ulong (scm_length (scm_pair),
-				    0, "BONDS_guile_get");
+	    //= scm_num2ulong (scm_length (scm_pair),
+	    //			    0, "BONDS_guile_get");
+	    = scm_to_uint64 (scm_length (scm_pair));
 	  if (pair_len != 2)
 	    {
 	      fprintf (stderr, "BONDS_guile_get:"
@@ -232,14 +248,18 @@ BONDS_guile_get (const char * var)
 	    }
 	  
 	  int ia, ib;
-	  ia = scm_num2int (scm_list_ref (scm_pair,
-					  scm_int2num (0)),
-			    0,
-			    "BONDS_guile_get");
-	  ib = scm_num2int (scm_list_ref (scm_pair,
-					  scm_int2num (1)),
-			    0,
-			    "BONDS_guile_get");
+	  //ia = scm_num2int (scm_list_ref (scm_pair,
+	  //				  scm_int2num (0)),
+	  //		    0,
+	  //		    "BONDS_guile_get");
+	  //ib = scm_num2int (scm_list_ref (scm_pair,
+	  //				  scm_int2num (1)),
+	  //		    0,
+	  //		    "BONDS_guile_get");
+	  ia = scm_to_int32 (scm_list_ref (scm_pair,
+					   scm_from_int32 (0)));
+	  ib = scm_to_int32 (scm_list_ref (scm_pair,
+					   scm_from_int32 (1)));
 
 	  BONDS_append (b, type, fene, p1, p2, p3,
 			ia, ib);

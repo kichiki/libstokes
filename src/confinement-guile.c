@@ -1,6 +1,5 @@
 /* guile interface for struct confinement
- * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: confinement-guile.c,v 1.2 2008/06/13 03:09:34 kichiki Exp $
+ * Copyright (C) 2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -111,8 +110,9 @@ CF_guile_get (const char *var)
   struct confinement *cf = NULL;
 
   unsigned long len
-    = scm_num2ulong (scm_length (scm_confinement),
-		     0, "CF_guile_get");
+    //= scm_num2ulong (scm_length (scm_confinement),
+    //		     0, "CF_guile_get");
+    = scm_to_uint64 (scm_length (scm_confinement));
   if (len == 0)
     {
       // no confinement
@@ -125,27 +125,23 @@ CF_guile_get (const char *var)
     }
 
   double epsilon
-    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (0)),
-		   "CF_guile_get");
+    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (0)),
+    //		   "CF_guile_get");
+    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (0)));
   double r0
-    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (1)),
-		   "CF_guile_get");
+    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (1)),
+    //		   "CF_guile_get");
+    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (1)));
 
   // get the string
   char *str_cf = NULL;
-  SCM scm_conf = scm_list_ref (scm_confinement, scm_int2num (2));
-#ifdef GUILE16
-  size_t str_len;
-  if (gh_string_p (scm_conf))
-    {
-      str_cf = gh_scm2newstr (scm_conf, &str_len);
-    }
-#else // !GUILE16
+  //SCM scm_conf = scm_list_ref (scm_confinement, scm_int2num (2));
+  SCM scm_conf = scm_list_ref (scm_confinement, scm_from_int32 (2));
   if (scm_is_string (scm_conf))
     {
       str_cf = scm_to_locale_string (scm_conf);
     }
-#endif // GUILE16
+
   if (strcmp (str_cf, "sphere") == 0)
     {
       if (len != 4)
@@ -156,8 +152,9 @@ CF_guile_get (const char *var)
       else
 	{
 	  double R
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  cf = CF_init (0, // sphere
 			R,
 			0.0, // r
@@ -180,11 +177,13 @@ CF_guile_get (const char *var)
       else
 	{
 	  double R
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  double r
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (4)));
 	  cf = CF_init (1, // sphere+hole
 			R,
 			r,
@@ -207,17 +206,21 @@ CF_guile_get (const char *var)
       else
 	{
 	  double r
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  double x
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (4)));
 	  double y
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (5)));
 	  double z
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (6)));
 	  cf = CF_init (2, // cylinder
 			0.0, // R,
 			r,
@@ -240,17 +243,21 @@ CF_guile_get (const char *var)
       else
 	{
 	  double R
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  double R2
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (4)));
 	  double L
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (5)));
 	  double r
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (6)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (6)));
 	  cf = CF_init (3, // dumbbell
 			R,
 			r,
@@ -273,14 +280,17 @@ CF_guile_get (const char *var)
       else
 	{
 	  double R
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  double r
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (4)));
 	  double L
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (5)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (5)));
 	  cf = CF_init (4, // hex2d
 			R,
 			r,
@@ -303,11 +313,13 @@ CF_guile_get (const char *var)
       else
 	{
 	  double R
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (3)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (3)));
 	  double L
-	    = scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
-			   "CF_guile_get");
+	    //= scm_num2dbl (scm_list_ref (scm_confinement, scm_int2num (4)),
+	    //		   "CF_guile_get");
+	    = scm_to_double (scm_list_ref (scm_confinement, scm_from_int32 (4)));
 	  cf = CF_init (5, // porous
 			R,
 			0.0,

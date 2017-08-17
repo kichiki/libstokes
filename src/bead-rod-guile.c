@@ -1,6 +1,5 @@
 /* guile interface for struct BeadRod
- * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: bead-rod-guile.c,v 1.3 2008/08/12 05:38:57 kichiki Exp $
+ * Copyright (C) 2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -85,8 +84,9 @@ BeadRod_guile_get (const char *var,
     }
 
   unsigned long len
-    = scm_num2ulong (scm_length (scm_brs),
-		     0, "BeadRod_guile_get");
+    //= scm_num2ulong (scm_length (scm_brs),
+    //		     0, "BeadRod_guile_get");
+    = scm_to_uint64 (scm_length (scm_brs));
   if (len <= 2)
     {
       // null list is given ==> no constraint
@@ -94,24 +94,19 @@ BeadRod_guile_get (const char *var,
     }
 
   // 1st element (0) of the list scm_brs
-  double eps = scm_num2dbl (scm_list_ref (scm_brs, scm_int2num (0)),
-			    "BeadRod_guile_get");
+  //double eps = scm_num2dbl (scm_list_ref (scm_brs, scm_int2num (0)),
+  //			    "BeadRod_guile_get");
+  double eps = scm_to_double (scm_list_ref (scm_brs, scm_from_int32 (0)));
   // 2nd element (1) of the list scm_brs
   // get the string
   char *str_scheme = NULL;
-  SCM scm_scheme = scm_list_ref (scm_brs, scm_int2num (1));
-#ifdef GUILE16
-  size_t str_len;
-  if (gh_string_p (scm_scheme))
-    {
-      str_scheme = gh_scm2newstr (scm_scheme, &str_len);
-    }
-#else // !GUILE16
+  //SCM scm_scheme = scm_list_ref (scm_brs, scm_int2num (1));
+  SCM scm_scheme = scm_list_ref (scm_brs, scm_from_int32 (1));
   if (scm_is_string (scm_scheme))
     {
       str_scheme = scm_to_locale_string (scm_scheme);
     }
-#endif // GUILE16
+
   int scheme;
   if (strcmp (str_scheme, "linear") == 0)
     {
@@ -140,8 +135,10 @@ BeadRod_guile_get (const char *var,
     {
       // (i-1)-th constraint
       SCM scm_br
+	//= scm_list_ref (scm_brs,
+	//		scm_int2num (i));
 	= scm_list_ref (scm_brs,
-			scm_int2num (i));
+			scm_from_int32 (i));
       if (!SCM_NFALSEP (scm_list_p (scm_br)))
 	{
 	  // scm_br is not a list
@@ -154,8 +151,9 @@ BeadRod_guile_get (const char *var,
 	  return (NULL); // failed
 	}
       unsigned long br_len
-	= scm_num2ulong (scm_length (scm_br),
-			 0, "BeadRod_guile_get");
+	//= scm_num2ulong (scm_length (scm_br),
+	//		 0, "BeadRod_guile_get");
+	= scm_to_uint64 (scm_length (scm_br));
       if (br_len != 2)
 	{
 	  fprintf (stderr, "BeadRod_guile_get:"
@@ -168,13 +166,15 @@ BeadRod_guile_get (const char *var,
 	}
 
       // 1st element (0) of the list scm_br
-      double a0 = scm_num2dbl (scm_list_ref (scm_br, scm_int2num (0)),
-			       "BeadRod_guile_get");
+      //double a0 = scm_num2dbl (scm_list_ref (scm_br, scm_int2num (0)),
+      //		       "BeadRod_guile_get");
+      double a0 = scm_to_double (scm_list_ref (scm_br, scm_from_int32 (0)));
       a0 /= length; // scale by the unit length
 
       // 2nd element (1) of the list scm_br
       SCM scm_pairs
-	= scm_list_ref (scm_br,	scm_int2num (1));
+	//= scm_list_ref (scm_br,	scm_int2num (1));
+	= scm_list_ref (scm_br,	scm_from_int32 (1));
 
       if (!SCM_NFALSEP (scm_list_p (scm_pairs)))
 	{
@@ -188,17 +188,21 @@ BeadRod_guile_get (const char *var,
 	  return (NULL); // failed
 	}
       unsigned long pairs_len
-	= scm_num2ulong (scm_length (scm_pairs),
-			 0, "BeadRod_guile_get");
+	//= scm_num2ulong (scm_length (scm_pairs),
+	//		 0, "BeadRod_guile_get");
+	= scm_to_uint64 (scm_length (scm_pairs));
       int j;
       for (j = 0; j < pairs_len; j ++)
 	{
 	  SCM scm_pair
+	    //= scm_list_ref (scm_pairs,
+	    //		    scm_int2num (j));
 	    = scm_list_ref (scm_pairs,
-			    scm_int2num (j));
+	    		    scm_from_int32 (j));
 	  unsigned long pair_len
-	    = scm_num2ulong (scm_length (scm_pair),
-			     0, "BeadRod_guile_get");
+	    //= scm_num2ulong (scm_length (scm_pair),
+	    //		     0, "BeadRod_guile_get");
+	    = scm_to_uint64 (scm_length (scm_pair));
 	  if (pair_len != 2)
 	    {
 	      fprintf (stderr, "BeadRod_guile_get:"
@@ -211,13 +215,15 @@ BeadRod_guile_get (const char *var,
 	      return (NULL); // failed
 	    }
 	  // 1st element (0) of the list scm_pair
-	  int ia0 = scm_num2int (scm_list_ref (scm_pair, scm_int2num (0)),
-				 0,
-				 "BeadRod_guile_get");
+	  //int ia0 = scm_num2int (scm_list_ref (scm_pair, scm_int2num (0)),
+	  //			 0,
+	  //			 "BeadRod_guile_get");
+	  int ia0 = scm_to_int32 (scm_list_ref (scm_pair, scm_from_int32 (0)));
 	  // 2nd element (1) of the list scm_pair
-	  int ib0 = scm_num2int (scm_list_ref (scm_pair, scm_int2num (1)),
-				 0,
-				 "BeadRod_guile_get");
+	  //int ib0 = scm_num2int (scm_list_ref (scm_pair, scm_int2num (1)),
+	  //			 0,
+	  //			 "BeadRod_guile_get");
+	  int ib0 = scm_to_int32 (scm_list_ref (scm_pair, scm_from_int32 (1)));
 	  nc ++;
 	  a  = (double *)realloc (a, sizeof (double) * nc);
 	  ia = (int *)realloc (ia, sizeof (int) * nc);

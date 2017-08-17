@@ -1,6 +1,5 @@
 /* guile interface for struct EV_LJ.
- * Copyright (C) 2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ev-LJ-guile.c,v 1.2 2008/06/13 03:11:16 kichiki Exp $
+ * Copyright (C) 2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -75,8 +74,9 @@ EV_LJ_guile_get (const char *var, int np)
     }
 
   unsigned long len
-    = scm_num2ulong (scm_length (scm_LJs),
-		     0, "EV_LJ_guile_get");
+    //= scm_num2ulong (scm_length (scm_LJs),
+    //		     0, "EV_LJ_guile_get");
+    = scm_to_uint64 (scm_length (scm_LJs));
   if (len == 0)
     {
       // null is given
@@ -90,8 +90,10 @@ EV_LJ_guile_get (const char *var, int np)
   for (i = 0; i < len; i ++)
     {
       SCM scm_LJ;
+      //scm_LJ = scm_list_ref (scm_LJs,
+      //		     scm_int2num (i));
       scm_LJ = scm_list_ref (scm_LJs,
-			     scm_int2num (i));
+			     scm_from_int32 (i));
       if (!SCM_NFALSEP (scm_list_p (scm_LJ)))
 	{
 	  // scm_LJ is not a list
@@ -102,8 +104,9 @@ EV_LJ_guile_get (const char *var, int np)
 	  return (NULL); // failed
 	}
       unsigned long LJ_len;
-      LJ_len = scm_num2ulong (scm_length (scm_LJ),
-				0, "EV_LJ_guile_get");
+      //LJ_len = scm_num2ulong (scm_length (scm_LJ),
+      //			0, "EV_LJ_guile_get");
+      LJ_len = scm_to_uint64 (scm_length (scm_LJ));
       if (LJ_len != 3)
 	{
 	  fprintf (stderr, "EV_LJ_guile_get:"
@@ -114,13 +117,16 @@ EV_LJ_guile_get (const char *var, int np)
 	}
 
       // 1st element (0) of the list scm_LJ is (double)e
-      double e  = scm_num2dbl (scm_list_ref (scm_LJ, scm_int2num (0)),
-			       "EV_LJ_guile_get");
+      //double e  = scm_num2dbl (scm_list_ref (scm_LJ, scm_int2num (0)),
+      //		       "EV_LJ_guile_get");
+      double e  = scm_to_double (scm_list_ref (scm_LJ, scm_from_int32 (0)));
       // 2nd element (1) of the list scm_LJ is (double)r0
-      double r0 = scm_num2dbl (scm_list_ref (scm_LJ, scm_int2num (1)),
-			       "EV_LJ_guile_get");
+      //double r0 = scm_num2dbl (scm_list_ref (scm_LJ, scm_int2num (1)),
+      //		       "EV_LJ_guile_get");
+      double r0 = scm_to_double (scm_list_ref (scm_LJ, scm_from_int32 (1)));
       // 3rd element (2) of the list scm_LJ is list
-      SCM scm_plist = scm_list_ref (scm_LJ, scm_int2num (2));
+      //SCM scm_plist = scm_list_ref (scm_LJ, scm_int2num (2));
+      SCM scm_plist = scm_list_ref (scm_LJ, scm_from_int32 (2));
       if (!SCM_NFALSEP (scm_list_p (scm_plist)))
 	{
 	  // scm_params is not a list
@@ -131,13 +137,15 @@ EV_LJ_guile_get (const char *var, int np)
 	  return (NULL); // failed
 	}
       unsigned long plist_len
-	= scm_num2ulong (scm_length (scm_plist), 0, "EV_LJ_guile_get");
+	//= scm_num2ulong (scm_length (scm_plist), 0, "EV_LJ_guile_get");
+	= scm_to_uint64 (scm_length (scm_plist));
       int j;
       for (j = 0; j < plist_len; j ++)
 	{
-	  int p = scm_num2int (scm_list_ref (scm_plist, scm_int2num (j)),
-			       0,
-			       "EV_LJ_guile_get");
+	  //int p = scm_num2int (scm_list_ref (scm_plist, scm_int2num (j)),
+	  //		       0,
+	  //		       "EV_LJ_guile_get");
+	  int p = scm_to_int32 (scm_list_ref (scm_plist, scm_from_int32 (j)));
 	  if (p < 0 || p >= np)
 	    {
 	      fprintf (stderr, "EV_LJ_guile_get:"
