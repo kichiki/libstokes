@@ -6,6 +6,7 @@ libstokes_extra_la_SOURCES = \
 	stokes-nc.c		\
 	stokes-nc-read.c	\
 	stokes-guile.c		\
+	ewald-2.c		\
 	coll.c			\
 	confinement.c		\
 	confinement-guile.c	\
