@@ -1,0 +1,1729 @@
+2007-08-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.5-RELEASE
+
+	* ewald.h: 1.7 2007/08/12 18:10:18 kichiki Exp
+	* ewald.c: 1.8 2007/08/12 18:09:49 kichiki Exp
+	(scalars_mob_poly_scale_SD_): make the routine public.
+
+2007-06-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* ZM.c: 1.5 2007/06/03 22:34:32 kichiki Exp
+	update to the order of 164.
+
+	* YM.c: 1.5 2007/06/03 22:33:12 kichiki Exp
+	update to the order of 158.
+
+	* XM.c: 1.5 2007/06/03 22:31:49 kichiki Exp
+	update to the order of 149.
+
+	* YH.c: 1.5 2007/06/03 22:28:40 kichiki Exp
+	update to the order of 153.
+
+	* YG.c: 1.5 2007/06/03 22:27:16 kichiki Exp
+	update to the order of 153.
+
+	* XG.c: 1.5 2007/06/03 22:23:10 kichiki Exp
+	update to the order of 147.
+
+	* YC.c: 1.5 2007/06/03 22:21:41 kichiki Exp
+	update to the order of 156.
+
+	* XC.c: 1.5 2007/06/03 22:20:16 kichiki Exp
+	update to the order of 187.
+
+	* YB.c: 1.5 2007/06/03 22:18:56 kichiki Exp
+	update to the order of 154.
+
+	* YA.c: 1.5 2007/06/03 22:17:28 kichiki Exp
+	update to the order of 154.
+
+	* XA.c: 1.5 2007/06/03 22:15:55 kichiki Exp
+	update to the order of 148.
+
+2007-05-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes.c: 2.18 2007/05/26 06:09:39 kichiki Exp
+	(stokes_set_radius): set the self-part pair. it might happen for 
+	periodic monolayer simulations.
+
+	* lub-matrix.c: 1.13 2007/05/26 06:08:38 kichiki Exp
+	(make_matrix_lub_3f, make_matrix_lub_3ft, make_matrix_lub_3fts): 
+	bug fixed on cond_lub_poly for the periodic poly case.
+
+	* lub.c: 5.10 2007/05/26 06:08:08 kichiki Exp
+	(calc_lub_3f, calc_lub_3ft, calc_lub_3fts): 
+	bug fixed on cond_lub_poly for the periodic poly case.
+
+2007-05-15  Kengo Ichiki  <ichiki@tpr60>
+
+	* ZM.c: 1.4 2007/05/16 04:12:33 kichiki Exp
+	add terms up to 154.
+
+	* YM.c: 1.4 2007/05/16 04:12:03 kichiki Exp
+	add terms up to 148.
+
+	* XM.c: 1.4 2007/05/16 04:11:34 kichiki Exp
+	add terms up to 139.
+
+	* YH.c: 1.4 2007/05/16 04:11:06 kichiki Exp
+	add terms up to 142.
+
+	* YC.c: 1.4 2007/05/16 04:10:35 kichiki Exp
+	add terms up to 145.
+
+2007-05-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3f.c: 4.13 2007/05/04 02:23:32 kichiki Exp
+	* ewald-3f-matrix.c: 2.14 2007/05/04 02:18:15 kichiki Exp
+	* ewald-3ft.c: 4.14 2007/05/04 02:12:05 kichiki Exp
+	* ewald-3ft-matrix.c: 2.13 2007/05/04 02:05:06 kichiki Exp
+	* ewald-3fts.c: 5.14 2007/05/04 01:55:31 kichiki Exp
+	* ewald-3fts-matrix.c: 2.13 2007/05/04 01:54:59 kichiki Exp
+	* matrix.c: 1.8 2007/05/04 01:16:53 kichiki Exp
+	* lub.c: 5.9 2007/05/04 01:15:10 kichiki Exp
+	* lub-matrix.c: 1.12 2007/05/04 01:14:44 kichiki Exp
+	some minor style update.
+
+	* stokes.h: 1.18 2007/05/04 01:18:28 kichiki Exp
+	* stokes.c: 2.17 2007/05/04 01:17:36 kichiki Exp
+	change lubmin in struct stokes to lubmin2, the squared value.
+
+	* fts.c: 2.16 2007/05/04 01:12:59 kichiki Exp
+	(calc_lub_fts_2b_poly, matrix_lub_fts_2b_poly): 
+	correct the lubmin application.
+	use lubmin2 instead of lubmin.
+
+	* ft.c: 2.14 2007/05/04 01:12:36 kichiki Exp
+	(calc_lub_ft_2b_poly, matrix_lub_ft_2b_poly): 
+	correct the lubmin application.
+	use lubmin2 instead of lubmin.
+
+	* f.c: 2.11 2007/05/04 01:12:14 kichiki Exp
+	(calc_lub_f_2b_poly, matrix_lub_f_2b_poly): 
+	correct the lubmin application.
+	use lubmin2 instead of lubmin.
+
+2007-04-26  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.c: 2.15 2007/04/27 01:00:43 kichiki Exp
+	* ft.c: 2.13 2007/04/27 01:00:21 kichiki Exp
+	* f.c: 2.10 2007/04/27 00:59:57 kichiki Exp
+	some house-keeping.
+
+	* twobody.c: 1.8 2007/04/27 00:58:50 kichiki Exp
+	(twobody_lub_with_f): remove a checking fprintf().
+
+2007-04-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.29 2007/04/26 05:15:27 kichiki Exp
+	* stokes.h: 1.17 2007/04/26 05:14:54 kichiki Exp
+	* stokes.c: 2.16 2007/04/26 05:14:37 kichiki Exp
+	(stokes_unset_radius): added.
+
+	* lub-matrix.c: 1.11 2007/04/26 05:14:18 kichiki Exp
+	(make_matrix_lub_3f, make_matrix_lub_3ft, make_matrix_lub_3fts): 
+	pass particle indices i and j to matrix_lub_f,ft,fts_2b_poly(),
+	respectively.
+
+	* lub.c: 5.8 2007/04/26 05:13:57 kichiki Exp
+	(calc_lub_3f, calc_lub_3ft, calc_lub_3fts): pass particle indices
+	i and j to calc_lub_f,ft,fts_2b_poly(), respectively.
+
+	* fts.h: 2.8 2007/04/26 05:13:34 kichiki Exp
+	* fts.c: 2.14 2007/04/26 05:13:15 kichiki Exp
+	(calc_lub_fts_2b_poly, matrix_lub_fts_2b_poly): take particle indices
+	i1 and i2 instead of radii a1 and a2, and extracting twobody_f for 
+	the pairs 12 and 21 and pass them to scalars_lub_poly_full().
+
+	* ft.h: 2.9 2007/04/26 05:12:54 kichiki Exp
+	* ft.c: 2.12 2007/04/26 05:12:34 kichiki Exp
+	(calc_lub_ft_2b_poly, matrix_lub_ft_2b_poly): take particle indices
+	i1 and i2 instead of radii a1 and a2, and extracting twobody_f for 
+	the pairs 12 and 21 and pass them to scalars_lub_poly_full().
+
+	* f.h: 2.7 2007/04/26 05:12:14 kichiki Exp
+	* f.c: 2.9 2007/04/26 05:11:54 kichiki Exp
+	(calc_lub_f_2b_poly, matrix_lub_f_2b_poly): take particle indices
+	i1 and i2 instead of radii a1 and a2, and extracting twobody_f for 
+	the pairs 12 and 21 and pass them to scalars_lub_poly_full().
+
+	* minv-poly.h: 1.4 2007/04/26 05:11:32 kichiki Exp
+	* minv-poly.c: 1.4 2007/04/26 05:11:12 kichiki Exp
+	(scalars_lub_poly, scalars_lub_poly_full): take twobody_f *f12 (and 
+	f21) in the argument and pass it (them) to twobody_scalars_res().
+
+	* twobody.h: 1.7 2007/04/26 05:10:43 kichiki Exp
+	* twobody.c: 1.7 2007/04/26 05:10:13 kichiki Exp
+	add an argument "version" for all (outer) routines.
+	(twobody_scalars_res): use twobody_lub_with_f() for the lub form.
+	take twobody_f *f12 in the argument and pass it to
+	twobody_lub_with_f() for the case.
+
+2007-04-24  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.28 2007/04/25 05:37:14 kichiki Exp
+	* stokes.h: 1.16 2007/04/25 05:36:40 kichiki Exp
+	* stokes.c: 2.15 2007/04/25 05:36:19 kichiki Exp
+	add new entries poly_table[] and twobody_f_list in struct stokes.
+	(stokes_set_radius): set poly_table[] and twobody_f_list, as well.
+
+	* twobody.h: 1.6 2007/04/25 05:35:25 kichiki Exp
+	* twobody.c: 1.6 2007/04/25 05:34:59 kichiki Exp
+	introduce struct twobody_f and twobody_f_list.
+	(twobody_f_init, twobody_f_free, twobody_f_list_init) 
+	(twobody_f_list_append, twobody_f_list_free): 
+	added.
+	(twobody_lub_with_f): added. this is all-in-one version of
+	twobody_lub() for the speed. also using twobody_f.
+
+2007-04-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* lub-matrix.c: 1.10 2007/04/20 01:55:24 kichiki Exp
+	* lub.c: 5.7 2007/04/20 01:55:00 kichiki Exp
+	use 'sys->lubmax' instead of 'sys->lubmax2', because square is faster
+	than sqrt, obviously.
+	correct the condition for polydisperse systems.
+
+	* fts.h: 2.7 2007/04/20 01:54:33 kichiki Exp
+	* fts.c: 2.13 2007/04/20 01:54:07 kichiki Exp
+	* ft.h: 2.8 2007/04/20 01:53:42 kichiki Exp
+	* ft.c: 2.11 2007/04/20 01:53:16 kichiki Exp
+	* f.h: 2.6 2007/04/20 01:52:41 kichiki Exp
+	* f.c: 2.8 2007/04/20 01:52:20 kichiki Exp
+	change the name from 'sys->lubcut' to 'sys->lubmin'.
+
+	* libstokes.h: 1.27 2007/04/20 01:51:48 kichiki Exp
+	* stokes.h: 1.15 2007/04/20 01:51:18 kichiki Exp
+	* stokes.c: 2.14 2007/04/20 01:50:47 kichiki Exp
+	change the name from 'sys->lubcut' to 'sys->lubmin'.
+	use 'sys->lubmax' instead of 'sys->lubmax2', because square is faster
+	than sqrt, obviously.
+
+2007-04-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* lub-matrix.c: 1.9 2007/04/19 02:50:15 kichiki Exp
+	* lub.c: 5.6 2007/04/19 02:49:48 kichiki Exp
+	take into account enough periodic images for lubmax2 range.
+
+2007-04-17  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald.h: 1.6 2007/04/18 01:28:08 kichiki Exp
+	* ewald.c: 1.7 2007/04/18 01:27:45 kichiki Exp
+	(scalars_ewald_real_poly): added.
+	(atimes_ewald_3all): 
+	(make_matrix_mob_ewald_3all): 
+	polydispersity code is implemented.
+
+2007-04-13  Kengo Ichiki  <ichiki@tpr60>
+
+	* lub-matrix.h: 1.4 2007/04/14 00:34:44 kichiki Exp
+	* lub-matrix.c: 1.8 2007/04/14 00:34:14 kichiki Exp
+	(make_matrix_lub_3f): 
+	(make_matrix_lub_3ft): 
+	(make_matrix_lub_3fts): 
+	add polydisperse handling.
+
+	* lub.h: 5.3 2007/04/14 00:33:51 kichiki Exp
+	* lub.c: 5.5 2007/04/14 00:33:28 kichiki Exp
+	(calc_lub_3f): 
+	(calc_lub_3ft): 
+	(calc_lub_3fts): 
+	add polydisperse handling.
+
+	* minv-poly.h: 1.3 2007/04/14 00:33:00 kichiki Exp
+	* minv-poly.c: 1.3 2007/04/14 00:32:26 kichiki Exp
+	(scalars_res_poly_scale_SD): correct the scaling factor for 
+	21- and 22-interactions.
+
+	* fts.h: 2.6 2007/04/14 00:31:42 kichiki Exp
+	* fts.c: 2.12 2007/04/14 00:31:21 kichiki Exp
+	(calc_lub_fts_2b_poly): added.
+	(matrix_lub_fts_2b_poly): added.
+
+	* ft.h: 2.7 2007/04/14 00:30:48 kichiki Exp
+	* ft.c: 2.10 2007/04/14 00:30:23 kichiki Exp
+	(calc_lub_ft_2b_poly): added.
+	(matrix_lub_ft_2b_poly): added.
+
+	* f.h: 2.5 2007/04/14 00:29:43 kichiki Exp
+	* f.c: 2.7 2007/04/14 00:29:20 kichiki Exp
+	(calc_lub_f_2b_poly): added.
+	(matrix_lub_f_2b_poly): added.
+
+	* libstokes.h: 1.23 2007/04/14 00:28:59 kichiki Exp
+	* stokes.h: 1.14 2007/04/14 00:28:14 kichiki Exp
+	* stokes.c: 2.13 2007/04/14 00:27:51 kichiki Exp
+	add twobody_nmax and twobody_lub for poly-lub calculation.
+
+2007-04-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* minv-poly.h: 1.2 2007/04/13 02:06:34 kichiki Exp
+	* minv-poly.c: 1.2 2007/04/13 02:06:10 kichiki Exp
+	(scalars_lub_poly): added.
+	(scalars_lub_poly_full): added.
+
+	* twobody.h: 1.5 2007/04/13 01:54:23 kichiki Exp
+	* twobody.c: 1.5 2007/04/13 01:53:58 kichiki Exp
+	(twobody_scalars_res): add a new argument 'flag_scale'.
+	(twobody_scale_SD): change the name from twobody_scale().
+	(twobody_scale): added for the dimensional form.
+
+2007-04-11  Kengo Ichiki  <ichiki@tpr60>
+
+	* non-ewald.c: 1.6 2007/04/12 05:37:55 kichiki Exp
+	(scalars_nonewald_poly_full): bug fixed on ya21.
+
+	* Makefile.am: 1.12 2007/04/12 05:19:43 kichiki Exp
+	add minv-poly.c.
+
+	* minv-poly.h: 1.1 2007/04/12 05:16:11 kichiki Exp
+	* minv-poly.c: 1.1 2007/04/12 05:15:42 kichiki Exp
+	added.
+
+	* non-ewald.h: 1.4 2007/04/12 03:40:00 kichiki Exp
+	* non-ewald.c: 1.5 2007/04/12 03:39:12 kichiki Exp
+	(scalars_nonewald_poly): change the results from the SD form
+	to the dimensional form.
+	(scalars_mob_poly_scale_SD): added.
+	(scalars_nonewald_poly_full): added.
+
+2007-04-10  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.c: 2.11 2007/04/11 01:16:57 kichiki Exp
+	(scalar_minv_fts): one tiny bug has found and fixed.
+
+2007-04-09  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.c: 2.10 2007/04/09 06:13:29 kichiki Exp
+	(scalar_minv_fts): the last change was wrong. it is confirmed that 
+	the old code is the right one.
+
+2007-04-08  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.c: 2.9 2007/04/08 23:40:32 kichiki Exp
+	(scalar_minv_fts): bug fixed.
+
+2007-04-06  Kengo Ichiki  <ichiki@tpr60>
+
+	* twobody.h: 1.4 2007/04/06 20:26:39 kichiki Exp
+	* twobody.c: 1.4 2007/04/06 20:26:12 kichiki Exp
+	(twobody_XG_lub): 
+	(twobody_YG_lub): 
+	(twobody_YH_lub): 
+	(twobody_XM_lub): 
+	(twobody_YM_lub): 
+	(twobody_ZM_lub): 
+	added.
+	(twobody_lub): updated.
+
+2007-04-03  Kengo Ichiki  <ichiki@tpr60>
+
+	* ZM.c: 1.3 2007/04/04 04:56:23 kichiki Exp
+	update to the order of 153.
+
+	* YM.c: 1.3 2007/04/04 04:55:54 kichiki Exp
+	update to the order of 124.
+
+	* XM.c: 1.3 2007/04/04 04:55:29 kichiki Exp
+	update to the order of 116.
+
+	* YH.c: 1.3 2007/04/04 04:55:04 kichiki Exp
+	update to the order of 124.
+
+	* YG.c: 1.4 2007/04/04 04:54:37 kichiki Exp
+	update to the order of 149.
+
+	* XG.c: 1.4 2007/04/04 04:54:11 kichiki Exp
+	update to the order of 139.
+
+	* YC.c: 1.3 2007/04/04 04:53:44 kichiki Exp
+	update to the order of 124.
+
+	* XC.c: 1.4 2007/04/04 04:53:16 kichiki Exp
+	update to the order of 175.
+
+	* YB.c: 1.4 2007/04/04 04:52:44 kichiki Exp
+	update to the order of 149.
+
+	* YA.c: 1.4 2007/04/04 04:52:13 kichiki Exp
+	update to the order of 148.
+
+2007-04-02  Kengo Ichiki  <ichiki@tpr60>
+
+	* XA.c: 1.4 2007/04/03 06:00:53 kichiki Exp
+	update to the order of 138.
+
+	* twobody.h: 1.3 2007/04/03 02:35:01 kichiki Exp
+	* twobody.c: 1.3 2007/04/03 02:34:12 kichiki Exp
+	(twobody_scale): added.
+	(twobody_scalars_res): added. this is a polydisperse version of
+	scalar_two_body_res() in two-body-res.c.
+
+	* XA.c: 1.3 2007/04/03 02:11:31 kichiki Exp
+        * YA.c: 1.3 2007/04/03 02:12:03 kichiki Exp
+        * YB.c: 1.3 2007/04/03 02:12:35 kichiki Exp
+        * XC.c: 1.3 2007/04/03 02:13:07 kichiki Exp
+        * YC.c: 1.2 2007/04/03 02:13:34 kichiki Exp
+        * XG.c: 1.3 2007/04/03 02:14:05 kichiki Exp
+        * YG.c: 1.3 2007/04/03 02:14:34 kichiki Exp
+        * YH.c: 1.2 2007/04/03 02:15:00 kichiki Exp
+        * XM.c: 1.2 2007/04/03 02:15:28 kichiki Exp
+        * YM.c: 1.2 2007/04/03 02:15:55 kichiki Exp
+	* ZM.c: 1.2 2007/04/03 02:16:21 kichiki Exp
+        * XP.c: 1.2 2007/04/03 02:17:56 kichiki Exp
+        * XQ.c: 1.2 2007/04/03 02:18:22 kichiki Exp
+	add some handling the orders beyond the implementation.
+
+	* non-ewald.h: 1.3 2007/04/03 02:10:34 kichiki Exp
+	* non-ewald.c: 1.4 2007/04/03 02:10:00 kichiki Exp
+	(scalars_nonewald): change the argument from doubles to the pointer.
+	some other house-keeping change.
+	(scalars_nonewald_poly): added.
+	(atimes_nonewald_3all): add polydisperse procedure.
+	(make_matrix_mob_nonewald_3all): add polydisperse procedure.
+
+2007-03-30  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.h: 2.5 2007/03/31 04:12:26 kichiki Exp
+	* fts.c: 2.8 2007/03/31 04:11:59 kichiki Exp
+	(matrix_fts_ij): bug fixed on the self part of B-tilde and
+	the self part of G-tilde.
+	(matrix_ij_GT): added.
+	(matrix_ij_Gt): removed. use matrix_ij_GT() -- the plain transposed
+	version -- for it as in matrix_fts_ij().
+	(matrix_ij_HT): change the name from ...Ht(). this is just the plain
+	transposed version of matrix_ij_H() and it is actually the same
+	of matrix_ij_Ht() because H(ij) = H(ji).
+	(matrix_fts_self_atimes): added.
+	(calc_lub_fts_2b): bug fixed on self parts of B-tilde and G-tilde.
+
+	* ft.h: 2.6 2007/03/31 04:11:17 kichiki Exp
+	* ft.c: 2.9 2007/03/31 04:10:49 kichiki Exp
+	(matrix_ft_ij): bug fixed on the self part of B-tilde.
+	(matrix_ij_Bt): removed. use matrix_ij_B() for B-tilde part
+	as in matrix_ft_ij().
+	(matrix_ft_self_atimes): added.
+	(calc_lub_ft_2b): bug fixed on self parts of B-tilde.
+
+2007-03-28  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.22 2007/03/29 02:33:28 kichiki Exp
+	* stokes.h: 1.13 2007/03/29 02:26:32 kichiki Exp
+	* stokes.c: 2.12 2007/03/29 02:25:38 kichiki Exp
+	(stokes_set_pos_mobile, stokes_set_pos_fixed): added.
+
+	* fts.c: 2.7 2007/03/29 02:22:34 kichiki Exp
+	(calc_lub_fts_2b, matrix_lub_fts_2b): drop '=' from cond. for lubcut.
+
+	* ft.c: 2.8 2007/03/29 02:19:43 kichiki Exp
+	(calc_lub_ft_2b, matrix_lub_ft_2b): drop '=' from cond. for lubcut.
+
+	* f.c: 2.6 2007/03/29 02:17:26 kichiki Exp
+	(calc_lub_f_2b, matrix_lub_f_2b): drop '=' from cond. for lubcut.
+
+2007-03-27  Kengo Ichiki  <ichiki@tpr60>
+
+	* twobody.h: 1.2 2007/03/27 07:05:11 kichiki Exp
+	* twobody.c: 1.2 2007/03/27 07:02:29 kichiki Exp
+	(twobody_lub): added. G,H,M are not implemented yet.
+
+	* fts.c: 2.6 2007/03/27 06:56:46 kichiki Exp
+	(matrix_fts_ij): bug fixed on B~ part -- self part should be negative
+	to maintain the symmetry.
+
+	* ft.c: 2.7 2007/03/27 06:56:15 kichiki Exp
+	(matrix_ft_ij): bug fixed on B~ part -- self part should be negative
+	to maintain the symmetry.
+
+2007-03-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.20 2007/03/26 04:04:05 kichiki Exp
+	import stokes.h --
+	add 'rad' in struct stokes for polydispersity.
+	add 'lubmax2' in struct stokes.
+	import stokes-nc.h --
+	(stokes_nc_x_init): added.
+
+	* stokes.h: 1.11 2007/03/26 03:58:35 kichiki Exp
+	* stokes.c: 2.11 2007/03/26 03:57:49 kichiki Exp
+	add 'rad' in struct stokes for polydispersity.
+	add 'lubmax2' in struct stokes.
+
+	* lub-matrix.c: 1.7 2007/03/26 03:56:06 kichiki Exp
+	* lub.c: 5.4 2007/03/26 03:55:27 kichiki Exp
+	(cond_lub): introduce lubmax2 in the argument for the limit.
+
+	* YG.c: 1.2 2007/03/26 03:30:28 kichiki Exp
+	update to the order of 139.
+
+	* XG.c: 1.2 2007/03/26 02:27:26 kichiki Exp
+	update to the order of 130.
+
+	* XC.c: 1.2 2007/03/26 00:57:44 kichiki Exp
+	update to the order of 168.
+
+	* YB.c: 1.2 2007/03/26 00:56:24 kichiki Exp
+	update to the order of 142.
+
+	* YA.c: 1.2 2007/03/25 23:17:56 kichiki Exp
+	update to the order of 141.
+
+	* XA.c: 1.2 2007/03/25 21:51:06 kichiki Exp
+	update to the order of 132.
+
+2007-03-24  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile.am: 1.10 2007/03/25 03:45:12 kichiki Exp
+	add [XYZ][ABCGHMPQ].c and twobody.c.
+
+        * twobody.h: 1.1 2007/03/25 03:41:56 kichiki Exp
+        * twobody.c: 1.1 2007/03/25 03:41:56 kichiki Exp
+	added. this is the wrapper for [XYZ][ABCGHMPQ].c
+
+	* XA.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YA.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YB.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * XC.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YC.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * XG.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YG.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YH.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * XM.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * YM.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+	* ZM.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * XP.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+        * XQ.c: 1.1 2007/03/25 03:36:31 kichiki Exp
+	added from RYUON-twobody.
+
+2007-03-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.19 2007/03/18 23:51:06 kichiki Exp
+	(solve_mob_lub_3f): added.
+	(solve_mob_lub_3ft): added.
+	(solve_mob_lub_3fts): added.
+
+	* ewald-3fts.h: 5.7 2007/03/18 23:49:25 kichiki Exp
+	* ewald-3fts.c: 5.13 2007/03/18 23:48:37 kichiki Exp
+	(solve_mob_lub_3fts): added.
+
+	* ewald-3ft.h: 4.6 2007/03/18 23:47:41 kichiki Exp
+	* ewald-3ft.c: 4.13 2007/03/18 23:46:55 kichiki Exp
+	(solve_mob_lub_3ft): added.
+
+	* ewald-3f.h: 4.6 2007/03/18 23:45:59 kichiki Exp
+	* ewald-3f.c: 4.12 2007/03/18 23:45:17 kichiki Exp
+	(solve_mob_lub_3f): added.
+
+	* matrix.h: 1.3 2007/03/18 22:58:13 kichiki Exp
+	* matrix.c: 1.7 2007/03/18 22:57:09 kichiki Exp
+	(mul_matrices): bug fixed on beta for FORTRAN blas routine.
+	add the check for the pointer C.
+	(solve_linear): use mul_matrices().
+	(mul_left_sq): make it static. used only in solve_gen_linear().
+	(add_and_mul): make it static. used only in solve_gen_linear().
+	use mul_matrices(), a wrapper for BLAS routines.
+	therefore, now you cannot use D == A.
+
+	* memory-check.h: 1.1 2007/03/18 22:33:25 kichiki Exp
+	added.
+
+	* ewald.c: 1.6 2007/03/18 22:31:02 kichiki Exp
+	(atimes_ewald_3all): bug fixed for indices i and j -- because
+	r = x[j]-x[i], it should be U[i] and F[j] as in
+	make_matrix_mob_ewald_3all().
+
+	* non-ewald.c: 1.3 2007/03/18 22:28:48 kichiki Exp
+	(atimes_nonewald_3all): bug fixed for indices i and j -- because
+	r = x[j]-x[i], it should be U[i] and F[j] as in
+	make_matrix_mob_nonewald_3all().
+
+2007-03-07  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile.am: 1.9 2007/03/07 23:12:39 kichiki Exp
+	according to the API change for solvers, update LDFLAGS
+	from 4:1:1 to 5:0:0.
+
+	* libstokes.h: 1.18 2007/03/07 22:51:02 kichiki Exp
+	revised for solver routines.
+	remove atimes routines.
+
+	* ewald.h: 1.5 2007/03/07 22:33:56 kichiki Exp
+	* ewald.c: 1.5 2007/03/07 22:33:26 kichiki Exp
+	(atimes_3all): added for a wrapper for atimes_ewald_3all() and
+	atimes_nonewald_3all().
+	(atimes_ewald_3all): reverse to the ewald-specific. use the new
+	atimes_3all(), instead.
+	(make_matrix_mob_3all): added for a wrapper for
+	make_matrix_mob_ewald_3all() and make_matrix_mob_nonewald_3all().
+	(make_matrix_mob_ewald_3all): reverse to the ewald-specific.
+	use the new make_matrix_mob_3all(), instead.
+	(atimes_3all_matrix): change the name from atimes_ewald_3all_matrix().
+
+	* non-ewald.h: 1.2 2007/03/07 22:32:29 kichiki Exp
+	* non-ewald.c: 1.2 2007/03/07 22:32:04 kichiki Exp
+	(atimes_nonewald_3all): change the name from atimes_3all().
+	(make_matrix_mob_nonewald_3all): change the name from
+	make_matrix_mob_3all().
+	(atimes_nonewald_3all_matrix): change the name from
+	atimes_3all_matrix().
+
+	* ewald-2fts.h: 1.4 2007/03/07 22:26:40 kichiki Exp
+	* ewald-2fts.c: 1.7 2007/03/07 22:26:16 kichiki Exp
+	(solve_res_2fts): change the name from solve_res_ewald_2fts().
+	(solve_mob_2fts): change the name from solve_mob_ewald_2fts().
+	(solve_mix_2fts): change the name from solve_mix_ewald_2fts().
+	(solve_res_lub_2fts): change the name from solve_res_lub_ewald_2fts().
+	(solve_mix_lub_2fts): change the name from solve_mix_lub_ewald_2fts().
+
+	* ewald-2ft.h: 1.4 2007/03/07 22:25:46 kichiki Exp
+	* ewald-2ft.c: 1.6 2007/03/07 22:25:23 kichiki Exp
+	(solve_res_2ft): change the name from solve_res_ewald_2ft().
+	(solve_mob_2ft): change the name from solve_mob_ewald_2ft().
+	(solve_mix_2ft): change the name from solve_mix_ewald_2ft().
+	(solve_res_lub_2ft): change the name from solve_res_lub_ewald_2ft().
+	(solve_mix_lub_2ft): change the name from solve_mix_lub_ewald_2ft().
+
+	* ewald-2f.h: 1.4 2007/03/07 22:25:00 kichiki Exp
+	* ewald-2f.c: 1.7 2007/03/07 22:24:36 kichiki Exp
+	(solve_res_2f): change the name from solve_res_ewald_2f().
+	(solve_mob_2f): change the name from solve_mob_ewald_2f().
+	(solve_mix_2f): change the name from solve_mix_ewald_2f().
+	(solve_res_lub_2f): change the name from solve_res_lub_ewald_2f().
+	(solve_mix_lub_2f): change the name from solve_mix_lub_ewald_2f().
+
+	* ewald-3fts-matrix.h: 2.6 2007/03/07 22:09:20 kichiki Exp
+	* ewald-3fts-matrix.c: 2.12 2007/03/07 22:08:54 kichiki Exp
+	(solve_res_3fts_matrix): change the name from
+	solve_res_ewald_3fts_matrix().
+	(solve_res_lub_3fts_matrix): change the name from
+	solve_res_lub_ewald_3fts_matrix().
+	(solve_mob_3fts_matrix): change the name from 
+	solve_mob_ewald_3fts_matrix().
+	(solve_mob_lub_3fts_matrix): change the name from 
+	solve_mob_lub_ewald_3fts_matrix().
+	(solve_mix_3fts_matrix): change the name from 
+	solve_mix_ewald_3fts_matrix().
+	(solve_mix_lub_3fts_matrix): change the name from 
+	solve_mix_lub_ewald_3fts_matrix().
+
+	* ewald-3ft-matrix.h: 2.6 2007/03/07 22:08:18 kichiki Exp
+	* ewald-3ft-matrix.c: 2.12 2007/03/07 22:07:47 kichiki Exp
+	(solve_res_3ft_matrix): change the name from
+	solve_res_ewald_3ft_matrix().
+	(solve_res_lub_3ft_matrix): change the name from
+	solve_res_lub_ewald_3ft_matrix().
+	(solve_mob_3ft_matrix): change the name from 
+	solve_mob_ewald_3ft_matrix().
+	(solve_mob_lub_3ft_matrix): change the name from 
+	solve_mob_lub_ewald_3ft_matrix().
+	(solve_mix_3ft_matrix): change the name from 
+	solve_mix_ewald_3ft_matrix().
+	(solve_mix_lub_3ft_matrix): change the name from 
+	solve_mix_lub_ewald_3ft_matrix().
+
+	* ewald-3f-matrix.h: 2.6 2007/03/07 22:07:10 kichiki Exp
+	* ewald-3f-matrix.c: 2.13 2007/03/07 22:06:34 kichiki Exp
+	(solve_res_3f_matrix): change the name from
+	solve_res_ewald_3f_matrix().
+	(solve_res_lub_3f_matrix): change the name from
+	solve_res_lub_ewald_3f_matrix().
+	(solve_mob_3f_matrix): change the name from 
+	solve_mob_ewald_3f_matrix().
+	(solve_mob_lub_3f_matrix): change the name from 
+	solve_mob_lub_ewald_3f_matrix().
+	(solve_mix_3f_matrix): change the name from 
+	solve_mix_ewald_3f_matrix().
+	(solve_mix_lub_3f_matrix): change the name from 
+	solve_mix_lub_ewald_3f_matrix().
+
+	* lub-matrix.h: 1.3 2007/03/07 21:34:15 kichiki Exp
+	* lub-matrix.c: 1.6 2007/03/07 21:33:45 kichiki Exp
+	(make_matrix_lub_3f): change the name from
+	make_matrix_lub_ewald_3f().
+	(make_matrix_lub_3ft): change the name from
+	make_matrix_lub_ewald_3ft().
+	(make_matrix_lub_3fts): change the name from
+	make_matrix_lub_ewald_3fts().
+
+	* ewald-3fts.h: 5.6 2007/03/07 21:04:54 kichiki Exp
+	* ewald-3fts.c: 5.12 2007/03/07 21:04:26 kichiki Exp
+	(solve_res_3fts): change the name from solve_res_ewald_3fts().
+	(solve_mob_3fts): change the name from solve_mob_ewald_3fts().
+	(solve_mix_3fts): change the name from solve_mix_ewald_3fts().
+	(solve_res_lub_3fts): change the name from solve_res_lub_ewald_3fts().
+	(solve_mix_lub_3fts): change the name from solve_mix_lub_ewald_3fts().
+
+	* ewald-3ft.h: 4.5 2007/03/07 21:03:38 kichiki Exp
+	* ewald-3ft.c: 4.12 2007/03/07 21:03:11 kichiki Exp
+	(solve_res_3ft): change the name from solve_res_ewald_3ft().
+	(solve_mob_3ft): change the name from solve_mob_ewald_3ft().
+	(solve_mix_3ft): change the name from solve_mix_ewald_3ft().
+	(solve_res_lub_3ft): change the name from solve_res_lub_ewald_3ft().
+	(solve_mix_lub_3ft): change the name from solve_mix_lub_ewald_3ft().
+
+	* ewald-3f.h: 4.5 2007/03/07 21:02:34 kichiki Exp
+	* ewald-3f.c: 4.11 2007/03/07 21:02:07 kichiki Exp
+	(solve_res_3f): change the name from solve_res_ewald_3f().
+	(solve_mob_3f): change the name from solve_mob_ewald_3f().
+	(solve_mix_3f): change the name from solve_mix_ewald_3f().
+	(solve_res_lub_3f): change the name from solve_res_lub_ewald_3f().
+	(solve_mix_lub_3f): change the name from solve_mix_lub_ewald_3f().
+
+	* lub.h: 5.2 2007/03/07 20:37:05 kichiki Exp
+	* lub.c: 5.3 2007/03/07 20:36:23 kichiki Exp
+	(calc_lub_3f): change the name from calc_lub_ewald_3f().
+	(calc_lub_3ft): change the name from calc_lub_ewald_3ft().
+	(calc_lub_3fts): change the name from calc_lub_ewald_3fts().
+
+	* fts.h: 2.4 2007/03/07 20:35:45 kichiki Exp
+	* fts.c: 2.5 2007/03/07 20:35:19 kichiki Exp
+	(calc_lub_3fts): removed. use the new calc_lub_3fts() in lub.c.
+
+	* ft.h: 2.5 2007/03/07 20:34:46 kichiki Exp
+	* ft.c: 2.6 2007/03/07 20:34:19 kichiki Exp
+	(calc_lub_3ft): removed. use the new calc_lub_3ft() in lub.c.
+
+	* f.h: 2.4 2007/03/07 20:33:39 kichiki Exp
+	* f.c: 2.5 2007/03/07 20:33:13 kichiki Exp
+	(calc_lub_3f): removed. use the new calc_lub_3f() in lub.c.
+
+2007-02-14  Kengo Ichiki  <ichiki@tpr60>
+
+	* Makefile.am: 1.8 2007/02/15 03:42:29 kichiki Exp
+	add 'non-ewald.c'.
+	API is hold so that just REVISION is incremented to 4:1:1.
+
+	* libstokes.h: 1.16 2007/02/15 03:41:37 kichiki Exp
+	now libstokes can handle non-periodic system.
+	update the struct stokes from stokes.h and the comments on
+	the routines in ewald.c.
+
+	* ewald-3fts-matrix.c: 2.11 2007/02/15 03:39:40 kichiki Exp
+	now multiply_extmat_with_extvec_3fts() is in matrix.c.
+
+	* lub-matrix.c: 1.5 2007/02/15 03:29:35 kichiki Exp
+	(make_matrix_lub_ewald_3f): 
+	(make_matrix_lub_ewald_3ft): 
+	(make_matrix_lub_ewald_3fts): 
+	enable to handle non-periodic case.
+
+	* lub.c: 5.2 2007/02/15 03:28:46 kichiki Exp
+	(calc_lub_ewald_3f): 
+	(calc_lub_ewald_3ft): 
+	(calc_lub_ewald_3fts): 
+	enable to handle non-periodic case.
+
+	* ewald.h: 1.4 2007/02/15 03:27:44 kichiki Exp
+	* ewald.c: 1.4 2007/02/15 03:27:07 kichiki Exp
+	move multiply_extmat_with_extvec_3fts() to matrix.c.
+	(atimes_ewald_3all): 
+	(make_matrix_mob_ewald_3all): 
+	enable to handle non-periodic case.
+
+	* non-ewald.h: 1.1 2007/02/15 03:26:22 kichiki Exp
+	* non-ewald.c: 1.1 2007/02/15 03:25:55 kichiki Exp
+	added.
+
+	* matrix.h: 1.2 2007/02/15 03:25:25 kichiki Exp
+	* matrix.c: 1.6 2007/02/15 03:24:57 kichiki Exp
+	(multiply_extmat_with_extvec_3fts): moved from ewald.c.
+
+	* stokes.h: 1.10 2007/02/15 03:24:14 kichiki Exp
+	* stokes.c: 2.10 2007/02/15 03:23:40 kichiki Exp
+	element 'periodic' is included in struct stokes.
+
+2006-10-22  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.4-RELEASE
+
+	* put a tag LIBSTOKES_0_4_1_RELEASE
+
+	* libstokes.h: 1.14 2006/10/23 00:21:30 kichiki Exp
+	* stokes.h: 1.9 2006/10/23 00:21:30 kichiki Exp
+	* stokes.c: 2.9 2006/10/23 00:21:30 kichiki Exp
+	change the name of (local) variable cutlim to ewald_eps.
+
+	* ewald-3f-matrix.c: 2.12 2006/10/23 00:22:04 kichiki Exp
+	(solve_mob_lub_ewald_3f_matrix): bug fixed on n3.
+
+	* ewald-3fts.c: 5.11 2006/10/22 23:01:44 kichiki Exp
+	* ewald-3ft.c: 4.11 2006/10/22 23:00:28 kichiki Exp
+	* ewald-3f.c: 4.10 2006/10/22 22:59:28 kichiki Exp
+	for mix_lub, here in atimes scheme, mob_lub routines are not
+	implemented, so that call plain mob for time being.
+
+	* ewald-3fts-matrix.c: 2.10 2006/10/22 22:58:57 kichiki Exp
+	* ewald-3ft-matrix.c: 2.11 2006/10/22 22:58:57 kichiki Exp
+	trivial bug fixed.
+
+	* matrix.c: 1.5 2006/10/22 22:47:10 kichiki Exp
+	add conditions for BLAS libraries.
+
+	* dgemv_c.h: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemv_c.c: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemm_c.h: 1.1 2006/10/22 22:43:44 kichiki Exp
+	* dgemm_c.c: 1.1 2006/10/22 22:43:44 kichiki Exp
+	import from stokes-src for plain BLAS environment.
+
+	* ewald-3fts-matrix.c: 2.9 2006/10/22 22:26:57 kichiki Exp
+	(solve_mix_ewald_3fts_matrix, solve_mix_lub_ewald_3fts_matrix): 
+	call mob routine if np == nm.
+
+	* ewald-3fts.c: 5.10 2006/10/22 22:25:25 kichiki Exp
+	(solve_mix_ewald_3fts, solve_mix_lub_ewald_3fts): 
+	call mob routine if np == nm.
+
+	* ewald-3ft-matrix.c: 2.10 2006/10/22 22:23:58 kichiki Exp
+	(solve_mix_ewald_3ft_matrix, solve_mix_lub_ewald_3ft_matrix): 
+	call mob routine if np == nm.
+
+	* ewald-3ft.c: 4.10 2006/10/22 22:22:45 kichiki Exp
+	(solve_mix_ewald_3ft, solve_mix_lub_ewald_3ft):
+	call mob routine if np == nm.
+
+	* ewald-3f-matrix.c: 2.11 2006/10/22 22:19:32 kichiki Exp
+	(solve_mix_lub_ewald_3f_matrix):
+	call mob routine if np == nm.
+
+	* ewald-3f.c: 4.9 2006/10/22 22:17:54 kichiki Exp
+	(solve_mix_ewald_3f, solve_mix_lub_ewald_3f):
+	call mob routine if np == nm.
+
+	* put a tag LIBSTOKES_0_4_RELEASE
+
+2006-10-19  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3fts-matrix.c: 2.8 2006/10/19 18:27:24 ichiki Exp
+	* ewald-3fts.c: 5.9 2006/10/19 18:27:03 ichiki Exp
+	* ewald-3ft-matrix.c: 2.9 2006/10/19 18:26:39 ichiki Exp
+	* ewald-3ft.c: 4.9 2006/10/19 18:26:22 ichiki Exp
+	* ewald-3f-matrix.c: 2.10 2006/10/19 18:26:00 ichiki Exp
+	* ewald-3f.c: 4.8 2006/10/19 18:25:29 ichiki Exp
+	implement shift between labo and fluid-rest frames for all solvers.
+
+	* fts.h: 2.3 2006/10/19 18:24:28 ichiki Exp
+	* fts.c: 2.4 2006/10/19 18:24:06 ichiki Exp
+	(shift_labo_to_rest_E): added.
+
+	* ft.h: 2.4 2006/10/19 18:23:38 ichiki Exp
+	* ft.c: 2.5 2006/10/19 18:23:12 ichiki Exp
+	(shift_labo_to_rest_O): added.
+	(shift_rest_to_labo_O): added.
+
+	* f.h: 2.3 2006/10/19 18:22:35 ichiki Exp
+	* f.c: 2.4 2006/10/19 18:22:10 ichiki Exp
+	(shift_labo_to_rest_U): added.
+	(shift_rest_to_labo_U): added.
+
+	* libstokes.h: 1.11 2006/10/19 04:32:17 ichiki Exp
+	add entries from stokes-nc-read.h and stokes-guile.h.
+	update for all ewald codes.
+
+	* Makefile.am: 1.4 2006/10/19 04:18:59 ichiki Exp
+	add stokes-nc-read.c and stokes-guile.c.
+	increment the library version.
+
+	* ewald-2fts.h: 1.3 2006/10/19 04:17:51 ichiki Exp
+	* ewald-2fts.c: 1.6 2006/10/19 04:17:29 ichiki Exp
+	* ewald-2ft.h: 1.3 2006/10/19 04:17:11 ichiki Exp
+	* ewald-2ft.c: 1.5 2006/10/19 04:16:51 ichiki Exp
+	* ewald-2f.h: 1.3 2006/10/19 04:16:32 ichiki Exp
+	* ewald-2f.c: 1.6 2006/10/19 04:16:11 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+
+	* ewald-3fts-matrix.h: 2.5 2006/10/19 04:15:49 ichiki Exp
+	* ewald-3fts-matrix.c: 2.7 2006/10/19 04:15:26 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3fts_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3fts_matrix): take into account the imposed
+	flow.
+
+	* ewald-3fts.h: 5.5 2006/10/19 04:15:01 ichiki Exp
+	* ewald-3fts.c: 5.8 2006/10/19 04:14:40 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3fts): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3fts): take into account the imposed flow.
+
+	* ewald-3ft-matrix.h: 2.5 2006/10/19 04:14:17 ichiki Exp
+	* ewald-3ft-matrix.c: 2.8 2006/10/19 04:13:54 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3ft_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3ft_matrix): take into account the imposed
+	flow.
+
+	* ewald-3ft.h: 4.4 2006/10/19 04:13:31 ichiki Exp
+	* ewald-3ft.c: 4.8 2006/10/19 04:13:10 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3ft): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3ft): take into account the imposed flow.
+
+	* ewald-3f-matrix.h: 2.5 2006/10/19 04:12:45 ichiki Exp
+	* ewald-3f-matrix.c: 2.9 2006/10/19 04:12:24 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3f_matrix): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3f_matrix): take into account the imposed flow.
+
+	* ewald-3f.h: 4.4 2006/10/19 04:11:58 ichiki Exp
+	* ewald-3f.c: 4.7 2006/10/19 04:11:28 ichiki Exp
+	change the routine's name from calc_...() to solve_...(), and
+	from ..._mob_fix_...() to ..._mix_...().
+	(calc_mob_fix_ewald_3f): take into account the imposed flow.
+	(calc_mob_lub_fix_ewald_3f): take into account the imposed flow.
+
+2006-10-18  Kengo Ichiki  <ichiki@tpr60>
+
+	* stokes.h: 1.8 2006/10/19 03:15:51 ichiki Exp
+	* stokes.c: 2.8 2006/10/19 03:15:31 ichiki Exp
+	add imposed flow informations into struct stokes.
+	(stokes_set_l): change the name from stokes_set_ll().
+
+2006-10-12  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.3-RELEASE
+
+	* Makefile.am: 1.3 2006/10/12 15:05:55 ichiki Exp
+	add lub.c.
+
+	* fts.c: 2.3 2006/10/12 15:05:11 ichiki Exp
+	* ft.c: 2.4 2006/10/12 15:04:44 ichiki Exp
+	* f.c: 2.3 2006/10/12 15:04:23 ichiki Exp
+	* lub-matrix.h: 1.2 2006/10/12 15:03:41 ichiki Exp
+	* lub-matrix.c: 1.4 2006/10/12 15:03:18 ichiki Exp
+	minor style update.
+
+	* lub.h: 5.1 2006/10/12 15:02:12 ichiki Exp
+	* lub.c: 5.1 2006/10/12 15:01:45 ichiki Exp
+	extract lub routines from ewald-3*.c.
+
+	* ewald-3fts.c: 5.7 2006/10/12 15:01:01 ichiki Exp
+	* ewald-3ft.c: 4.7 2006/10/12 15:00:11 ichiki Exp
+	* ewald-3f.c: 4.6 2006/10/12 14:59:48 ichiki Exp
+	split lub routines to lub.c.
+
+	* ewald-3fts-matrix.c: 2.6 2006/10/12 04:47:07 ichiki Exp
+	* ewald-3ft-matrix.c: 2.7 2006/10/12 04:46:44 ichiki Exp
+	* ewald-3f-matrix.c: 2.8 2006/10/12 04:46:23 ichiki Exp
+	revive memory-allocation check.
+
+	* lub-matrix.c: 1.3 2006/10/12 04:31:41 ichiki Exp
+	bug fixed on memory handling.
+
+2006-10-10  Kengo Ichiki  <ichiki@tpr60>
+
+	* libstokes.h: 1.9 2006/10/11 03:18:52 ichiki Exp
+	* stokes.h: 1.7 2006/10/11 03:18:31 ichiki Exp
+	* stokes.c: 2.7 2006/10/11 03:18:15 ichiki Exp
+	(stokes_set_pos): added.
+
+	* libstokes.h: 1.8 2006/10/10 17:15:42 ichiki Exp
+	* stokes.h: 1.6 2006/10/10 17:15:18 ichiki Exp
+	* stokes.c: 2.6 2006/10/10 17:14:55 ichiki Exp
+	(stokes_set_iter): added.
+
+2006-10-06  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3ft-matrix.c: 2.6 2006/10/06 20:32:21 kichiki Exp
+	(merge_matrix_fix_3ft): bug fixed.
+	(calc_mob_fix_ewald_3ft_matrix): bug fixed.
+
+	* ewald-3f-matrix.c: 2.6 2006/10/06 20:31:41 kichiki Exp
+	(merge_matrix_fix_3f): bug fixed.
+	(calc_mob_fix_ewald_3f_matrix): bug fixed.
+
+2006-10-05  Kengo Ichiki  <ichiki@tpr60>
+
+	* 0.2-RELEASE
+
+	* libstokes.h: 1.7 2006/10/05 21:33:29 ichiki Exp
+	updated.
+
+	* stokes.h: 1.5 2006/10/05 21:32:10 ichiki Exp
+	* stokes.c: 2.5 2006/10/05 21:31:41 ichiki Exp
+	now always making the ewald table.
+	make ewald-table stuff static (hidden).
+	correct the name of parameter 'zeta' to 'xi' in struct stokes.
+	use rmax2 instead of rmax in struct stokes.
+
+	* ewald.h: 1.3 2006/10/05 21:31:15 ichiki Exp
+	* ewald.c: 1.3 2006/10/05 21:30:45 ichiki Exp
+	make the table version default.
+	some minor improvement on atimes routines -- 1) replace the order
+	of lattice summation and particle-particle loop in reciprocal
+	space, 2) use rmax2 instead of rmax to check the condition
+	in real space.
+	(atimes_ewald_3all): change the name to ..._notbl().
+	(make_matrix_mob_ewald_3all): change the name to ..._notbl().
+	(atimes_ewald_3all_matrix): change the name to ..._notbl().
+	(atimes_ewald_3all_table): cut _table from the name.
+	(make_matrix_mob_ewald_3all_table): cut _table from the name.
+	(atimes_ewald_3all_table_matrix): cut _table from the name.
+
+	* lub-matrix.c: 1.2 2006/10/05 21:26:46 ichiki Exp
+	* ewald-3fts-matrix.c: 2.5 2006/10/05 21:26:10 ichiki Exp
+	* ewald-3ft-matrix.c: 2.5 2006/10/05 21:25:38 ichiki Exp
+	* ewald-3f-matrix.c: 2.5 2006/10/05 21:25:10 ichiki Exp
+	adjust headers.
+
+	* ewald-3f.h: 4.3 2006/10/05 19:23:59 ichiki Exp
+	* ewald-3f.c: 4.5 2006/10/05 19:23:38 ichiki Exp
+	use 3all routine in ewald.c.
+	(atimes_ewald_3f): removed.
+
+	* ewald-3ft.h: 4.3 2006/10/05 19:09:14 ichiki Exp
+	* ewald-3ft.c: 4.5 2006/10/05 19:08:52 ichiki Exp
+	use 3all routine in ewald.c.
+	(atimes_ewald_3ft): removed.
+
+	* ewald-3fts.h: 5.4 2006/10/05 19:00:50 ichiki Exp
+	* ewald-3fts.c: 5.5 2006/10/05 19:00:27 ichiki Exp
+	use 3all routine in ewald.c.
+	(atimes_ewald_3fts): removed.
+
+	* configure.in: 1.2 2006/10/05 18:30:18 ichiki Exp
+	increment the version to 0.2.
+
+	* Makefile.am: 1.3 2006/10/05 18:28:46 ichiki Exp
+	add matrix codes.
+
+	* libstokes.h: 1.5 2006/10/05 18:23:11 ichiki Exp
+	add calc_mob_*_matrix calc_res_*_matrix routines.
+
+	* ewald-3fts-matrix.h: 2.4 2006/10/05 04:55:14 ichiki Exp
+	* ewald-3fts-matrix.c: 2.4 2006/10/05 04:54:45 ichiki Exp
+	(make_matrix_lub_ewald_3fts): moved to lub-matrix.c.
+
+	* ewald-3ft-matrix.h: 2.4 2006/10/05 04:53:42 ichiki Exp
+	* ewald-3ft-matrix.c: 2.4 2006/10/05 04:53:14 ichiki Exp
+	(make_matrix_lub_ewald_3ft): moved to lub-matrix.c.
+
+	* ewald-3f-matrix.h: 2.4 2006/10/05 04:52:26 ichiki Exp
+	* ewald-3f-matrix.c: 2.4 2006/10/05 04:51:59 ichiki Exp
+	(make_matrix_lub_ewald_3f) moved to lub-matrix.c.
+
+	* lub-matrix.h: 1.1 2006/10/05 04:48:18 ichiki Exp
+	* lub-matrix.c: 1.1 2006/10/05 04:48:01 ichiki Exp
+	split from ewald-3f/ft/fts-matrix.c.
+
+	* ewald-3f-matrix.h: 2.3 2006/10/05 04:29:12 ichiki Exp
+	* ewald-3f-matrix.c: 2.3 2006/10/05 04:27:51 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3f): removed. use 3all routine in ewald.c.
+	(atimes_ewald_3f_matrix): removed. use 3all routine in ewald.c.
+
+	* ewald-3ft-matrix.h: 2.3 2006/10/05 04:27:18 ichiki Exp
+	* ewald-3ft-matrix.c: 2.3 2006/10/05 04:25:47 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3ft): removed. use 3all routine in ewald.c.
+	(atimes_ewald_3ft_matrix): removed. use 3all routine in ewald.c.
+
+	* ewald.h: 1.2 2006/10/05 04:10:46 ichiki Exp
+	* ewald.c: 1.2 2006/10/05 04:10:22 ichiki Exp
+	(scalars_ewald_real): extract this part into a subroutine.
+	(atimes_ewald_3all): added. this is a generic non-table version.
+	(make_matrix_mob_ewald_3all): added. this is a generic non-table
+	version.
+	(atimes_ewald_3all_matrix): added. this is a generic non-table version.
+
+	* ewald-3fts-matrix.h: 2.3 2006/10/05 04:02:56 ichiki Exp
+	* ewald-3fts-matrix.c: 2.3 2006/10/05 04:02:32 ichiki Exp
+	use new generic routine (3all) in ewald.c.
+	(make_matrix_mob_ewald_3fts): removed. use 3all_table routine
+	in ewald.c.
+	(atimes_ewald_3fts_matrix): removed. use 3all_table routine
+	in ewald.c.
+
+2006-10-04  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald.h: 1.1 2006/10/05 00:36:38 ichiki Exp
+	* ewald.c: 1.1 2006/10/05 00:36:19 ichiki Exp
+	initial revision.
+
+	* libstokes.h: 1.4 2006/10/05 00:29:36 kichiki Exp
+	update due to stokes.h.
+
+	* ewald-3fts.c: 5.4 2006/10/05 00:28:29 kichiki Exp
+	* ewald-3ft.c: 4.4 2006/10/05 00:27:44 kichiki Exp
+	* ewald-3f.c: 4.4 2006/10/05 00:26:53 kichiki Exp
+	update for new struct stokes.
+
+	* stokes.h: 1.4 2006/10/05 00:25:54 kichiki Exp
+	* stokes.c: 2.4 2006/10/05 00:25:12 kichiki Exp
+	change the name 'pcell[xyz]' to 'rmax[xyz]' in struct stokes.
+	add 'rmax' and 'kmax' in struct stokes.
+	add self_[acm] in struct stokes.
+	add ewald-table in struct stokes.
+	(stokes_set_zeta): revised for accuracy.
+	(stokes_ewald_table_free): moved from ryuon/libstokes-matrix/ewald.c.
+	(stokes_ewald_table_make): moved from ryuon/libstokes-matrix/ewald.c.
+
+	* ewald-3.h:
+	* ewald-3.c:
+	move to ryuon/stokes.
+
+2006-09-29  Kengo Ichiki  <ichiki@tpr60>
+
+	* dgetri_c.c: 1.5 2006/09/29 04:16:22 ichiki Exp
+	typo fixed.
+
+2006-09-28  Kengo Ichiki  <ichiki@tpr60>
+
+	* matrix.h: 1.1 2006/09/29 03:39:03 ichiki Exp
+	* matrix.c: 1.2 2006/09/29 03:38:48 ichiki Exp
+	(solve_gen_linear): use lapack_inv_() instead of lu_inv().
+	(solve_linear): use lapack_inv_() instead of lu_inv().
+	(mul_matrices): put 'const for const pointers.
+	(mul_left_sq): put 'const for const pointers.
+	(add_and_mul): put 'const for const pointers.
+	(dot_prod_matrix): put 'const for const pointers.
+
+	* dgetri_c.h: 1.3 2006/09/29 03:33:18 ichiki Exp
+	* dgetri_c.c: 1.4 2006/09/29 03:32:31 ichiki Exp
+	copy from WORK/src/MD.
+	(lapack_inv_): added.
+
+	* ewald-3f-matrix.h: 2.2 2006/09/29 03:31:48 ichiki Exp
+	* ewald-3f-matrix.c: 2.2 2006/09/29 03:31:28 ichiki Exp
+	start 3F version based on ewald-3fts-matrix.[ch] Rev 2.1.
+
+	* ewald-3ft-matrix.h: 2.2 2006/09/29 03:30:39 ichiki Exp
+	* ewald-3ft-matrix.c: 2.2 2006/09/29 03:29:58 ichiki Exp
+	start 3FT version based on ewald-3fts-matrix.[ch] Rev 2.1.
+
+	* ewald-3fts-matrix.h: 2.2 2006/09/29 03:28:43 ichiki Exp
+	* ewald-3fts-matrix.c: 2.2 2006/09/29 03:28:16 ichiki Exp
+	add 'const' for const pointers.
+	(make_matrix_mob_ewald_3fts): stop asigning local variables but use
+	sys->* directory.
+	update on cpu times and cut ZETA.
+	(calc_res_ewald_3fts_matrix): use lapack_inv_() instead of lu_inv().
+	(calc_res_lub_ewald_3fts_matrix): use lapack_inv_().
+
+	* ewald-3fts.c: 5.3 2006/09/28 04:49:16 kichiki Exp
+	use sys->lubcut.
+	revise for new libiter and struct stokes using solve_iter().
+	(atimes_ewald_3fts): change due to bench.c.
+	API of libstokes holds.
+
+	* ewald-3ft.c: 4.3 2006/09/28 04:48:21 kichiki Exp
+	use sys->lubcut.
+	revise for new libiter and struct stokes using solve_iter().
+	(atimes_ewald_3ft): change due to bench.c.
+	API of libstokes holds.
+
+	* ewald-3f.c: 4.3 2006/09/28 04:47:32 kichiki Exp
+	use sys->lubcut.
+	revise for new libiter and struct stokes using solve_iter().
+	(atimes_ewald_3f): change due to bench.c.
+	API of libstokes holds.
+
+	* fts.h: 2.2 2006/09/28 04:45:02 kichiki Exp
+	* fts.c: 2.2 2006/09/28 04:44:01 kichiki Exp
+	(calc_lub_fts_2b, matrix_lub_fts_2b): use sys->lubcut to prevent
+	divergence on lub.
+
+	* ft.h: 2.3 2006/09/28 04:42:52 kichiki Exp
+	* ft.c: 2.3 2006/09/28 04:42:13 kichiki Exp
+	(calc_lub_ft_2b): use sys->lubcut to prevent divergence on lub.
+	(matrix_lub_ft_2b): added.
+	use sys->lubcut to prevent divergence on lub.
+
+	* f.h: 2.2 2006/09/28 04:41:16 kichiki Exp
+	* f.c: 2.2 2006/09/28 04:40:52 kichiki Exp
+	(calc_lub_f_2b): use sys->lubcut to prevent divergence on lub.
+	(matrix_lub_f_2b): added.
+	use sys->lubcut to prevent divergence on lub.
+
+	* libstokes.h: 1.3 2006/09/28 04:39:47 kichiki Exp
+	add 'lubcut' and 'iter' in struct stokes.
+
+	* stokes.h: 1.3 2006/09/28 04:38:43 kichiki Exp
+	add 'lubcut' in struct stokes.
+
+	* stokes.c: 2.3 2006/09/28 04:37:13 kichiki Exp
+	(stokes_init): add parameters for libiter.
+
+	* bench.h: 1.3 2006/09/28 04:35:07 kichiki Exp
+	* bench.c: 1.4 2006/09/28 04:34:28 kichiki Exp
+	return the current time, not the difference.
+	the API holds.
+
+2006-09-26  Kengo Ichiki  <ichiki@tpr60>
+
+	* ewald-3fts.h: 5.3 2006/09/27 00:47:54 ichiki Exp
+	minor change.
+
+	* 0.1-RELEASE
+
+	* bench.h: 1.2 2006/09/27 00:19:49 ichiki Exp
+	* bench.c: 1.3 2006/09/27 00:19:17 ichiki Exp
+	add GPL notice.
+
+	* configure.in: 1.1 2006/09/27 00:16:50 ichiki Exp
+	initial revision.
+
+	* Makefile.am: 1.1 2006/09/27 00:16:12 ichiki Exp
+	initial revision.
+
+	* two-body-res.h: 1.2 2006/09/27 00:15:46 ichiki Exp
+	* two-body-res.c: 1.2 2006/09/27 00:14:02 ichiki Exp
+	add GPL notice.
+
+	* fts.h: 2.1 2006/09/27 00:11:52 ichiki Exp
+	* fts.c: 2.1 2006/09/27 00:11:14 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* ft.h: 2.2 2006/09/27 00:10:29 ichiki Exp
+	* ft.c: 2.2 2006/09/27 00:09:58 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* f.h: 2.1 2006/09/27 00:09:16 ichiki Exp
+	* f.c: 2.1 2006/09/27 00:08:44 ichiki Exp
+	put 'const' for const pointers.
+	add GPL notice.
+
+	* ewald-2f.h: 1.2 2006/09/27 00:07:09 ichiki Exp
+	* ewald-2f.c: 1.5 2006/09/27 00:06:28 ichiki Exp
+	add GPL notice.
+
+	* ewald-2ft.h: 1.2 2006/09/27 00:05:47 ichiki Exp
+	* ewald-2ft.c: 1.4 2006/09/27 00:05:04 ichiki Exp
+	add GPL notice.
+
+	* ewald-2fts.h: 1.2 2006/09/27 00:04:23 ichiki Exp
+	* ewald-2fts.c: 1.5 2006/09/27 00:03:29 ichiki Exp
+	add GPL notice.
+
+	* stokes.h: 1.2 2006/09/27 00:02:31 ichiki Exp
+	* stokes.c: 2.2 2006/09/27 00:02:03 ichiki Exp
+	add GPL notice.
+
+	* ewald-3f.h: 4.2 2006/09/27 00:01:11 ichiki Exp
+	* ewald-3f.c: 4.2 2006/09/27 00:00:26 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+
+	* ewald-3ft.h: 4.2 2006/09/26 23:59:45 ichiki Exp
+	* ewald-3ft.c: 4.2 2006/09/26 23:57:50 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+	(calc_mob_ewald_3ft): bug fixed.
+
+	* ewald-3fts.c: 5.2 2006/09/26 23:58:56 ichiki Exp
+	* ewald-3fts.c: 5.2 2006/09/26 23:54:52 ichiki Exp
+	put 'const' for const pointers.
+	remove 'ZETA' and always estimate cpu times for library usage.
+
+	* libstokes.h: 1.2 2006/09/26 23:52:15 ichiki Exp
+	add entries in 'stokes.h'.
+
+	* libstokes.h: 1.1 2006/09/26 21:40:40 ichiki Exp
+	initial revision.
+
+	* bench.h: 1.1 2006/09/26 18:21:31 ichiki Exp
+	* bench.c: 1.2 2006/09/26 18:21:16 ichiki Exp
+	move from 'misc' to here.
+
+	* ewald-2fts.h: 1.1 2006/09/26 05:41:25 ichiki Exp
+	* ewald-2fts.c: 1.4 2006/09/26 05:41:11 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+	* ewald-2ft.h: 1.1 2006/09/26 05:40:01 ichiki Exp
+	* ewald-2ft.c: 1.3 2006/09/26 05:39:46 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+	* ewald-2f.h: 1.1 2006/09/26 05:39:11 ichiki Exp
+	* ewald-2f.c: 1.4 2006/09/26 05:38:58 ichiki Exp
+	introduce struct stokes and remove the grobals.
+	put 'const' for const pointers.
+
+2006-09-25  Kengo Ichiki  <ichiki@tpr60>
+
+	* fts.h: 1.1 2006/09/26 01:12:11 ichiki Exp
+	* fts.c: 1.13 2006/09/26 01:11:45 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ft.h: 2.1 2006/09/26 01:11:05 ichiki Exp
+	* ft.c: 2.1 2006/09/26 01:10:38 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* f.h: 1.1 2006/09/26 01:09:51 ichiki Exp
+	* f.c: 1.6 2006/09/26 01:09:20 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3fts.h: 5.1 2006/09/26 01:06:44 ichiki Exp
+	* ewald-3fts.c: 5.1 2006/09/26 01:06:12 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3ft.h: 4.1 2006/09/26 01:05:28 ichiki Exp
+	* ewald-3ft.c: 4.1 2006/09/26 01:04:44 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* ewald-3f.h: 4.1 2006/09/26 01:03:47 ichiki Exp
+	* ewald-3f.c: 4.1 2006/09/26 01:02:52 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+	* stokes.h: 1.1 2006/09/26 01:00:32 ichiki Exp
+	* stokes.c: 2.1 2006/09/26 01:00:12 ichiki Exp
+	based on ewald-3.c, introduce system structure 'stokes'.
+
+	* two-body-res.h: move from LIBEXP to RYUON/libstokes.
+	* two-body-res.c: move from LIBEXP to RYUON/libstokes.
+
+	* ewald-3fts-matrix.h: 2.1 2006/09/26 01:07:49 ichiki Exp
+	* ewald-3fts-matrix.c: 2.1 2006/09/26 01:07:29 ichiki Exp
+	introduce struct stokes and remove the grobals.
+
+2005-07-17  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.h: 1.2 2005/07/17 18:58:46 ichiki Exp
+	add _DGETRI_C_H_ definition.
+
+	* dgetri_c.c: 1.3 2005/07/17 18:57:08 ichiki Exp
+	-- the revision had made a long time ago --
+	(lapack_inv): add 'info' checks.
+
+2005-03-30  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.c: 1.2 2005/03/31 02:46:07 ichiki Exp
+	(lapack_inv): add free()!
+
+2005-03-29  Kengo Ichiki  <ichiki@tpr51>
+
+	* dgetri_c.h: 1.1 2005/03/29 18:48:17 ichiki Exp
+	* dgetri_c.c: 1.1 2005/03/29 18:48:22 ichiki Exp
+	initial revision.
+
+2003-04-25  kengo ichiki  <ichiki@tp>
+
+	* two-body-res.h: move from FINITE to LIBEXP.
+	* two-body-res.c: move from FINITE to LIBEXP.
+
+	* two-body-res.h: 1.1 2003/04/26 01:31:33 ichiki Exp
+	initial revision.
+
+2002-06-02  Kengo Ichiki  <ichiki@haru-me.me.jhu.edu>
+
+	* ewald-3fts.h: 4.1 2002/06/02 19:11:17 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 4.1 2002/06/02 19:09:49 ichiki Exp
+	update API's --
+	(atimes_ewald_3fts): add user_data pointer in the argument.
+	(atimes_mob_ewald_3fts): same above.
+	(atimes_mob_fix_ewald_3fts): same above.
+	(atimes_mob_lub_fix_ewald_3fts): same above.
+	(calc_res_ewald_3fts): revise the API of solve_iter_stab() routine.
+	(calc_mob_ewald_3fts): same above.
+	(calc_mob_fix_ewald_3fts): same above.
+	(calc_res_lub_ewald_3fts): same above.
+	(calc_mob_lub_fix_ewald_3fts): same above.
+	(calc_b_mob_ewald_3fts): revise the API of atimes... routine.
+	(calc_b_mob_fix_ewald_3fts): same above.
+	(atimes_mob_fix_ewald_3fts): same above.
+	(calc_res_lub_ewald_3fts): same above.
+	(calc_b_mob_lub_fix_ewald_3fts): same above.
+	(atimes_mob_lub_fix_ewald_3fts): same above.
+
+2001-02-15  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts-matrix.c: 1.5 2001/02/15 04:57:13 ichiki Exp
+	finish the tests on fixed version.
+	(split_matrix_fix_3fts): fix bugs.
+	(merge_matrix_fix_3fts): fix bugs.
+	(calc_mob_fix_ewald_3fts_matrix): added.
+	(calc_mob_lub_fix_ewald_3fts_matrix): added.
+
+2001-02-14  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts-matrix.c: 1.4 2001/02/14 10:10:24 ichiki Exp
+	add utility routines for fixed version.
+	(split_matrix_3fts): added. (not tested yet!)
+	(merge_matrix_3fts): added. (not tested yet!)
+
+	* ewald-3fts-matrix.c: 1.3 2001/02/14 09:07:12 ichiki Exp
+	(trans_mat_ext2ext): added.
+	(calc_mob_ewald_3fts_matrix): revised, using routines in matrix.c.
+
+	* matrix.c: 1.1 2001/02/14 08:40:35 ichiki Exp
+	initial revision.
+
+2001-02-13  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* fts.c: 1.12 2001/02/13 09:53:54 ichiki Exp
+	(matrix_lub_fts_2b): added for matrix version.
+
+	* ewald-3fts-matrix.c: 1.2 2001/02/13 09:52:44 ichiki Exp
+	use not cholesky() but lu_inv() for inversion.
+	(make_matrix_mob_ewald_3fts): fix a bug on particle-index for
+	routine matrix_fts_ij().
+	(atimes_ewald_3fts_matrix): added for test.
+	(calc_mob_lub_ewald_3fts_matrix): added. (not pass the test yet!)
+	(test_symmetric): added for a test.
+	(multiply_matrices): added.
+
+	* ewald-3fts-matrix.c: 1.1 2001/02/13 07:41:32 ichiki Exp
+	initial revision.
+
+2001-02-12  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* f.c: 1.5 2001/02/12 08:41:11 ichiki Exp
+	(matrix_f_ij): recovred, based on FTS version fts.c Rev 1.11.
+	(matrix_ij_A): added.
+
+	* ft.c: 1.9 2001/02/12 08:40:49 ichiki Exp
+	(matrix_ft_ij): recovred, based on FTS version fts.c Rev 1.11.
+	(matrix_ij_B): added.
+	(matrix_ij_Bt): added.
+	(matrix_ij_C): added.
+
+	* fts.c: 1.11 2001/02/12 08:40:09 ichiki Exp
+	(matrix_fts_ij): recovred from Rev 1.5, and split into small-matrices.
+	(matrix_fts_ij_G): added.
+	(matrix_fts_ij_Gt): added.
+	(matrix_fts_ij_H): added.
+	(matrix_fts_ij_Ht): added.
+	(matrix_fts_ij_M): added.
+
+2001-02-09  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3f.c: 3.4 2001/02/09 05:59:14 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3f): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+	(calc_b_mob_lub_fix_ewald_3f): same revision above,
+	but this routine is called once	for a problem.
+
+	* ewald-3ft.c: 3.5 2001/02/09 05:54:33 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3ft): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+	(calc_b_mob_lub_fix_ewald_3ft): same revision above,
+	but this routine is called once	for a problem.
+
+	* ewald-3fts.c: 3.11 2001/02/09 05:46:50 ichiki Exp
+	(calc_b_mob_lub_fix_ewald_3fts): same revision for
+	atimes_mob_lub_fix_ewald_3fts(), but this routine is called once
+	for a problem.
+
+	* ewald-3fts.c: 3.10 2001/02/09 05:23:54 ichiki Exp
+	(atimes_mob_lub_fix_ewald_3fts): revise this routine; this makes twice
+	faster than before, that is, all only once at a time.
+
+2001-02-05  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-2.c: 1.1 2001/02/05 09:38:47 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 3.9 2001/02/05 07:45:56 ichiki Exp
+	(atimes_ewald_3fts): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+	* ewald-3ft.c: 3.4 2001/02/05 07:39:12 ichiki Exp
+	(atimes_ewald_3ft): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+	* ewald-3f.c: 3.3 2001/02/05 07:29:11 ichiki Exp
+	(calc_mob_fix_ewald_3f): add fail-sale for 'np==nm' case.
+	(atimes_ewald_3f): use routine not 'clock()' but 'ptime_ms_d()'
+	in NR/src/bench.c.
+
+2001-02-04  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-2fts.c: 1.3 2001/02/04 12:26:43 ichiki Exp
+	(calc_mob_ewald_2fts): correct call to 'calc_mob_ewald_3fts()'.
+	(calc_res_lub_ewald_3fts_2d): removed.
+	(calc_mob_lub_fix_ewald_3fts_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2fts): removed.
+	(atimes_mob_lub_fix_ewald_2fts): removed.
+	(calc_lub_ewald_2fts): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2ft.c: 1.2 2001/02/04 12:19:15 ichiki Exp
+	(calc_mob_ewald_2ft): correct call function to 'calc_mob_ewald_3ft()'.
+	(calc_res_lub_ewald_3ft_2d): removed.
+	(calc_mob_lub_fix_ewald_3ft_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2ft): removed.
+	(atimes_mob_lub_fix_ewald_2ft): removed.
+	(calc_lub_ewald_2ft): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2f.c: 1.3 2001/02/04 12:10:26 ichiki Exp
+	(calc_mob_ewald_2f): correct call function to 'calc_mob_ewald_3f()'.
+
+	* fts.c: 1.10 2001/02/04 11:46:33 ichiki Exp
+	(scalar_minv_fts): debug on xm11; the order is not 7 but 8.
+
+	* f.c: 1.4 2001/02/04 09:00:00 ichiki Exp
+	(scalar_minv_f): correct the denominator 'dy'.
+
+	* fts.c: 1.9 2001/02/04 07:48:34 ichiki Exp
+	(scalar_minv_fts): revised.
+
+	* ft.c: 1.8 2001/02/04 07:50:07 ichiki Exp
+	(scalar_minv_ft): correct the sign.
+
+	* f.c: 1.3 2001/02/04 07:53:12 ichiki Exp
+	(scalar_minv_f): correct the sign.
+
+	* ewald-2f.c: 1.2 2001/02/04 04:55:20 ichiki Exp
+	(calc_res_lub_ewald_3f_2d): removed.
+	(calc_mob_lub_fix_ewald_3f_2d): removed.
+	(calc_b_mob_lub_fix_ewald_2f): removed.
+	(atimes_mob_lub_fix_ewald_2f): removed.
+	(calc_lub_ewald_2f): removed.
+	(cond_lub_2d): removed.
+
+	* ewald-2f.c: 1.1 2001/02/03 15:05:28 ichiki Exp
+	initial revision.
+
+2001-02-03  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-2ft.c: 1.1 2001/02/03 14:48:36 ichiki Exp
+	initial revision.
+
+	* ewald-3f.c: 3.2 2001/02/03 14:03:54 ichiki Exp
+	completely rewritten from ewald-3fts.c Rev 3.8.
+
+	* ewald-3ft.c: 3.3 2001/02/03 14:01:21 ichiki Exp
+	cut inclusion of 'lub.h'.
+	(calc_mob_lub_fix_ewald_3ft): correct the arguments.
+	(calc_lub_ewald_3ft): correct the name of routine from
+	calc_lub_2b() to calc_lub_ft_2b().
+
+	* fts.c: 1.8 2001/02/03 13:36:58 ichiki Exp
+	(scalar_minv_fts): change name of this function from 'scalar_minv_FTS.'
+
+	* f.c: 1.2 2001/02/03 13:34:25 ichiki Exp
+	(calc_lub_3f): added.
+	(calc_lub_f_2b): added.
+
+	* ft.c: 1.7 2001/02/03 13:29:43 ichiki Exp
+	(calc_lub_3ft): added.
+	(calc_lub_ft_2b): added.
+
+	* fts.c: 1.7 2001/02/03 13:09:03 ichiki Exp
+	merge with lub.c Rev 1.2.
+	(scalar_minv_FTS): moved from FINITE/stokes-fts.c Rev 1.5.
+	(calc_lub_3fts): moved from PBC/lub.c Rev 1.2.
+	(calc_lub_fts_2b): moved from PBC/lub.c Rev 1.2.
+
+	* f.c: 1.1 2001/02/03 12:51:51 ichiki Exp
+	initial revision.
+
+	* ft.c: 1.6 2001/02/03 12:50:34 ichiki Exp
+	(scalar_minv_FT): added.
+
+	* ft.c: 1.5 2001/02/03 09:33:17 ichiki Exp
+	(matrix_ft_ij): remove because this is obsolete.
+	(matrix_ft_atimes): revise based on fts.c Rev 1.6.
+
+	* ewald-3ft.c: 3.2 2001/02/03 08:57:59 ichiki Exp
+	completely rewritten from ewald-3fts.c Rev 3.8.
+
+	* ft.c: 1.4 2001/02/03 08:52:37 ichiki Exp
+	(set_FT_by_ft): added.
+	(set_ft_by_FT): added.
+
+2001-02-02  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-2fts.c: 1.2 2001/02/02 08:40:10 ichiki Exp
+	(calc_lub_ewald_2fts): change according to ewald-3.c Rev 1.5.
+	z-direction is the neglecting one under 2D codes.
+
+	* ewald-2fts.c: 1.1 2001/02/02 08:01:53 ichiki Exp
+	initial revision.
+
+2001-02-01  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.8 2001/02/01 05:30:55 ichiki Exp
+	lubrication codes are introduced.
+	(calc_res_lub_ewald_3fts): added.
+	(calc_mob_lub_fix_ewald_3fts): added.
+	(calc_b_mob_lub_fix_ewald_3fts): added.
+	(atimes_mob_lub_fix_ewald_3fts): added.
+	(calc_lub_ewald_3fts): added.
+	(cond_lub): added.
+
+	* lub.c: 1.2 2001/02/01 05:32:02 ichiki Exp
+	(calc_lub_3fts): added. this routine is, though, for free boundary
+	condition.
+
+2001-01-31  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* lub.c: 1.1 2001/01/31 10:10:22 ichiki Exp
+	initial revision.
+
+	* fts.c: 1.6 2001/01/31 09:32:15 ichiki Exp
+	(matrix_fts_ij): remove because this is obsolete.
+
+	* fts.c: 1.5 2001/01/31 09:02:56 ichiki Exp
+	finish checking by test-fts-exp.c.
+
+2001-01-29  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.7 2001/01/29 09:34:20 ichiki Exp
+	(calc_res_ewald_3fts): revise according to bi-cgstab.c Rev 1.5.
+	(calc_mob_ewald_3fts): same above.
+	(calc_mob_fix_ewald_3fts): same above.
+
+	* ewald-3fts.c: 3.6 2001/01/29 05:39:14 ichiki Exp
+	(calc_b_mob_fix_ewald_3fts): modify the argument (for convenience).
+
+	* ewald-3fts.c: 3.5 2001/01/29 04:29:52 ichiki Exp
+	(calc_b_mob_ewald_3fts): v3_0 is removed (because of no-use).
+	(atimes_mob_ewald_3fts): same above (v5_0 is used for v3_0).
+	(calc_mob_fix_ewald_3fts): mobility problem with FIXED particles
+	is started.
+	add LOCAL global variable 'NUMB_mobile_particles' for
+	atimes_mob_fix_ewald_3fts ().
+	(calc_b_mob_fix_ewald_3fts): added.
+	(atimes_mob_fix_ewald_3fts): added.
+
+2001-01-25  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.4 2001/01/25 08:09:51 ichiki Exp
+	(calc_res_ewald_3fts): added.
+
+	* fts.c: 1.4 2001/01/25 04:56:20 ichiki Exp ichiki
+	(matrix_fts_atimes): correct to manipulate stresslet in extracted form.
+
+2001-01-24  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.3 2001/01/24 08:59:06 ichiki Exp
+	(atimes_mob_ewald_3fts): debugs; 1) n should be np, and 2) argument
+	of set_fts_by_FTS () must be 'o', not '0'.
+
+	* ewald-3fts.c: 3.2 2001/01/24 08:14:23 ichiki Exp
+	(calc_mob_ewald_3fts): added.
+	(calc_b_mob_ewald_3fts): added.
+	(atimes_mob_ewald_3fts): added.
+
+	* fts.c: 1.3 2001/01/24 06:48:33 ichiki Exp
+	(set_FTS_by_fts): added.
+	(set_fts_by_FTS): added.
+
+2001-01-22  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 3.1 2001/01/22 04:17:21 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3fts () -- this is obsolete.
+
+	* ewald-3ft.c: 3.1 2001/01/22 04:16:11 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3ft () -- this is obsolete.
+
+	* ewald-3f.c: 3.1 2001/01/22 04:14:22 ichiki Exp
+	make routines atimes completely;
+	remove calc_mob_ewald_3f () -- this is obsolete.
+
+	* ewald-3f.c: 2.4 2001/01/22 04:11:17 ichiki Exp
+	(calc_mob_ewald_3f): debug on loop j for k-space summation.
+
+	* ewald-3f.c: 2.3 2001/01/22 03:32:14 ichiki Exp
+	(atimes_ewald_3f): added for atimes-type routine (O(N^2) scheme).
+
+	* ewald-3ft.c: 2.4 2001/01/22 03:04:59 ichiki Exp
+	(atimes_ewald_3ft): added for atimes-type routine (O(N^2) scheme).
+
+	* ft.c: 1.3 2001/01/22 02:59:43 ichiki Exp
+	(matrix_ft_atimes): added for atimes-type routine (O(N^2) scheme).
+
+2001-01-19  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 2.8 2001/01/19 07:56:54 ichiki Exp
+	(atimes_ewald_3fts): added for atimes-type routine (O(N^2) scheme).
+
+	* fts.c: 1.2 2001/01/19 07:45:51 ichiki Exp
+	(matrix_fts_atimes): added for atimes-type routine (O(N^2) scheme).
+
+2000-12-11  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ft.c: 1.2 2000/12/11 06:37:37 ichiki Exp
+	(matrix_ft_ij): debug ... n11 is replaced by n6.
+
+	* ewald-3f.c: 2.2 2000/12/11 06:28:03 ichiki Exp
+	(calc_mob_ewald_3f): style change; due to ewald-3fts.c Rev 2.7.
+
+	* ewald-3ft.c: 2.3 2000/12/11 06:11:27 ichiki Exp
+	(calc_mob_ewald_3ft): style change; due to ewald-3fts.c Rev 2.7.
+
+	* ft.c: 1.1 2000/12/11 06:08:02 ichiki Exp
+	initial revision.
+
+	* ewald-3fts.c: 2.7 2000/12/11 05:59:42 ichiki Exp
+	(calc_mob_ewald_3fts): introduce variables 'erfczr' and 'expzr2'.
+	remove 'pi6vol' completely (replacing 'pivol').
+
+	* ewald-3fts.c: 2.6 2000/12/11 05:30:46 ichiki Exp
+	(calc_mob_ewald_3fts): do not use pi6vol but pivol.
+	use matrix_fts_ij() for self part, also.
+	change name of variable 'mob' to 'kexp'.
+	BUGS FIX on definition of xm, ym, zm in real space; this makes
+	goot -- no zeta-dependence observed! (finally).
+
+2000-12-09  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-3fts.c: 2.5 2000/12/09 10:11:17 ichiki Exp
+	(calc_mob_ewald_3fts): make use of matrix_fts_ij() in fts.c.
+	correct k-space part, introducing sin-factor 'sf'.
+
+	* fts.c: 1.1 2000/12/09 08:37:33 ichiki Exp
+	initial revisin.
+
+2000-12-08  ICHIKI Kengo  <ichiki@esau.psdn.org>
+
+	* ewald-3fts.c: 2.4 2000/12/08 14:10:42 ichiki Exp
+	(calc_mob_ewald_3fts): debug.
+
+2000-12-08  ICHIKI Kengo  <ichiki@kona.jinkan.kyoto-u.ac.jp>
+
+	* ewald-3fts.c: 2.3 2000/12/08 09:01:35 ichiki Exp
+	started, based on
+	ewald-3ft.c: 2.2 2000/12/08 06:13:40 ichiki Exp
+
+	* ewald-3ft.c: 2.2 2000/12/08 06:13:40 ichiki Exp
+	started, based on
+	ewald-3f.c: 2.1 2000/12/08 05:04:14 ichiki Exp
+
+	* ewald-3f.c: 2.1 2000/12/08 05:04:14 ichiki Exp
+	change (update) style.
+	-- from log of ewald-3f.c, for the record --
+	Revision 1.3  1999/01/31 00:30:18  ichiki
+	use cholesky() rather than ludcmp() & luinv().
+	extract calc_mob_ewald_2f() from calf2-non.c for convenience.
+	introduce ZETA in order to share this with zeta2.c directly.
+	Revision 1.2  1999/01/30 08:56:49  ichiki
+	revise comments (translate into English).
+	cut set_Uniform().
+	HISTORY
+	'96/05/08 correct order of evaluation of equations
+	summarize global variables
+	'96/04/23 non-dimensionalize
+	'95/03/02 cut routine calc_steady_vel_2f() (contained in _fix)
+	'95/02/27 simplify program and debug
+	'95/02/24 compare 2D code
+	simplify code
+	'94/06/09 add calc_steady_vel_3f_fix()
+	'93/10/09 debug on summation in reciprocal space
+	'93/10/08 simplify routine calc_mob_ewald_3f() in order to debug
+	'93/ 9/22 calc determinant in ludcmp()
+	'93/ 9/21 rebuild (almost same above !!)
+	'93/ 9/20 Original (but all removed !!)
+	based on  cal_f_p3.c on '93/ 9/18
+
+
+Tue Aug 24 18:03:56 1999  ICHIKI Kengo  <ichiki@konakia.che.caltech.edu>
+
+	* two-body-res.c: 1.1 1999/08/25 01:11:56 ichiki Exp
+	initial revision.
+	numerical coeficients are estimated by two-body-JO-coef.c.
+
