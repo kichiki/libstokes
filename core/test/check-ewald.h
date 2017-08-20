@@ -1,4 +1,4 @@
-/* header file foe check-ewald.c --
+/* header file for check-ewald.c --
  * test code for ewald.c
  * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
  * $Id: check-ewald.h,v 1.1 2007/04/20 02:00:00 kichiki Exp $

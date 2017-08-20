@@ -1968,4 +1968,49 @@ scalars_mob_poly_scale_SD (int version,
 			   double *scalar);
 
 
+// *** debugging polydisperse bug ***
+
+// from ewald-new.h
+/* fixed version for polydisperse systems of
+ * ATIMES of calc ewald-summed mobility for F/FT/FTS versions
+ * this is a wrapper for non-periodic and periodic cases
+ * also polydisperse systems for non-periodic
+ * INPUT
+ *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
+ *  x [n] : F, FT, or FTS
+ *  user_data = (struct stokes *) sys
+ * OUTPUT
+ *  y [n] : U, UO, or UOE
+ */
+void
+atimes_3all_new (int n, const double *x, double *y, void * user_data);
+
+/* fixed version for polydisperse systems of
+ * ATIMES of calc ewald-summed mobility for F/FT/FTS versions
+ * with the ewald table
+ * INPUT
+ *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
+ *  x [n] : F, FT, or FTS
+ *  user_data = (struct stokes *) sys
+ * OUTPUT
+ *  y [n] : U, UO, or UOE
+ */
+void
+atimes_ewald_3all_new (int n, const double *x, double *y, void * user_data);
+
+// from non-ewald-new.h
+/* fixed version for polydisperse systems of
+ * ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
+ * for both monodisplerse and polydisperse systems (given by sys->a)
+ * INPUT
+ *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
+ *  x [n] : F, FT, or FTS
+ *  user_data = (struct stokes *) sys
+ * OUTPUT
+ *  y [n] : U, UO, or UOE
+ */
+void
+atimes_nonewald_3all_new (int n, const double *x, double *y, void *user_data);
+
+
 #endif /* !_LIBSTOKES_CORE_H_ */

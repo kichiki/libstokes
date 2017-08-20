@@ -44,6 +44,8 @@ libstokes_core_la_SOURCES = \
 	minv-poly.c		\
 	ewald.c			\
 	non-ewald.c		\
+	ewald-new.c		\
+	non-ewald-new.c		\
 	ewald-3f-matrix.c	\
 	ewald-3ft-matrix.c	\
 	ewald-3fts-matrix.c	\

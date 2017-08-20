@@ -137,7 +137,8 @@ LIBS = \
 all:	test-all	\
 	test-twobody	\
 	make-lub-table	\
-	test-twobody-slip
+	test-twobody-slip	\
+	test-new
 
 
 # test-all
@@ -193,9 +194,24 @@ test-twobody-slip:	$(test-twobody-slip-OBJ)
 	$(test-twobody-slip-OBJ)		\
 	$(LIBS)
 
+
+# test-new
+test-new-OBJ =\
+	test-new.o	\
+	check.o	\
+	check-non-ewald-new.o	\
+	check-ewald-new.o
+
+test-new:	$(test-new-OBJ)
+	$(LD) $(LDFLAGS) -o test-new	\
+	$(test-new-OBJ)		\
+	$(LIBS)
+
+
 clean:	
 	rm -f *~ *.o	\
 	test-all	\
 	test-twobody	\
 	make-lub-table	\
-	test-twobody-slip
+	test-twobody-slip	\
+	test-new
