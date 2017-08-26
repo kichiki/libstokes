@@ -1,6 +1,5 @@
 /* lubrication routines -- atimes procedure
- * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.15 2008/07/17 02:25:27 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -641,7 +640,7 @@ calc_lub_3fts (struct stokes * sys,
 		      else
 			{
 			  // slip
-			  calc_lub_ft_2b_slip
+			  calc_lub_fts_2b_slip
 			    (sys,
 			     uoe + i11, uoe + j11,
 			     sys->pos + i3, sys->pos + j3,
@@ -670,7 +669,7 @@ calc_lub_3fts (struct stokes * sys,
 		      else
 			{
 			  // slip
-			  calc_lub_ft_2b_slip
+			  calc_lub_fts_2b_slip
 			    (sys,
 			     uoe + i11, uoe + j11,
 			     sys->pos + i3, sys->pos + j3,
@@ -721,7 +720,7 @@ calc_lub_3fts (struct stokes * sys,
 				  else
 				    {
 				      // slip
-				      calc_lub_ft_2b_slip
+				      calc_lub_fts_2b_slip
 					(sys,
 					 uoe + i11, uoe + j11,
 					 sys->pos + i3, tmp_pos,
@@ -750,7 +749,7 @@ calc_lub_3fts (struct stokes * sys,
 				  else
 				    {
 				      // slip
-				      calc_lub_ft_2b_slip
+				      calc_lub_fts_2b_slip
 					(sys,
 					 uoe + i11, uoe + j11,
 					 sys->pos + i3, tmp_pos,
