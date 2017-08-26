@@ -7,6 +7,7 @@ libstokes_core_la_SOURCES = \
 	ewald-3f.c		\
 	ewald-3ft.c		\
 	ewald-3fts.c		\
+	ewald-3fts-new.c	\
 	ewald-2f.c		\
 	ewald-2ft.c		\
 	ewald-2fts.c		\
