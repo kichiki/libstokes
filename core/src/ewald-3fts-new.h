@@ -1,4 +1,5 @@
 /* header file for 'ewald-3fts-new.c' --
+ * bug fixing for polydisperse systems
  * Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *

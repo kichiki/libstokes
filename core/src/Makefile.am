@@ -7,6 +7,8 @@ libstokes_core_la_SOURCES = \
 	ewald-3f.c		\
 	ewald-3ft.c		\
 	ewald-3fts.c		\
+	ewald-3f-new.c		\
+	ewald-3ft-new.c		\
 	ewald-3fts-new.c	\
 	ewald-2f.c		\
 	ewald-2ft.c		\
@@ -14,6 +16,9 @@ libstokes_core_la_SOURCES = \
 	f.c			\
 	ft.c			\
 	fts.c			\
+	f-new.c			\
+	ft-new.c		\
+	fts-new.c		\
 	two-body-res.c		\
         XA.c			\
         YA.c			\
@@ -41,7 +46,9 @@ libstokes_core_la_SOURCES = \
         YM-slip.c		\
         ZM-slip.c		\
 	twobody-slip.c		\
+	twobody-slip-new.c	\
 	lub.c			\
+	lub-new.c		\
 	minv-poly.c		\
 	ewald.c			\
 	non-ewald.c		\

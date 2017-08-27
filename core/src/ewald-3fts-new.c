@@ -1,4 +1,5 @@
-/* Solvers for 3 dimensional FTS version problems
+/* bug fixing for polydisperse systems
+ * Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +25,8 @@
 #include "ft.h" // shift_labo_to_rest_O()
 #include "f.h" // shift_labo_to_rest_U()
 #include "ewald-new.h" // atimes_3all_new()
-#include "lub.h" // calc_lub_3fts()
+//#include "lub.h" // calc_lub_3fts()
+#include "lub-new.h" // calc_lub_3fts_new()
 
 //#include "ewald-3fts.h"
 #include "ewald-3fts-new.h"
@@ -707,7 +709,7 @@ solve_res_lub_3fts_0_new
 
   set_fts_by_FTS (np, b, u, o, e);
 
-  calc_lub_3fts (sys, b, lub);
+  calc_lub_3fts_new (sys, b, lub);
   atimes_3all_new (n11, lub, x, (void *) sys);
   // sys->version is 2 (FTS)
   // x[] is used temporarily
@@ -827,7 +829,7 @@ calc_b_mob_lub_3fts_new
     }
 
   // set tmp = L.(0,0,e)
-  calc_lub_3fts (sys, ft, tmp);
+  calc_lub_3fts_new (sys, ft, tmp);
   // set ft = M.L.(0,0,e)
   atimes_3all_new (n11, tmp, ft, (void *) sys);
 
@@ -905,7 +907,7 @@ atimes_mob_lub_3fts_new (int n, const double *x, double *y, void * user_data)
     }
 
   // set z = L.(u,o,0)
-  calc_lub_3fts (sys, uo, z);
+  calc_lub_3fts_new (sys, uo, z);
   // set tmp = M.L.(u,o,0)
   atimes_3all_new (n11, z, tmp, (void *) sys);
 
@@ -1068,7 +1070,7 @@ calc_b_mix_lub_3fts_new
   set_fts_by_FTS (nf, b + nm11, uf, of, ef);
 
   /* set y := L.[(0,0,E)_m,(U,O,E)_f] */
-  calc_lub_3fts (sys, b, y);
+  calc_lub_3fts_new (sys, b, y);
 
   /* set x := [(F,T,0)_m,(0,0,0)_f] */
   set_fts_by_FTS (nm, x, f, t, v5_0);
@@ -1158,7 +1160,7 @@ atimes_mix_lub_3fts_new
   set_fts_by_FTS (nf, y + nm11, v5_0, v5_0, v5_0);
 
   /* set w := L.[(U,O,0)_mobile,(0,0,0)_fixed] */
-  calc_lub_3fts (sys, y, w);
+  calc_lub_3fts_new (sys, y, w);
 
   /* set z := [(0,0,S)_mobile,(F,T,S)_fixed] */
   set_fts_by_FTS (nm, z, v5_0, v5_0, s);
