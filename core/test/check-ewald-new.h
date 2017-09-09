@@ -35,6 +35,13 @@ check_atimes_ewald_3all_new_1
 (int version,
  int verbose, double tiny);
 
+// compare mono (without a) with polydisperse systems with a = 1.0
+int
+check_atimes_ewald_3all_new_1b
+(int version,
+ int verbose, double tiny);
+
+
 // compare with polydisperse systems
 // scaled by the factor "scale"
 // F, T, S and U, O, E are properly scaled for comparison

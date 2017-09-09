@@ -21,6 +21,15 @@
 #include "check-non-ewald-new.h" // check_atimes_nonewald_3all_new ()
 #include "check-ewald-new.h" // check_atimes_ewald_3all_new ()
 
+#include "check-ewald-3fts-new_res0.h" // check_solve_res_3fts_0_a ()
+
+#include "check-ewald-3fts-new_res.h" // check_solve_res_3fts_a ()
+#include "check-ewald-3fts-new_mob.h" // check_solve_mob_3fts_a ()
+#include "check-ewald-3fts-new_mix.h" // check_solve_mix_3fts_a ()
+
+#include "check-ewald-3fts-new_res_lub.h" // check_solve_res_lub_3fts_a ()
+#include "check-ewald-3fts-new_mob_lub.h" // check_solve_mob_lub_3fts_a ()
+#include "check-ewald-3fts-new_mix_lub.h" // check_solve_mix_lub_3fts_a ()
 
 /* main program */
 int
@@ -46,6 +55,89 @@ main (int argc, char** argv)
   check += check_atimes_ewald_3all_new_1 (version, 1, 0.0);
   // compare with polydisperse systems scaled by the factor "scale"
   check += check_atimes_ewald_3all_new_2 (version, 10.0, 0.25, 1, 3.0e-12);
+
+  // compare mono (without a) with polydisperse systems with a = 1.0
+  check += check_atimes_ewald_3all_new_1b (version, 1, 1.3e-14);
+
+
+  // check-ewald-3fts-new_res0.c
+  // compare new (mono) with old (mono)
+  check += check_solve_res_3fts_0_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_3fts_0_b (1, 0.0);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_res_3fts_0_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_3fts_0_d (1, 3.9e-11);
+
+
+  // check-ewald-3fts-new_res.c
+  // compare new (mono) with old (mono)
+  check += check_solve_res_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_3fts_b (1, 0.0);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_res_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_3fts_d (1, 8.0e-12);
+
+  // check-ewald-3fts-new_mob.c
+  // compare new (mono) with old (mono)
+  check += check_solve_mob_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mob_3fts_b (1, 0.0);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_mob_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mob_3fts_d (1, 9.2e-14);
+
+  // check-ewald-3fts-new_mix.c
+  // compare new (mono) with old (mono)
+  check += check_solve_mix_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mix_3fts_b (1, 0.0);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_mix_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mix_3fts_d (1, 1.3e-08);
+
+
+  // check-ewald-3fts-new_res_lub.c
+  // compare new (mono) with old (mono)
+  check += check_solve_res_lub_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_lub_3fts_b (1, 1.0e-14);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_res_lub_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_res_lub_3fts_d (1, 2.8e-06);
+
+  // check-ewald-3fts-new_mob_lub.c
+  // compare new (mono) with old (mono)
+  check += check_solve_mob_lub_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mob_lub_3fts_b (1, 1.2e-14);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_mob_lub_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mob_lub_3fts_d (1, 7.2e-06);
+
+  // check-ewald-3fts-new_mix_lub.c
+  // compare new (mono) with old (mono)
+  check += check_solve_mix_lub_3fts_a (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mix_lub_3fts_b (1, 6.3e-14);
+  // peroidic systems
+  // compare new (mono) with old (mono)
+  check += check_solve_mix_lub_3fts_c (1, 0.0);
+  // compare with new (mono) and new (poly a=1)
+  check += check_solve_mix_lub_3fts_d (1, 7.6e-06);
 
 
   fprintf (stdout,

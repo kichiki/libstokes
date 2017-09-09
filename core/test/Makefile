@@ -200,7 +200,14 @@ test-new-OBJ =\
 	test-new.o	\
 	check.o	\
 	check-non-ewald-new.o	\
-	check-ewald-new.o
+	check-ewald-new.o	\
+	check-ewald-3fts-new_res0.o	\
+	check-ewald-3fts-new_res.o	\
+	check-ewald-3fts-new_mob.o	\
+	check-ewald-3fts-new_mix.o	\
+	check-ewald-3fts-new_res_lub.o	\
+	check-ewald-3fts-new_mob_lub.o	\
+	check-ewald-3fts-new_mix_lub.o
 
 test-new:	$(test-new-OBJ)
 	$(LD) $(LDFLAGS) -o test-new	\

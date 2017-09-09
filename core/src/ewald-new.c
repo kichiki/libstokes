@@ -26,7 +26,7 @@
 #include "f.h"      // matrix_f_ij() matrix_f_atimes()
 #include "ft.h"     // matrix_ft_ij() matrix_ft_atimes()
 #include "fts.h"    // matrix_fts_ij() matrix_fts_atimes()
-#include "non-ewald-new.h" // atimes_nonewald_3al_newl()
+#include "non-ewald-new.h" // atimes_nonewald_3all_new()
 
 #include "ewald.h"  // scalars_ewald_real() scalars_ewald_real_poly()
 
