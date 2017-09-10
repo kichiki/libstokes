@@ -1,7 +1,6 @@
 /* header file for non-ewald.c --
  * utility for non-Ewald routines
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: non-ewald.h,v 1.4 2007/04/12 03:40:00 kichiki Exp $
+ * Copyright (C) 2007-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,28 +64,6 @@ scalars_nonewald_poly (int version,
 		       double aa, double ab,
 		       double *scalar);
 
-/* convert scalar functions for mobility from dimensional to SD form
- * INPUT
- *  version : 0 = F version
- *            1 = FT version
- *            2 = FTS version
- *  a1      : radius for the particle 1
- *            Note that the scalar functions are for (12)-interaction.
- *  scalar [11]:
- *    0, 1,    : (xa12, ya12) for F version
- *    2,       : (yb12)
- *    3, 4,    : (xc12, yc12) for FT version
- *    5, 6,    : (xg12, yg12)
- *    7,       : (yh12)
- *    8, 9, 10 : (xm12, ym12, zm12) for FTS version
- * OUTPUT
- *  scalar [11]: scaled
- */
-void
-scalars_mob_poly_scale_SD (int version,
-			   double a1,
-			   double *scalar);
-
 /* calculate scalar functions for unequal spheres
  * under no periodic boundary condition in dimensional form
  * to convert them in the SD form, use scalars_mob_poly_scale_SD ().
@@ -127,37 +104,8 @@ scalars_nonewald_poly_full (int version,
  *  y [n] : U, UO, or UOE
  */
 void
-atimes_nonewald_3all (int n, const double *x, double *y, void *user_data);
-
-
-#include "stokes.h" // struct stokes
-
-/* make plain mobility matrix for F/FT/FTS versions for non-periodic case
- * for both monodisplerse and polydisperse systems (given by sys->a)
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_nonewald_3all (struct stokes *sys, double *mat);
-
-
-/* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
- * for both monodisplerse and polydisperse systems (given by sys->a)
- * through matrix procedure
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_nonewald_3all_matrix (int n, const double *x,
-			     double *y, void *user_data);
+atimes_nonewald_3all
+(int n, const double *x, double *y, void *user_data);
 
 
 #endif /* !_NON_EWALD_H_ */

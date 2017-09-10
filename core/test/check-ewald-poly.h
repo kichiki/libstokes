@@ -1,7 +1,6 @@
 /* header file for check-ewald-poly.c --
  * test code for polydisperse code in ewald.c
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald-poly.h,v 1.1 2007/04/20 02:01:04 kichiki Exp $
+ * Copyright (C) 2007-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,49 +57,6 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
 				   double phi,
 				   double ewald_tr, double ewald_eps,
 				   int verbose, double tiny);
-
-
-/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
- * with SC config with N=1
- * INPUT
- *  version   : 0 (F), 1 (FT), 2 (FTS)
- *  phi       : volume fraction, that is, phi = (4/3)pi a^3/l^3
- *  ewald_tr  :
- *  ewald_eps :
- *  verbose : if non-zero, print results
- *  tiny    : small number for check
- * OUTPUT
- *  (returned value) : 0 => passed
- *                     otherwise => failed
- */
-int
-check_make_matrix_mob_ewald_3all_poly_SC_1
-(int version,
- double phi,
- double ewald_tr, double ewald_eps,
- int verbose, double tiny);
-
-/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
- * with SC config with N=2
- * INPUT
- *  version   : 0 (F), 1 (FT), 2 (FTS)
- *  dir       : direction of the config, 0 (x), 1 (y), 2(z).
- *  phi       : volume fraction, that is, phi = (4/3)pi a^3/l^3
- *  ewald_tr  :
- *  ewald_eps :
- *  verbose : if non-zero, print results
- *  tiny    : small number for check
- * OUTPUT
- *  (returned value) : 0 => passed
- *                     otherwise => failed
- */
-int
-check_make_matrix_mob_ewald_3all_poly_SC_2
-(int version,
- int dir,
- double phi,
- double ewald_tr, double ewald_eps,
- int verbose, double tiny);
 
 
 #endif /* !_CHECK_EWALD_POLY_H_ */

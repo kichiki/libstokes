@@ -3,6 +3,10 @@
 lib_LTLIBRARIES = libstokes-extra.la
 
 libstokes_extra_la_SOURCES = \
+	ewald-3f-matrix.c	\
+	ewald-3ft-matrix.c	\
+	ewald-3fts-matrix.c	\
+	lub-matrix.c		\
 	stokes-nc.c		\
 	stokes-nc-read.c	\
 	stokes-guile.c		\

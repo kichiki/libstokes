@@ -1,6 +1,5 @@
 /* Solvers for 3 dimensional FT version problems
- * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3ft.c,v 4.16 2007/11/17 23:31:48 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,51 +32,6 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : particle velocity in the labo frame.
- *  o [np * 3] : angular  velocity in the labo frame.
- * OUTPUT
- *  f [np * 3] :
- *  t [np * 3] :
- */
-void
-solve_res_3ft (struct stokes * sys,
-	       const double *u, const double *o,
-	       double *f, double *t)
-{
-  if (sys->version != 1)
-    {
-      fprintf (stderr, "libstokes solve_res_3ft :"
-	       " the version is wrong. reset to FT\n");
-      sys->version = 1;
-    }
-
-  int np = sys->np;
-  double *u0 = (double *) malloc (sizeof (double) * np * 3);
-  double *o0 = (double *) malloc (sizeof (double) * np * 3);
-  CHECK_MALLOC (u0, "solve_res_3ft");
-  CHECK_MALLOC (o0, "solve_res_3ft");
-
-  shift_labo_to_rest_U (sys, np, u, u0);
-  shift_labo_to_rest_O (sys, np, o, o0);
-  /* the main calculation is done in the the fluid-rest frame;
-   * u(x)=0 as |x|-> infty */
-
-  solve_res_3ft_0 (sys,
-		   u0, o0,
-		   f, t);
-
-  free (u0);
-  free (o0);
-
-  /* for the interface, we are in the labo frame, that is
-   * u(x) is given by the imposed flow field as |x|-> infty */
-  // here, no velocity in output, we do nothing
-}
-
 /* solve natural resistance problem in FT version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -89,9 +43,10 @@ solve_res_3ft (struct stokes * sys,
  *  t [np * 3] :
  */
 void
-solve_res_3ft_0 (struct stokes * sys,
-		 const double *u, const double *o,
-		 double *f, double *t)
+solve_res_3ft_0
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t)
 {
   if (sys->version != 1)
     {
@@ -120,6 +75,53 @@ solve_res_3ft_0 (struct stokes * sys,
   free (b);
   free (x);
 }
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ */
+void
+solve_res_3ft
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  double *u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *o0 = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (u0, "solve_res_3ft");
+  CHECK_MALLOC (o0, "solve_res_3ft");
+
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  solve_res_3ft_0
+    (sys,
+     u0, o0,
+     f, t);
+
+  free (u0);
+  free (o0);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
+}
+
 
 /** natural mobility problem **/
 /* solve natural mobility problem in FT version
@@ -133,9 +135,10 @@ solve_res_3ft_0 (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_3ft (struct stokes * sys,
-	       const double *f, const double *t,
-	       double *u, double *o)
+solve_mob_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ double *u, double *o)
 {
   if (sys->version != 1)
     {
@@ -183,10 +186,11 @@ solve_mob_3ft (struct stokes * sys,
  *  b [np * 6] : constant vector
  */
 static void
-calc_b_mix_3ft (struct stokes * sys,
-		const double *f, const double *t,
-		const double *uf, const double *of,
-		double *b)
+calc_b_mix_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *b)
 {
   if (sys->version != 1)
     {
@@ -321,11 +325,12 @@ atimes_mix_3ft (int n, const double *x, double *y, void * user_data)
  *   tf [nf * 3] :
  */
 void
-solve_mix_3ft (struct stokes * sys,
-	       const double *f, const double *t,
-	       const double *uf, const double *of,
-	       double *u, double *o,
-	       double *ff, double *tf)
+solve_mix_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *u, double *o,
+ double *ff, double *tf)
 {
   if (sys->version != 1)
     {
@@ -338,8 +343,9 @@ solve_mix_3ft (struct stokes * sys,
   int nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_3ft (sys, f, t,
-		     u, o);
+      solve_mob_3ft
+	(sys, f, t,
+	 u, o);
       return;
     }
 
@@ -381,52 +387,8 @@ solve_mix_3ft (struct stokes * sys,
   shift_rest_to_labo_O (sys, nm, o);
 }
 
+
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_lub_3ft (struct stokes * sys,
-		   const double *u, const double *o,
-		   double *f, double *t)
-{
-  if (sys->version != 1)
-    {
-      fprintf (stderr, "libstokes solve_res_lub_3ft :"
-	       " the version is wrong. reset to FT\n");
-      sys->version = 1;
-    }
-
-  int np = sys->np;
-  double *u0 = (double *) malloc (sizeof (double) * np * 3);
-  double *o0 = (double *) malloc (sizeof (double) * np * 3);
-  CHECK_MALLOC (u0, "solve_res_lub_3ft");
-  CHECK_MALLOC (o0, "solve_res_lub_3ft");
-
-  shift_labo_to_rest_U (sys, np, u, u0);
-  shift_labo_to_rest_O (sys, np, o, o0);
-  /* the main calculation is done in the the fluid-rest frame;
-   * u(x)=0 as |x|-> infty */
-
-  solve_res_lub_3ft_0 (sys,
-		       u0, o0,
-		       f, t);
-
-  free (u0);
-  free (o0);
-
-  /* for the interface, we are in the labo frame, that is
-   * u(x) is given by the imposed flow field as |x|-> infty */
-  // here, no velocity in output, we do nothing
-}
-
 /* solve natural resistance problem with lubrication in FT version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -439,9 +401,10 @@ solve_res_lub_3ft (struct stokes * sys,
  *   t [np * 3] :
  */
 void
-solve_res_lub_3ft_0 (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t)
+solve_res_lub_3ft_0
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t)
 {
   if (sys->version != 1)
     {
@@ -483,12 +446,59 @@ solve_res_lub_3ft_0 (struct stokes * sys,
   free (x);
   free (lub);
 }
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_3ft
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t)
+{
+  if (sys->version != 1)
+    {
+      fprintf (stderr, "libstokes solve_res_lub_3ft :"
+	       " the version is wrong. reset to FT\n");
+      sys->version = 1;
+    }
+
+  int np = sys->np;
+  double *u0 = (double *) malloc (sizeof (double) * np * 3);
+  double *o0 = (double *) malloc (sizeof (double) * np * 3);
+  CHECK_MALLOC (u0, "solve_res_lub_3ft");
+  CHECK_MALLOC (o0, "solve_res_lub_3ft");
+
+  shift_labo_to_rest_U (sys, np, u, u0);
+  shift_labo_to_rest_O (sys, np, o, o0);
+  /* the main calculation is done in the the fluid-rest frame;
+   * u(x)=0 as |x|-> infty */
+
+  solve_res_lub_3ft_0
+    (sys,
+     u0, o0,
+     f, t);
+
+  free (u0);
+  free (o0);
+
+  /* for the interface, we are in the labo frame, that is
+   * u(x) is given by the imposed flow field as |x|-> infty */
+  // here, no velocity in output, we do nothing
+}
 
 
 /** mob_lub_3ft **/
 static void
-atimes_mob_lub_3ft (int n, const double *x,
-		    double *y, void *user_data)
+atimes_mob_lub_3ft
+(int n, const double *x,
+ double *y, void *user_data)
 {
   struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 1)
@@ -513,7 +523,6 @@ atimes_mob_lub_3ft (int n, const double *x,
 
   free (lub);
 }
-
 /* solve natural mobility problem with lubrication in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -525,9 +534,10 @@ atimes_mob_lub_3ft (int n, const double *x,
  *   o [np * 3] :
  */
 void
-solve_mob_lub_3ft (struct stokes * sys,
-		   const double *f, const double *t,
-		   double *u, double *o)
+solve_mob_lub_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ double *u, double *o)
 {
   if (sys->version != 1)
     {
@@ -583,10 +593,11 @@ solve_mob_lub_3ft (struct stokes * sys,
  *  b [np * 6] : constant vector
  */
 static void
-calc_b_mix_lub_3ft (struct stokes * sys,
-		    const double *f, const double *t,
-		    const double *uf, const double *of,
-		    double *b)
+calc_b_mix_lub_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *b)
 {
   if (sys->version != 1)
     {
@@ -654,8 +665,9 @@ calc_b_mix_lub_3ft (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mix_lub_3ft (int n, const double *x,
-		    double *y, void * user_data)
+atimes_mix_lub_3ft
+(int n, const double *x,
+ double *y, void * user_data)
 {
   struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 1)
@@ -745,11 +757,12 @@ atimes_mix_lub_3ft (int n, const double *x,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_3ft (struct stokes * sys,
-		   const double *f, const double *t,
-		   const double *uf, const double *of,
-		   double *u, double *o,
-		   double *ff, double *tf)
+solve_mix_lub_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *u, double *o,
+ double *ff, double *tf)
 {
   if (sys->version != 1)
     {
@@ -762,7 +775,8 @@ solve_mix_lub_3ft (struct stokes * sys,
   int nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_lub_3ft (sys, f, t, u, o);
+      solve_mob_lub_3ft
+	(sys, f, t, u, o);
       return;
     }
 
@@ -789,8 +803,8 @@ solve_mix_lub_3ft (struct stokes * sys,
   free (of0);
 
   solve_iter (n6, b, x,
-	       atimes_mix_lub_3ft, (void *)sys,
-	       sys->it);
+	      atimes_mix_lub_3ft, (void *)sys,
+	      sys->it);
 
   set_FT_by_ft (nm, u, o, x);
   set_FT_by_ft (nf, ff, tf, x + nm6);

@@ -1,6 +1,5 @@
 /* lubrication routines -- atimes procedure
- * Copyright (C) 1993-2008 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: lub.c,v 5.15 2008/07/17 02:25:27 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -161,9 +160,10 @@ set_imax_lub_periodic (struct stokes *sys,
  *   f [np * 3] : force
  */
 void
-calc_lub_3f (struct stokes *sys,
-	     const double *u,
-	     double *f)
+calc_lub_3f
+(struct stokes *sys,
+ const double *u,
+ double *f)
 {
   int i, j;
   int i3;
@@ -219,6 +219,7 @@ calc_lub_3f (struct stokes *sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_f_2b
 			    (sys,
 			     u + i3, u + j3,
@@ -300,6 +301,7 @@ calc_lub_3f (struct stokes *sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_f_2b
 					(sys,
 					 u + i3, u + j3,
@@ -367,8 +369,9 @@ calc_lub_3f (struct stokes *sys,
  *   ft [np * 6] : force, torque, stresslet
  */
 void
-calc_lub_3ft (struct stokes * sys,
-	      const double * uo, double * ft)
+calc_lub_3ft
+(struct stokes * sys,
+ const double * uo, double * ft)
 {
   int i, j;
   int i3, i6;
@@ -426,6 +429,7 @@ calc_lub_3ft (struct stokes * sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_ft_2b
 			    (sys,
 			     uo + i6, uo + j6,
@@ -506,6 +510,7 @@ calc_lub_3ft (struct stokes * sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_ft_2b
 					(sys,
 					 uo + i6, uo + j6,
@@ -632,6 +637,7 @@ calc_lub_3fts (struct stokes * sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_fts_2b
 			    (sys,
 			     uoe + i11, uoe + j11,
@@ -641,7 +647,7 @@ calc_lub_3fts (struct stokes * sys,
 		      else
 			{
 			  // slip
-			  calc_lub_ft_2b_slip
+			  calc_lub_fts_2b_slip
 			    (sys,
 			     uoe + i11, uoe + j11,
 			     sys->pos + i3, sys->pos + j3,
@@ -670,7 +676,7 @@ calc_lub_3fts (struct stokes * sys,
 		      else
 			{
 			  // slip
-			  calc_lub_ft_2b_slip
+			  calc_lub_fts_2b_slip
 			    (sys,
 			     uoe + i11, uoe + j11,
 			     sys->pos + i3, sys->pos + j3,
@@ -712,6 +718,7 @@ calc_lub_3fts (struct stokes * sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_fts_2b
 					(sys,
 					 uoe + i11, uoe + j11,
@@ -721,7 +728,7 @@ calc_lub_3fts (struct stokes * sys,
 				  else
 				    {
 				      // slip
-				      calc_lub_ft_2b_slip
+				      calc_lub_fts_2b_slip
 					(sys,
 					 uoe + i11, uoe + j11,
 					 sys->pos + i3, tmp_pos,
@@ -750,7 +757,7 @@ calc_lub_3fts (struct stokes * sys,
 				  else
 				    {
 				      // slip
-				      calc_lub_ft_2b_slip
+				      calc_lub_fts_2b_slip
 					(sys,
 					 uoe + i11, uoe + j11,
 					 sys->pos + i3, tmp_pos,

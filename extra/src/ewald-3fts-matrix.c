@@ -1,6 +1,5 @@
 /* Solvers for 3 dimensional FTS version problems by MATRIX procedure
- * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts-matrix.c,v 2.18 2007/12/22 17:36:56 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +20,8 @@
 #include <stdlib.h> /* for exit() */
 #include "memory-check.h" // CHECK_MALLOC
 
-#include "dgetri_c.h" /* lapack_inv_() */
+/*
+#include "dgetri_c.h" // lapack_inv_()
 
 #include "stokes.h"
 #include "bench.h"
@@ -31,6 +31,9 @@
 
 #include "ewald.h" // make_matrix_mob_3all ()
 #include "matrix.h"
+*/
+#include <libstokes-core.h>
+
 #include "lub-matrix.h"
 #include "ewald-3fts-matrix.h"
 

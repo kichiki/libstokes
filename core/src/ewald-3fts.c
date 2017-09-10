@@ -1,6 +1,5 @@
 /* Solvers for 3 dimensional FTS version problems
- * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3fts.c,v 5.18 2007/12/22 17:36:05 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,17 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#include <math.h>
-#include <stdio.h> /* for printf() */
 #include <stdlib.h> /* for exit() */
 #include <libiter.h> /* solve_iter() */
 #include "memory-check.h" // macro CHECK_MALLOC
 
-#include "bench.h" // ptime_ms_d()
 #include "stokes.h" /* struct stokeks */
-#include "fts.h"
-#include "ft.h"
-#include "f.h"
+#include "fts.h" // set_fts_by_FTS()
+#include "ft.h" // shift_labo_to_rest_O()
+#include "f.h" // shift_labo_to_rest_U()
 #include "ewald.h" // atimes_3all()
 #include "lub.h" // calc_lub_3fts()
 
@@ -47,9 +43,10 @@
  *  s [np * 5] :
  */
 void
-solve_res_3fts_0 (struct stokes * sys,
-		  const double *u, const double *o, const double *e,
-		  double *f, double *t, double *s)
+solve_res_3fts_0
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s)
 {
   if (sys->version != 2)
     {
@@ -91,9 +88,10 @@ solve_res_3fts_0 (struct stokes * sys,
  *  s [np * 5] :
  */
 void
-solve_res_3fts (struct stokes * sys,
-		const double *u, const double *o, const double *e,
-		double *f, double *t, double *s)
+solve_res_3fts
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s)
 {
   if (sys->version != 2)
     {
@@ -116,9 +114,10 @@ solve_res_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_res_3fts_0 (sys,
-		    u0, o0, e0,
-		    f, t, s);
+  solve_res_3fts_0
+    (sys,
+     u0, o0, e0,
+     f, t, s);
 
   free (u0);
   free (o0);
@@ -143,9 +142,10 @@ solve_res_3fts (struct stokes * sys,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mob_3fts (struct stokes * sys,
-		 const double *f, const double *t, const double *e,
-		 double *b)
+calc_b_mob_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *b)
 {
   if (sys->version != 2)
     {
@@ -260,9 +260,10 @@ atimes_mob_3fts (int n, const double *x, double *y, void * user_data)
  *  s [np * 5] :
  */
 void
-solve_mob_3fts_0 (struct stokes *sys, struct iter *iter,
-		  const double *f, const double *t, const double *e,
-		  double *u, double *o, double *s)
+solve_mob_3fts_0
+(struct stokes *sys, struct iter *iter,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s)
 {
   if (sys->version != 2)
     {
@@ -312,9 +313,10 @@ solve_mob_3fts_0 (struct stokes *sys, struct iter *iter,
  *  s [np * 5] :
  */
 void
-solve_mob_3fts (struct stokes * sys,
-		const double *f, const double *t, const double *e,
-		double *u, double *o, double *s)
+solve_mob_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s)
 {
   if (sys->version != 2)
     {
@@ -331,9 +333,10 @@ solve_mob_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_mob_3fts_0 (sys, sys->it,
-		    f, t, e0,
-		    u, o, s);
+  solve_mob_3fts_0
+    (sys, sys->it,
+     f, t, e0,
+     u, o, s);
 
   free (e0);
 
@@ -360,11 +363,12 @@ solve_mob_3fts (struct stokes * sys,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mix_3fts (struct stokes * sys,
-		 const double *f, const double *t, const double *e,
-		 const double *uf, const double *of,
-		 const double *ef,
-		 double *b)
+calc_b_mix_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *b)
 {
   if (sys->version != 2)
     {
@@ -528,11 +532,12 @@ atimes_mix_3fts (int n, const double *x, double *y, void * user_data)
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
-		  const double *f, const double *t, const double *e,
-		  const double *uf, const double *of, const double *ef,
-		  double *u, double *o, double *s,
-		  double *ff, double *tf, double *sf)
+solve_mix_3fts_0
+(struct stokes *sys, struct iter *iter,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of, const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf)
 {
   if (sys->version != 2)
     {
@@ -545,9 +550,10 @@ solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
   int nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_3fts_0 (sys, iter,
-			f, t, e,
-			u, o, s);
+      solve_mob_3fts_0
+	(sys, iter,
+	 f, t, e,
+	 u, o, s);
       return;
     }
 
@@ -600,11 +606,12 @@ solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts (struct stokes * sys,
-		const double *f, const double *t, const double *e,
-		const double *uf, const double *of, const double *ef,
-		double *u, double *o, double *s,
-		double *ff, double *tf, double *sf)
+solve_mix_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of, const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf)
 {
   if (sys->version != 2)
     {
@@ -617,9 +624,10 @@ solve_mix_3fts (struct stokes * sys,
   int nm = sys->nm;
   if (np == nm)
     {
-      solve_mob_3fts (sys,
-		      f, t, e,
-		      u, o, s);
+      solve_mob_3fts
+	(sys,
+	 f, t, e,
+	 u, o, s);
       return;
     }
 
@@ -640,11 +648,12 @@ solve_mix_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_mix_3fts_0 (sys, sys->it,
-		    f, t, e0,
-		    uf0, of0, ef0,
-		    u, o, s,
-		    ff, tf, sf);
+  solve_mix_3fts_0
+    (sys, sys->it,
+     f, t, e0,
+     uf0, of0, ef0,
+     u, o, s,
+     ff, tf, sf);
 
   free (uf0);
   free (of0);
@@ -673,9 +682,10 @@ solve_mix_3fts (struct stokes * sys,
  *  s [np * 5] :
  */
 void
-solve_res_lub_3fts_0 (struct stokes * sys,
-		      const double *u, const double *o, const double *e,
-		      double *f, double *t, double *s)
+solve_res_lub_3fts_0
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s)
 {
   if (sys->version != 2)
     {
@@ -730,9 +740,10 @@ solve_res_lub_3fts_0 (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_res_lub_3fts (struct stokes * sys,
-		    const double *u, const double *o, const double *e,
-		    double *f, double *t, double *s)
+solve_res_lub_3fts
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s)
 {
   if (sys->version != 2)
     {
@@ -755,9 +766,10 @@ solve_res_lub_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_res_lub_3fts_0 (sys,
-			u0, o0, e0,
-			f, t, s);
+  solve_res_lub_3fts_0
+    (sys,
+     u0, o0, e0,
+     f, t, s);
 
   free (u0);
   free (o0);
@@ -773,9 +785,10 @@ solve_res_lub_3fts (struct stokes * sys,
 /* b := M.(f,t,0)-(I+M.L).(0,0,e)
  */
 static void
-calc_b_mob_lub_3fts (struct stokes * sys,
-		     const double *f, const double *t, const double *e,
-		     double *b)
+calc_b_mob_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *b)
 {
   if (sys->version != 2)
     {
@@ -787,7 +800,7 @@ calc_b_mob_lub_3fts (struct stokes * sys,
   int n11 = sys->np * 11;
 
   double *v5_0 = (double *)malloc (sizeof (double) * n5);
-  CHECK_MALLOC (v5_0, "calc_b_mob_lub_3ft");
+  CHECK_MALLOC (v5_0, "calc_b_mob_lub_3fts");
   int i;
   for (i = 0; i < n5; i ++)
     {
@@ -796,8 +809,8 @@ calc_b_mob_lub_3fts (struct stokes * sys,
 
   double *ft = (double *)malloc (sizeof (double) * n11);
   double *tmp = (double *)malloc (sizeof (double) * n11);
-  CHECK_MALLOC (ft, "atimes_mob_lub_3ft");
-  CHECK_MALLOC (tmp, "atimes_mob_lub_3ft");
+  CHECK_MALLOC (ft, "atimes_mob_lub_3fts");
+  CHECK_MALLOC (tmp, "atimes_mob_lub_3fts");
 
   // set ft = (f,t,0)
   set_fts_by_FTS (sys->np, ft, f, t, v5_0);
@@ -851,7 +864,7 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
     }
 
   double *v5_0 = (double *)malloc (sizeof (double) * n5);
-  CHECK_MALLOC (v5_0, "atimes_mob_lub_3ft");
+  CHECK_MALLOC (v5_0, "atimes_mob_lub_3fts");
   int i;
   for (i = 0; i < n5; i ++)
     {
@@ -861,9 +874,9 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
   double *uo = (double *)malloc (sizeof (double) * n11);
   double *z = (double *)malloc (sizeof (double) * n11);
   double *tmp = (double *)malloc (sizeof (double) * n11);
-  CHECK_MALLOC (uo, "atimes_mob_lub_3ft");
-  CHECK_MALLOC (z, "atimes_mob_lub_3ft");
-  CHECK_MALLOC (tmp, "atimes_mob_lub_3ft");
+  CHECK_MALLOC (uo, "atimes_mob_lub_3fts");
+  CHECK_MALLOC (z, "atimes_mob_lub_3fts");
+  CHECK_MALLOC (tmp, "atimes_mob_lub_3fts");
   double *u = tmp;
   double *o = tmp + n3;
   double *s = tmp + n3 + n3;
@@ -920,9 +933,10 @@ atimes_mob_lub_3fts (int n, const double *x, double *y, void * user_data)
  *  s [np * 5] :
  */
 void
-solve_mob_lub_3fts_0 (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      double *u, double *o, double *s)
+solve_mob_lub_3fts_0
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s)
 {
   if (sys->version != 2)
     {
@@ -963,9 +977,10 @@ solve_mob_lub_3fts_0 (struct stokes * sys,
  *   s [np * 5] :
  */
 void
-solve_mob_lub_3fts (struct stokes * sys,
-		    const double *f, const double *t, const double *e,
-		    double *u, double *o, double *s)
+solve_mob_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s)
 {
   if (sys->version != 2)
     {
@@ -984,8 +999,9 @@ solve_mob_lub_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_mob_lub_3fts_0 (sys, f, t, e0,
-			u, o, s);
+  solve_mob_lub_3fts_0
+    (sys, f, t, e0,
+     u, o, s);
 
   free (e0);
 
@@ -1012,12 +1028,13 @@ solve_mob_lub_3fts (struct stokes * sys,
  *  b [np * 11] : constant vector
  */
 static void
-calc_b_mix_lub_3fts (struct stokes * sys,
-		     const double *f, const double *t,
-		     const double *e,
-		     const double *uf, const double *of,
-		     const double *ef,
-		     double *b)
+calc_b_mix_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *b)
 {
   if (sys->version != 2)
     {
@@ -1085,8 +1102,9 @@ calc_b_mix_lub_3fts (struct stokes * sys,
  *  y [n] :
  */
 static void
-atimes_mix_lub_3fts (int n, const double *x,
-		     double *y, void * user_data)
+atimes_mix_lub_3fts
+(int n, const double *x,
+ double *y, void * user_data)
 {
   struct stokes *sys = (struct stokes *) user_data;
   if (sys->version != 2)
@@ -1189,12 +1207,13 @@ atimes_mix_lub_3fts (int n, const double *x,
  *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts_0 (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      const double *uf, const double *of,
-		      const double *ef,
-		      double *u, double *o, double *s,
-		      double *ff, double *tf, double *sf)
+solve_mix_lub_3fts_0
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf)
 {
   if (sys->version != 2)
     {
@@ -1252,12 +1271,13 @@ solve_mix_lub_3fts_0 (struct stokes * sys,
  *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts (struct stokes * sys,
-		    const double *f, const double *t, const double *e,
-		    const double *uf, const double *of,
-		    const double *ef,
-		    double *u, double *o, double *s,
-		    double *ff, double *tf, double *sf)
+solve_mix_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf)
 {
   if (sys->version != 2)
     {
@@ -1292,8 +1312,11 @@ solve_mix_lub_3fts (struct stokes * sys,
   /* the main calculation is done in the the fluid-rest frame;
    * u(x)=0 as |x|-> infty */
 
-  solve_mix_lub_3fts_0 (sys, f, t, e0, uf0, of0, ef0,
-			u, o, s, ff, tf, sf);
+  solve_mix_lub_3fts_0
+    (sys,
+     f, t, e0, uf0, of0, ef0,
+     u, o, s, ff, tf, sf);
+
   free (uf0);
   free (of0);
   free (ef0);

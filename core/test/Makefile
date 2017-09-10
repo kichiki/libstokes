@@ -137,7 +137,8 @@ LIBS = \
 all:	test-all	\
 	test-twobody	\
 	make-lub-table	\
-	test-twobody-slip
+	test-twobody-slip	\
+	test-new
 
 
 # test-all
@@ -150,11 +151,8 @@ test-all-OBJ =\
 	check-solve-gen-linear.o \
 	check-twobody.o	\
 	check-poly.o	\
-	check-minv.o	\
 	check-minv-poly.o	\
 	check-lub-poly.o	\
-	check-mob-fts.o		\
-	check-ewald.o		\
 	check-ewald-poly.o	\
 	check-ewald-shear.o	\
 	check-twobody-slip.o	\
@@ -193,9 +191,31 @@ test-twobody-slip:	$(test-twobody-slip-OBJ)
 	$(test-twobody-slip-OBJ)		\
 	$(LIBS)
 
+
+# test-new
+test-new-OBJ =\
+	test-new.o	\
+	check.o	\
+	check-non-ewald-new.o	\
+	check-ewald-new.o	\
+	check-ewald-3fts-new_res0.o	\
+	check-ewald-3fts-new_res.o	\
+	check-ewald-3fts-new_mob.o	\
+	check-ewald-3fts-new_mix.o	\
+	check-ewald-3fts-new_res_lub.o	\
+	check-ewald-3fts-new_mob_lub.o	\
+	check-ewald-3fts-new_mix_lub.o
+
+test-new:	$(test-new-OBJ)
+	$(LD) $(LDFLAGS) -o test-new	\
+	$(test-new-OBJ)		\
+	$(LIBS)
+
+
 clean:	
 	rm -f *~ *.o	\
 	test-all	\
 	test-twobody	\
 	make-lub-table	\
-	test-twobody-slip
+	test-twobody-slip	\
+	test-new

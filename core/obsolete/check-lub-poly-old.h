@@ -1,7 +1,6 @@
-/* header file foe check-ewald.c --
- * test code for ewald.c
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: check-ewald.h,v 1.1 2007/04/20 02:00:00 kichiki Exp $
+/* header file for check-lub-poly-old.c --
+ * test code for lubrication for polydisperse systems
+ * Copyright (C) 2007-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,18 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#ifndef	_CHECK_EWALD_H_
-#define	_CHECK_EWALD_H_
+#ifndef	_CHECK_LUB_POLY_OLD_H_
+#define	_CHECK_LUB_POLY_OLD_H_
 
 
-/** check routines **/
-
-/* compare atimes and matrix processes for ewald_3all
+/* compare lub scalar functions
+ *  scalarwo-body_res() + scalar_minv_fts() for mono
+ *  and scalars_lub_poly_full() for poly
+ * for equal-sphere case
  * INPUT
- *  version   : 0 (F), 1 (FT), 2 (FTS)
- *  phi       : volume fraction, that is, phi = (4/3)pi a^3/l^3
- *  ewald_tr  :
- *  ewald_eps :
+ *  r       := x_2 - x_1
+ *  nmax    : for scalars_lub_poly_full() in twobody.c
  *  verbose : if non-zero, print results
  *  tiny    : small number for check
  * OUTPUT
@@ -36,10 +34,20 @@
  *                     otherwise => failed
  */
 int
-check_ewald_3all_atimes_matrix_SC (int version,
-				   double phi,
-				   double ewald_tr, double ewald_eps,
-				   int verbose, double tiny);
+check_lub_scalars_poly (double r, int nmax,
+			int verbose, double tiny);
+
+/* check matrix_lub_fts_2b_poly() with a1=a2=a
+ * comparing with matrix_lub_fts_2b()
+ */
+int
+check_matrix_lub_fts_2b_poly (double r, int verbose, double tiny);
+
+/* compare calc_lub_fts_2b_poly() and matrix_lub_fts_2b_poly()
+ */
+int
+check_atimes_matrix_lub_fts_2b_poly (double r, double a1, double a2,
+				     int verbose, double tiny);
 
 
-#endif /* !_CHECK_EWALD_H_ */
+#endif /* !_CHECK_LUB_POLY_OLD_H_ */

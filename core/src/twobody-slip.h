@@ -1,7 +1,6 @@
 /* header file for twobody-slip.c --
  * twobody solutions for slip particles
- * Copyright (C) 2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: twobody-slip.h,v 1.1 2007/08/17 04:31:19 kichiki Exp $
+ * Copyright (C) 2007-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -404,36 +403,13 @@ scalars_lub_slip_full (int version,
  *   f2 [3] : force of particle 2
  */
 void
-calc_lub_f_2b_slip (struct stokes *sys,
-		    const double *u1, const double *u2,
-		    const double *x1, const double *x2,
-		    int i1, int i2,
-		    double *f1, double *f2);
+calc_lub_f_2b_slip
+(struct stokes *sys,
+ const double *u1, const double *u2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *f1, double *f2);
 
-/* calculate lub-matrix in F version for pair of unequal spheres 1 and 2
- * Note that this take care of both (12)- and (21)-interactions,
- * so that this is called in the loop
- *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
- * INPUT
- *   sys    : system parameters. the followings are referred:
- *            sys->lubmin2      : square of min distance for lub calculation.
- *            sys->twobody_nmax : max order in twobody.
- *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
- *   i      : particle index for '1'
- *   j      : particle index for '2'
- *   x1 [3] : position of particle 1
- *   x2 [3] : position of particle 2
- *   i1, i2 : particle index for particles 1 and 2
- *   n      : dimension of matrix 'mat' (must be np*3)
- * OUTPUT
- *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
- */
-void
-matrix_lub_f_2b_slip (struct stokes *sys,
-		      int i, int j,
-		      const double *x1, const double *x2,
-		      int i1, int i2,
-		      int n, double *mat);
 
 /** FT version **/
 
@@ -456,36 +432,13 @@ matrix_lub_f_2b_slip (struct stokes *sys,
  *   ft2 [6] :
  */
 void
-calc_lub_ft_2b_slip (struct stokes *sys,
-		     const double *uo1, const double *uo2,
-		     const double *x1, const double *x2,
-		     int i1, int i2,
-		     double *ft1, double *ft2);
+calc_lub_ft_2b_slip
+(struct stokes *sys,
+ const double *uo1, const double *uo2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *ft1, double *ft2);
 
-/* calculate lub-matrix in FT version for pair of unequal spheres 1 and 2
- * Note that this take care of both (12)- and (21)-interactions,
- * so that this is called in the loop
- *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
- * INPUT
- *   sys    : system parameters. the followings are referred:
- *            sys->lubmin2      : square of min distance for lub calculation.
- *            sys->twobody_nmax : max order in twobody.
- *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
- *   i      : particle index for '1'
- *   j      : particle index for '2'
- *   x1 [3] : position of particle 1
- *   x2 [3] : position of particle 2
- *   i1, i2 : particle index for particles 1 and 2
- *   n      : dimension of matrix 'mat' (must be np*6)
- * OUTPUT
- *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
- */
-void
-matrix_lub_ft_2b_slip (struct stokes *sys,
-		       int i, int j,
-		       const double *x1, const double *x2,
-		       int i1, int i2,
-		       int n, double *mat);
 
 /** FTS version **/
 
@@ -507,36 +460,12 @@ matrix_lub_ft_2b_slip (struct stokes *sys,
  *   fts2 [11] :
  */
 void
-calc_lub_fts_2b_slip (struct stokes *sys,
-		      const double *uoe1, const double *uoe2,
-		      const double *x1, const double *x2,
-		      int i1, int i2,
-		      double *fts1, double *fts2);
-
-/* calculate lub-matrix in FTS version for pair of unequal spheres 1 and 2
- * Note that this take care of both (12)- and (21)-interactions,
- * so that this is called in the loop
- *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
- * INPUT
- *   sys    : system parameters. the followings are referred:
- *            sys->lubmin2      : square of min distance for lub calculation.
- *            sys->twobody_nmax : max order in twobody.
- *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
- *   i      : particle index for '1'
- *   j      : particle index for '2'
- *   x1 [3] : position of particle 1
- *   x2 [3] : position of particle 2
- *   i1, i2 : particle index for particles 1 and 2
- *   n      : dimension of matrix 'mat' (must be np*11)
- * OUTPUT
- *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
- */
-void
-matrix_lub_fts_2b_slip (struct stokes *sys,
-			int i, int j,
-			const double *x1, const double *x2,
-			int i1, int i2,
-			int n, double *mat);
+calc_lub_fts_2b_slip
+(struct stokes *sys,
+ const double *uoe1, const double *uoe2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *fts1, double *fts2);
 
 
 #endif /* !_TWOBODY_SLIP_H_ */
