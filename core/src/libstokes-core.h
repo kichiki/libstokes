@@ -1,5 +1,5 @@
 /* header file for library 'libstokes-core'
- * Copyright (C) 1993-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -351,6 +351,954 @@ struct stokes *
 stokes_copy (struct stokes *s0);
 
 
+
+/******************/
+/* from twobody.h */
+/******************/
+struct twobody_f {
+  int nmax;
+  double lambda;
+
+  double *XA;
+  double *YA;
+  double *YB;
+  double *XC;
+  double *YC;
+  double *XG;
+  double *YG;
+  double *YH;
+  double *XM;
+  double *YM;
+  double *ZM;
+};
+
+struct twobody_f_list {
+  int n;
+  double *l; // lambda
+  struct twobody_f **f;
+};
+
+
+void twobody_XA (int n, double l, double * f);
+void twobody_YA (int n, double l, double * f);
+
+void twobody_YB (int n, double l, double * f);
+
+void twobody_XC (int n, double l, double * f);
+void twobody_YC (int n, double l, double * f);
+
+void twobody_XG (int n, double l, double * f);
+void twobody_YG (int n, double l, double * f);
+
+void twobody_YH (int n, double l, double * f);
+
+void twobody_XM (int n, double l, double * f);
+void twobody_YM (int n, double l, double * f);
+void twobody_ZM (int n, double l, double * f);
+
+void twobody_XP (int n, double l, double * f);
+void twobody_XQ (int n, double l, double * f);
+
+
+/** utility routines for struct twobody_f and twobody_f_list **/
+
+struct twobody_f *
+twobody_f_init (int nmax, double lambda);
+void
+twobody_f_free (struct twobody_f *f);
+
+struct twobody_f_list *
+twobody_f_list_init (void);
+void
+twobody_f_list_append (struct twobody_f_list *list,
+		       int nmax, double lambda);
+void
+twobody_f_list_free (struct twobody_f_list *list);
+
+
+/** far form **/
+
+/* calc XA11 and XA12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XA11
+ *  XA12
+ */
+void twobody_XA_far (int n, double l, double s,
+		     double *XA11, double *XA12);
+
+/* calc YA11 and YA12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YA11
+ *  YA12
+ */
+void twobody_YA_far (int n, double l, double s,
+		     double *YA11, double *YA12);
+
+/* calc YB11 and YB12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YB11
+ *  YB12
+ */
+void twobody_YB_far (int n, double l, double s,
+		     double *YB11, double *YB12);
+
+/* calc XC11 and XC12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XC11
+ *  XC12
+ */
+void twobody_XC_far (int n, double l, double s,
+		     double *XC11, double *XC12);
+
+/* calc YC11 and YC12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YC_far (int n, double l, double s,
+		     double *YC11, double *YC12);
+
+/* calc XG11 and XG12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XG11
+ *  XG12
+ */
+void twobody_XG_far (int n, double l, double s,
+		     double *XG11, double *XG12);
+
+/* calc YG11 and YG12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YG11
+ *  YG12
+ */
+void twobody_YG_far (int n, double l, double s,
+		     double *YG11, double *YG12);
+
+/* calc YH11 and YH12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YH11
+ *  YH12
+ */
+void twobody_YH_far (int n, double l, double s,
+		     double *YH11, double *YH12);
+
+/* calc XM11 and XM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XM11
+ *  XM12
+ */
+void twobody_XM_far (int n, double l, double s,
+		     double *XM11, double *XM12);
+
+/* calc YM11 and YM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YM11
+ *  YM12
+ */
+void twobody_YM_far (int n, double l, double s,
+		     double *YM11, double *YM12);
+
+/* calc ZM11 and ZM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  ZM11
+ *  ZM12
+ */
+void twobody_ZM_far (int n, double l, double s,
+		     double *ZM11, double *ZM12);
+
+/* calc scalar functions of resistance problem by 1/s expansion
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_far (int version, int n, double l, double s,
+		  double *far);
+
+/* calc scalar functions of resistance problem by 1/s expansion
+ * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_far_with_f (int version,
+			 struct twobody_f *f12,
+			 int n, double l, double s,
+			 double *far);
+
+
+/** lubrication form **/
+
+/* calc XA11 and XA12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XA11
+ *  XA12
+ */
+void twobody_XA_lub (int n, double l, double s,
+		     double *XA11, double *XA12);
+
+/* calc YA11 and YA12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YA11
+ *  YA12
+ */
+void twobody_YA_lub (int n, double l, double s,
+		     double *YA11, double *YA12);
+
+/* calc YB11 and YB12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YB11
+ *  YB12
+ */
+void twobody_YB_lub (int n, double l, double s,
+		     double *YB11, double *YB12);
+
+/* calc XC11 and XC12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  XC11
+ *  XC12
+ */
+void twobody_XC_lub (int n, double l, double s,
+		     double *XC11, double *XC12);
+
+/* calc YC11 and YC12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YC_lub (int n, double l, double s,
+		     double *YC11, double *YC12);
+
+/* calc XG11 and XG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XG_lub (int n, double l, double s,
+		     double *XG11, double *XG12);
+
+/* calc YG11 and YG12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YG_lub (int n, double l, double s,
+		     double *YG11, double *YG12);
+
+/* calc YH11 and YH12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YH_lub (int n, double l, double s,
+		     double *YH11, double *YH12);
+
+/* calc XM11 and XM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_XM_lub (int n, double l, double s,
+		     double *XM11, double *XM12);
+
+/* calc YM11 and YM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YM_lub (int n, double l, double s,
+		     double *YM11, double *YM12);
+
+/* calc ZM11 and ZM12 for lubrication form
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_ZM_lub (int n, double l, double s,
+		     double *ZM11, double *ZM12);
+
+
+/* calc scalar functions of resistance problem by lub form
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_lub (int version, int n, double l, double s,
+		  double *lub);
+
+/* calc scalar functions of resistance problem by lub form
+ * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_lub_with_f (int version,
+			 struct twobody_f *f2b,
+			 int n, double l, double s,
+			 double *lub);
+
+/* scale the scalar functions from Jeffrey-Onishi to Stokesian dynamics
+ * INPUT
+ *  version  : 0=F, 1=FT, 2=FTS.
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in SD form
+ */
+void
+twobody_scale_SD (int version, double *two, double l);
+
+/* scale the scalar functions from Jeffrey-Onishi to the dimensional form
+ * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
+ *  two [22] : scalar functions in Jeffrey form
+ *  l        : lambda = ab / aa,
+ *             where aa and ab are radii for particles a(alpha) and b(beta)
+ *             Note that the scalar functions are for "a-b" interaction.
+ * OUTPUT
+ *  two [22] : scalar functions in the dimensional form
+ */
+void
+twobody_scale (int version, double *two, double a1, double l);
+
+
+/* calc scalar functions of two-body exact solution in resistance problem
+ * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
+ *  r          : distance between the two := x_b - x_a
+ *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  f12        : (struct twobody_f *).
+ *               you can give NULL for them.
+ *               then, the coefs are calculated on-the-fly (terribly slow).
+ *  n          : max order for the coefficients
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ *  flag_scale : 0 no scaling, that is, in Jeffrey form
+ *               1 for the dimensional form
+ *               2 for the Stokesian dynamics form
+ *  res [22]   :
+ * OUTPUT
+ *  res [22]   : scalar functions. the scaling is given by flag_scale.
+ */
+void
+twobody_scalars_res (int version,
+		     double r,
+		     double aa, double ab,
+		     struct twobody_f *f12,
+		     int n, int flag_lub, int flag_scale,
+		     double *res);
+
+
+/***********************/
+/* from twobody-slip.h */
+/***********************/
+struct twobody_slip_f {
+  int nmax;
+  double lambda;  // = a2 / a1
+  double hat_g1;  // = gamma1 / a1
+  double hat_g2;  // = gamma2 / a2
+  double slip_a1; // = a1 * sqrt(Gamma^(1)(0,2)
+  double slip_a2; // = a2 * sqrt(Gamma^(2)(0,2)
+
+  double *XA;
+  double *YA;
+  double *YB;
+  double *XC;
+  double *YC;
+  double *XG;
+  double *YG;
+  double *YH;
+  double *XM;
+  double *YM;
+  double *ZM;
+};
+
+struct twobody_slip_f_list {
+  int n;
+  struct twobody_slip_f **f;
+};
+
+
+
+void twobody_XA_slip (int n, double l, double *f);
+void twobody_YA_slip (int n, double l, double *f);
+void twobody_YB_slip (int n, double l, double *f);
+void twobody_XC_slip (int n, double l, double *f);
+void twobody_YC_slip (int n, double l, double *f);
+void twobody_XG_slip (int n, double l, double *f);
+void twobody_YG_slip (int n, double l, double *f);
+void twobody_YH_slip (int n, double l, double *f);
+void twobody_XM_slip (int n, double l, double *f);
+void twobody_YM_slip (int n, double l, double *f);
+void twobody_ZM_slip (int n, double l, double *f);
+
+
+/* 
+ * INPUT
+ *  (extern) lambda : slip length scaled by the radius
+ *                    if negative, the slip length is infinity (perfect slip)
+ */
+double SL_G1 (int m, int n);
+double SL_G2 (int m, int n);
+
+
+/** utility routines for struct twobody_f and twobody_f_list **/
+struct twobody_slip_f *
+twobody_slip_f_init (int nmax,
+		     double lambda,
+		     double hat_g1, double hat_g2,
+		     double slip_a1, double slip_a2);
+
+void
+twobody_slip_f_free (struct twobody_slip_f *f);
+
+struct twobody_slip_f_list *
+twobody_slip_f_list_init (void);
+
+void
+twobody_slip_f_list_append (struct twobody_slip_f_list *list,
+			    int nmax,
+			    double lambda,
+			    double hat_g1, double hat_g2,
+			    double slip_a1, double slip_a2);
+
+void
+twobody_slip_f_list_free (struct twobody_slip_f_list *list);
+
+
+/** far form **/
+
+/* calc XA11 and XA12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  XA11
+ *  XA12
+ */
+void twobody_XA_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *XA11, double *XA12);
+
+/* calc YA11 and YA12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YA11
+ *  YA12
+ */
+void twobody_YA_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YA11, double *YA12);
+
+/* calc YB11 and YB12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YB11
+ *  YB12
+ */
+void twobody_YB_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YB11, double *YB12);
+
+/* calc XC11 and XC12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  XC11
+ *  XC12
+ */
+void twobody_XC_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *XC11, double *XC12);
+
+/* calc YC11 and YC12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YC11
+ *  YC12
+ */
+void twobody_YC_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YC11, double *YC12);
+
+/* calc XG11 and XG12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  XG11
+ *  XG12
+ */
+void twobody_XG_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *XG11, double *XG12);
+
+/* calc YG11 and YG12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YG11
+ *  YG12
+ */
+void twobody_YG_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YG11, double *YG12);
+
+/* calc YH11 and YH12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YH11
+ *  YH12
+ */
+void twobody_YH_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YH11, double *YH12);
+
+/* calc XM11 and XM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  XM11
+ *  XM12
+ */
+void twobody_XM_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *XM11, double *XM12);
+
+/* calc YM11 and YM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  YM11
+ *  YM12
+ */
+void twobody_YM_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *YM11, double *YM12);
+
+/* calc ZM11 and ZM12
+ * INPUT
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  ZM11
+ *  ZM12
+ */
+void twobody_ZM_slip_far (int n, double l, double s,
+			  double hat_g1, double hat_g2,
+			  double *ZM11, double *ZM12);
+
+/* calc scalar functions of resistance problem by 1/s expansion
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_slip_far (int version, int n, double l, double s,
+		       double hat_g1, double hat_g2,
+		       double *far);
+
+/* calc scalar functions of resistance problem by 1/s expansion
+ * all-in-one form (to reduce calculating the same parameters)
+ * and with struct twobody_f *f12 table (to avoid recalculating them)
+ * INPUT
+ *  version : 0=F, 1=FT, 2=FTS.
+ *  f12     : struct twobody_f for the pair
+ *            you can give NULL for them.
+ *            then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  l := a2 / a1
+ *  s := 2 * r / (a1 + a2)
+ *  hat_g1 := gamma1 / a1
+ *  hat_g2 := gamma2 / a2
+ * OUTPUT
+ *  far [22] : scalar functions
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void twobody_slip_far_with_f (int version,
+			      struct twobody_slip_f *f12,
+			      int n, double l, double s,
+			      double hat_g1, double hat_g2,
+			      double *far);
+
+
+/* calc scalar functions of two-body exact solution in resistance problem
+ * INPUT
+ *  version    : 0=F, 1=FT, 2=FTS.
+ *  r          : distance between the two := x_b - x_a
+ *  aa, ab     : radii for particles a(alpha) and b(beta)
+ *  f12        : (struct twobody_slip_f *).
+ *               you can give NULL for them.
+ *               then, the coefs are calculated on-the-fly (terribly slow).
+ *  n          : max order for the coefficients
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ *               (*** currently, lub form is not implemented ***)
+ *  flag_scale : 0 no scaling, that is, in Jeffrey form
+ *               1 for the dimensional form
+ *               2 for the Stokesian dynamics form
+ *  res [22]   :
+ * OUTPUT
+ *  res [22]   : scalar functions. the scaling is given by flag_scale.
+ */
+void
+twobody_slip_scalars_res (int version,
+			  double r,
+			  double aa, double ab,
+			  struct twobody_slip_f *f12,
+			  int n, int flag_lub, int flag_scale,
+			  double *res);
+
+/* calc scalar functions of lubrication correction for unequal spheres
+ * INPUT
+ *  r      := x_2 - x_1
+ *  a1, a2 : radius of particle a and b
+ *  f12,f21: (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  flag_lub   : 0 to use twobody_slip_far()
+ *               1 to use twobody_slip_lub()
+ *               (*** currently, lub form is not implemented ***)
+ * OUTPUT
+ *  lub [44] : scalar functions in dimensional form!
+ *    0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *    4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *    8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *   12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *   16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *   20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *   24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *   28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *   32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *   36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *   40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
+ */
+void
+scalars_lub_slip_full (int version,
+		       double r, double a1, double a2,
+		       struct twobody_slip_f *f12,
+		       struct twobody_slip_f *f21,
+		       int n, int flag_lub,
+		       double *lub);
+
+//#include "stokes.h" // struct stokes
+/** F version **/
+
+/* calculate f by u for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin2      : square of min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   u1 [3] : velocity of particle 1
+ *   u2 [3] : velocity of particle 2
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   f1 [3] : force of particle 1
+ *   f2 [3] : force of particle 2
+ */
+void
+calc_lub_f_2b_slip
+(struct stokes *sys,
+ const double *u1, const double *u2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *f1, double *f2);
+
+
+/** FT version **/
+
+/* calculate ft by uo for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin2      : square of min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uo1 [6] : velocity, angular velocity
+ *   uo2 [6] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   ft1 [6] : force, torque
+ *   ft2 [6] :
+ */
+void
+calc_lub_ft_2b_slip
+(struct stokes *sys,
+ const double *uo1, const double *uo2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *ft1, double *ft2);
+
+
+/** FTS version **/
+
+/* calculate fts by uoe for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin2      : square of min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uoe1 [11] : velocity, angular velocity, strain
+ *   uoe2 [11] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   fts1 [11] : force, torque, stresslet
+ *   fts2 [11] :
+ */
+void
+calc_lub_fts_2b_slip
+(struct stokes *sys,
+ const double *uoe1, const double *uoe2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *fts1, double *fts2);
+
+
+
+
 /************************************
  ** miscellaneous routines         **
  ************************************/
@@ -518,10 +1466,7 @@ void lapack_solve_lin (int n, const double *a, const double *b,
 		       double *x);
 
 
-/***********************************
- ** resistance problems           **
- ***********************************/
-
+/* from ewald-3f.h */
 /** natural resistance problem **/
 /* solve natural resistance problem in F version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -532,22 +1477,61 @@ void lapack_solve_lin (int n, const double *a, const double *b,
  *  f [np * 3] :
  */
 void
-solve_res_3f_0 (struct stokes *sys,
-		const double *u,
-		double *f);
+solve_res_3f_0
+(struct stokes *sys,
+ const double *u,
+ double *f);
 /* solve natural resistance problem in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *  u [np * 3] :
+ *  u [np * 3] : particle velocity in the labo frame.
  * OUTPUT
  *  f [np * 3] :
  */
 void
-solve_res_3f (struct stokes * sys,
-	      const double *u,
-	      double *f);
+solve_res_3f
+(struct stokes *sys,
+ const double *u,
+ double *f);
 
+
+/** natural mobility problem **/
+/* solve natural mobility problem in F version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [np * 3] :
+ * OUTPUT
+ *  u [np * 3] :
+ */
+void
+solve_mob_3f
+(struct stokes * sys,
+ const double *f,
+ double *u);
+
+
+/** natural mobility problem with fixed particles **/
+/* solve natural mobility problem with fixed particles in F version
+ * INPUT
+ *  sys : system parameters
+ *  f [nm * 3] :
+ *  uf [nf * 3] :
+ * OUTPUT
+ *   u [nm * 3] :
+ *   ff [nf * 3] :
+ */
+void
+solve_mix_3f
+(struct stokes * sys,
+ const double *f,
+ const double *uf,
+ double *u,
+ double *ff);
+
+
+/** natural resistance problem with lubrication **/
 /* solve natural resistance problem with lubrication in F version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -558,48 +1542,67 @@ solve_res_3f (struct stokes * sys,
  *  f [np * 3] :
  */
 void
-solve_res_lub_3f_0 (struct stokes * sys,
-		    const double *u,
-		    double *f);
+solve_res_lub_3f_0
+(struct stokes * sys,
+ const double *u,
+ double *f);
 /* solve natural resistance problem with lubrication in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *  u [np * 3] :
+ *  u [np * 3] : particle velocity in the labo frame.
  * OUTPUT
  *   f [np * 3] :
  */
 void
-solve_res_lub_3f (struct stokes * sys,
-		  const double *u,
-		  double *f);
+solve_res_lub_3f
+(struct stokes * sys,
+ const double *u,
+ double *f);
 
-/* solve natural resistance problem in F version
+
+/** mob_lub_3f **/
+void
+atimes_mob_lub_3f
+(int n, const double *x,
+ double *y, void *user_data);
+/* solve natural mobility problem with lubrication in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- * OUTPUT
  *   f [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
  */
 void
-solve_res_3f_matrix (struct stokes * sys,
-		     const double *u,
-		     double *f);
+solve_mob_lub_3f
+(struct stokes * sys,
+ const double *f,
+ double *u);
 
-/* solve natural resistance problem in F version
+
+/** natural mobility problem with lubrication with fixed particles **/
+/* solve natural mobility problem with lubrication
+ * with fixed particles in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
+ *  f [nm * 3] :
+ *  uf [nf * 3] :
  * OUTPUT
- *   f [np * 3] :
+ *   u [nm * 3] :
+ *   ff [nf * 3] :
  */
 void
-solve_res_lub_3f_matrix (struct stokes * sys,
-			 const double *u,
-			 double *f);
+solve_mix_lub_3f
+(struct stokes * sys,
+ const double *f,
+ const double *uf,
+ double *u,
+ double *ff);
 
+/* from ewald-3ft.h */
+/** natural resistance problem **/
 /* solve natural resistance problem in FT version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -611,333 +1614,28 @@ solve_res_lub_3f_matrix (struct stokes * sys,
  *  t [np * 3] :
  */
 void
-solve_res_3ft_0 (struct stokes * sys,
-		 const double *u, const double *o,
-		 double *f, double *t);
+solve_res_3ft_0
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t);
 /* solve natural resistance problem in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_3ft (struct stokes * sys,
-	       const double *u, const double *o,
-	       double *f, double *t);
-
-/* solve natural resistance problem with lubrication in FT version
- * in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_lub_3ft_0 (struct stokes * sys,
-		     const double *u, const double *o,
-		     double *f, double *t);
-/* solve natural resistance problem with lubrication in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_lub_3ft (struct stokes * sys,
-		   const double *u, const double *o,
-		   double *f, double *t);
-
-/* solve natural resistance problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_3ft_matrix (struct stokes * sys,
-		      const double *u, const double *o,
-		      double *f, double *t);
-
-/* solve natural resistance problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- */
-void
-solve_res_lub_3ft_matrix (struct stokes * sys,
-			  const double *u, const double *o,
-			  double *f, double *t);
-
-/* solve natural resistance problem in FTS version in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
  * OUTPUT
  *  f [np * 3] :
  *  t [np * 3] :
- *  s [np * 5] :
  */
 void
-solve_res_3fts_0 (struct stokes * sys,
-		  const double *u, const double *o, const double *e,
-		  double *f, double *t, double *s);
-/* solve natural resistance problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_3fts (struct stokes * sys,
-		const double *u, const double *o, const double *e,
-		double *f, double *t, double *s);
-
-/* solve natural resistance problem with lubrication in FTS version
- * in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
- * OUTPUT
- *  f [np * 3] :
- *  t [np * 3] :
- *  s [np * 5] :
- */
-void
-solve_res_lub_3fts_0 (struct stokes * sys,
-		      const double *u, const double *o, const double *e,
-		      double *f, double *t, double *s);
-/* solve natural resistance problem with lubrication in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_lub_3fts (struct stokes * sys,
-		    const double *u, const double *o, const double *e,
-		    double *f, double *t, double *s);
-
-/* solve natural resistance problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_3fts_matrix (struct stokes * sys,
-		       const double *u, const double *o, const double *e,
-		       double *f, double *t, double *s);
-
-/* solve natural resistance problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 3] :
- *   o [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   f [np * 3] :
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_lub_3fts_matrix (struct stokes * sys,
-			   const double *u, const double *o,
-			   const double *e,
-			   double *f, double *t, double *s);
-
-/* solve natural resistance problem in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- */
-void
-solve_res_2f (struct stokes * sys,
-	      const double *u,
-	      double *f);
-
-/* solve natural resistance problem with lubrication in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- */
-void
-solve_res_lub_2f (struct stokes * sys,
-		  const double *u,
-		  double *f);
-
-/* solve natural resistance problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- *   t [np * 3] :
- */
-void
-solve_res_2ft (struct stokes * sys,
-	       const double *u, const double *o,
-	       double *f, double *t);
-
-/* solve natural resistance problem with lubrication in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- *   t [np * 3] :
- */
-void
-solve_res_lub_2ft (struct stokes * sys,
-		   const double *u, const double *o,
-		   double *f, double *t);
-
-/* solve natural resistance problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_2fts (struct stokes * sys,
-		const double *u, const double *o, const double *e,
-		double *f, double *t, double *s);
-
-/* solve natural resistance problem with lubrication in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
- *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
- *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   f [np * 3] : results are given in 3D form
- *   t [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_res_lub_2fts (struct stokes * sys,
-		    const double *u, const double *o, const double *e,
-		    double *f, double *t, double *s);
+solve_res_3ft
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t);
 
 
-/***********************************
- ** mobility problems             **
- ***********************************/
-
-/* solve natural mobility problem in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  f [np * 3] :
- * OUTPUT
- *  u [np * 3] :
- */
-void
-solve_mob_3f (struct stokes * sys,
-	      const double *f,
-	      double *u);
-
-/* solve natural mobility problem with lubrication in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- */
-void
-solve_mob_lub_3f (struct stokes * sys,
-		  const double *f,
-		  double *u);
-
-/* solve natural mobility problem in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- */
-void
-solve_mob_3f_matrix (struct stokes * sys,
-		     const double *f,
-		     double *u);
-
-/* solve natural mobility problem in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- */
-void
-solve_mob_lub_3f_matrix (struct stokes * sys,
-			 const double *f,
-			 double *u);
-
+/** natural mobility problem **/
 /* solve natural mobility problem in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -949,277 +1647,13 @@ solve_mob_lub_3f_matrix (struct stokes * sys,
  *   o [np * 3] :
  */
 void
-solve_mob_3ft (struct stokes * sys,
-	       const double *f, const double *t,
-	       double *u, double *o);
-
-/* solve natural mobility problem with lubrication in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-solve_mob_lub_3ft (struct stokes * sys,
-		   const double *f, const double *t,
-		   double *u, double *o);
-
-/* solve natural mobility problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-solve_mob_3ft_matrix (struct stokes * sys,
-		      const double *f, const double *t,
-		      double *u, double *o);
-
-/* solve natural mobility problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- */
-void
-solve_mob_lub_3ft_matrix (struct stokes * sys,
-			  const double *f, const double *t,
-			  double *u, double *o);
-
-/* solve natural mobility problem in FTS version in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys  : system parameters
- *  iter : struct iter (if NULL is given, use sys->it for the solver)
- *  f [np * 3] :
- *  t [np * 3] :
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
- * OUTPUT
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  s [np * 5] :
- */
-void
-solve_mob_3fts_0 (struct stokes *sys, struct iter *iter,
-		  const double *f, const double *t, const double *e,
-		  double *u, double *o, double *s);
-/* solve natural mobility problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_mob_3fts (struct stokes * sys,
-		const double *f, const double *t, const double *e,
-		double *u, double *o, double *s);
-
-/* solve natural mobility problem with lubrication in FTS version
- * in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  f [np * 3] :
- *  t [np * 3] :
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
- * OUTPUT
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  s [np * 5] :
- */
-void
-solve_mob_lub_3fts_0 (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      double *u, double *o, double *s);
-/* solve natural mobility problem with lubrication in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_mob_lub_3fts (struct stokes * sys,
-		    const double *f, const double *t, const double *e,
-		    double *u, double *o, double *s);
-
-/* solve natural mobility problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_mob_3fts_matrix (struct stokes * sys,
-		       const double *f, const double *t, const double *e,
-		       double *u, double *o, double *s);
-
-/* solve natural mobility problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 3] :
- *   t [np * 3] :
- *   e [np * 5] :
- * OUTPUT
- *   u [np * 3] :
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_mob_lub_3fts_matrix (struct stokes * sys,
-			   const double *f, const double *t,
-			   const double *e,
-			   double *u, double *o, double *s);
-
-/* solve natural mobility problem in F version
- * for both periodic and non-periodic boundary conditions
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- */
-void
-solve_mob_2f (struct stokes * sys,
-	      const double *f,
-	      double *u);
-
-/* solve natural mobility problem in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [np * 3] : OK, this is 3D form
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- *   o [np * 3] :
- */
-void
-solve_mob_2ft (struct stokes * sys,
-	       const double *f, const double *t3,
-	       double *u, double *o);
-
-/* solve natural mobility problem in FTS version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
- *   t3 [np * 3] : OK, this is 3D form
- *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
- * OUTPUT
- *   u [np * 3] : results are given in 3D form
- *   o [np * 3] :
- *   s [np * 5] :
- */
-void
-solve_mob_2fts (struct stokes * sys,
-		const double *f, const double *t3, const double *e,
-		double *u, double *o, double *s);
+solve_mob_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ double *u, double *o);
 
 
-/***********************************
- ** mixed problems                **
- ***********************************/
-
-/* solve natural mobility problem with fixed particles in F version
- * INPUT
- *  sys : system parameters
- *  f [nm * 3] :
- *  uf [nf * 3] :
- * OUTPUT
- *   u [nm * 3] :
- *   ff [nf * 3] :
- */
-void
-solve_mix_3f (struct stokes * sys,
-	      const double *f,
-	      const double *uf,
-	      double *u,
-	      double *ff);
-
-/* solve natural mobility problem with lubrication
- * with fixed particles in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  f [nm * 3] :
- *  uf [nf * 3] :
- * OUTPUT
- *   u [nm * 3] :
- *   ff [nf * 3] :
- */
-void
-solve_mix_lub_3f (struct stokes * sys,
-		  const double *f,
-		  const double *uf,
-		  double *u,
-		  double *ff);
-
-/* solve natural mobility problem with lubrication
- * with fixed particles in FT version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- */
-void
-solve_mix_3f_matrix (struct stokes * sys,
-		     const double *f, const double *uf,
-		     double *u, double *ff);
-
-/* solve natural mobility problem with lubrication
- * with fixed particles in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *   f [nm * 3] :
- *   uf [nf * 3] :
- * OUTPUT
- *   u [nm * 3] :
- *   ff [nf * 3] :
- */
-void
-solve_mix_lub_3f_matrix (struct stokes * sys,
-			 const double *f, const double *uf,
-			 double *u, double *ff);
-
+/** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -1235,12 +1669,67 @@ solve_mix_lub_3f_matrix (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_3ft (struct stokes * sys,
-	       const double *f, const double *t,
-	       const double *uf, const double *of,
-	       double *u, double *o,
-	       double *ff, double *tf);
+solve_mix_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *u, double *o,
+ double *ff, double *tf);
 
+
+/** natural resistance problem with lubrication **/
+/* solve natural resistance problem with lubrication in FT version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, the velocity in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, the velocity in the fluid-rest frame
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_3ft_0
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t);
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] :
+ *   o [np * 3] :
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_3ft
+(struct stokes * sys,
+ const double *u, const double *o,
+ double *f, double *t);
+
+
+/** mob_lub_3ft **/
+/* solve natural mobility problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ * OUTPUT
+ *   u [np * 3] :
+ *   o [np * 3] :
+ */
+void
+solve_mob_lub_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ double *u, double *o);
+
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
  * with fixed particles in FT version
  * for both periodic and non-periodic boundary conditions
@@ -1257,56 +1746,90 @@ solve_mix_3ft (struct stokes * sys,
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_3ft (struct stokes * sys,
-		   const double *f, const double *t,
-		   const double *uf, const double *of,
-		   double *u, double *o,
-		   double *ff, double *tf);
+solve_mix_lub_3ft
+(struct stokes * sys,
+ const double *f, const double *t,
+ const double *uf, const double *of,
+ double *u, double *o,
+ double *ff, double *tf);
 
-/* solve natural mobility problem with lubrication
- * with fixed particles in FT version
+/* from ewald-3fts.h */
+/** natural resistance problem **/
+/* solve natural resistance problem in FTS version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
  */
 void
-solve_mix_3ft_matrix (struct stokes * sys,
-		      const double *f, const double *t,
-		      const double *uf, const double *of,
-		      double *u, double *o,
-		      double *ff, double *tf);
-
-/* solve natural mobility problem with lubrication
- * with fixed particles in FT version
+solve_res_3fts_0
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s);
+/* solve natural resistance problem in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ *  e [np * 5] : strain tensor     in the labo frame.
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
  */
 void
-solve_mix_lub_3ft_matrix (struct stokes * sys,
-			  const double *f, const double *t,
-			  const double *uf, const double *of,
-			  double *u, double *o,
-			  double *ff, double *tf);
+solve_res_3fts
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s);
 
+
+/** natural mobility problem **/
+/* solve natural mobility problem in FTS version in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys  : system parameters
+ *  iter : struct iter (if NULL is given, use sys->it for the solver)
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [np * 5] :
+ */
+void
+solve_mob_3fts_0
+(struct stokes *sys, struct iter *iter,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s);
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : strain tensor     in the labo frame.
+ * OUTPUT
+ *  u [np * 3] : particle velocity in the labo frame.
+ *  o [np * 3] : angular  velocity in the labo frame.
+ *  s [np * 5] :
+ */
+void
+solve_mob_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s);
+
+
+/** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FTS version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -1328,36 +1851,116 @@ solve_mix_lub_3ft_matrix (struct stokes * sys,
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts_0 (struct stokes *sys, struct iter *iter,
-		  const double *f, const double *t, const double *e,
-		  const double *uf, const double *of, const double *ef,
-		  double *u, double *o, double *s,
-		  double *ff, double *tf, double *sf);
+solve_mix_3fts_0
+(struct stokes *sys, struct iter *iter,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of, const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf);
 /* solve natural mobility problem with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [nm * 5] : in the labo frame.
+ *  uf [nf * 3] : in the labo frame.
+ *  of [nf * 3] : in the labo frame.
+ *  ef [nf * 5] : in the labo frame.
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
+ *  u [nm * 3] : in the labo frame.
+ *  o [nm * 3] : in the labo frame.
+ *  s [nm * 5] :
+ *  ff [nf * 3] :
+ *  tf [nf * 3] :
+ *  sf [nf * 5] :
  */
 void
-solve_mix_3fts (struct stokes * sys,
-		const double *f, const double *t, const double *e,
-		const double *uf, const double *of, const double *ef,
-		double *u, double *o, double *s,
-		double *ff, double *tf, double *sf);
+solve_mix_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of, const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf);
 
+
+/** natural resistance problem with lubrication **/
+/* solve natural resistance problem with lubrication in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  s [np * 5] :
+ */
+void
+solve_res_lub_3fts_0
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s);
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 3] : in the labo frame.
+ *   o [np * 3] : in the labo frame.
+ *   e [np * 5] : in the labo frame.
+ * OUTPUT
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_lub_3fts
+(struct stokes * sys,
+ const double *u, const double *o, const double *e,
+ double *f, double *t, double *s);
+
+
+/** mob_lub_3fts **/
+/* solve natural mobility problem with lubrication in FTS version
+ * in the fluid-rest frame
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  f [np * 3] :
+ *  t [np * 3] :
+ *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ * OUTPUT
+ *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
+ *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
+ *  s [np * 5] :
+ */
+void
+solve_mob_lub_3fts_0
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s);
+/* solve natural mobility problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 3] :
+ *   t [np * 3] :
+ *   e [np * 5] : in the labo frame.
+ * OUTPUT
+ *   u [np * 3] : in the labo frame.
+ *   o [np * 3] : in the labo frame.
+ *   s [np * 5] :
+ */
+void
+solve_mob_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ double *u, double *o, double *s);
+
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version
  * in the fluid-rest frame
@@ -1379,95 +1982,73 @@ solve_mix_3fts (struct stokes * sys,
  *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts_0 (struct stokes * sys,
-		      const double *f, const double *t, const double *e,
-		      const double *uf, const double *of,
-		      const double *ef,
-		      double *u, double *o, double *s,
-		      double *ff, double *tf, double *sf);
+solve_mix_lub_3fts_0
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf);
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *  f [nm * 3] :
+ *  t [nm * 3] :
+ *  e [nm * 5] : in the labo frame.
+ *  uf [nf * 3] : in the labo frame.
+ *  of [nf * 3] : in the labo frame.
+ *  ef [nf * 5] : in the labo frame.
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
+ *  u [nm * 3] : in the labo frame.
+ *  o [nm * 3] : in the labo frame.
+ *  s [nm * 5] :
+ *  ff [nf * 3] :
+ *  tf [nf * 3] :
+ *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts (struct stokes * sys,
-		    const double *f, const double *t, const double *e,
-		    const double *uf, const double *of,
-		    const double *ef,
-		    double *u, double *o, double *s,
-		    double *ff, double *tf, double *sf);
+solve_mix_lub_3fts
+(struct stokes * sys,
+ const double *f, const double *t, const double *e,
+ const double *uf, const double *of,
+ const double *ef,
+ double *u, double *o, double *s,
+ double *ff, double *tf, double *sf);
 
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version
+
+
+
+/* from ewald-2f.h */
+/** natural resistance problem **/
+/* solve natural resistance problem in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
+ *   f [np * 3] : results are given in 3D form
  */
 void
-solve_mix_3fts_matrix (struct stokes * sys,
-		       const double *f, const double *t,
-		       const double *e,
-		       const double *uf, const double *of,
-		       const double *ef,
-		       double *u, double *o, double *s,
-		       double *ff, double *tf, double *sf);
+solve_res_2f (struct stokes * sys,
+	      const double *u,
+	      double *f);
 
-/* solve natural mobility problem with lubrication
- * with fixed particles in FTS version
+/** natural mobility problem **/
+/* solve natural mobility problem in F version
  * for both periodic and non-periodic boundary conditions
- * INPUT
  *  sys : system parameters
- *   f [nm * 3] :
- *   t [nm * 3] :
- *   e [nm * 5] :
- *   uf [nf * 3] :
- *   of [nf * 3] :
- *   ef [nf * 5] :
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
  * OUTPUT
- *   u [nm * 3] :
- *   o [nm * 3] :
- *   s [nm * 5] :
- *   ff [nf * 3] :
- *   tf [nf * 3] :
- *   sf [nf * 5] :
+ *   u [np * 3] : results are given in 3D form
  */
 void
-solve_mix_lub_3fts_matrix (struct stokes * sys,
-			   const double *f, const double *t,
-			   const double *e,
-			   const double *uf, const double *of,
-			   const double *ef,
-			   double *u, double *o, double *s,
-			   double *ff, double *tf, double *sf);
+solve_mob_2f (struct stokes * sys,
+	      const double *f,
+	      double *u);
 
+/** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -1485,6 +2066,21 @@ solve_mix_2f (struct stokes * sys,
 	      double *u,
 	      double *ff);
 
+/** natural resistance problem with lubrication **/
+/* solve natural resistance problem with lubrication in F version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ */
+void
+solve_res_lub_2f (struct stokes * sys,
+		  const double *u,
+		  double *f);
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
  * with fixed particles in F version
  * for both periodic and non-periodic boundary conditions
@@ -1503,6 +2099,40 @@ solve_mix_lub_2f (struct stokes * sys,
 		  double *u,
 		  double *ff);
 
+/* from ewald-2ft.h */
+/** natural resistance problem **/
+/* solve natural resistance problem in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ *   t [np * 3] :
+ */
+void
+solve_res_2ft (struct stokes * sys,
+	       const double *u, const double *o,
+	       double *f, double *t);
+
+/** natural mobility problem **/
+/* solve natural mobility problem in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [np * 3] : OK, this is 3D form
+ * OUTPUT
+ *   u [np * 3] : results are given in 3D form
+ *   o [np * 3] :
+ */
+void
+solve_mob_2ft (struct stokes * sys,
+	       const double *f, const double *t3,
+	       double *u, double *o);
+
+/** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FT version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -1524,6 +2154,23 @@ solve_mix_2ft (struct stokes * sys,
 	       double *u, double *o,
 	       double *ff, double *tf);
 
+/** natural resistance problem with lubrication **/
+/* solve natural resistance problem with lubrication in FT version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ *   t [np * 3] :
+ */
+void
+solve_res_lub_2ft (struct stokes * sys,
+		   const double *u, const double *o,
+		   double *f, double *t);
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
  * with fixed particles in FT version
  * for both periodic and non-periodic boundary conditions
@@ -1546,6 +2193,44 @@ solve_mix_lub_2ft (struct stokes * sys,
 		   double *u, double *o,
 		   double *ff, double *tf);
 
+/* from ewald-2fts.h */
+/** natural resistance problem **/
+/* solve natural resistance problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_2fts (struct stokes * sys,
+		const double *u, const double *o, const double *e,
+		double *f, double *t, double *s);
+
+/** natural mobility problem **/
+/* solve natural mobility problem in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   f [np * 2] : f_x, f_y are given (and f_z = 0 is assumed)
+ *   t3 [np * 3] : OK, this is 3D form
+ *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   u [np * 3] : results are given in 3D form
+ *   o [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_mob_2fts (struct stokes * sys,
+		const double *f, const double *t3, const double *e,
+		double *u, double *o, double *s);
+
+/** natural mobility problem with fixed particles **/
 /* solve natural mobility problem with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -1571,6 +2256,25 @@ solve_mix_2fts (struct stokes * sys,
 		double *u, double *o, double *s,
 		double *ff, double *tf, double *sf);
 
+/** natural resistance problem with lubrication **/
+/* solve natural resistance problem with lubrication in FTS version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *   u [np * 2] : u_x, u_y are given (and u_z = 0 is assumed)
+ *   o [np * 1] : o_z is given (and o_x = o_y = 0 is assumed)
+ *   e [np * 2] : e_xx, e_xy are given (e_?z = e_z? = 0 is assumed)
+ * OUTPUT
+ *   f [np * 3] : results are given in 3D form
+ *   t [np * 3] :
+ *   s [np * 5] :
+ */
+void
+solve_res_lub_2fts (struct stokes * sys,
+		    const double *u, const double *o, const double *e,
+		    double *f, double *t, double *s);
+
+/** natural mobility problem with lubrication with fixed particles **/
 /* solve natural mobility problem with lubrication
  * with fixed particles in FTS version
  * for both periodic and non-periodic boundary conditions
@@ -1672,255 +2376,106 @@ solve_mix_3fts_noHI (struct stokes *sys,
 /** atimes routines **/
 /* from ewald.h */
 
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * this is a wrapper for non-periodic and periodic cases
- * also polydisperse systems for non-periodic
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_3all (int n, const double *x, double *y, void * user_data);
-
-/* make mobility matrix for F/FT/FTS versions
- * this is a wrapper for non-periodic and periodic cases
- * also polydisperse systems for non-periodic
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_3all (struct stokes * sys, double * mat);
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions through matrix
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_3all_matrix (int n, const double *x,
-		    double *y, void * user_data);
-
-
-/** table version **/
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * with the ewald table
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all (int n, const double *x, double *y, void * user_data);
-
-/* make ewald-summed mobility matrix for F/FT/FTS versions
- * with the ewald table
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_ewald_3all (struct stokes * sys, double * mat);
-
-
-/** non-table version **/
-
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_notbl (int n, const double *x,
-			 double *y, void * user_data);
-/* make ewald-summed mobility matrix for F/FT/FTS versions
- * INPUT
- * sys : system parameters
- * OUTPUT
- *  mat [np * 3  * np * 3 ] : for F version
- *  mat [np * 6  * np * 6 ] : for FT version
- *  mat [np * 11 * np * 11] : for FTS version
- */
-void
-make_matrix_mob_ewald_3all_notbl (struct stokes * sys, double * mat);
-/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * through matrix
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_matrix_notbl (int n, const double *x,
-				double *y, void * user_data);
-
-
-/* from lub.h */
-/* calculate lubrication f by u for all particles
- * for both under the periodic and non-periodic boundary conditions.
- * polydisperse and slip systems can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- *   u [np * 3] : velocity
- * OUTPUT
- *   f [np * 3] : force
- */
-void
-calc_lub_3f (struct stokes *sys,
-	     const double *u,
-	     double *f);
-
-/* calculate lubrication ft by uoe for all particles
- * for both under the periodic and non-periodic boundary conditions
- * polydisperse and slip systems can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- *   uo [np * 6] : velocity, angular velocity, strain
- * OUTPUT
- *   ft [np * 6] : force, torque, stresslet
- */
-void
-calc_lub_3ft (struct stokes * sys,
-	      const double * uo, double * ft);
-
-/* calculate lubrication fts by uoe for all particles
- * for both under the periodic and non-periodic boundary conditions
- * polydisperse and slip systems can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- *   uoe [np * 11] : velocity, angular velocity, strain
- * OUTPUT
- *   fts [np * 11] : force, torque, stresslet
- */
-void
-calc_lub_3fts (struct stokes * sys,
-	       const double * uoe, double * fts);
-
-
-/* from lub-matrix.h */
-/* make lubrication matrix for F version for all particles
- * for both periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 3 * np * 3] :
- */
-void
-make_matrix_lub_3f (struct stokes *sys,
-		    double *mat);
-
-/* make lubrication matrix for FT version for all particles
- * for both periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 6 * np * 6] :
- */
-void
-make_matrix_lub_3ft (struct stokes *sys,
-		     double *mat);
-
-/* make lubrication matrix for FTS version for all particles
- * for both periodic and non-periodic boundary conditions
- * polydisperse system can be handled.
- * INPUT
- *   sys : system parameters. following entries are used;
- *         sys->pos
- *         sys->ll[xyz]
- * OUTPUT
- *  mat [np * 11 * np * 11] :
- */
-void
-make_matrix_lub_3fts (struct stokes *sys,
-		      double *mat);
-
-
-/* from ewald-3fts-matrix.h */
 /*
  * INPUT
- *  r [np * 11 * np * 11] : this is INVERSED form
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
  * OUTPUT
- *  r [np * 11 * np * 11] : this is EXTRACTED form
+ *  xa, ya : for F version
+ *  yb,
+ *  xc, yc : for FT version
+ *  xg, yg,
+ *  yh,
+ *  xm, ym, zm : for FTS version
  */
 void
-trans_ext (int np, double *r);
+scalars_ewald_real (int version,
+		    double xi, double r,
+		    double *xa, double *ya,
+		    double *yb,
+		    double *xc, double *yc,
+		    double *xg, double *yg,
+		    double *yh,
+		    double *xm, double *ym, double *zm);
 
-void
-split_matrix_3fts (int np, const double *mat,
-		   double * mat_ll, double * mat_lh,
-		   double * mat_hl, double * mat_hh);
-/* solve natural resistance problem in FTS version in the fluid-rest frame
- * for both periodic and non-periodic boundary conditions
+/* calculate scalar functions of (12)-interaction for unequal spheres
  * INPUT
- *  sys : system parameters
- *  u [np * 3] : = U - u^inf, that is, in the fluid-rest frame
- *  o [np * 3] : = O - O^inf, that is, in the fluid-rest frame
- *  e [np * 5] : = E - E^inf, that is, in the fluid-rest frame
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ *  r      := x_2 - x_1
+ *  aa, ab : radius of particle a and b
  * OUTPUT
- *  f [np * 3] :
- *  t [np * 3] :
- *  s [np * 5] :
+ *  xa, ya : for F version
+ *  yb,
+ *  xc, yc : for FT version
+ *  xg, yg,
+ *  yh,
+ *  xm, ym, zm : for FTS version
  */
 void
-solve_res_3fts_matrix_0 (struct stokes * sys,
-			 const double *u, const double *o, const double *e,
-			 double *f, double *t, double *s);
+scalars_ewald_real_poly (int version,
+			 double xi, double r,
+			 double aa, double ab,
+			 double *xa, double *ya,
+			 double *yb,
+			 double *xc, double *yc,
+			 double *xg, double *yg,
+			 double *yh,
+			 double *xm, double *ym, double *zm);
 
 
-/* from f.h */
-/* ATIMES version (for O(N^2) scheme) of
- * store matrix in F format with scalar functions
- * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
- * NOTE that only 'alpha(i) <- beta(j)' interaction is stored.
+/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
+ * this is a wrapper for non-periodic and periodic cases
+ * also polydisperse systems for non-periodic
  * INPUT
- *   x [3] : F of particle 'i'
- *   ex, ey, ez := (pos[j] - pos[i]) / r,
- *                 where 'i' is for y[] and 'j' is for x[].
- *   xa, ya, ... : scalar functions
+ *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
+ *  x [n] : F, FT, or FTS
+ *  user_data = (struct stokes *) sys
  * OUTPUT
- *   y [3] : U of particle 'j'
+ *  y [n] : U, UO, or UOE
  */
 void
-matrix_f_atimes (const double *x,
-		 double *y,
-		 double ex, double ey, double ez,
-		 double xa, double ya);
+atimes_3all
+(int n, const double *x, double *y, void * user_data);
+
+
+/* ATIMES of calc ewald-summed mobility for F/FT/FTS versions
+ * with the ewald table
+ * INPUT
+ *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
+ *  x [n] : F, FT, or FTS
+ *  user_data = (struct stokes *) sys
+ * OUTPUT
+ *  y [n] : U, UO, or UOE
+ */
+void
+atimes_ewald_3all
+(int n, const double *x, double *y, void * user_data);
 
 
 /* from non-ewald.h */
+/* calculate scalar functions under no periodic boundary condition
+ * all functions are explicitly shown in Durlofsky-Brady (1987).
+ * INPUT
+ *  version : 0 = F version
+ *            1 = FT version
+ *            2 = FTS version
+ * OUTPUT
+ *  scalar [11]:
+ *   0, 1,    : (xa12, ya12) for F version
+ *   2,       : (yb12)
+ *   3, 4,    : (xc12, yc12) for FT version
+ *   5, 6,    : (xg12, yg12)
+ *   7,       : (yh12)
+ *   8, 9, 10 : (xm12, ym12, zm12) for FTS version
+ */
+void
+scalars_nonewald (int version,
+		  double r,
+		  double *scalar);
+
 /* calculate scalar functions for unequal spheres
  * under no periodic boundary condition in dimensional form
  * to convert them in the SD form, use scalars_mob_poly_scale_SD ().
@@ -1945,62 +2500,37 @@ scalars_nonewald_poly (int version,
 		       double aa, double ab,
 		       double *scalar);
 
-/* convert scalar functions for mobility from dimensional to SD form
+/* calculate scalar functions for unequal spheres
+ * under no periodic boundary condition in dimensional form
+ * to convert them in the SD form, use scalars_mob_poly_scale_SD ().
  * INPUT
  *  version : 0 = F version
  *            1 = FT version
  *            2 = FTS version
- *  a1      : radius for the particle 1
- *            Note that the scalar functions are for (12)-interaction.
- *  scalar [11]:
- *    0, 1,    : (xa12, ya12) for F version
- *    2,       : (yb12)
- *    3, 4,    : (xc12, yc12) for FT version
- *    5, 6,    : (xg12, yg12)
- *    7,       : (yh12)
- *    8, 9, 10 : (xm12, ym12, zm12) for FTS version
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
  * OUTPUT
- *  scalar [11]: scaled
+ *  scalar [44] : scalar functions in dimensional form!
+ *   0, 1, 2, 3 : (xa11, xa12, xa21, xa22)
+ *   4, 5, 6, 7 : (ya11, ya12, ya21, ya22)
+ *   8, 9,10,11 : (yb11, yb12, yb21, yb22)
+ *  12,13,14,15 : (xc11, xc12, xc21, xc22)
+ *  16,17,18,19 : (yc11, yc12, yc21, yc22)
+ *  20,21,22,23 : (xg11, xg12, xg21, xg22)
+ *  24,25,26,27 : (yg11, yg12, yg21, yg22)
+ *  28,29,30,31 : (yh11, yh12, yh21, yh22)
+ *  32,33,34,35 : (xm11, xm12, xm21, xm22)
+ *  36,37,38,39 : (ym11, ym12, ym21, ym22)
+ *  40,41,42,43 : (zm11, zm12, zm21, zm22)
  */
 void
-scalars_mob_poly_scale_SD (int version,
-			   double a1,
-			   double *scalar);
+scalars_nonewald_poly_full (int version,
+			    double r,
+			    double aa, double ab,
+			    double *scalar);
 
 
-// *** debugging polydisperse bug ***
-
-// from ewald-new.h
-/* fixed version for polydisperse systems of
- * ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * this is a wrapper for non-periodic and periodic cases
- * also polydisperse systems for non-periodic
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_3all_new (int n, const double *x, double *y, void * user_data);
-
-/* fixed version for polydisperse systems of
- * ATIMES of calc ewald-summed mobility for F/FT/FTS versions
- * with the ewald table
- * INPUT
- *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
- *  x [n] : F, FT, or FTS
- *  user_data = (struct stokes *) sys
- * OUTPUT
- *  y [n] : U, UO, or UOE
- */
-void
-atimes_ewald_3all_new (int n, const double *x, double *y, void * user_data);
-
-// from non-ewald-new.h
-/* fixed version for polydisperse systems of
- * ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
+/* ATIMES of calc plain mobility for F/FT/FTS versions for non-periodic case
  * for both monodisplerse and polydisperse systems (given by sys->a)
  * INPUT
  *  n := np*3 (F), np*6 (FT), or np*11 (FTS)
@@ -2010,7 +2540,910 @@ atimes_ewald_3all_new (int n, const double *x, double *y, void * user_data);
  *  y [n] : U, UO, or UOE
  */
 void
-atimes_nonewald_3all_new (int n, const double *x, double *y, void *user_data);
+atimes_nonewald_3all
+(int n, const double *x, double *y, void *user_data);
+
+
+/* from lub.h */
+/* condition for lubrication
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ *  lubmax2 : square of the max distance (0 means no limit)
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+int
+cond_lub (const double *x1, const double *x2, double lubmax2);
+
+/* condition for lubrication for polydisperse system
+ * INPUT
+ *  x1 [3], x2 [3] : position
+ *  a1, a2         : radii for particles 1 and 2
+ *  lubmax2        : square of the max distance (0 means no limit)
+ * OUTPUT (return value)
+ *  0 : r != 0 and r < 3.0
+ *  1 : otherwise
+ */
+int
+cond_lub_poly (const double *x1, const double *x2,
+	       double a1, double a2,
+	       double lubmax2);
+
+/* calculate lubrication f by u for all particles
+ * for both under the periodic and non-periodic boundary conditions.
+ * polydisperse and slip systems can be handled.
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ *   u [np * 3] : velocity
+ * OUTPUT
+ *   f [np * 3] : force
+ */
+void
+calc_lub_3f
+(struct stokes *sys,
+ const double *u,
+ double *f);
+
+/* calculate lubrication ft by uoe for all particles
+ * for both under the periodic and non-periodic boundary conditions
+ * polydisperse and slip systems can be handled.
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ *   uo [np * 6] : velocity, angular velocity, strain
+ * OUTPUT
+ *   ft [np * 6] : force, torque, stresslet
+ */
+void
+calc_lub_3ft
+(struct stokes * sys,
+ const double * uo, double * ft);
+
+/* calculate lubrication fts by uoe for all particles
+ * for both under the periodic and non-periodic boundary conditions
+ * polydisperse and slip systems can be handled.
+ * INPUT
+ *   sys : system parameters. following entries are used;
+ *         sys->pos
+ *         sys->ll[xyz]
+ *   uoe [np * 11] : velocity, angular velocity, strain
+ * OUTPUT
+ *   fts [np * 11] : force, torque, stresslet
+ */
+void
+calc_lub_3fts
+(struct stokes * sys,
+ const double * uoe, double * fts);
+
+
+
+
+/* from f.h */
+/* store matrix in F format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n3 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n3 * n3] :
+ */
+void
+matrix_f_ij (int i, int j,
+	     double ex, double ey, double ez,
+	     double xa, double ya,
+	     int n3, double *mat);
+
+/* store matrix in A part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_A (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xa, double ya);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in F format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- beta(j)' interaction is stored.
+ * INPUT
+ *   x [3] : F of particle 'i'
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [3] : U of particle 'j'
+ */
+void
+matrix_f_atimes (const double *x,
+		 double *y,
+		 double ex, double ey, double ez,
+		 double xa, double ya);
+
+/* convert f[] to f[] (this is applicable for U)
+ * INPUT
+ *  n : # particles
+ *  f2 [n * 3] :
+ * OUTPUT
+ *  f1 [n * 3] := f2 [n * 3]
+ */
+void
+set_F_by_f (int n,
+	    double *f1,
+	    const double *f2);
+
+/* calc scalar functions of (M^inf)^-1 in F
+ * INPUT
+ *   s : distance of particles
+ * OUTPUT
+ *  scalar_f [4] :
+ */
+void
+scalar_minv_f (double s, double * scalar_f);
+
+/* calculate f by u for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubmin is used.
+ *   u1 [3] : velocity
+ *   u2 [3] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ * OUTPUT
+ *   f1 [3] : force
+ *   f2 [3] :
+ */
+void
+calc_lub_f_2b (struct stokes * sys,
+	       const double * u1, const double * u2,
+	       const double * x1, const double * x2,
+	       double * f1, double * f2);
+
+/* calculate lub-matrix in F version for pair of particles 1 and 2
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ matrix_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys    : system parameters. the followings are referred:
+ *            sys->lubmin2      : square of min distance for lub calculation.
+ *            sys->twobody_nmax : max order in twobody.
+ *            sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   i      : particle index for '1'
+ *   j      : particle index for '2'
+ *            (i,j) are used to assign the results in mat[].
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*3)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_f_2b (struct stokes * sys,
+		 int i, int j,
+		 const double *x1, const double *x2,
+		 int n, double * mat);
+
+
+/* calculate f by u for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   u1 [3] : velocity of particle 1
+ *   u2 [3] : velocity of particle 2
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   f1 [3] : force of particle 1
+ *   f2 [3] : force of particle 2
+ */
+void
+calc_lub_f_2b_poly
+(struct stokes *sys,
+ const double *u1, const double *u2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *f1, double *f2);
+
+
+
+
+/* pre-process for imposed flow shifting, that is, converting U
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  u[np*3] : velocity in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  u0[np*3] : velocity in the labo frame
+ */
+void
+shift_labo_to_rest_U (struct stokes * sys,
+		      int np, const double *u,
+		      double *u0);
+
+/* post-process for imposed flow shifting, that is, converting U
+ * from the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * to the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  u[np*3] : velocity in the fluid-rest frame
+ *            (data is overwritten after the process)
+ * OUTPUT
+ *  u[np*3] : velocity in the labo frame
+ */
+void
+shift_rest_to_labo_U (struct stokes * sys,
+		      int np, double *u);
+
+
+/* from ft.h */
+/* store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n6 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n6 * n6] :
+ */
+void
+matrix_ft_ij (int i, int j,
+	      double ex, double ey, double ez,
+	      double xa, double ya,
+	      double yb,
+	      double xc, double yc,
+	      int n6, double *mat);
+
+/* store matrix in B part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yb : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_B (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double yb);
+
+/* store matrix in C part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xc, yc : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_C (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xc, double yc);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- beta(j)' interaction is stored.
+ * INPUT
+ *   x [6] : FTS of particle 'i'
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [6] : UOE of particle 'j'
+ */
+void
+matrix_ft_atimes (const double *x,
+		  double *y,
+		  double ex, double ey, double ez,
+		  double xa, double ya,
+		  double yb,
+		  double xc, double yc);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FT format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [6] : FTS of particle 'i'
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [6] : UOE of particle 'j'
+ */
+void
+matrix_ft_self_atimes (const double *x,
+		       double *y,
+		       double ex, double ey, double ez,
+		       double xa, double ya,
+		       double yb,
+		       double xc, double yc);
+
+/* convert ft[] to f[], t[] (this is applicable for UO)
+ * INPUT
+ *  n : # particles
+ *  ft [n * 6] :
+ * OUTPUT
+ *  f[n * 3] :
+ *  t[n * 3] :
+ */
+void
+set_FT_by_ft (int n,
+	      double *f, double *t,
+	      const double *ft);
+
+/* convert ft[] to f[], t[] (this is applicable for UO)
+ * INPUT
+ *  n : # particles
+ *  f[n * 3] :
+ *  t[n * 3] :
+ * OUTPUT
+ *  ft [n * 6] :
+ */
+void
+set_ft_by_FT (int n,
+	      double *ft,
+	      const double *f, const double *t);
+
+/* calc scalar functions of (M^inf)^-1 in FT
+ * INPUT
+ *   s : distance of particles
+ * OUTPUT
+ *  scalar_ft [10] :
+ */
+void
+scalar_minv_ft (double s, double * scalar_ft);
+
+/* calculate ft by uoe for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubmin is used.
+ *   uo1 [6] : velocity, angular velocity
+ *   uo2 [6] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ * OUTPUT
+ *   ft1 [6] : force, torque
+ *   ft2 [6] :
+ */
+void
+calc_lub_ft_2b (struct stokes * sys,
+		const double *uo1, const double *uo2,
+		const double *x1, const double *x2,
+		double *ft1, double *ft2);
+
+/* calculate lub-matrix in FT version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubmin is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*6)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)- and (j,i)-pairs.
+ */
+void
+matrix_lub_ft_2b (struct stokes * sys,
+		  int i, int j,
+		  const double *x1, const double *x2,
+		  int n, double * mat);
+
+/* calculate ft by uo for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ * INPUT
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uo1 [6] : velocity, angular velocity
+ *   uo2 [6] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   ft1 [6] : force, torque
+ *   ft2 [6] :
+ */
+void
+calc_lub_ft_2b_poly
+(struct stokes *sys,
+ const double *uo1, const double *uo2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *ft1, double *ft2);
+
+
+
+
+/* pre-process for imposed flow shifting, that is, converting U,O
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  o0[np*3] : angular velocity in the labo frame
+ */
+void
+shift_labo_to_rest_O (struct stokes * sys,
+		      int np, const double *o,
+		      double *o0);
+
+/* post-process for imposed flow shifting, that is, converting U,O
+ * from the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * to the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  o[np*3] : angular velocity in the fluid-rest frame
+ *            (data is overwritten after the process)
+ * OUTPUT
+ *  o[np*3] : angular velocity in the labo frame
+ */
+void
+shift_rest_to_labo_O (struct stokes * sys,
+		      int np, double *o);
+
+
+/* from fts.h */
+/* store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   i, j : particle index
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xa, ya, ... : scalar functions
+ *   n11 : dimension of the matrix mat []
+ * OUTPUT
+ *   mat [n11 * n11] :
+ */
+void
+matrix_fts_ij (int i, int j,
+	       double ex, double ey, double ez,
+	       double xa, double ya,
+	       double yb,
+	       double xc, double yc,
+	       double xg, double yg,
+	       double yh,
+	       double xm, double ym, double zm,
+	       int n11, double *mat);
+
+/* store matrix in G part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xg, yg : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_G (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xg, double yg);
+
+/* store matrix in G-transpose part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xg, yg : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_GT (int n, double *mat,
+	      double ex, double ey, double ez,
+	      double xg, double yg);
+
+/* store matrix in H part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yh : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2)] : added (not cleared!)
+ */
+void
+matrix_ij_H (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double yh);
+
+/* store matrix in H-transpose part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   yh : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_HT (int n, double *mat,
+	      double ex, double ey, double ez,
+	      double yh);
+
+/* store matrix in M part with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * only m [alpha(i), beta(j)] is stored.
+ * INPUT
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for UOE (y[]) and 'j' is for FTS(x[]).
+ *   xm, ym, zm : scalar functions
+ *   n : # dimension of matrix mat[] (should be more tha 'np * 3')
+ * OUTPUT
+ *   mat [(0,1,2,3,4) * n + (0,1,2,3,4)] : added (not cleared!)
+ */
+void
+matrix_ij_M (int n, double *mat,
+	     double ex, double ey, double ez,
+	     double xm, double ym, double zm);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- beta(j)' interaction is stored.
+ * INPUT
+ *   x [11] : FTS of particle 'i' (extracted form)
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [11] : UOE of particle 'j' (extracted form)
+ */
+void
+matrix_fts_atimes (const double *x,
+		   double *y,
+		   double ex, double ey, double ez,
+		   double xa, double ya,
+		   double yb,
+		   double xc, double yc,
+		   double xg, double yg,
+		   double yh,
+		   double xm, double ym, double zm);
+
+/* ATIMES version (for O(N^2) scheme) of
+ * store matrix in FTS format with scalar functions
+ * r := pos [beta(j)] - pos [alpha(i)] (NOTE THE SIGN!)
+ * NOTE that only 'alpha(i) <- alpha(i)' interaction is stored.
+ * INPUT
+ *   x [11] : FTS of particle 'i' (extracted form)
+ *   ex, ey, ez := (pos[j] - pos[i]) / r,
+ *                 where 'i' is for y[] and 'j' is for x[].
+ *   xa, ya, ... : scalar functions
+ * OUTPUT
+ *   y [11] : UOE of particle 'j' (extracted form)
+ */
+void
+matrix_fts_self_atimes (const double *x,
+			double *y,
+			double ex, double ey, double ez,
+			double xa, double ya,
+			double yb,
+			double xc, double yc,
+			double xg, double yg,
+			double yh,
+			double xm, double ym, double zm);
+
+/* convert fts[] to f[], t[], s[] (this is applicable for UOE)
+ * INPUT
+ *  n : # particles
+ *  fts [n * 11] :
+ * OUTPUT
+ *  f[n * 3] :
+ *  t[n * 3] :
+ *  s[n * 5] :
+ */
+void
+set_FTS_by_fts (int n,
+		double *f, double *t, double *s,
+		const double *fts);
+
+/* convert fts[] to f[], t[], s[] (this is applicable for UOE)
+ * INPUT
+ *  n : # particles
+ *  f[n * 3] :
+ *  t[n * 3] :
+ *  s[n * 5] :
+ * OUTPUT
+ *  fts [n * 11] :
+ */
+void
+set_fts_by_FTS (int n,
+		double *fts,
+		const double *f, const double *t, const double *s);
+
+/* calc scalar functions of (M^inf)^-1 in FTS
+ * INPUT
+ *   s : distance of particles
+ * OUTPUT
+ *   lub [22] : scalar functions
+ */
+void
+scalar_minv_fts (double s,  double * scalar_fts);
+
+/* calculate fts by uoe for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubmin is used.
+ *   uoe1 [11] : velocity, angular velocity, strain
+ *   uoe2 [11] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ * OUTPUT
+ *   fts1 [11] : force, torque, stresslet
+ *   fts2 [11] :
+ */
+void
+calc_lub_fts_2b (struct stokes * sys,
+		 const double *uoe1, const double *uoe2,
+		 const double *x1, const double *x2,
+		 double *fts1, double *fts2);
+
+/* calculate lub-matrix in FTS version for pair of particles 1 and 2
+ * INPUT
+ *   sys : system parameters
+ *         sys->lubmin is used.
+ *   i : particle index for '1'
+ *   j : particle index for '2'
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   n : dimension of matrix 'mat' (must be np*11)
+ * OUTPUT
+ *   mat [n * n] : add for (i,j)-pair
+ */
+void
+matrix_lub_fts_2b (struct stokes * sys,
+		   int i, int j,
+		   const double *x1, const double *x2,
+		   int n, double * mat);
+
+/* calculate fts by uoe for pair of particles 1 and 2 for unequal spheres
+ * Note that this take care of both (12)- and (21)-interactions,
+ * so that this is called in the loop
+ *   for(i=0;i<n;i++){ for(j=i+1;j<n;j++){ calc_lub_f_2b(i,j); }}
+ *   sys : system parameters. the followings are referred:
+ *         sys->lubmin       : min distance for lub calculation.
+ *         sys->twobody_nmax : max order in twobody.
+ *         sys->twobody_lub  : 0 for far form, 1 for lub form in twobody.
+ *   uoe1 [11] : velocity, angular velocity, strain
+ *   uoe2 [11] :
+ *   x1 [3] : position of particle 1
+ *   x2 [3] : position of particle 2
+ *   i1, i2 : particle index for particles 1 and 2
+ * OUTPUT
+ *   fts1 [11] : force, torque, stresslet
+ *   fts2 [11] :
+ */
+void
+calc_lub_fts_2b_poly
+(struct stokes *sys,
+ const double *uoe1, const double *uoe2,
+ const double *x1, const double *x2,
+ int i1, int i2,
+ double *fts1, double *fts2);
+
+
+
+
+/* pre-process for imposed flow shifting, that is, converting E
+ * from the labo frame
+ *    u(x) is given by the imposed flow field as |x|-> infty
+ * to the fluid-rest frame
+ *    u(x) = 0 as |x|-> infty
+ * INPUT
+ *  sys     : struct stokes
+ *  np      : number of particles to shift (and defined in u[])
+ *  e[np*5] : strain in the fluid-rest frame
+ *            (data is preserved)
+ * OUTPUT
+ *  e0[np*5] : strain in the fluid-rest frame
+ */
+void
+shift_labo_to_rest_E (struct stokes * sys,
+		      int np, const double *e,
+		      double *e0);
+
+
+
+
+/* from minv-poly.h */
+/* calc scalar functions of (M^inf)^-1 in F for unequal spheres
+ * INPUT
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  scalar_f [8] : scalar functions in dimensional form!
+ *    0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *    4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ */
+void
+scalars_minv_f_poly (double r, double aa, double ab,
+		     double *scalar_f);
+
+/* calc scalar functions of (M^inf)^-1 in FT for unequal spheres
+ * INPUT
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  scalar_ft [20] : scalar functions in dimensional form!
+ *      0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *      4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *      8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *     12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *     16,17,18,19 : (YC11, YC12, YC21, YC22)
+ */
+void
+scalars_minv_ft_poly (double r, double aa, double ab,
+		      double *scalar_ft);
+
+/* calc scalar functions of (M^inf)^-1 in FTS for unequal spheres
+ * INPUT
+ *  r      := x_b - x_a
+ *  aa, ab : radius of particle a and b
+ * OUTPUT
+ *  scalar_fts [44] : scalar functions in dimensional form!
+ *       0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *       4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *       8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *      12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *      16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *      20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *      24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *      28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *      32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *      36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *      40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
+ */
+void
+scalars_minv_fts_poly (double r, double aa, double ab,
+		       double *scalar_fts);
+
+
+
+
+/** lubrication functions for polydisperse systems **/
+
+//#include "twobody.h" // struct twobody_f
+
+/* calc scalar functions of lubrication correction for unequal spheres
+ * INPUT
+ *  r      := x_2 - x_1
+ *  a1, a2 : radius of particle a and b
+ *  f12    : (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ * OUTPUT
+ *  lub [22] : scalar functions in dimensional form!
+ *      0, 1 : (XA11, XA12)
+ *      2, 3 : (YA11, YA12)
+ *      4, 5 : (YB11, YB12)
+ *      6, 7 : (XC11, XC12)
+ *      8  9 : (YC11, YC12)
+ *     10,11 : (XG11, XG12)
+ *     12,13 : (YG11, YG12)
+ *     14,15 : (YH11, YH12)
+ *     16,17 : (XM11, XM12)
+ *     18,19 : (YM11, YM12)
+ *     20,21 : (ZM11, ZM12)
+ */
+void
+scalars_lub_poly (int version,
+		  double r, double a1, double a2,
+		  struct twobody_f *f12,
+		  int n, int flag_lub,
+		  double *lub);
+
+/* calc scalar functions of lubrication correction for unequal spheres
+ * INPUT
+ *  r      := x_2 - x_1
+ *  a1, a2 : radius of particle a and b
+ *  f12,f21: (struct twobody_f *).
+ *           you can give NULL for them.
+ *           then, the coefs are calculated on-the-fly (terribly slow).
+ *  n : max order
+ *  flag_lub   : 0 to use twobody_far()
+ *               1 to use twobody_lub()
+ * OUTPUT
+ *  lub [44] : scalar functions in dimensional form!
+ *    0, 1, 2, 3 : (XA11, XA12, XA21, XA22)
+ *    4, 5, 6, 7 : (YA11, YA12, YA21, YA22)
+ *    8, 9,10,11 : (YB11, YB12, YB21, YB22)
+ *   12,13,14,15 : (XC11, XC12, XC21, XC22)
+ *   16,17,18,19 : (YC11, YC12, YC21, YC22)
+ *   20,21,22,23 : (XG11, XG12, XG21, XG22)
+ *   24,25,26,27 : (YG11, YG12, YG21, YG22)
+ *   28,29,30,31 : (YH11, YH12, YH21, YH22)
+ *   32,33,34,35 : (XM11, XM12, XM21, XM22)
+ *   36,37,38,39 : (YM11, YM12, YM21, YM22)
+ *   40,41,42,43 : (ZM11, ZM12, ZM21, ZM22)
+ */
+void
+scalars_lub_poly_full (int version,
+		       double r, double a1, double a2,
+		       struct twobody_f *f12, struct twobody_f *f21,
+		       int n, int flag_lub,
+		       double *lub);
+
+/* from two-body-res.h */
+/* calc scalar functions of two-body resistance
+ * INPUT
+ *   s : distance of particles
+ * OUTPUT
+ *   res [22] : scalar functions
+ */
+void
+scalar_two_body_res (double s, double *res);
+
+
+
+
+/* the following header files are internal use only */
+
+// dgemm_c.h
+// dgemv_c.h
+// memory-check.h
 
 
 #endif /* !_LIBSTOKES_CORE_H_ */

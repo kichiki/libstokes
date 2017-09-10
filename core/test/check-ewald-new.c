@@ -22,310 +22,11 @@
 
 #include <stokes.h> // struct stokes
 #include <ewald.h> // atimes_ewald_3all()
-#include <ewald-new.h> // atimes_ewald_3all_new()
 
 #include "check.h" // compare()
 
 
 /** check routines **/
-
-// compare with monodisperse systems
-int
-check_atimes_ewald_3all_new_0
-(int version,
- int verbose, double tiny)
-{
-  if (verbose != 0)
-    {
-      fprintf (stdout,
-	       "==================================================\n"
-	       "check_atimes_ewald_3all_new_0\n"
-	       "(%d)"
-	       ": start\n",
-	       version);
-    }
-
-
-  struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_ewald_3all_new_0");
-  sys->version = version;
-
-
-  double phi = 0.2;
-  double l;
-  l = pow (M_PI / 0.75 / phi, 1.0 / 3.0);
-
-  int n0;
-  if (version == 0)      n0 =  3;
-  else if (version == 1) n0 =  6;
-  else                   n0 = 11;
-
-
-  /*
-  // N=1
-  int np = 1;
-  int n = n0 * np;
-  stokes_set_np (sys, np, np);
-
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
-
-  sys->periodic = 1;
-  stokes_set_l (sys, l, l, l);
-  */
-
-  // N=8
-  int np = 8;
-  int n = n0 * np;
-  stokes_set_np (sys, np, np);
-
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
-
-  sys->pos [3] = l;
-  sys->pos [4] = 0.0;
-  sys->pos [5] = 0.0;
-
-  sys->pos [6] = 0.0;
-  sys->pos [7] = l;
-  sys->pos [8] = 0.0;
-
-  sys->pos [9] = 0.0;
-  sys->pos[10] = 0.0;
-  sys->pos[11] = l;
-
-  sys->pos[12] = l;
-  sys->pos[13] = l;
-  sys->pos[14] = 0.0;
-
-  sys->pos[15] = l;
-  sys->pos[16] = 0.0;
-  sys->pos[17] = l;
-
-  sys->pos[18] = 0.0;
-  sys->pos[19] = l;
-  sys->pos[20] = l;
-
-  sys->pos[21] = l;
-  sys->pos[22] = l;
-  sys->pos[23] = l;
-
-  sys->periodic = 1;
-  stokes_set_l (sys, 2.0*l, 2.0*l, 2.0*l);
-
-
-  double ewald_tr = 1.0;
-  double ewald_eps = 1.0e-12;
-
-  double xi = xi_by_tratio (sys, ewald_tr);
-  stokes_set_xi (sys, xi, ewald_eps);
-
-
-  double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "check_atimes_ewald_3all_new_0");
-  for (int i = 0; i < n; i ++)
-    {
-      x[i] = 1.0;
-    }
-
-
-  // bug fixed version
-  double *y1 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y1, "check_atimes_ewald_3all_new_0");
-
-  atimes_ewald_3all_new (n, x, y1, (void *)sys);
-
-  // the old version
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_ewald_3all_new_0");
-
-  atimes_ewald_3all (n, x, y2, (void *)sys);
-
-
-  // compare
-  int check = 0;
-  double max = 0.0;
-
-  char label [80];
-  // between y1 and y2
-  for (int i = 0; i < n; i ++)
-    {
-      sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
-    }
-
-
-  free (y1);
-  free (y2);
-  free (x);
-  stokes_free (sys);
-
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
-      if (check == 0) fprintf (stdout, " => PASSED\n\n");
-      else            fprintf (stdout, " => FAILED\n\n");
-    }
-
-  return (check);
-}
-
-// compare with polydisperse systems with a = 1.0 (monodisperse)
-int
-check_atimes_ewald_3all_new_1
-(int version,
- int verbose, double tiny)
-{
-  if (verbose != 0)
-    {
-      fprintf (stdout,
-	       "==================================================\n"
-	       "check_atimes_ewald_3all_new_1\n"
-	       "(%d)"
-	       ": start\n",
-	       version);
-    }
-
-
-  struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_ewald_3all_new_1");
-  sys->version = version;
-
-
-  double phi = 0.2;
-  double l;
-  l = pow (M_PI / 0.75 / phi, 1.0 / 3.0);
-
-  int n0;
-  if (version == 0)      n0 =  3;
-  else if (version == 1) n0 =  6;
-  else                   n0 = 11;
-
-
-  /*
-  // N=1
-  int np = 1;
-  int n = n0 * np;
-  stokes_set_np (sys, np, np);
-
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
-
-  sys->periodic = 1;
-  stokes_set_l (sys, l, l, l);
-  */
-
-  // N=8
-  int np = 8;
-  int n = n0 * np;
-  stokes_set_np (sys, np, np);
-
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
-
-  sys->pos [3] = l;
-  sys->pos [4] = 0.0;
-  sys->pos [5] = 0.0;
-
-  sys->pos [6] = 0.0;
-  sys->pos [7] = l;
-  sys->pos [8] = 0.0;
-
-  sys->pos [9] = 0.0;
-  sys->pos[10] = 0.0;
-  sys->pos[11] = l;
-
-  sys->pos[12] = l;
-  sys->pos[13] = l;
-  sys->pos[14] = 0.0;
-
-  sys->pos[15] = l;
-  sys->pos[16] = 0.0;
-  sys->pos[17] = l;
-
-  sys->pos[18] = 0.0;
-  sys->pos[19] = l;
-  sys->pos[20] = l;
-
-  sys->pos[21] = l;
-  sys->pos[22] = l;
-  sys->pos[23] = l;
-
-
-  double *a = (double *)malloc (sizeof (double) * np);
-  for (int i = 0; i < np; i ++)
-    {
-      a[i] = 1.0;
-    }
-  stokes_set_radius (sys, a);
-
-
-  sys->periodic = 1;
-  stokes_set_l (sys, 2.0*l, 2.0*l, 2.0*l);
-
-
-  double ewald_tr = 1.0;
-  double ewald_eps = 1.0e-12;
-
-  double xi = xi_by_tratio (sys, ewald_tr);
-  stokes_set_xi (sys, xi, ewald_eps);
-
-
-  double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "check_atimes_ewald_3all_new_1");
-  for (int i = 0; i < n; i ++)
-    {
-      x[i] = 1.0;
-    }
-
-
-  // bug fixed version
-  double *y1 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y1, "check_atimes_ewald_3all_new_1");
-
-  atimes_ewald_3all_new (n, x, y1, (void *)sys);
-
-  // the old version
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_ewald_3all_new_1");
-
-  atimes_ewald_3all (n, x, y2, (void *)sys);
-
-
-  // compare
-  int check = 0;
-  double max = 0.0;
-
-  char label [80];
-  // between y1 and y2
-  for (int i = 0; i < n; i ++)
-    {
-      sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
-    }
-
-
-  free (y1);
-  free (y2);
-  free (a);
-  free (x);
-  stokes_free (sys);
-
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
-      if (check == 0) fprintf (stdout, " => PASSED\n\n");
-      else            fprintf (stdout, " => FAILED\n\n");
-    }
-
-  return (check);
-}
 
 // compare mono (without a) with polydisperse systems with a = 1.0
 int
@@ -445,13 +146,13 @@ check_atimes_ewald_3all_new_1b
   double *y1 = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y1, "check_atimes_ewald_3all_new_1b");
 
-  atimes_ewald_3all_new (n, x, y1, (void *)sys0);
+  atimes_ewald_3all (n, x, y1, (void *)sys0);
 
   // poly (a=1)
   double *y2 = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y2, "check_atimes_ewald_3all_new_1b");
 
-  atimes_ewald_3all_new (n, x, y2, (void *)sys1);
+  atimes_ewald_3all (n, x, y2, (void *)sys1);
 
 
   // compare
@@ -598,7 +299,7 @@ check_atimes_ewald_3all_new_2
       }
 
 
-    atimes_ewald_3all_new (n, x, y1, (void *)sys);
+    atimes_ewald_3all (n, x, y1, (void *)sys);
   }
 
 
@@ -684,7 +385,7 @@ check_atimes_ewald_3all_new_2
       }
 
 
-    atimes_ewald_3all_new (n, x, y2, (void *)sys);
+    atimes_ewald_3all (n, x, y2, (void *)sys);
 
 
     // scale U, O, E for comparison

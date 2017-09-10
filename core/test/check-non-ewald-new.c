@@ -22,109 +22,11 @@
 
 #include <stokes.h> // struct stokes
 #include <non-ewald.h> // atimes_nonewald_3all()
-#include <non-ewald-new.h> // atimes_nonewald_3all_new()
 
 #include "check.h" // compare()
 
 
 /** check routines **/
-
-// compare with monodisperse systems
-int
-check_atimes_nonewald_3all_new_0
-(int version,
- int verbose, double tiny)
-{
-  if (verbose != 0)
-    {
-      fprintf (stdout,
-	       "==================================================\n"
-	       "check_atimes_nonewald_3all_new_0\n"
-	       "(%d)"
-	       ": start\n",
-	       version);
-    }
-
-
-  struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_nonewald_3all_new_0");
-  sys->version = version;
-
-
-  int n0;
-  if (version == 0)      n0 =  3;
-  else if (version == 1) n0 =  6;
-  else                   n0 = 11;
-
-
-  // N = 3
-  int np = 3;
-  int n = n0 * np;
-
-  stokes_set_np (sys, np, np);
-
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
-
-  sys->pos [3] = 10.0;
-  sys->pos [4] = 0.0;
-  sys->pos [5] = 0.0;
-
-  sys->pos [6] = -10.0;
-  sys->pos [7] = 0.0;
-  sys->pos [8] = 0.0;
-
-
-  double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "check_atimes_nonewald_3all_new_0");
-  for (int i = 0; i < n; i ++)
-    {
-      x[i] = 1.0;
-    }
-
-
-  // bug fixed version
-  double *y1 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y1, "check_atimes_nonewald_3all_new_0");
-
-  atimes_nonewald_3all_new (n, x, y1, (void *)sys);
-
-  // the old version
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_nonewald_3all_new_0");
-
-  atimes_nonewald_3all (n, x, y2, (void *)sys);
-
-
-  // compare
-  int check = 0;
-  double max = 0.0;
-
-  char label [80];
-  // between y1 and y2
-  for (int i = 0; i < n; i ++)
-    {
-      sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
-    }
-
-
-  free (y1);
-  free (y2);
-  free (x);
-  stokes_free (sys);
-
-
-  if (verbose != 0)
-    {
-      fprintf (stdout, " max error = %e vs tiny = %e\n", max, tiny);
-      if (check == 0) fprintf (stdout, " => PASSED\n\n");
-      else            fprintf (stdout, " => FAILED\n\n");
-    }
-
-  return (check);
-}
 
 // compare with polydisperse systems with a = 1.0 (monodisperse)
 int
@@ -143,37 +45,34 @@ check_atimes_nonewald_3all_new_1
     }
 
 
-  struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_nonewald_3all_new_1");
-  sys->version = version;
-
-
   int n0;
   if (version == 0)      n0 =  3;
   else if (version == 1) n0 =  6;
   else                   n0 = 11;
 
 
+  // mono
+  struct stokes *sys0 = stokes_init ();
+  CHECK_MALLOC (sys0, "check_atimes_nonewald_3all_new_1");
+  sys0->version = version;
+
   // N = 3
   int np = 3;
   int n = n0 * np;
 
-  stokes_set_np (sys, np, np);
+  stokes_set_np (sys0, np, np);
 
-  sys->pos [0] = 0.0;
-  sys->pos [1] = 0.0;
-  sys->pos [2] = 0.0;
+  sys0->pos [0] = 0.0;
+  sys0->pos [1] = 0.0;
+  sys0->pos [2] = 0.0;
 
-  sys->pos [3] = 10.0;
-  sys->pos [4] = 0.0;
-  sys->pos [5] = 0.0;
+  sys0->pos [3] = 10.0;
+  sys0->pos [4] = 0.0;
+  sys0->pos [5] = 0.0;
 
-  sys->pos [6] = -10.0;
-  sys->pos [7] = 0.0;
-  sys->pos [8] = 0.0;
-
-  double a [3] = {1.0, 1.0, 1.0};
-  stokes_set_radius (sys, a);
+  sys0->pos [6] = -10.0;
+  sys0->pos [7] = 0.0;
+  sys0->pos [8] = 0.0;
 
 
   double *x = (double *)malloc (sizeof (double) * n);
@@ -183,18 +82,32 @@ check_atimes_nonewald_3all_new_1
       x[i] = 1.0;
     }
 
+  double *y0 = (double *)malloc (sizeof (double) * n);
+  CHECK_MALLOC (y0, "check_atimes_nonewald_3all_new_1");
 
-  // bug fixed version
+  atimes_nonewald_3all (n, x, y0, (void *)sys0);
+
+
+  // poly (a=1)
+  struct stokes *sys1 = stokes_init ();
+  CHECK_MALLOC (sys1, "check_atimes_nonewald_3all_new_1");
+  sys1->version = version;
+
+  stokes_set_np (sys1, np, np);
+
+  for (int i = 0; i < np * 3; i ++)
+    {
+      sys1->pos [i] = sys0->pos [i];
+    }
+
+  double a [3] = {1.0, 1.0, 1.0};
+  stokes_set_radius (sys0, a);
+
+
   double *y1 = (double *)malloc (sizeof (double) * n);
   CHECK_MALLOC (y1, "check_atimes_nonewald_3all_new_1");
 
-  atimes_nonewald_3all_new (n, x, y1, (void *)sys);
-
-  // the old version
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_nonewald_3all_new_1");
-
-  atimes_nonewald_3all (n, x, y2, (void *)sys);
+  atimes_nonewald_3all (n, x, y1, (void *)sys1);
 
 
   // compare
@@ -202,18 +115,19 @@ check_atimes_nonewald_3all_new_1
   double max = 0.0;
 
   char label [80];
-  // between y1 and y2
+  // between y0 and y1
   for (int i = 0; i < n; i ++)
     {
       sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
+      check += compare_max (y0[i], y1[i], label, verbose, tiny, &max);
     }
 
 
+  free (y0);
   free (y1);
-  free (y2);
   free (x);
-  stokes_free (sys);
+  stokes_free (sys0);
+  stokes_free (sys1);
 
 
   if (verbose != 0)
@@ -302,8 +216,7 @@ check_atimes_nonewald_3all_new_2
       }
 
 
-    atimes_nonewald_3all_new (n, x, y1, (void *)sys);
-    //atimes_nonewald_3all (n, x, y1, (void *)sys);
+    atimes_nonewald_3all (n, x, y1, (void *)sys);
   }
 
   // system 2
@@ -381,8 +294,7 @@ check_atimes_nonewald_3all_new_2
       }
 
 
-    atimes_nonewald_3all_new (n, x, y2, (void *)sys);
-    //atimes_nonewald_3all (n, x, y2, (void *)sys);
+    atimes_nonewald_3all (n, x, y2, (void *)sys);
 
     // scale U, O, E for comparison
     double scale2 = scale * scale;

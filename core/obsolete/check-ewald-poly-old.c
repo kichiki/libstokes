@@ -29,7 +29,8 @@
 
 /** check routines **/
 
-/* check atimes_ewald_3all() for mono and poly(a=1) with SC config with N=1
+/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
+ * with SC config with N=1
  * INPUT
  *  version   : 0 (F), 1 (FT), 2 (FTS)
  *  phi       : volume fraction, that is, phi = (4/3)pi a^3/l^3
@@ -42,16 +43,17 @@
  *                     otherwise => failed
  */
 int
-check_atimes_ewald_3all_poly_SC_1 (int version,
-				   double phi,
-				   double ewald_tr, double ewald_eps,
-				   int verbose, double tiny)
+check_make_matrix_mob_ewald_3all_poly_SC_1
+(int version,
+ double phi,
+ double ewald_tr, double ewald_eps,
+ int verbose, double tiny)
 {
   if (verbose != 0)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_atimes_ewald_3all_poly_SC_1\n"
+	       "check_make_matrix_mob_ewald_3all_poly_SC_1\n"
 	       "(%d,phi=%f,tr=%f,eps=%f)"
 	       ": start\n",
 	       version, phi, ewald_tr, ewald_eps);
@@ -59,7 +61,7 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
 
   // initialize struct stokes *sys
   struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_ewald_3all_poly_SC_1");
+  CHECK_MALLOC (sys, "check_make_matrix_mob_ewald_3all_poly_SC_1");
   sys->version = version;
 
   int np = 1;
@@ -70,6 +72,7 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   sys->pos [2] = 0.0;
 
 
+  //sys->lubmin = 2.0000000001;
   sys->lubmin2 = 4.0000000001;
   stokes_set_iter (sys, "gmres", 2000, 20, 1.0e-6, 1, stderr);
 
@@ -87,21 +90,13 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   else if (version == 1) n =  6 * np;
   else                   n = 11 * np;
 
-  double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "check_atimes_ewald_3all_poly_SC_1");
-  int i;
-  for (i = 0; i < n; i ++)
-    {
-      x[i] = 1.0;
-    }
-
   // case 1) -- mono code
-  double *y1 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y1, "check_atimes_ewald_3all_poly_SC_1");
+  double *mat1 = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat1, "check_make_matrix_mob_ewald_3all_poly_SC_1");
 
   double t0, t;
   t0 = ptime_ms_d ();
-  atimes_ewald_3all (n, x, y1, (void *)sys);
+  make_matrix_mob_ewald_3all (sys, mat1);
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
@@ -110,12 +105,12 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   double a [1] = {1.0};
   stokes_set_radius (sys, a);
 
-  // case 2) -- poly code
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_ewald_3all_poly_SC_1");
+  // case 2)
+  double *mat2 = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat2, "check_make_matrix_mob_ewald_3all_poly_SC_1");
 
   t0 = ptime_ms_d ();
-  atimes_ewald_3all (n, x, y2, (void *)sys);
+  make_matrix_mob_ewald_3all (sys, mat2);
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
 
@@ -124,15 +119,19 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   int check = 0;
   double max = 0.0;
   char label [80];
+  int i, j;
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
+      for (j = 0; j < n; j ++)
+	{
+	  sprintf (label, " (%d, %d) ", i, j);
+	  check += compare_max (mat1[i*n+j], mat2[i*n+j],
+				label, verbose, tiny, &max);
+	}
     }
 
-  free (x);
-  free (y1);
-  free (y2);
+  free (mat1);
+  free (mat2);
   stokes_free (sys);
 
 
@@ -149,7 +148,8 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
   return (check);
 }
 
-/* check atimes_ewald_3all() for mono and poly(a=1) with SC config with N=2
+/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
+ * with SC config with N=2
  * INPUT
  *  version   : 0 (F), 1 (FT), 2 (FTS)
  *  dir       : direction of the config, 0 (x), 1 (y), 2(z).
@@ -163,24 +163,25 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
  *                     otherwise => failed
  */
 int
-check_atimes_ewald_3all_poly_SC_2 (int version,
-				   int dir,
-				   double phi,
-				   double ewald_tr, double ewald_eps,
-				   int verbose, double tiny)
+check_make_matrix_mob_ewald_3all_poly_SC_2
+(int version,
+ int dir,
+ double phi,
+ double ewald_tr, double ewald_eps,
+ int verbose, double tiny)
 {
   if (verbose != 0)
     {
       fprintf (stdout,
 	       "==================================================\n"
-	       "check_atimes_ewald_3all_poly_SC_2\n"
+	       "check_make_matrix_mob_ewald_3all_poly_SC_2\n"
 	       "(%d,dir=%d,phi=%f,tr=%f,eps=%f): start\n",
 	       version, dir, phi, ewald_tr, ewald_eps);
     }
 
   // initialize struct stokes *sys
   struct stokes *sys = stokes_init ();
-  CHECK_MALLOC (sys, "check_atimes_ewald_3all_poly_SC_2");
+  CHECK_MALLOC (sys, "check_make_matrix_mob_ewald_3all_poly_SC_2");
   sys->version = version;
 
   int np = 2;
@@ -232,7 +233,7 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
       sys->pos [5] = l;
     }
 
-
+  
   double xi = xi_by_tratio (sys, ewald_tr);
   stokes_set_xi (sys, xi, ewald_eps);
 
@@ -241,21 +242,13 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
   else if (version == 1) n =  6 * np;
   else                   n = 11 * np;
 
-  double *x = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (x, "check_atimes_ewald_3all_poly_SC_2");
-  int i;
-  for (i = 0; i < n; i ++)
-    {
-      x[i] = 1.0;
-    }
-
-  // case 1) -- mono code
-  double *y1 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y1, "check_atimes_ewald_3all_poly_SC_2");
+  // case 1) -- mono
+  double *mat1 = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat1, "check_make_matrix_mob_ewald_3all_poly_SC_2");
 
   double t0, t;
   t0 = ptime_ms_d ();
-  atimes_ewald_3all (n, x, y1, (void *)sys);
+  make_matrix_mob_ewald_3all (sys, mat1);
   t = ptime_ms_d ();
   double ptime_mono = t - t0;
 
@@ -264,12 +257,12 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
   double a [2] = {1.0, 1.0};
   stokes_set_radius (sys, a);
 
-  // case 2) -- poly code
-  double *y2 = (double *)malloc (sizeof (double) * n);
-  CHECK_MALLOC (y2, "check_atimes_ewald_3all_poly_SC_2");
+  // case 2) -- poly
+  double *mat2 = (double *)malloc (sizeof (double) * n * n);
+  CHECK_MALLOC (mat2, "check_make_matrix_mob_ewald_3all_poly_SC_2");
 
   t0 = ptime_ms_d ();
-  atimes_ewald_3all (n, x, y2, (void *)sys);
+  make_matrix_mob_ewald_3all (sys, mat2);
   t = ptime_ms_d ();
   double ptime_poly = t - t0;
 
@@ -278,15 +271,19 @@ check_atimes_ewald_3all_poly_SC_2 (int version,
   int check = 0;
   double max = 0.0;
   char label [80];
+  int i, j;
   for (i = 0; i < n; i ++)
     {
-      sprintf (label, " (%d) ", i);
-      check += compare_max (y1[i], y2[i], label, verbose, tiny, &max);
+      for (j = 0; j < n; j ++)
+	{
+	  sprintf (label, " (%d, %d) ", i, j);
+	  check += compare_max (mat1[i*n+j], mat2[i*n+j],
+				label, verbose, tiny, &max);
+	}
     }
 
-  free (x);
-  free (y1);
-  free (y2);
+  free (mat1);
+  free (mat2);
   stokes_free (sys);
 
 

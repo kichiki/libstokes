@@ -1,5 +1,4 @@
-/* header file for 'ewald-3fts-new.c' --
- * bug fixing for polydisperse systems
+/* header file for 'ewald-3fts.c' --
  * Solvers for 3 dimensional FTS version problems
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
@@ -17,8 +16,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#ifndef	_EWALD_3FTS_NEW_H_
-#define	_EWALD_3FTS_NEW_H_
+#ifndef	_EWALD_3FTS_OLD_H_
+#define	_EWALD_3FTS_OLD_H_
 
 
 /** natural resistance problem **/
@@ -35,7 +34,7 @@
  *  s [np * 5] :
  */
 void
-solve_res_3fts_0_new
+solve_res_3fts_0_old
 (struct stokes * sys,
  const double *u, const double *o, const double *e,
  double *f, double *t, double *s);
@@ -52,7 +51,7 @@ solve_res_3fts_0_new
  *  s [np * 5] :
  */
 void
-solve_res_3fts_new
+solve_res_3fts_old
 (struct stokes * sys,
  const double *u, const double *o, const double *e,
  double *f, double *t, double *s);
@@ -73,7 +72,7 @@ solve_res_3fts_new
  *  s [np * 5] :
  */
 void
-solve_mob_3fts_0_new
+solve_mob_3fts_0_old
 (struct stokes *sys, struct iter *iter,
  const double *f, const double *t, const double *e,
  double *u, double *o, double *s);
@@ -90,7 +89,7 @@ solve_mob_3fts_0_new
  *  s [np * 5] :
  */
 void
-solve_mob_3fts_new
+solve_mob_3fts_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  double *u, double *o, double *s);
@@ -118,7 +117,7 @@ solve_mob_3fts_new
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts_0_new
+solve_mix_3fts_0_old
 (struct stokes *sys, struct iter *iter,
  const double *f, const double *t, const double *e,
  const double *uf, const double *of, const double *ef,
@@ -143,7 +142,7 @@ solve_mix_3fts_0_new
  *  sf [nf * 5] :
  */
 void
-solve_mix_3fts_new
+solve_mix_3fts_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  const double *uf, const double *of, const double *ef,
@@ -166,7 +165,7 @@ solve_mix_3fts_new
  *  s [np * 5] :
  */
 void
-solve_res_lub_3fts_0_new
+solve_res_lub_3fts_0_old
 (struct stokes * sys,
  const double *u, const double *o, const double *e,
  double *f, double *t, double *s);
@@ -183,12 +182,13 @@ solve_res_lub_3fts_0_new
  *   s [np * 5] :
  */
 void
-solve_res_lub_3fts_new
+solve_res_lub_3fts_old
 (struct stokes * sys,
  const double *u, const double *o, const double *e,
  double *f, double *t, double *s);
 
 
+/** mob_lub_3fts **/
 /* solve natural mobility problem with lubrication in FTS version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -203,7 +203,7 @@ solve_res_lub_3fts_new
  *  s [np * 5] :
  */
 void
-solve_mob_lub_3fts_0_new
+solve_mob_lub_3fts_0_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  double *u, double *o, double *s);
@@ -220,7 +220,7 @@ solve_mob_lub_3fts_0_new
  *   s [np * 5] :
  */
 void
-solve_mob_lub_3fts_new
+solve_mob_lub_3fts_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  double *u, double *o, double *s);
@@ -248,7 +248,7 @@ solve_mob_lub_3fts_new
  *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts_0_new
+solve_mix_lub_3fts_0_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  const double *uf, const double *of,
@@ -275,7 +275,7 @@ solve_mix_lub_3fts_0_new
  *  sf [nf * 5] :
  */
 void
-solve_mix_lub_3fts_new
+solve_mix_lub_3fts_old
 (struct stokes * sys,
  const double *f, const double *t, const double *e,
  const double *uf, const double *of,
@@ -284,4 +284,4 @@ solve_mix_lub_3fts_new
  double *ff, double *tf, double *sf);
 
 
-#endif /* !_EWALD_3FTS_NEW_H_ */
+#endif /* !_EWALD_3FTS_OLD_H_ */

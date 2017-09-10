@@ -1,5 +1,4 @@
-/* bug fixing for polydisperse systems
- * lubrication routines -- atimes procedure
+/* lubrication routines -- MATRIX procedure
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
@@ -16,27 +15,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
+#include <stdio.h> /* for printf() */
+#include <stdlib.h> /* for exit() */
 
+/*
 #include "stokes.h"
+//#include "bonds.h" // list_ex_check()
+#include "f.h"
+#include "ft.h"
+#include "fts.h"
 
-#include "f.h" // calc_lub_f_2b()
-#include "ft.h" // calc_lub_ft_2b()
-#include "fts.h" // calc_lub_fts_2b()
+#include "matrix.h"
+#include "lub.h" // cond_lub(), cond_lub_poly()
+*/
+#include <libstokes-core.h>
 
-#include "lub.h"
-
-#include "f-new.h"
-#include "ft-new.h"
-#include "fts-new.h"
-#include "twobody-slip-new.h" // calc_lub_[f,ft,fts]_2b_slip_new()
-
-#include "lub-new.h"
+#include "lub-matrix.h"
 
 
-// copy from lub.c
 /*
  * INPUT
  *  sys : struct stokes *sys.
@@ -68,34 +65,33 @@ set_imax_lub_periodic (struct stokes *sys,
 }
 
 
-/* calculate lubrication f by u for all particles
- * for both under the periodic and non-periodic boundary conditions.
- * polydisperse and slip systems can be handled.
+/* make lubrication matrix for F version for all particles
+ * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
  *         sys->ll[xyz]
- *   u [np * 3] : velocity
  * OUTPUT
- *   f [np * 3] : force
+ *  mat [np * 3 * np * 3] :
  */
 void
-calc_lub_3f_new
-(struct stokes *sys,
- const double *u,
- double *f)
+make_matrix_lub_3f (struct stokes *sys,
+		    double *mat)
 {
   int i, j;
   int i3;
   int j3;
+  int n;
 
-  double tmp_pos[3];
+  double tmp_pos [3];
 
   int np = sys->np;
-  /* clear f [np * 3] */
-  for (i = 0; i < np * 3; ++i)
+  n = np * 3;
+  /* clear result */
+  for (i = 0; i < n * n; ++i)
     {
-      f [i] = 0.0;
+      mat [i] = 0.0;
     }
 
   // set lubmax2 for cond_lub()
@@ -136,26 +132,10 @@ calc_lub_3f_new
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  // mono noslip is OK
-			  calc_lub_f_2b
-			    (sys,
-			     u + i3, u + j3,
-			     sys->pos + i3, sys->pos + j3,
-			     f + i3, f + j3);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_f_2b_slip_new
-			    (sys,
-			     u + i3, u + j3,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     f + i3, f + j3);
-			}
+		      matrix_lub_f_2b (sys,
+				       i, j,
+				       sys->pos + i3, sys->pos + j3,
+				       n, mat);
 		    }
 		}
 	      else
@@ -165,26 +145,11 @@ calc_lub_3f_new
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  calc_lub_f_2b_poly_new
-			    (sys,
-			     u + i3, u + j3,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     f + i3, f + j3);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_f_2b_slip_new
-			    (sys,
-			     u + i3, u + j3,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     f + i3, f + j3);
-			}
+		      matrix_lub_f_2b_poly (sys,
+					    i, j,
+					    sys->pos + i3, sys->pos + j3,
+					    i, j,
+					    n, mat);
 		    }
 		}
 	    }
@@ -218,26 +183,11 @@ calc_lub_3f_new
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      // mono noslip is OK
-				      calc_lub_f_2b
-					(sys,
-					 u + i3, u + j3,
-					 sys->pos + i3, tmp_pos,
-					 f + i3, f + j3);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_f_2b_slip_new
-					(sys,
-					 u + i3, u + j3,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 f + i3, f + j3);
-				    }
+				  matrix_lub_f_2b
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     n, mat);
 				}
 			    }
 			  else
@@ -247,63 +197,49 @@ calc_lub_3f_new
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      calc_lub_f_2b_poly_new
-					(sys,
-					 u + i3, u + j3,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 f + i3, f + j3);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_f_2b_slip_new
-					(sys,
-					 u + i3, u + j3,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 f + i3, f + j3);
-				    }
+				  matrix_lub_f_2b_poly
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     i, j,
+				     n, mat);
 				}
 			    }
 			}
 		    }
 		}
+	      // endif for periodic
 	    }
 	}
     }
 }
 
-/* calculate lubrication ft by uoe for all particles
- * for both under the periodic and non-periodic boundary conditions
- * polydisperse and slip systems can be handled.
+/* make lubrication matrix for FT version for all particles
+ * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
  *         sys->ll[xyz]
- *   uo [np * 6] : velocity, angular velocity, strain
  * OUTPUT
- *   ft [np * 6] : force, torque, stresslet
+ *  mat [np * 6 * np * 6] :
  */
 void
-calc_lub_3ft_new
-(struct stokes * sys,
- const double * uo, double * ft)
+make_matrix_lub_3ft (struct stokes *sys,
+		     double *mat)
 {
   int i, j;
-  int i3, i6;
-  int j3, j6;
+  int i3, j3;
+  int n;
 
-  double tmp_pos[3];
+  double tmp_pos [3];
 
   int np = sys->np;
-  /* clear ft [np * 6] */
-  for (i = 0; i < np * 6; ++i)
+  n = np * 6;
+  /* clear result */
+  for (i = 0; i < n * n; ++i)
     {
-      ft [i] = 0.0;
+      mat [i] = 0.0;
     }
 
   // set lubmax2 for cond_lub()
@@ -323,7 +259,6 @@ calc_lub_3ft_new
   for (i = 0; i < np; ++i)
     {
       i3 = i * 3;
-      i6 = i * 6;
       for (j = i; j < np; ++j)
 	{
 	  /*
@@ -335,7 +270,6 @@ calc_lub_3ft_new
 	  */
 
 	  j3 = j * 3;
-	  j6 = j * 6;
 
 	  if (sys->periodic == 0)
 	    {
@@ -346,26 +280,10 @@ calc_lub_3ft_new
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  // mono noslip is OK
-			  calc_lub_ft_2b
-			    (sys,
-			     uo + i6, uo + j6,
-			     sys->pos + i3, sys->pos + j3,
-			     ft + i6, ft + j6);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_ft_2b_slip_new
-			    (sys,
-			     uo + i6, uo + j6,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     ft + i6, ft + j6);
-			}
+		      matrix_lub_ft_2b (sys,
+					i, j,
+					sys->pos + i3, sys->pos + j3,
+					n, mat);
 		    }
 		}
 	      else
@@ -375,31 +293,17 @@ calc_lub_3ft_new
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  calc_lub_ft_2b_poly_new
-			    (sys,
-			     uo + i6, uo + j6,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     ft + i6, ft + j6);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_ft_2b_slip_new
-			    (sys,
-			     uo + i6, uo + j6,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     ft + i6, ft + j6);
-			}
+		      matrix_lub_ft_2b_poly (sys,
+					     i, j,
+					     sys->pos + i3, sys->pos + j3,
+					     i, j,
+					     n, mat);
 		    }
 		}
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -427,26 +331,11 @@ calc_lub_3ft_new
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      // mono noslip is OK
-				      calc_lub_ft_2b
-					(sys,
-					 uo + i6, uo + j6,
-					 sys->pos + i3, tmp_pos,
-					 ft + i6, ft + j6);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_ft_2b_slip_new
-					(sys,
-					 uo + i6, uo + j6,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 ft + i6, ft + j6);
-				    }
+				  matrix_lub_ft_2b
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     n, mat);
 				}
 			    }
 			  else
@@ -456,63 +345,49 @@ calc_lub_3ft_new
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      calc_lub_ft_2b_poly_new
-					(sys,
-					 uo + i6, uo + j6,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 ft + i6, ft + j6);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_ft_2b_slip_new
-					(sys,
-					 uo + i6, uo + j6,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 ft + i6, ft + j6);
-				    }
+				  matrix_lub_ft_2b_poly
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     i, j,
+				     n, mat);
 				}
 			    }
 			}
 		    }
 		}
+	      // endif for periodic
 	    }
 	}
     }
 }
 
-/* calculate lubrication fts by uoe for all particles
- * for both under the periodic and non-periodic boundary conditions
- * polydisperse and slip systems can be handled.
+/* make lubrication matrix for FTS version for all particles
+ * for both periodic and non-periodic boundary conditions
+ * polydisperse system can be handled.
  * INPUT
  *   sys : system parameters. following entries are used;
  *         sys->pos
  *         sys->ll[xyz]
- *   uoe [np * 11] : velocity, angular velocity, strain
  * OUTPUT
- *   fts [np * 11] : force, torque, stresslet
+ *  mat [np * 11 * np * 11] :
  */
 void
-calc_lub_3fts_new
-(struct stokes * sys,
- const double * uoe, double * fts)
+make_matrix_lub_3fts (struct stokes *sys,
+		      double *mat)
 {
   int i, j;
-  int i3, i11;
-  int j3, j11;
+  int i3, j3;
+  int n;
 
-  double tmp_pos[3];
+  double tmp_pos [3];
 
   int np = sys->np;
-  /* clear fts [np * 11] */
-  for (i = 0; i < np * 11; ++i)
+  n = np * 11;
+  /* clear result */
+  for (i = 0; i < n * n; ++i)
     {
-      fts [i] = 0.0;
+      mat [i] = 0.0;
     }
 
   // set lubmax2 for cond_lub()
@@ -532,7 +407,6 @@ calc_lub_3fts_new
   for (i = 0; i < np; ++i)
     {
       i3 = i * 3;
-      i11 = i * 11;
       for (j = i; j < np; ++j)
 	{
 	  /*
@@ -544,7 +418,6 @@ calc_lub_3fts_new
 	  */
 
 	  j3 = j * 3;
-	  j11 = j * 11;
 
 	  if (sys->periodic == 0)
 	    {
@@ -555,26 +428,10 @@ calc_lub_3fts_new
 		  if (cond_lub (sys->pos + i3, sys->pos + j3,
 				lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  // mono noslip is OK
-			  calc_lub_fts_2b
-			    (sys,
-			     uoe + i11, uoe + j11,
-			     sys->pos + i3, sys->pos + j3,
-			     fts + i11, fts + j11);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_fts_2b_slip_new
-			    (sys,
-			     uoe + i11, uoe + j11,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     fts + i11, fts + j11);
-			}
+		      matrix_lub_fts_2b (sys,
+					 i, j,
+					 sys->pos + i3, sys->pos + j3,
+					 n, mat);
 		    }
 		}
 	      else
@@ -584,31 +441,17 @@ calc_lub_3fts_new
 				     sys->a[i], sys->a[j],
 				     lubmax2) == 0)
 		    {
-		      if (sys->slip == NULL)
-			{
-			  // noslip
-			  calc_lub_fts_2b_poly_new
-			    (sys,
-			     uoe + i11, uoe + j11,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     fts + i11, fts + j11);
-			}
-		      else
-			{
-			  // slip
-			  calc_lub_fts_2b_slip_new
-			    (sys,
-			     uoe + i11, uoe + j11,
-			     sys->pos + i3, sys->pos + j3,
-			     i, j,
-			     fts + i11, fts + j11);
-			}
+		      matrix_lub_fts_2b_poly (sys,
+					      i, j,
+					      sys->pos + i3, sys->pos + j3,
+					      i, j,
+					      n, mat);
 		    }
 		}
 	    }
 	  else
 	    {
+	      // periodic system
 	      int ix, iy, iz;
 	      for (ix = -imaxx; ix <= imaxx; ix++)
 		{
@@ -636,26 +479,11 @@ calc_lub_3fts_new
 			      if (cond_lub (sys->pos + i3, tmp_pos,
 					    lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      // mono noslip is OK
-				      calc_lub_fts_2b
-					(sys,
-					 uoe + i11, uoe + j11,
-					 sys->pos + i3, tmp_pos,
-					 fts + i11, fts + j11);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_fts_2b_slip_new
-					(sys,
-					 uoe + i11, uoe + j11,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 fts + i11, fts + j11);
-				    }
+				  matrix_lub_fts_2b
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     n, mat);
 				}
 			    }
 			  else
@@ -665,26 +493,12 @@ calc_lub_3fts_new
 						 sys->a[i], sys->a[j],
 						 lubmax2) == 0)
 				{
-				  if (sys->slip == NULL)
-				    {
-				      // noslip
-				      calc_lub_fts_2b_poly_new
-					(sys,
-					 uoe + i11, uoe + j11,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 fts + i11, fts + j11);
-				    }
-				  else
-				    {
-				      // slip
-				      calc_lub_fts_2b_slip_new
-					(sys,
-					 uoe + i11, uoe + j11,
-					 sys->pos + i3, tmp_pos,
-					 i, j,
-					 fts + i11, fts + j11);
-				    }
+				  matrix_lub_fts_2b_poly
+				    (sys,
+				     i, j,
+				     sys->pos + i3, tmp_pos,
+				     i, j,
+				     n, mat);
 				}
 			    }
 			}

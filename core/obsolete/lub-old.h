@@ -1,5 +1,5 @@
-/* header file for lub-new.c --
- * bug fixing for polydisperse systems
+/* header file for lub.c --
+ * backup of bug fixing for polydisperse systems
  * lubrication routines -- atimes procedure
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
@@ -17,8 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#ifndef	_LUB_NEW_H_
-#define	_LUB_NEW_H_
+#ifndef	_LUB_OLD_H_
+#define	_LUB_OLD_H_
+
 
 /* calculate lubrication f by u for all particles
  * for both under the periodic and non-periodic boundary conditions.
@@ -32,7 +33,7 @@
  *   f [np * 3] : force
  */
 void
-calc_lub_3f_new
+calc_lub_3f_old
 (struct stokes *sys,
  const double *u,
  double *f);
@@ -49,7 +50,7 @@ calc_lub_3f_new
  *   ft [np * 6] : force, torque, stresslet
  */
 void
-calc_lub_3ft_new
+calc_lub_3ft_old
 (struct stokes * sys,
  const double * uo, double * ft);
 
@@ -65,9 +66,9 @@ calc_lub_3ft_new
  *   fts [np * 11] : force, torque, stresslet
  */
 void
-calc_lub_3fts_new
+calc_lub_3fts_old
 (struct stokes * sys,
  const double * uoe, double * fts);
 
 
-#endif /* !_LUB_NEW_H_ */
+#endif /* !_LUB_OLD_H_ */

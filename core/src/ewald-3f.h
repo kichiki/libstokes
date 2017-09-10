@@ -1,7 +1,6 @@
 /* header file for 'ewald-3f.c' --
  * Solvers for 3 dimensional F version problems
- * Copyright (C) 1993-2007 Kengo Ichiki <kichiki@users.sourceforge.net>
- * $Id: ewald-3f.h,v 4.8 2007/11/28 03:21:21 kichiki Exp $
+ * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,19 +21,6 @@
 
 
 /** natural resistance problem **/
-/* solve natural resistance problem in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : particle velocity in the labo frame.
- * OUTPUT
- *  f [np * 3] :
- */
-void
-solve_res_3f (struct stokes *sys,
-	      const double *u,
-	      double *f);
-
 /* solve natural resistance problem in F version in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -44,9 +30,23 @@ solve_res_3f (struct stokes *sys,
  *  f [np * 3] :
  */
 void
-solve_res_3f_0 (struct stokes *sys,
-		const double *u,
-		double *f);
+solve_res_3f_0
+(struct stokes *sys,
+ const double *u,
+ double *f);
+/* solve natural resistance problem in F version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : particle velocity in the labo frame.
+ * OUTPUT
+ *  f [np * 3] :
+ */
+void
+solve_res_3f
+(struct stokes *sys,
+ const double *u,
+ double *f);
 
 
 /** natural mobility problem **/
@@ -59,9 +59,10 @@ solve_res_3f_0 (struct stokes *sys,
  *  u [np * 3] :
  */
 void
-solve_mob_3f (struct stokes * sys,
-	      const double *f,
-	      double *u);
+solve_mob_3f
+(struct stokes * sys,
+ const double *f,
+ double *u);
 
 
 /** natural mobility problem with fixed particles **/
@@ -75,27 +76,15 @@ solve_mob_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_3f (struct stokes * sys,
-	      const double *f,
-	      const double *uf,
-	      double *u,
-	      double *ff);
+solve_mix_3f
+(struct stokes * sys,
+ const double *f,
+ const double *uf,
+ double *u,
+ double *ff);
 
 
 /** natural resistance problem with lubrication **/
-/* solve natural resistance problem with lubrication in F version
- * for both periodic and non-periodic boundary conditions
- * INPUT
- *  sys : system parameters
- *  u [np * 3] : particle velocity in the labo frame.
- * OUTPUT
- *   f [np * 3] :
- */
-void
-solve_res_lub_3f (struct stokes * sys,
-		  const double *u,
-		  double *f);
-
 /* solve natural resistance problem with lubrication in F version
  * in the fluid-rest frame
  * for both periodic and non-periodic boundary conditions
@@ -106,15 +95,30 @@ solve_res_lub_3f (struct stokes * sys,
  *  f [np * 3] :
  */
 void
-solve_res_lub_3f_0 (struct stokes * sys,
-		    const double *u,
-		    double *f);
+solve_res_lub_3f_0
+(struct stokes * sys,
+ const double *u,
+ double *f);
+/* solve natural resistance problem with lubrication in F version
+ * for both periodic and non-periodic boundary conditions
+ * INPUT
+ *  sys : system parameters
+ *  u [np * 3] : particle velocity in the labo frame.
+ * OUTPUT
+ *   f [np * 3] :
+ */
+void
+solve_res_lub_3f
+(struct stokes * sys,
+ const double *u,
+ double *f);
 
 
 /** mob_lub_3f **/
 void
-atimes_mob_lub_3f (int n, const double *x,
-		   double *y, void *user_data);
+atimes_mob_lub_3f
+(int n, const double *x,
+ double *y, void *user_data);
 /* solve natural mobility problem with lubrication in F version
  * for both periodic and non-periodic boundary conditions
  * INPUT
@@ -124,9 +128,10 @@ atimes_mob_lub_3f (int n, const double *x,
  *   u [np * 3] :
  */
 void
-solve_mob_lub_3f (struct stokes * sys,
-		  const double *f,
-		  double *u);
+solve_mob_lub_3f
+(struct stokes * sys,
+ const double *f,
+ double *u);
 
 
 /** natural mobility problem with lubrication with fixed particles **/
@@ -142,11 +147,12 @@ solve_mob_lub_3f (struct stokes * sys,
  *   ff [nf * 3] :
  */
 void
-solve_mix_lub_3f (struct stokes * sys,
-		  const double *f,
-		  const double *uf,
-		  double *u,
-		  double *ff);
+solve_mix_lub_3f
+(struct stokes * sys,
+ const double *f,
+ const double *uf,
+ double *u,
+ double *ff);
 
 
 #endif /* !_EWALD_3F_H_ */

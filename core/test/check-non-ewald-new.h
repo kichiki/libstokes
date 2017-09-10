@@ -22,11 +22,13 @@
 
 /** check routines **/
 
+/*
 // compare with monodisperse systems
 int
 check_atimes_nonewald_3all_new_0
 (int version,
  int verbose, double tiny);
+*/
 
 // compare with polydisperse systems with a = 1.0 (monodisperse)
 int

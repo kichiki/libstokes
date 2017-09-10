@@ -1,5 +1,5 @@
 /* test code for libstokes-core
- * Copyright (C) 2007-2008,2017 Kengo Ichiki <kengoichiki@gmail.com>
+ * Copyright (C) 2007-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,11 +24,10 @@
 
 #include "check-twobody.h" // check_twobody_scalars_res_with_equal()
 #include "check-poly.h" // check_scalars_nonewald_poly()
-#include "check-minv.h" // check_matrix_mob_nonewald_fts(), check_minv_fts()
+
 #include "check-minv-poly.h" // check_scalars_minv_[f,ft,fts]_poly_...()
 #include "check-lub-poly.h" // check_lub_fts_2b_poly()
-#include "check-mob-fts.h" // check_mob_fts ()
-#include "check-ewald.h" // check_atimes_ewald_3all_SC ()
+
 #include "check-ewald-poly.h" // check_atimes_ewald_3all_poly_SC_...()
 #include "check-ewald-shear.h" // check_atimes_3all_ewald_shear()
 #include "check-twobody-slip.h" // check_twobody_slip_with_noslip()
@@ -75,9 +74,6 @@ main (int argc, char** argv)
   check += check_scalars_nonewald_poly_symmetry (2.5, a1, a2, 1, 1.0e-17);
   check += check_scalars_ewald_real_poly (2.5, 1.0, 1, 1.3e-15);
 
-  check += check_matrix_mob_nonewald_fts (r, 1, 1.0e-14);
-  check += check_minv_fts (2.5, 1, 1.0e-14);
-
   check += check_scalars_minv_f_poly_with_equal   (r, 1, 1.0e-15);
   check += check_scalars_minv_ft_poly_with_equal  (r, 1, 1.0e-15);
   check += check_scalars_minv_fts_poly_with_equal (r, 1, 1.0e-14);
@@ -88,23 +84,13 @@ main (int argc, char** argv)
   check += check_scalars_minv_fts_poly_ana (r, a1, a2, 1, 1.0e-14);
 
   // check-lub-poly.c
-  // the reason of such big tiny is because of the accuracy of two-body-res.c
-  check += check_lub_scalars_poly (r, 50, 1, 3.0e-6);
   check += check_lub_fts_2b_poly (r, 1, 1.0e-4);
-  check += check_matrix_lub_fts_2b_poly (r, 1, 1.0e-5);
-  check += check_atimes_matrix_lub_fts_2b_poly (r, a1, a2, 1, 1.0e-15);
 
-  // check-mob-fts.c
-  check += check_mob_fts (1, 7.6e-12);
-  check += check_mob_lub_fts (1, 3.4e-11);
 
-  // check-ewald.c
   int version = 2; // FTS
   double phi = 0.2;
   double ewald_tr = 1.0;
   double ewald_eps = 1.0e-12;
-  check += check_ewald_3all_atimes_matrix_SC
-    (version, phi, ewald_tr, ewald_eps, 1, 5.0e-14);
 
   // check-ewald-poly.c
   check += check_atimes_ewald_3all_poly_SC_1 (version, phi,
@@ -117,15 +103,6 @@ main (int argc, char** argv)
 					      10.0, // ewald_tr
 					      ewald_eps, 1, 2.3e-14);
 
-  check += check_make_matrix_mob_ewald_3all_poly_SC_1
-    (version, phi, 4.0, // ewald_tr
-     ewald_eps, 1, 7.0e-15);
-  check += check_make_matrix_mob_ewald_3all_poly_SC_1
-    (version, phi, 1.0, // ewald_tr
-     ewald_eps, 1, 8.0e-15);
-  check += check_make_matrix_mob_ewald_3all_poly_SC_1
-    (version, phi, 10.0, // ewald_tr
-     ewald_eps, 1, 2.0e-14);
 
   check += check_atimes_ewald_3all_poly_SC_2
     (version, 0, // x dir
@@ -137,18 +114,6 @@ main (int argc, char** argv)
     (version, 2, // z dir
      phi, ewald_tr, ewald_eps, 1, 1.0e-14);
 
-  check += check_make_matrix_mob_ewald_3all_poly_SC_2
-    (version, 0, // x dir
-     phi, ewald_tr, ewald_eps,
-     1, 2.0e-14);
-  check += check_make_matrix_mob_ewald_3all_poly_SC_2
-    (version, 1, // y dir
-     phi, ewald_tr, ewald_eps,
-     1, 2.0e-14);
-  check += check_make_matrix_mob_ewald_3all_poly_SC_2
-    (version, 2, // z dir
-     phi, ewald_tr, ewald_eps,
-     1, 2.0e-14);
 
   // check-ewald-shear.c
   check += check_atimes_3all_ewald_shear

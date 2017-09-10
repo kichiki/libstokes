@@ -151,11 +151,8 @@ test-all-OBJ =\
 	check-solve-gen-linear.o \
 	check-twobody.o	\
 	check-poly.o	\
-	check-minv.o	\
 	check-minv-poly.o	\
 	check-lub-poly.o	\
-	check-mob-fts.o		\
-	check-ewald.o		\
 	check-ewald-poly.o	\
 	check-ewald-shear.o	\
 	check-twobody-slip.o	\

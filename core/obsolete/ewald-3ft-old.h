@@ -1,5 +1,5 @@
-/* header file for 'ewald-3ft-new.c' --
- * bug fixing for polydisperse systems
+/* header file for 'ewald-3ft.c' --
+ * backup of bug fixing for polydisperse systems
  * Solvers for 3 dimensional FT version problems
  * Copyright (C) 1993-2017 Kengo Ichiki <kengoichiki@gmail.com>
  *
@@ -17,8 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#ifndef	_EWALD_3FT_NEW_H_
-#define	_EWALD_3FT_NEW_H_
+#ifndef	_EWALD_3FT_OLD_H_
+#define	_EWALD_3FT_OLD_H_
 
 
 /** natural resistance problem **/
@@ -33,7 +33,7 @@
  *  t [np * 3] :
  */
 void
-solve_res_3ft_0_new
+solve_res_3ft_0_old
 (struct stokes * sys,
  const double *u, const double *o,
  double *f, double *t);
@@ -48,7 +48,7 @@ solve_res_3ft_0_new
  *  t [np * 3] :
  */
 void
-solve_res_3ft_new
+solve_res_3ft_old
 (struct stokes * sys,
  const double *u, const double *o,
  double *f, double *t);
@@ -66,7 +66,7 @@ solve_res_3ft_new
  *   o [np * 3] :
  */
 void
-solve_mob_3ft_new
+solve_mob_3ft_old
 (struct stokes * sys,
  const double *f, const double *t,
  double *u, double *o);
@@ -88,13 +88,12 @@ solve_mob_3ft_new
  *   tf [nf * 3] :
  */
 void
-solve_mix_3ft_new
+solve_mix_3ft_old
 (struct stokes * sys,
  const double *f, const double *t,
  const double *uf, const double *of,
  double *u, double *o,
  double *ff, double *tf);
-
 
 /** natural resistance problem with lubrication **/
 /* solve natural resistance problem with lubrication in FT version
@@ -109,7 +108,7 @@ solve_mix_3ft_new
  *   t [np * 3] :
  */
 void
-solve_res_lub_3ft_0_new
+solve_res_lub_3ft_0_old
 (struct stokes * sys,
  const double *u, const double *o,
  double *f, double *t);
@@ -124,10 +123,11 @@ solve_res_lub_3ft_0_new
  *   t [np * 3] :
  */
 void
-solve_res_lub_3ft_new
+solve_res_lub_3ft_old
 (struct stokes * sys,
  const double *u, const double *o,
  double *f, double *t);
+
 
 
 /** mob_lub_3ft **/
@@ -142,7 +142,7 @@ solve_res_lub_3ft_new
  *   o [np * 3] :
  */
 void
-solve_mob_lub_3ft_new
+solve_mob_lub_3ft_old
 (struct stokes * sys,
  const double *f, const double *t,
  double *u, double *o);
@@ -165,7 +165,7 @@ solve_mob_lub_3ft_new
  *   tf [nf * 3] :
  */
 void
-solve_mix_lub_3ft_new
+solve_mix_lub_3ft_old
 (struct stokes * sys,
  const double *f, const double *t,
  const double *uf, const double *of,
@@ -173,4 +173,4 @@ solve_mix_lub_3ft_new
  double *ff, double *tf);
 
 
-#endif /* !_EWALD_3FT_NEW_H_ */
+#endif /* !_EWALD_3FT_OLD_H_ */

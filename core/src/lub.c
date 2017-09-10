@@ -160,9 +160,10 @@ set_imax_lub_periodic (struct stokes *sys,
  *   f [np * 3] : force
  */
 void
-calc_lub_3f (struct stokes *sys,
-	     const double *u,
-	     double *f)
+calc_lub_3f
+(struct stokes *sys,
+ const double *u,
+ double *f)
 {
   int i, j;
   int i3;
@@ -218,6 +219,7 @@ calc_lub_3f (struct stokes *sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_f_2b
 			    (sys,
 			     u + i3, u + j3,
@@ -299,6 +301,7 @@ calc_lub_3f (struct stokes *sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_f_2b
 					(sys,
 					 u + i3, u + j3,
@@ -366,8 +369,9 @@ calc_lub_3f (struct stokes *sys,
  *   ft [np * 6] : force, torque, stresslet
  */
 void
-calc_lub_3ft (struct stokes * sys,
-	      const double * uo, double * ft)
+calc_lub_3ft
+(struct stokes * sys,
+ const double * uo, double * ft)
 {
   int i, j;
   int i3, i6;
@@ -425,6 +429,7 @@ calc_lub_3ft (struct stokes * sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_ft_2b
 			    (sys,
 			     uo + i6, uo + j6,
@@ -505,6 +510,7 @@ calc_lub_3ft (struct stokes * sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_ft_2b
 					(sys,
 					 uo + i6, uo + j6,
@@ -631,6 +637,7 @@ calc_lub_3fts (struct stokes * sys,
 		      if (sys->slip == NULL)
 			{
 			  // noslip
+			  // mono noslip is OK
 			  calc_lub_fts_2b
 			    (sys,
 			     uoe + i11, uoe + j11,
@@ -711,6 +718,7 @@ calc_lub_3fts (struct stokes * sys,
 				  if (sys->slip == NULL)
 				    {
 				      // noslip
+				      // mono noslip is OK
 				      calc_lub_fts_2b
 					(sys,
 					 uoe + i11, uoe + j11,

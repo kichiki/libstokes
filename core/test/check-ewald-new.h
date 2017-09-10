@@ -23,18 +23,6 @@
 
 /** check routines **/
 
-// compare with monodisperse systems
-int
-check_atimes_ewald_3all_new_0
-(int version,
- int verbose, double tiny);
-
-// compare with polydisperse systems with a = 1.0 (monodisperse)
-int
-check_atimes_ewald_3all_new_1
-(int version,
- int verbose, double tiny);
-
 // compare mono (without a) with polydisperse systems with a = 1.0
 int
 check_atimes_ewald_3all_new_1b

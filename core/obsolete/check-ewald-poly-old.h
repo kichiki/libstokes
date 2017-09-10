@@ -16,11 +16,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-#ifndef	_CHECK_EWALD_POLY_H_
-#define	_CHECK_EWALD_POLY_H_
+#ifndef	_CHECK_EWALD_POLY_OLD_H_
+#define	_CHECK_EWALD_POLY_OLD_H_
 
 
-/* check atimes_ewald_3all() for mono and poly(a=1) with SC config with N=1
+/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
+ * with SC config with N=1
  * INPUT
  *  version   : 0 (F), 1 (FT), 2 (FTS)
  *  phi       : volume fraction, that is, phi = (4/3)pi a^3/l^3
@@ -33,12 +34,14 @@
  *                     otherwise => failed
  */
 int
-check_atimes_ewald_3all_poly_SC_1 (int version,
-				   double phi,
-				   double ewald_tr, double ewald_eps,
-				   int verbose, double tiny);
+check_make_matrix_mob_ewald_3all_poly_SC_1
+(int version,
+ double phi,
+ double ewald_tr, double ewald_eps,
+ int verbose, double tiny);
 
-/* check atimes_ewald_3all() for mono and poly(a=1) with SC config with N=2
+/* check make_matrix_mob_ewald_3all() for mono and poly(a=1)
+ * with SC config with N=2
  * INPUT
  *  version   : 0 (F), 1 (FT), 2 (FTS)
  *  dir       : direction of the config, 0 (x), 1 (y), 2(z).
@@ -52,11 +55,12 @@ check_atimes_ewald_3all_poly_SC_1 (int version,
  *                     otherwise => failed
  */
 int
-check_atimes_ewald_3all_poly_SC_2 (int version,
-				   int dir,
-				   double phi,
-				   double ewald_tr, double ewald_eps,
-				   int verbose, double tiny);
+check_make_matrix_mob_ewald_3all_poly_SC_2
+(int version,
+ int dir,
+ double phi,
+ double ewald_tr, double ewald_eps,
+ int verbose, double tiny);
 
 
-#endif /* !_CHECK_EWALD_POLY_H_ */
+#endif /* !_CHECK_EWALD_POLY_OLD_H_ */

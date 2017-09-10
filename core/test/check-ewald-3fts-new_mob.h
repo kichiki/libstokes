@@ -23,10 +23,6 @@
 
 /** check routines **/
 
-// compare new (mono) with old (mono)
-int
-check_solve_mob_3fts_a
-(int verbose, double tiny);
 // compare with new (mono) and new (poly a=1)
 int
 check_solve_mob_3fts_b
@@ -41,10 +37,6 @@ check_solve_mob_3fts_b2
 
 // ** peroidic systems **
 
-// compare new (mono) with old (mono)
-int
-check_solve_mob_3fts_c
-(int verbose, double tiny);
 // compare with new (mono) and new (poly a=1)
 int
 check_solve_mob_3fts_d
