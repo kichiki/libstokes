@@ -27,13 +27,20 @@
 int
 check_solve_res_3fts_a
 (int verbose, double tiny);
-
 // compare with new (mono) and new (poly a=1)
 int
 check_solve_res_3fts_b
 (int verbose, double tiny);
 
-// peroidic systems
+// compare with mono and scaled poly (a = "scale")
+int
+check_solve_res_3fts_b2
+(double scale,
+ int verbose, double tiny);
+
+
+// ** peroidic systems **
+
 // compare new (mono) with old (mono)
 int
 check_solve_res_3fts_c
@@ -42,6 +49,12 @@ check_solve_res_3fts_c
 int
 check_solve_res_3fts_d
 (int verbose, double tiny);
+
+// compare with mono and scaled poly (a = "scale")
+int
+check_solve_res_3fts_d2
+(double scale,
+ int verbose, double tiny);
 
 
 #endif /* !_CHECK_EWALD_3FTS_NEW_RES_H_ */

@@ -39,6 +39,7 @@ main (int argc, char** argv)
 
   int version = 2; // FTS
 
+
   // check-non-ewald-new.c
   // compare with monodisperse systems
   check += check_atimes_nonewald_3all_new_0 (version, 1, 0.0);
@@ -138,6 +139,49 @@ main (int argc, char** argv)
   check += check_solve_mix_lub_3fts_c (1, 0.0);
   // compare with new (mono) and new (poly a=1)
   check += check_solve_mix_lub_3fts_d (1, 7.6e-06);
+
+
+  // check-ewald-3fts-new_res.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_res_3fts_b2 (10.0, 1, 8.7e-13);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_res_3fts_d2 (10.0, 1, 3.6e-08);
+
+  // check-ewald-3fts-new_mob.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mob_3fts_b2 (10.0, 1, 8.6e-13);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mob_3fts_d2 (10.0, 1, 3.3e-11);
+
+  // check-ewald-3fts-new_mix.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mix_3fts_b2 (10.0, 1, 2.5e-08);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mix_3fts_d2 (10.0, 1, 2.8e-07);
+
+  // check-ewald-3fts-new_res_lub.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_res_lub_3fts_b2 (10.0, 1, 7.5e-13);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_res_lub_3fts_d2 (10.0, 1, 4.2e-08);
+
+  // check-ewald-3fts-new_mob_lub.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mob_lub_3fts_b2 (10.0, 1, 1.4e-12);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mob_lub_3fts_d2 (10.0, 1, 1.7e-06);
+
+  // check-ewald-3fts-new_mix_lub.c PART II
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mix_lub_3fts_b2 (10.0, 1, 2.5e-06);
+  // ** peroidic systems **
+  // compare with mono and scaled poly (a=10)
+  check += check_solve_mix_lub_3fts_d2 (10.0, 1, 1.9e-05);
 
 
   fprintf (stdout,

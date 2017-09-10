@@ -536,7 +536,7 @@ check_atimes_ewald_3all_new_2
   CHECK_MALLOC (x, "check_atimes_nonewald_3all_new_2");
 
   double *a = (double *)malloc (sizeof (double) * np);
-  CHECK_MALLOC (y1, "check_atimes_nonewald_3all_new_2");
+  CHECK_MALLOC (a, "check_atimes_nonewald_3all_new_2");
 
 
   // system 1
